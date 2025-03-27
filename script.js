@@ -20,7 +20,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
     let isLogin = true;
     let sharedMap, rentMap, sharedMarkers = [], rentMarkers = [];
-    const API_URL = 'http://localhost:8080/api/v1'; // 後端 URL，確認與伺服器一致
+    const API_URL = 'http://192.168.50.222:8080/api/v1'; // 後端 URL，確認與伺服器一致
 
     // 切換登入/註冊
     toggleMessage.addEventListener("click", function (event) {
@@ -61,7 +61,7 @@ document.addEventListener("DOMContentLoaded", function () {
             }
         } else {
             try {
-                const response = await fetch(`${API_URL}/register`, {
+                 const response = await fetch(`${API_URL}/members/register`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ email, password })
