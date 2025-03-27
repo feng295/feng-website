@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 body {
     font-family: Arial, sans-serif;
     margin: 0;
@@ -202,4 +203,210 @@ button:hover {
 
 .search-container button:hover {
     background: #0056b3;
+=======
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #f4f4f4;
+}
+
+.container {
+    width: 300px;
+    margin: 100px auto;
+    padding: 20px;
+    background: white;
+    border-radius: 5px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+.input-group {
+    margin-bottom: 15px;
+}
+
+.input-group label {
+    display: block;
+    margin-bottom: 5px;
+}
+
+.input-group input {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 3px;
+}
+
+button {
+    width: 100%;
+    padding: 10px;
+    background: #28a745;
+    color: white;
+    border: none;
+    border-radius: 3px;
+    cursor: pointer;
+}
+
+button:hover {
+    background: #218838;
+}
+
+.error-message {
+    color: red;
+    margin-top: 10px;
+}
+
+/* 停車管理系統佈局 */
+.system-container {
+    display: flex;
+    width: 80%;
+    max-width: 1200px;
+    margin: 50px auto;
+    gap: 20px;
+}
+
+/* 功能清單 */
+.function-list {
+    width: 25%;
+    background: white;
+    padding: 20px;
+    border-radius: 5px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+.function-list ul {
+    list-style: none;
+    padding: 0;
+}
+
+.function-list ul li {
+    margin: 10px 0;
+}
+
+.function-list ul li a {
+    text-decoration: none;
+    color: #007bff;
+    cursor: pointer;
+}
+
+.function-list ul li a:hover {
+    color: #0056b3;
+}
+
+/* 右側內容區塊 */
+.content-container {
+    width: 75%;
+    background: white;
+    padding: 20px;
+    border-radius: 5px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+/* 車位狀態 */
+.parking-status {
+    margin-top: 20px;
+}
+
+.parking-spaces {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.parking-space {
+    width: 100px;
+    height: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 5px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: transform 0.2s, opacity 0.2s; /* 加入點擊動畫效果 */
+}
+
+.parking-space:hover {
+    transform: scale(1.05); /* 滑鼠懸停時稍微放大 */
+    opacity: 0.9; /* 略微降低透明度 */
+}
+
+.parking-space:active {
+    transform: scale(0.95); /* 點擊時縮小 */
+}
+
+.available {
+    background-color: green;
+    color: white;
+}
+
+.occupied {
+    background-color: red;
+    color: white;
+}
+
+.reserved {
+    background-color: blue;
+    color: white;
+}
+
+#logoutButton {
+    margin: 20px auto;
+    display: block;
+    width: 200px;
+}
+
+#historyList {
+    list-style: none;
+    padding: 0;
+}
+
+#historyList li {
+    padding: 5px 0;
+    border-bottom: 1px solid #eee;
+}
+
+/* 地圖和搜尋樣式 */
+.map-container {
+    height: 400px;
+    width: 100%;
+    margin-top: 20px;
+    border: 1px solid #ccc;
+}
+
+.search-container {
+    margin-top: 10px;
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap; /* 允許元素換行，避免過長時溢出 */
+    gap: 10px; /* 新增間距，確保元素之間有適當距離 */
+}
+
+.search-container label {
+    margin-right: 10px;
+}
+
+.search-container select {
+    padding: 5px;
+    border: 1px solid #ccc;
+    border-radius: 3px;
+    margin-right: 10px; /* 調整間距為更緊湊的 10px */
+}
+
+.search-container input {
+    padding: 5px;
+    border: 1px solid #ccc;
+    border-radius: 3px;
+    width: 200px;
+}
+
+.search-container button {
+    width: auto;
+    padding: 5px 10px; /* 調整為更適合的按鈕大小 */
+    background: #007bff;
+    margin-left: 10px;
+    font-size: 14px;
+}
+
+.search-container button:hover {
+    background: #0056b3;
+>>>>>>> 17efc002c0ee18b86189b33cd5e856319ed47cb0
 }
