@@ -25,7 +25,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
     let isLogin = true;
     let sharedMap, rentMap, sharedMarkers = [], rentMarkers = [];
-    const API_URL = 'http://192.168.50.222:2236/api/v1'; // 後端 URL
+    const API_URL = '/api/v1'; // 後端 URL
 
     // 動態隱藏註冊專用欄位
     function toggleFormFields() {
@@ -67,7 +67,7 @@ document.addEventListener("DOMContentLoaded", function () {
         if (isLogin) {
             // 登入只需要 email 和 password
             try {
-                const response = await fetch(`${API_URL}/login`, {
+                const response = await fetch(`${API_URL}/members/login`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ email, password })
