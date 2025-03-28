@@ -18,9 +18,32 @@ document.addEventListener("DOMContentLoaded", function () {
     const logoutButton = document.getElementById("logoutButton");
     const historyList = document.getElementById("historyList");
 
+    const nameInput = document.getElementById("name");
+    const phoneInput = document.getElementById("phone");
+    const roleInput = document.getElementById("role");
+    const paymentMethodInput = document.getElementById("payment_method");
+
     let isLogin = true;
     let sharedMap, rentMap, sharedMarkers = [], rentMarkers = [];
-    const API_URL = 'http://192.168.50.222:8080/api/v1'; // 後端 URL，確認與伺服器一致
+    const API_URL = 'http://192.168.50.222:2236/api/v1'; // 後端 URL
+
+    // 動態隱藏註冊專用欄位
+    function toggleFormFields() {
+        if (isLogin) {
+            nameInput.parentElement.style.display = "none";
+            phoneInput.parentElement.style.display = "none";
+            roleInput.parentElement.style.display = "none";
+            paymentMethodInput.parentElement.style.display = "none";
+        } else {
+            nameInput.parentElement.style.display = "block";
+            phoneInput.parentElement.style.display = "block";
+            roleInput.parentElement.style.display = "block";
+            paymentMethodInput.parentElement.style.display = "block";
+        }
+    }
+
+    // 初始化表單顯示
+    toggleFormFields();
 
     // 切換登入/註冊
     toggleMessage.addEventListener("click", function (event) {
@@ -32,15 +55,17 @@ document.addEventListener("DOMContentLoaded", function () {
             ? '還沒有帳號？<a href="#" id="toggleLink">註冊</a>'
             : '已有帳號？<a href="#" id="toggleLink">登入</a>';
         errorMessage.textContent = "";
+        toggleFormFields();
     });
 
-    // 處理登入/註冊（改為連接到後端 API）
+    // 處理登入/註冊
     authForm.addEventListener("submit", async function (event) {
         event.preventDefault();
         const email = document.getElementById("email").value.trim();
         const password = document.getElementById("password").value.trim();
 
         if (isLogin) {
+            // 登入只需要 email 和 password
             try {
                 const response = await fetch(`${API_URL}/login`, {
                     method: 'POST',
@@ -60,11 +85,23 @@ document.addEventListener("DOMContentLoaded", function () {
                 errorMessage.textContent = "無法連接到伺服器，請檢查網路或後端服務";
             }
         } else {
+            // 註冊需要所有欄位
+            const name = nameInput.value.trim();
+            const phone = phoneInput.value.trim();
+            const role = roleInput.value;
+            const payment_method = paymentMethodInput.value;
+
+            // 前端驗證
+            if (!name || !phone || !role || !payment_method) {
+                errorMessage.textContent = "請填寫所有必填欄位！";
+                return;
+            }
+
             try {
-                 const response = await fetch(`${API_URL}/members/register`, {
+                const response = await fetch(`${API_URL}/members/register`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email, password })
+                    body: JSON.stringify({ name, email, password, phone, role, payment_method })
                 });
                 const result = await response.json();
                 if (response.ok) {
@@ -73,6 +110,7 @@ document.addEventListener("DOMContentLoaded", function () {
                     formTitle.textContent = "登入";
                     submitButton.textContent = "登入";
                     toggleMessage.innerHTML = '還沒有帳號？<a href="#" id="toggleLink">註冊</a>';
+                    toggleFormFields();
                 } else {
                     errorMessage.textContent = result.message || "註冊失敗";
                 }
@@ -92,7 +130,7 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     });
 
-    // 初始化地圖
+    // 以下為地圖和其他功能的程式碼，保持不變
     function initMap(mapId, spots, markersArray) {
         const mapElement = document.getElementById(mapId);
         if (!mapElement) {
@@ -120,11 +158,10 @@ document.addEventListener("DOMContentLoaded", function () {
             }
         });
 
-        setTimeout(() => map.invalidateSize(), 100); // 確保地圖尺寸更新
+        setTimeout(() => map.invalidateSize(), 100);
         return map;
     }
 
-    // 更新地圖標記（從後端獲取資料）
     async function updateMap(map, category, markersArray, filterType, filterFloor, filterPricing, filterStatus, searchQuery) {
         if (!map) {
             console.error("Map object is not initialized");
@@ -172,7 +209,6 @@ document.addEventListener("DOMContentLoaded", function () {
 
     const navLinks = document.querySelectorAll(".nav-link");
 
-    // 功能清單切換並初始化地圖
     navLinks.forEach(link => {
         link.addEventListener("click", async function (event) {
             event.preventDefault();
@@ -219,7 +255,6 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     });
 
-    // 共享車位過濾
     function setupSharedParkingFilters() {
         const filterType = document.getElementById("sharedParkingType");
         const filterFloor = document.getElementById("sharedFloor");
@@ -248,7 +283,6 @@ document.addEventListener("DOMContentLoaded", function () {
         searchButton.addEventListener("click", applySharedFilters);
     }
 
-    // 租用車位過濾
     function setupRentParkingFilters() {
         const filterType = document.getElementById("rentParkingType");
         const filterFloor = document.getElementById("rentFloor");
@@ -277,7 +311,6 @@ document.addEventListener("DOMContentLoaded", function () {
         searchButton.addEventListener("click", applyRentFilters);
     }
 
-    // 查看車位
     function setupViewParking() {
         setTimeout(() => {
             const parkingSpaces = document.querySelectorAll("#viewParking .parking-space");
@@ -295,7 +328,6 @@ document.addEventListener("DOMContentLoaded", function () {
         alert(`查看車位 ${spaceId}，請從後端獲取狀態！`);
     }
 
-    // 預約車位
     function setupReserveParking() {
         setTimeout(() => {
             const parkingSpaces = document.querySelectorAll("#reserveParking .parking-space");
@@ -336,11 +368,6 @@ document.addEventListener("DOMContentLoaded", function () {
         }
     }
 
-    // 初始化過濾功能
-    setupSharedParkingFilters();
-    setupRentParkingFilters();
-
-    // 新增歷史紀錄
     function addToHistory(action) {
         const now = new Date();
         const timestamp = now.toLocaleString("zh-TW", { hour12: false });
@@ -348,4 +375,7 @@ document.addEventListener("DOMContentLoaded", function () {
         listItem.textContent = `${action} - ${timestamp}`;
         historyList.appendChild(listItem);
     }
+
+    setupSharedParkingFilters();
+    setupRentParkingFilters();
 });
