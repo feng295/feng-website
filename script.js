@@ -25,7 +25,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
     let isLogin = true;
     let sharedMap, rentMap, sharedMarkers = [], rentMarkers = [];
-    const API_URL = 'http://192.168.50.222:8080/api/v1'; // 後端 URL
+    const API_URL = 'http://192.168.50.222:2236/api/v1'; // 後端 URL
 
     // 動態隱藏註冊專用欄位
     function toggleFormFields() {
