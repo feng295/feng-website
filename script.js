@@ -8,6 +8,15 @@ if (typeof L === 'undefined') {
 document.addEventListener("DOMContentLoaded", function () {
     console.log("DOM fully loaded");
 
+document.getElementById('showCardInput').addEventListener('click', function() {
+        var cardNumberContainer = document.getElementById('cardNumberContainer');
+        if (cardNumberContainer.style.display === 'none') {
+            cardNumberContainer.style.display = 'block';
+        } else {
+            cardNumberContainer.style.display = 'none';
+        }
+    });
+
     const authContainer = document.getElementById("authContainer");
     const parkingContainer = document.getElementById("parkingContainer");
     const authForm = document.getElementById("authForm");
