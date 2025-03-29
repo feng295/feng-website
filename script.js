@@ -28,7 +28,8 @@ document.addEventListener("DOMContentLoaded", function () {
     let isLogin = true;
     let sharedMap, rentMap, sharedMarkers = [], rentMarkers = [];
     const API_URL = '/api/v1'; // 後端 URL
-    // 付款方式選擇監聽，當選擇信用卡時顯示卡號輸入框
+
+    // 當付款方式改變時，顯示或隱藏信用卡號輸入框
     paymentMethodInput.addEventListener("change", function () {
         if (paymentMethodInput.value === "credit_card") {
             cardNumberContainer.style.display = "block";
@@ -36,6 +37,13 @@ document.addEventListener("DOMContentLoaded", function () {
             cardNumberContainer.style.display = "none";
             cardNumberInput.value = ""; // 清空卡號欄位
         }
+    });
+
+    // 信用卡號輸入格式化（自動加上 "-"）
+    cardNumberInput.addEventListener("input", function (event) {
+        let value = cardNumberInput.value.replace(/\D/g, ""); // 移除非數字
+        value = value.replace(/(\d{4})(?=\d)/g, "$1-"); // 每 4 位數加 "-"
+        cardNumberInput.value = value;
     });
 
     // 動態隱藏註冊專用欄位
@@ -107,9 +115,8 @@ document.addEventListener("DOMContentLoaded", function () {
             const payment_method = paymentMethodInput.value;
             const card_number = cardNumberInput.value.trim();
 
-
             // 前端驗證
-            if (!name || !phone || !role || !payment_method|| (payment_method === "credit_card" && !card_number)) {
+            if (!name || !phone || !role || !payment_method || (payment_method === "credit_card" && !card_number)) {
                 errorMessage.textContent = "請填寫所有必填欄位！";
                 return;
             }
@@ -146,7 +153,6 @@ document.addEventListener("DOMContentLoaded", function () {
             section.style.display = "none";
         });
     });
-
     // 以下為地圖和其他功能的程式碼，保持不變
     function initMap(mapId, spots, markersArray) {
         const mapElement = document.getElementById(mapId);
