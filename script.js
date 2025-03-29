@@ -153,6 +153,8 @@ document.addEventListener("DOMContentLoaded", function () {
             section.style.display = "none";
         });
     });
+
+
     // 以下為地圖和其他功能的程式碼，保持不變
     function initMap(mapId, spots, markersArray) {
         const mapElement = document.getElementById(mapId);
