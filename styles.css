@@ -203,3 +203,16 @@ button:hover {
 .search-container button:hover {
     background: #0056b3;
 }
+
+/* 信用卡輸入框樣式 */
+#cardNumberContainer {
+    display: none; /* 預設隱藏信用卡輸入框 */
+    margin-top: 15px;
+}
+
+#cardNumberContainer input {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 3px;
+}

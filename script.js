@@ -8,12 +8,14 @@ if (typeof L === 'undefined') {
 document.addEventListener("DOMContentLoaded", function () {
     console.log("DOM fully loaded");
 
-document.getElementById('showCardInput').addEventListener('click', function() {
+    document.getElementById('payment_method').addEventListener('change', function() {
+        var paymentMethod = this.value;
         var cardNumberContainer = document.getElementById('cardNumberContainer');
-        if (cardNumberContainer.style.display === 'none') {
-            cardNumberContainer.style.display = 'block';
+        
+        if (paymentMethod === 'credit_card') {
+            cardNumberContainer.style.display = 'block'; // Show the credit card input
         } else {
-            cardNumberContainer.style.display = 'none';
+            cardNumberContainer.style.display = 'none'; // Hide the credit card input
         }
     });
 
