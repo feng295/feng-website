@@ -22,10 +22,21 @@ document.addEventListener("DOMContentLoaded", function () {
     const phoneInput = document.getElementById("phone");
     const roleInput = document.getElementById("role");
     const paymentMethodInput = document.getElementById("payment_method");
-
+    const cardNumberContainer = document.getElementById("cardNumberContainer");
+    const cardNumberInput = document.getElementById("card_number");
+    
     let isLogin = true;
     let sharedMap, rentMap, sharedMarkers = [], rentMarkers = [];
     const API_URL = '/api/v1'; // 後端 URL
+    // 付款方式選擇監聽，當選擇信用卡時顯示卡號輸入框
+    paymentMethodInput.addEventListener("change", function () {
+        if (paymentMethodInput.value === "credit_card") {
+            cardNumberContainer.style.display = "block";
+        } else {
+            cardNumberContainer.style.display = "none";
+            cardNumberInput.value = ""; // 清空卡號欄位
+        }
+    });
 
     // 動態隱藏註冊專用欄位
     function toggleFormFields() {
@@ -34,11 +45,15 @@ document.addEventListener("DOMContentLoaded", function () {
             phoneInput.parentElement.style.display = "none";
             roleInput.parentElement.style.display = "none";
             paymentMethodInput.parentElement.style.display = "none";
+            cardNumberContainer.style.display = "none";
         } else {
             nameInput.parentElement.style.display = "block";
             phoneInput.parentElement.style.display = "block";
             roleInput.parentElement.style.display = "block";
             paymentMethodInput.parentElement.style.display = "block";
+            if (paymentMethodInput.value === "credit_card") {
+                cardNumberContainer.style.display = "block";
+            }
         }
     }
 
@@ -90,9 +105,11 @@ document.addEventListener("DOMContentLoaded", function () {
             const phone = phoneInput.value.trim();
             const role = roleInput.value;
             const payment_method = paymentMethodInput.value;
+            const card_number = cardNumberInput.value.trim();
+
 
             // 前端驗證
-            if (!name || !phone || !role || !payment_method) {
+            if (!name || !phone || !role || !payment_method|| (payment_method === "credit_card" && !card_number)) {
                 errorMessage.textContent = "請填寫所有必填欄位！";
                 return;
             }
@@ -101,7 +118,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 const response = await fetch(`${API_URL}/members/register`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ name, email, password, phone, role, payment_method })
+                    body: JSON.stringify({ name, email, password, phone, role, payment_method, card_number })
                 });
                 const result = await response.json();
                 if (response.ok) {
