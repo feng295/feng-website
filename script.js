@@ -56,9 +56,10 @@ document.addEventListener("DOMContentLoaded", function () {
         const phoneRegex = /^[0-9]{10}$/;
         if (phoneRegex.test(value)) {
             errorMessage.textContent = "";
+            errorMessage.classList.remove("error");
         } else {
             errorMessage.textContent = "請提供有效的電話號碼（10位數字）";
-            errorMessage.style.color = "red";
+            errorMessage.classList.add("error");
         }
     });
 
@@ -142,112 +143,114 @@ document.addEventListener("DOMContentLoaded", function () {
     });
 
     // 處理登入/註冊
-    authForm.addEventListener("submit", async function (event) {
-        event.preventDefault();
-        const email = emailInput.value.trim();
-        const password = passwordInput.value.trim();
+ // 處理登入/註冊
+authForm.addEventListener("submit", async function (event) {
+    event.preventDefault();
+    const email = emailInput.value.trim();
+    const password = passwordInput.value.trim();
 
-        if (isLogin) {
-            // 登入只需要 email 和 password
-            try {
-                const response = await fetch(`${API_URL}/members/login`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email, password })
-                });
-                const result = await response.json();
-                if (response.ok) {
-                    alert("登入成功！");
-                    authContainer.style.display = "none";
-                    parkingContainer.style.display = "block";
-                } else {
-                    errorMessage.textContent = result.error || "電子郵件或密碼錯誤！";
-                    errorMessage.style.color = "red";
-                }
-            } catch (error) {
-                console.error("Login failed:", error);
-                errorMessage.textContent = "無法連接到伺服器，請檢查網路或後端服務";
-                errorMessage.style.color = "red";
+    if (isLogin) {
+        // 登入只需要 email 和 password
+        try {
+            const response = await fetch(`${API_URL}/members/login`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, password })
+            });
+            const result = await response.json();
+            if (response.ok) {
+                alert("登入成功！");
+                authContainer.style.display = "none";
+                parkingContainer.style.display = "block";
+            } else {
+                errorMessage.textContent = result.error || "電子郵件或密碼錯誤！";
+                errorMessage.classList.add("error");
             }
-        } else {
-            // 註冊需要所有欄位
-            const name = nameInput.value.trim();
-            const phone = phoneInput.value.trim();
-            const role = roleInput.value;
-            const payment_method = paymentMethodInput.value;
-            let payment_info = cardNumberInput.value.trim();
-
-            // 前端驗證
-            if (!name || !phone || !role || !payment_method) {
-                errorMessage.textContent = "請填寫所有必填欄位！";
-                return;
-            }
-
-            // 收集所有驗證錯誤
-            const errors = [];
-
-            // 驗證必填欄位
-            if (!name) errors.push("請填寫姓名");
-            if (!phone) errors.push("請填寫電話號碼");
-            if (!role) errors.push("請選擇角色");
-            if (!payment_method) errors.push("請選擇付款方式");
-
-            // 驗證電話號碼
-            const phoneRegex = /^[0-9]{10}$/;
-            if (!phoneRegex.test(phone)) {
-                errors.push("請提供有效的電話號碼（10位數字）");
-            }
-
-            // 清理密碼中的不可見字符
-            const cleanedPassword = password.replace(/[^\x20-\x7E]/g, "");
-            console.log("Password after cleanup:", cleanedPassword);
-
-            // 驗證密碼格式
-            const hasLetter = /[a-zA-Z]/.test(cleanedPassword);
-            const hasNumber = /[0-9]/.test(cleanedPassword);
-            const isLongEnough = cleanedPassword.length >= 8;
-            if (!hasLetter || !hasNumber || !isLongEnough) {
-                errors.push("密碼必須至少8個字符，包含字母和數字");
-            }
-
-            // 驗證 payment_info
-            if (payment_method === "credit_card" && !payment_info) {
-                errors.push("請輸入信用卡號");
-            }
-
-            // 如果有錯誤，顯示所有錯誤訊息
-            if (errors.length > 0) {
-                errorMessage.textContent = errors.join("；");
-                errorMessage.style.color = "red";
-                return;
-            }
-
-            try {
-                const response = await fetch(`${API_URL}/members/register`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ name, email, password: cleanedPassword, phone, role, payment_method, payment_info })
-                });
-                const result = await response.json();
-                if (response.ok) {
-                    alert("註冊成功！請使用此帳號登入。");
-                    isLogin = true;
-                    formTitle.textContent = "登入";
-                    submitButton.textContent = "登入";
-                    toggleMessage.innerHTML = '還沒有帳號？<a href="#" id="toggleLink">註冊</a>';
-                    toggleFormFields();
-                } else {
-                    console.log("Register failed:", response.status, result);
-                    errorMessage.textContent = result.error || `註冊失敗！（錯誤碼：${response.status}）`;
-                    errorMessage.style.color = "red";
-                }
-            } catch (error) {
-                console.error("Register failed:", error);
-                errorMessage.textContent = "無法連接到伺服器，請檢查網路或後端服務";
-                errorMessage.style.color = "red";
-            }
+        } catch (error) {
+            console.error("Login failed:", error);
+            errorMessage.textContent = "無法連接到伺服器，請檢查網路或後端服務";
+            errorMessage.classList.add("error");
         }
-    });
+    } else {
+        // 註冊需要所有欄位
+        const name = nameInput.value.trim();
+        const phone = phoneInput.value.trim();
+        const role = roleInput.value;
+        const payment_method = paymentMethodInput.value;
+        let payment_info = cardNumberInput.value.trim();
+
+        // 前端驗證
+        if (!name || !phone || !role || !payment_method) {
+            errorMessage.textContent = "請填寫所有必填欄位！";
+            errorMessage.classList.add("error");
+            return;
+        }
+
+        // 收集所有驗證錯誤
+        const errors = [];
+
+        // 驗證必填欄位
+        if (!name) errors.push("請填寫姓名");
+        if (!phone) errors.push("請填寫電話號碼");
+        if (!role) errors.push("請選擇角色");
+        if (!payment_method) errors.push("請選擇付款方式");
+
+        // 驗證電話號碼
+        const phoneRegex = /^[0-9]{10}$/;
+        if (!phoneRegex.test(phone)) {
+            errors.push("請提供有效的電話號碼（10位數字）");
+        }
+
+        // 清理密碼中的不可見字符
+        const cleanedPassword = password.replace(/[^\x20-\x7E]/g, "");
+        console.log("Password after cleanup:", cleanedPassword);
+
+        // 驗證密碼格式
+        const hasLetter = /[a-zA-Z]/.test(cleanedPassword);
+        const hasNumber = /[0-9]/.test(cleanedPassword);
+        const isLongEnough = cleanedPassword.length >= 8;
+        if (!hasLetter || !hasNumber || !isLongEnough) {
+            errors.push("密碼必須至少8個字符，包含字母和數字");
+        }
+
+        // 驗證 payment_info
+        if (payment_method === "credit_card" && !payment_info) {
+            errors.push("請輸入信用卡號");
+        }
+
+        // 如果有錯誤，顯示所有錯誤訊息
+        if (errors.length > 0) {
+            errorMessage.textContent = errors.join("；");
+            errorMessage.classList.add("error");
+            return;
+        }
+
+        try {
+            const response = await fetch(`${API_URL}/members/register`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name, email, password: cleanedPassword, phone, role, payment_method, payment_info })
+            });
+            const result = await response.json();
+            if (response.ok) {
+                alert("註冊成功！請使用此帳號登入。");
+                isLogin = true;
+                formTitle.textContent = "登入";
+                submitButton.textContent = "登入";
+                toggleMessage.innerHTML = '還沒有帳號？<a href="#" id="toggleLink">註冊</a>';
+                toggleFormFields();
+            } else {
+                console.log("Register failed:", response.status, result);
+                errorMessage.textContent = result.error || `註冊失敗！（錯誤碼：${response.status}）`;
+                errorMessage.classList.add("error");
+            }
+        } catch (error) {
+            console.error("Register failed:", error);
+            errorMessage.textContent = "無法連接到伺服器，請檢查網路或後端服務";
+            errorMessage.classList.add("error");
+        }
+    }
+});
 
     // 登出功能
     logoutButton.addEventListener("click", function () {
@@ -270,12 +273,12 @@ document.addEventListener("DOMContentLoaded", function () {
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
         }).addTo(map);
-
+    
         if (!Array.isArray(spots)) {
             console.error("Spots data is not an array:", spots);
             return map;
         }
-
+    
         spots.forEach(spot => {
             if (spot.lat && spot.lng) {
                 const marker = L.marker([spot.lat, spot.lng]).addTo(map);
@@ -285,8 +288,15 @@ document.addEventListener("DOMContentLoaded", function () {
                 console.warn("Invalid spot data:", spot);
             }
         });
-
-        setTimeout(() => map.invalidateSize(), 100);
+    
+        setTimeout(() => {
+            if (map) {
+                map.invalidateSize();
+                console.log(`Map ${mapId} initialized successfully`);
+            } else {
+                console.error(`Map ${mapId} is not initialized`);
+            }
+        }, 100);
         return map;
     }
 
@@ -341,6 +351,7 @@ document.addEventListener("DOMContentLoaded", function () {
         link.addEventListener("click", async function (event) {
             event.preventDefault();
             const targetId = this.getAttribute("data-target");
+            console.log(`Nav link clicked: ${targetId}`);
             document.querySelectorAll(".content-section").forEach(section => {
                 section.style.display = "none";
             });
@@ -350,39 +361,67 @@ document.addEventListener("DOMContentLoaded", function () {
                 return;
             }
             targetSection.style.display = "block";
-
+            console.log(`Showing section: ${targetId}`);
+    
             if (targetId === "sharedParking") {
+                console.log("Attempting to initialize sharedParking map");
                 if (!sharedMap) {
                     try {
-                        const spots = await fetch(`${API_URL}/parking/shared`).then(res => res.json());
+                        const response = await fetch(`${API_URL}/parking/shared`);
+                        if (!response.ok) {
+                            throw new Error(`Failed to fetch shared parking spots: ${response.status}`);
+                        }
+                        const spots = await response.json();
+                        console.log("Shared parking spots:", spots);
                         sharedMap = initMap("sharedMap", spots, sharedMarkers);
-                        if (sharedMap) sharedMap.invalidateSize();
+                        if (sharedMap) {
+                            sharedMap.invalidateSize();
+                            console.log("sharedMap initialized");
+                        } else {
+                            console.error("Failed to initialize sharedMap");
+                        }
                     } catch (error) {
                         console.error("Failed to initialize shared map:", error);
+                        alert("無法載入共享車位地圖，請檢查後端服務是否運行");
                     }
                 } else {
                     sharedMap.invalidateSize();
+                    console.log("sharedMap already initialized, resizing");
                 }
             } else if (targetId === "rentParking") {
+                console.log("Attempting to initialize rentParking map");
                 if (!rentMap) {
                     try {
-                        const spots = await fetch(`${API_URL}/parking/rent`).then(res => res.json());
+                        const response = await fetch(`${API_URL}/parking/rent`);
+                        if (!response.ok) {
+                            throw new Error(`Failed to fetch rent parking spots: ${response.status}`);
+                        }
+                        const spots = await response.json();
+                        console.log("Rent parking spots:", spots);
                         rentMap = initMap("rentMap", spots, rentMarkers);
-                        if (rentMap) rentMap.invalidateSize();
+                        if (rentMap) {
+                            rentMap.invalidateSize();
+                            console.log("rentMap initialized");
+                        } else {
+                            console.error("Failed to initialize rentMap");
+                        }
                     } catch (error) {
                         console.error("Failed to initialize rent map:", error);
+                        alert("無法載入租用車位地圖，請檢查後端服務是否運行");
                     }
                 } else {
                     rentMap.invalidateSize();
+                    console.log("rentMap already initialized, resizing");
                 }
             } else if (targetId === "viewParking") {
                 setupViewParking();
-            } else if (targetId === "reserveParking") {
+                console.log("viewParking setup complete");
+            } else if (targetId === "reserveParking") { // 修正拼寫錯誤
                 setupReserveParking();
+                console.log("reserveParking setup complete");
             }
         });
     });
-
     function setupSharedParkingFilters() {
         const filterType = document.getElementById("sharedParkingType");
         const filterFloor = document.getElementById("sharedFloor");

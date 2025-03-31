@@ -106,18 +106,24 @@ button:active {
     margin-top: 10px;
     font-size: 14px;
     text-align: center;
-    min-height: 0; /* 移除固定高度，避免空內容時顯示框框 */
-    padding: 0; /* 移除 padding，避免空內容時顯示框框 */
-    background: none; /* 預設無背景色 */
+    min-height: 0;
+    padding: 0;
+    background: none;
     border-radius: 3px;
-    transition: background 0.3s ease; /* 添加背景色過渡效果 */
+    transition: background 0.3s ease, color 0.3s ease;
 }
 
-/* 當有錯誤訊息時才顯示背景色 */
+/* 當有錯誤訊息時顯示紅色背景 */
 #errorMessage:not(:empty) {
-    background: #ffe6e6; /* 有內容時顯示紅色背景 */
-    padding: 5px; /* 有內容時添加 padding */
-    min-height: 20px; /* 有內容時設置最小高度 */
+    background: #ffe6e6;
+    padding: 5px;
+    min-height: 20px;
+}
+
+/* 當訊息為成功時（例如密碼格式正確），顯示綠色背景 */
+#errorMessage.success {
+    color: green;
+    background: #e6ffe6;
 }
 
 /* 切換鏈接樣式 */
@@ -146,6 +152,7 @@ button:active {
     max-width: 1200px;
     margin: 50px auto;
     gap: 20px;
+    flex-direction: row;
 }
 
 /* 功能清單 */
@@ -155,6 +162,15 @@ button:active {
     padding: 20px;
     border-radius: 5px;
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    box-sizing: border-box;
+    writing-mode: vertical-rl; /* 垂直排列，從右到左 */
+    text-align: center;
+}
+
+.function-list h1 {
+    font-size: 24px;
+    margin-bottom: 20px;
+    writing-mode: vertical-rl; /* 確保標題也垂直 */
 }
 
 .function-list ul {
@@ -170,6 +186,7 @@ button:active {
     text-decoration: none;
     color: #007bff;
     cursor: pointer;
+    writing-mode: vertical-rl; /* 確保鏈接文字也垂直 */
 }
 
 .function-list ul li a:hover {
@@ -183,6 +200,16 @@ button:active {
     padding: 20px;
     border-radius: 5px;
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    box-sizing: border-box;
+}
+
+/* 內容區塊 */
+.content-section {
+    display: none;
+}
+
+.content-section[style*="display: block"] {
+    display: block;
 }
 
 /* 車位狀態 */
@@ -372,7 +399,6 @@ button:active {
     }
 
     #errorMessage {
-        font  {
         font-size: 13px;
     }
 
