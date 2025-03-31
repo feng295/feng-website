@@ -32,6 +32,7 @@
             <div>
                 <label for="role">角色</label>
                 <select id="role" name="role">
+                    <option value="">請選擇角色</option>
                     <option value="shared_owner">車位共享者</option>
                     <option value="renter">租用者</option>
                 </select>
@@ -39,9 +40,13 @@
             <div>
                 <label for="payment_method">付款方式</label>
                 <select id="payment_method" name="payment_method">
+                    <option value="">請選擇付款方式</option>
                     <option value="credit_card">信用卡</option>
-                    <input type="text" id="card_number" name="card_number" placeholder="請輸入信用卡號">
                 </select>
+            </div>
+            <div id="cardNumberContainer" style="display: none;">
+                <label for="card_number">信用卡號</label>
+                <input type="text" id="card_number" name="card_number" placeholder="請輸入信用卡號">
             </div>
             <button type="submit" id="submitButton">登入</button>
             <p id="toggleMessage">還沒有帳號？<a href="#" id="toggleLink">註冊</a></p>
