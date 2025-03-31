@@ -84,13 +84,35 @@ document.addEventListener("DOMContentLoaded", function () {
             roleInput.parentElement.style.display = "none";
             paymentMethodInput.parentElement.style.display = "none";
             cardNumberContainer.style.display = "none";
+
+            // 移除非必要欄位的 required 屬性
+            nameInput.removeAttribute("required");
+            phoneInput.removeAttribute("required");
+            roleInput.removeAttribute("required");
+            paymentMethodInput.removeAttribute("required");
+            cardNumberInput.removeAttribute("required");
+
+            // 確保 email 和 password 是必填
+            emailInput.setAttribute("required", "true");
+            passwordInput.setAttribute("required", "true");
         } else {
+            // 註冊模式：顯示所有欄位
             nameInput.parentElement.style.display = "block";
             phoneInput.parentElement.style.display = "block";
             roleInput.parentElement.style.display = "block";
             paymentMethodInput.parentElement.style.display = "block";
             if (paymentMethodInput.value === "credit_card") {
                 cardNumberContainer.style.display = "block";
+            }
+            // 添加所有欄位的 required 屬性
+            emailInput.setAttribute("required", "true");
+            passwordInput.setAttribute("required", "true");
+            nameInput.setAttribute("required", "true");
+            phoneInput.setAttribute("required", "true");
+            roleInput.setAttribute("required", "true");
+            paymentMethodInput.setAttribute("required", "true");
+            if (paymentMethodInput.value === "credit_card") {
+                cardNumberInput.setAttribute("required", "true");
             }
         }
     }
