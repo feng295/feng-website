@@ -7,7 +7,8 @@ if (typeof L === 'undefined') {
 
 document.addEventListener("DOMContentLoaded", function () {
     console.log("DOM fully loaded");
-    // 確保所有 DOM 元素都存在
+
+    // 定義所有 DOM 元素
     const authContainer = document.getElementById("authContainer");
     const parkingContainer = document.getElementById("parkingContainer");
     const authForm = document.getElementById("authForm");
@@ -18,14 +19,15 @@ document.addEventListener("DOMContentLoaded", function () {
     const logoutButton = document.getElementById("logoutButton");
     const historyList = document.getElementById("historyList");
 
+    const emailInput = document.getElementById("email"); // 添加 emailInput 定義
+    const passwordInput = document.getElementById("password");
     const nameInput = document.getElementById("name");
     const phoneInput = document.getElementById("phone");
     const roleInput = document.getElementById("role");
     const paymentMethodInput = document.getElementById("payment_method");
     const cardNumberContainer = document.getElementById("cardNumberContainer");
     const cardNumberInput = document.getElementById("card_number");
-    const passwordInput = document.getElementById("password");
-    
+
     // 檢查必要的 DOM 元素是否存在
     if (!emailInput || !passwordInput || !authForm) {
         console.error("Required DOM elements are missing: emailInput, passwordInput, or authForm");
@@ -174,7 +176,7 @@ document.addEventListener("DOMContentLoaded", function () {
             const role = roleInput.value;
             const payment_method = paymentMethodInput.value;
             let payment_info = cardNumberInput.value.trim();
-            
+
             // 前端驗證
             if (!name || !phone || !role || !payment_method) {
                 errorMessage.textContent = "請填寫所有必填欄位！";
@@ -197,13 +199,13 @@ document.addEventListener("DOMContentLoaded", function () {
             }
 
             // 清理密碼中的不可見字符
-            password = password.replace(/[^\x20-\x7E]/g, "");
-            console.log("Password after cleanup:", password);
+            const cleanedPassword = password.replace(/[^\x20-\x7E]/g, "");
+            console.log("Password after cleanup:", cleanedPassword);
 
             // 驗證密碼格式
-            const hasLetter = /[a-zA-Z]/.test(password);
-            const hasNumber = /[0-9]/.test(password);
-            const isLongEnough = password.length >= 8;
+            const hasLetter = /[a-zA-Z]/.test(cleanedPassword);
+            const hasNumber = /[0-9]/.test(cleanedPassword);
+            const isLongEnough = cleanedPassword.length >= 8;
             if (!hasLetter || !hasNumber || !isLongEnough) {
                 errors.push("密碼必須至少8個字符，包含字母和數字");
             }
@@ -212,8 +214,6 @@ document.addEventListener("DOMContentLoaded", function () {
             if (payment_method === "credit_card" && !payment_info) {
                 errors.push("請輸入信用卡號");
             }
-            // 如果 payment_method 為 e_wallet，允許 payment_info 為空（根據後端需求調整）
-            // 如果後端要求 e_wallet 必須提供 payment_info，則需要添加相應的輸入框和驗證
 
             // 如果有錯誤，顯示所有錯誤訊息
             if (errors.length > 0) {
@@ -226,7 +226,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 const response = await fetch(`${API_URL}/members/register`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ name, email, password, phone, role, payment_method, payment_info })
+                    body: JSON.stringify({ name, email, password: cleanedPassword, phone, role, payment_method, payment_info })
                 });
                 const result = await response.json();
                 if (response.ok) {

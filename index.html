@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,46 +8,44 @@
     <link rel="stylesheet" href="/feng-website/styles.css">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 </head>
+
 <body>
     <div class="container" id="authContainer">
         <h2 id="formTitle">登入</h2>
         <form id="authForm">
-            <div class="input-group">
+            <div>
                 <label for="name">姓名</label>
-                <input type="text" id="name" name="name" >
+                <input type="text" id="name" name="name">
             </div>
-            <div class="input-group">
+            <div>
                 <label for="email">電子郵件</label>
                 <input type="email" id="email" name="email" required>
             </div>
-            <div class="input-group">
+            <div>
                 <label for="phone">電話號碼</label>
-                <input type="text" id="phone" name="phone" >
+                <input type="text" id="phone" name="phone">
             </div>
-            <div class="input-group">
+            <div>
                 <label for="password">密碼</label>
                 <input type="password" id="password" name="password" required>
             </div>
-            <div class="input-group">
+            <div>
                 <label for="role">角色</label>
-                <select id="role" name="role" >
+                <select id="role" name="role">
                     <option value="shared_owner">車位共享者</option>
                     <option value="renter">租用者</option>
                 </select>
             </div>
-            <div class="input-group">
+            <div>
                 <label for="payment_method">付款方式</label>
-                <select id="payment_method" name="payment_method" >
+                <select id="payment_method" name="payment_method">
                     <option value="credit_card">信用卡</option>
+                    <input type="text" id="card_number" name="card_number" placeholder="請輸入信用卡號">
                 </select>
-            </div>
-            <div class="input-group" id="cardNumberContainer" style="display: none;">
-                <label for="card_number">信用卡號</label>
-                <input type="text" id="card_number" name="card_number" placeholder="請輸入信用卡號">
             </div>
             <button type="submit" id="submitButton">登入</button>
             <p id="toggleMessage">還沒有帳號？<a href="#" id="toggleLink">註冊</a></p>
-            <p id="errorMessage" class="error-message"></p>
+            <p id="errorMessage" style="color: red;"></p>
         </form>
     </div>
 
@@ -180,4 +179,5 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="script.js"></script>
 </body>
+
 </html>
