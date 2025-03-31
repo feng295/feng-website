@@ -147,7 +147,8 @@ document.addEventListener("DOMContentLoaded", function () {
                     toggleMessage.innerHTML = '還沒有帳號？<a href="#" id="toggleLink">註冊</a>';
                     toggleFormFields();
                 } else {
-                    errorMessage.textContent = result.message || "註冊失敗";
+                    console.log("Register failed:", response.status, result); // 添加日誌
+                    errorMessage.textContent = result.message || `註冊失敗！（錯誤碼：${response.status}）`;
                 }
             } catch (error) {
                 console.error("Register failed:", error);
