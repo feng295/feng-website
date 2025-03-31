@@ -42,6 +42,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
     // 當付款方式改變時，顯示或隱藏信用卡號輸入框
     paymentMethodInput.addEventListener("change", function () {
+        const eWalletContainer = document.getElementById("eWalletContainer");
         if (paymentMethodInput.value === "credit_card") {
             cardNumberContainer.style.display = "block";
         } else {
@@ -124,19 +125,38 @@ document.addEventListener("DOMContentLoaded", function () {
             const phone = phoneInput.value.trim();
             const role = roleInput.value;
             const payment_method = paymentMethodInput.value;
-            const card_number = cardNumberInput.value.trim();
+            let payment_info = cardNumberInput.value.trim();
 
             // 前端驗證
-            if (!name || !phone || !role || !payment_method || (payment_method === "credit_card" && !card_number)) {
+            if (!name || !phone || !role || !payment_method ) {
                 errorMessage.textContent = "請填寫所有必填欄位！";
                 return;
             }
+
+            //驗證密碼格式
+            const passwordRegex = /^(=.[a-zA-Z])(=.[0-9]).{8,}$/;
+            if (!passwordRegex.test(password)) {
+                errorMessage.textContent = "密碼必須至少8個字符，包含字母和數字";
+                return;
+            }
+
+            //當選擇 e_wallet 時，設置一個預設的 payment_info（或者要求用戶輸入）
+            if (payment_method === "e_wallet") {
+                if (!payment_info) {
+                    payment_info = "e_wallet_default";  //設置預設值，或者要求用戶輸入
+                }
+            } else if (payment_method === "credit_card" && !payment_info) {
+                errorMessage.textContent = "請輸入信用卡號！";
+                return;
+            }
+
+
 
             try {
                 const response = await fetch(`${API_URL}/members/register`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ name, email, password, phone, role, payment_method, card_number })
+                    body: JSON.stringify({ name, email, password, phone, role, payment_method, payment_info})
                 });
                 const result = await response.json();
                 if (response.ok) {
