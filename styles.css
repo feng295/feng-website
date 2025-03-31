@@ -1,148 +1,52 @@
-/* 設定全局樣式 */
 body {
     font-family: Arial, sans-serif;
     margin: 0;
     padding: 0;
     background-color: #f4f4f4;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    min-height: 100vh;
 }
 
-/* 表單容器樣式 */
 .container {
-    width: 350px;
-    margin: 20px auto;
-    padding: 25px;
+    width: 300px;
+    margin: 100px auto;
+    padding: 20px;
     background: white;
-    border-radius: 10px;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
-    text-align: center;
+    border-radius: 5px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
 }
 
-/* 表單標題 */
-#formTitle {
-    color: #333;
-    margin-bottom: 20px;
-    font-size: 24px;
-    font-weight: bold;
-}
-
-/* 表單欄位樣式 */
 .input-group {
     margin-bottom: 15px;
-    text-align: left;
-    transition: opacity 0.3s ease, max-height 0.3s ease;
-    opacity: 1;
-    max-height: 100px;
-    overflow: hidden;
-}
-
-.input-group[style*="display: none"] {
-    opacity: 0;
-    max-height: 0;
 }
 
 .input-group label {
     display: block;
     margin-bottom: 5px;
-    font-size: 14px;
-    color: #333;
-    font-weight: 500;
 }
 
-.input-group input,
-.input-group select {
+.input-group input {
     width: 100%;
-    padding: 10px;
+    padding: 8px;
     border: 1px solid #ccc;
-    border-radius: 5px;
-    box-sizing: border-box;
-    font-size: 16px;
-    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+    border-radius: 3px;
 }
 
-.input-group input:focus,
-.input-group select:focus {
-    border-color: #007bff;
-    box-shadow: 0 0 5px rgba(0, 123, 255, 0.3);
-    outline: none;
-}
-
-.input-group select {
-    appearance: none;
-    background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="10" height="5" viewBox="0 0 10 5"><path fill="%23333" d="M0 0h10L5 5z"/></svg>') no-repeat right 10px center;
-    background-size: 10px;
-    padding-right: 30px;
-}
-
-/* 按鈕樣式 */
 button {
     width: 100%;
-    padding: 12px;
-    background: #007bff;
+    padding: 10px;
+    background: #28a745;
     color: white;
     border: none;
-    border-radius: 5px;
+    border-radius: 3px;
     cursor: pointer;
-    font-size: 16px;
-    font-weight: 500;
-    transition: background 0.3s ease, transform 0.1s ease;
 }
 
 button:hover {
-    background: #0056b3;
-    transform: translateY(-1px);
+    background: #218838;
 }
 
-button:active {
-    transform: translateY(0);
-}
-
-/* 錯誤訊息樣式 */
-#errorMessage {
+.error-message {
     color: red;
     margin-top: 10px;
-    font-size: 14px;
-    text-align: center;
-    min-height: 0;
-    padding: 0;
-    background: none;
-    border-radius: 3px;
-    transition: background 0.3s ease, color 0.3s ease;
-}
-
-/* 當有錯誤訊息時顯示紅色背景 */
-#errorMessage:not(:empty) {
-    background: #ffe6e6;
-    padding: 5px;
-    min-height: 20px;
-}
-
-/* 當訊息為成功時（例如密碼格式正確），顯示綠色背景 */
-#errorMessage.success {
-    color: green;
-    background: #e6ffe6;
-}
-
-/* 切換鏈接樣式 */
-#toggleMessage {
-    text-align: center;
-    margin-top: 15px;
-    font-size: 14px;
-    color: #666;
-}
-
-#toggleMessage a {
-    color: #007bff;
-    text-decoration: none;
-    font-weight: 500;
-}
-
-#toggleMessage a:hover {
-    color: #0056b3;
-    text-decoration: underline;
 }
 
 /* 停車管理系統佈局 */
@@ -152,7 +56,6 @@ button:active {
     max-width: 1200px;
     margin: 50px auto;
     gap: 20px;
-    flex-direction: row;
 }
 
 /* 功能清單 */
@@ -162,15 +65,6 @@ button:active {
     padding: 20px;
     border-radius: 5px;
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-    box-sizing: border-box;
-    writing-mode: vertical-rl; /* 垂直排列，從右到左 */
-    text-align: center;
-}
-
-.function-list h1 {
-    font-size: 24px;
-    margin-bottom: 20px;
-    writing-mode: vertical-rl; /* 確保標題也垂直 */
 }
 
 .function-list ul {
@@ -186,7 +80,6 @@ button:active {
     text-decoration: none;
     color: #007bff;
     cursor: pointer;
-    writing-mode: vertical-rl; /* 確保鏈接文字也垂直 */
 }
 
 .function-list ul li a:hover {
@@ -200,16 +93,6 @@ button:active {
     padding: 20px;
     border-radius: 5px;
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-    box-sizing: border-box;
-}
-
-/* 內容區塊 */
-.content-section {
-    display: none;
-}
-
-.content-section[style*="display: block"] {
-    display: block;
 }
 
 /* 車位狀態 */
@@ -232,16 +115,16 @@ button:active {
     border-radius: 5px;
     font-weight: bold;
     cursor: pointer;
-    transition: transform 0.2s, opacity 0.2s;
+    transition: transform 0.2s, opacity 0.2s; /* 加入點擊動畫效果 */
 }
 
 .parking-space:hover {
-    transform: scale(1.05);
-    opacity: 0.9;
+    transform: scale(1.05); /* 滑鼠懸停時稍微放大 */
+    opacity: 0.9; /* 略微降低透明度 */
 }
 
 .parking-space:active {
-    transform: scale(0.95);
+    transform: scale(0.95); /* 點擊時縮小 */
 }
 
 .available {
@@ -259,14 +142,12 @@ button:active {
     color: white;
 }
 
-/* 登出按鈕 */
 #logoutButton {
     margin: 20px auto;
     display: block;
     width: 200px;
 }
 
-/* 歷史紀錄 */
 #historyList {
     list-style: none;
     padding: 0;
@@ -289,21 +170,19 @@ button:active {
     margin-top: 10px;
     display: flex;
     align-items: center;
-    flex-wrap: wrap;
-    gap: 10px;
+    flex-wrap: wrap; /* 允許元素換行，避免過長時溢出 */
+    gap: 10px; /* 新增間距，確保元素之間有適當距離 */
 }
 
 .search-container label {
     margin-right: 10px;
-    font-size: 14px;
 }
 
 .search-container select {
     padding: 5px;
     border: 1px solid #ccc;
     border-radius: 3px;
-    margin-right: 10px;
-    font-size: 14px;
+    margin-right: 10px; /* 調整間距為更緊湊的 10px */
 }
 
 .search-container input {
@@ -311,12 +190,11 @@ button:active {
     border: 1px solid #ccc;
     border-radius: 3px;
     width: 200px;
-    font-size: 14px;
 }
 
 .search-container button {
     width: auto;
-    padding: 5px 10px;
+    padding: 5px 10px; /* 調整為更適合的按鈕大小 */
     background: #007bff;
     margin-left: 10px;
     font-size: 14px;
@@ -328,81 +206,13 @@ button:active {
 
 /* 信用卡輸入框樣式 */
 #cardNumberContainer {
-    display: none;
+    display: none; /* 預設隱藏信用卡輸入框 */
     margin-top: 15px;
-    transition: opacity 0.3s ease, max-height 0.3s ease;
-    opacity: 0;
-    max-height: 0;
-    overflow: hidden;
-}
-
-#cardNumberContainer[style*="display: block"] {
-    opacity: 1;
-    max-height: 100px;
 }
 
 #cardNumberContainer input {
     width: 100%;
-    padding: 10px;
+    padding: 8px;
     border: 1px solid #ccc;
-    border-radius: 5px;
-    font-size: 16px;
-}
-
-/* 響應式設計 */
-@media (max-width: 768px) {
-    .system-container {
-        flex-direction: column;
-        width: 90%;
-    }
-
-    .function-list,
-    .content-container {
-        width: 100%;
-    }
-
-    .search-container {
-        flex-direction: column;
-        align-items: flex-start;
-    }
-
-    .search-container select,
-    .search-container input {
-        width: 100%;
-        margin-right: 0;
-        margin-bottom: 10px;
-    }
-
-    .search-container button {
-        width: 100%;
-        margin-left: 0;
-    }
-
-    .container {
-        width: 90%;
-        padding: 20px;
-    }
-
-    #formTitle {
-        font-size: 20px;
-    }
-
-    .input-group input,
-    .input-group select {
-        padding: 8px;
-        font-size: 14px;
-    }
-
-    button {
-        padding: 10px;
-        font-size: 14px;
-    }
-
-    #errorMessage {
-        font-size: 13px;
-    }
-
-    #toggleMessage {
-        font-size: 13px;
-    }
+    border-radius: 3px;
 }
