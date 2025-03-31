@@ -1,22 +1,47 @@
+/* 設定全局樣式 */
 body {
     font-family: Arial, sans-serif;
     margin: 0;
     padding: 0;
     background-color: #f4f4f4;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh; /* 確保表單在小螢幕上也能居中 */
 }
 
+/* 表單容器樣式 */
 .container {
-    width: 300px;
-    margin: 100px auto;
-    padding: 20px;
+    width: 350px; /* 稍微加寬表單，提升可讀性 */
+    margin: 20px auto; /* 調整為更靈活的 margin */
+    padding: 25px;
     background: white;
-    border-radius: 5px;
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    border-radius: 10px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+    text-align: center; /* 讓內容置中 */
+}
+
+/* 表單標題 */
+#formTitle {
+    color: #333;
+    margin-bottom: 20px;
+    font-size: 24px;
+    font-weight: bold;
 }
 
 /* 表單欄位樣式 */
 .input-group {
     margin-bottom: 15px;
+    text-align: left;
+    transition: opacity 0.3s ease, max-height 0.3s ease; /* 添加顯示/隱藏動畫 */
+    opacity: 1;
+    max-height: 100px; /* 根據實際高度調整 */
+    overflow: hidden;
+}
+
+.input-group[style*="display: none"] {
+    opacity: 0;
+    max-height: 0;
 }
 
 .input-group label {
@@ -24,40 +49,55 @@ body {
     margin-bottom: 5px;
     font-size: 14px;
     color: #333;
+    font-weight: 500;
 }
 
 .input-group input,
 .input-group select {
     width: 100%;
-    padding: 8px;
+    padding: 10px;
     border: 1px solid #ccc;
-    border-radius: 3px;
-    box-sizing: border-box; /* 確保 padding 不影響寬度 */
-    font-size: 14px;
+    border-radius: 5px;
+    box-sizing: border-box;
+    font-size: 16px;
+    transition: border-color 0.3s ease, box-shadow 0.3s ease; /* 添加聚焦效果 */
+}
+
+.input-group input:focus,
+.input-group select:focus {
+    border-color: #007bff;
+    box-shadow: 0 0 5px rgba(0, 123, 255, 0.3);
+    outline: none;
 }
 
 .input-group select {
-    appearance: none; /* 移除瀏覽器預設的下拉箭頭 */
+    appearance: none;
     background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="10" height="5" viewBox="0 0 10 5"><path fill="%23333" d="M0 0h10L5 5z"/></svg>') no-repeat right 10px center;
     background-size: 10px;
-    padding-right: 30px; /* 為下拉箭頭留出空間 */
+    padding-right: 30px;
 }
 
 /* 按鈕樣式 */
 button {
     width: 100%;
-    padding: 10px;
-    background: #28a745;
+    padding: 12px;
+    background: #007bff; /* 統一使用藍色，與其他按鈕一致 */
     color: white;
     border: none;
-    border-radius: 3px;
+    border-radius: 5px;
     cursor: pointer;
     font-size: 16px;
-    transition: background 0.3s ease; /* 添加過渡效果 */
+    font-weight: 500;
+    transition: background 0.3s ease, transform 0.1s ease;
 }
 
 button:hover {
-    background: #218838;
+    background: #0056b3;
+    transform: translateY(-1px); /* 懸停時輕微上移 */
+}
+
+button:active {
+    transform: translateY(0); /* 點擊時恢復原位 */
 }
 
 /* 錯誤訊息樣式 */
@@ -65,7 +105,30 @@ button:hover {
     color: red;
     margin-top: 10px;
     font-size: 14px;
-    min-height: 20px; /* 確保錯誤訊息區域有固定高度，避免跳動 */
+    min-height: 20px; /* 避免佈局跳動 */
+    text-align: center;
+    background: #ffe6e6; /* 添加背景色，突出錯誤訊息 */
+    padding: 5px;
+    border-radius: 3px;
+}
+
+/* 切換鏈接樣式 */
+#toggleMessage {
+    text-align: center;
+    margin-top: 15px;
+    font-size: 14px;
+    color: #666;
+}
+
+#toggleMessage a {
+    color: #007bff;
+    text-decoration: none;
+    font-weight: 500;
+}
+
+#toggleMessage a:hover {
+    color: #0056b3;
+    text-decoration: underline;
 }
 
 /* 停車管理系統佈局 */
@@ -99,7 +162,6 @@ button:hover {
     text-decoration: none;
     color: #007bff;
     cursor: pointer;
-    font-size: 16px;
 }
 
 .function-list ul li a:hover {
@@ -167,7 +229,6 @@ button:hover {
     margin: 20px auto;
     display: block;
     width: 200px;
-    transition: background 0.3s ease;
 }
 
 /* 歷史紀錄 */
@@ -179,7 +240,6 @@ button:hover {
 #historyList li {
     padding: 5px 0;
     border-bottom: 1px solid #eee;
-    font-size: 14px;
 }
 
 /* 地圖和搜尋樣式 */
@@ -225,7 +285,6 @@ button:hover {
     background: #007bff;
     margin-left: 10px;
     font-size: 14px;
-    transition: background 0.3s ease;
 }
 
 .search-container button:hover {
@@ -236,7 +295,7 @@ button:hover {
 #cardNumberContainer {
     display: none;
     margin-top: 15px;
-    transition: opacity 0.3s ease, max-height 0.3s ease; /* 添加顯示/隱藏動畫 */
+    transition: opacity 0.3s ease, max-height 0.3s ease;
     opacity: 0;
     max-height: 0;
     overflow: hidden;
@@ -244,15 +303,15 @@ button:hover {
 
 #cardNumberContainer[style*="display: block"] {
     opacity: 1;
-    max-height: 100px; /* 根據實際高度調整 */
+    max-height: 100px;
 }
 
 #cardNumberContainer input {
     width: 100%;
-    padding: 8px;
+    padding: 10px;
     border: 1px solid #ccc;
-    border-radius: 3px;
-    font-size: 14px;
+    border-radius: 5px;
+    font-size: 16px;
 }
 
 /* 響應式設計 */
@@ -286,6 +345,29 @@ button:hover {
 
     .container {
         width: 90%;
-        margin: 50px auto;
+        padding: 20px;
+    }
+
+    #formTitle {
+        font-size: 20px;
+    }
+
+    .input-group input,
+    .input-group select {
+        padding: 8px;
+        font-size: 14px;
+    }
+
+    button {
+        padding: 10px;
+        font-size: 14px;
+    }
+
+    #errorMessage {
+        font-size: 13px;
+    }
+
+    #toggleMessage {
+        font-size: 13px;
     }
 }

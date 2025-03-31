@@ -13,23 +13,23 @@
     <div class="container" id="authContainer">
         <h2 id="formTitle">登入</h2>
         <form id="authForm">
-            <div>
+            <div class="input-group">
                 <label for="name">姓名</label>
                 <input type="text" id="name" name="name">
             </div>
-            <div>
+            <div class="input-group">
                 <label for="email">電子郵件</label>
                 <input type="email" id="email" name="email" required>
             </div>
-            <div>
+            <div class="input-group">
                 <label for="phone">電話號碼</label>
                 <input type="text" id="phone" name="phone">
             </div>
-            <div>
+            <div class="input-group">
                 <label for="password">密碼</label>
                 <input type="password" id="password" name="password" required>
             </div>
-            <div>
+            <div class="input-group">
                 <label for="role">角色</label>
                 <select id="role" name="role">
                     <option value="">請選擇角色</option>
@@ -37,13 +37,13 @@
                     <option value="renter">租用者</option>
                 </select>
             </div>
-            <div>
+            <div class="input-group">
                 <label for="payment_method">付款方式</label>
                 <select id="payment_method" name="payment_method">
                     <option value="">請選擇付款方式</option>
                     <option value="credit_card">信用卡</option>
                 </select>
-            </div>
+            </div class="input-group">
             <div id="cardNumberContainer" style="display: none;">
                 <label for="card_number">信用卡號</label>
                 <input type="text" id="card_number" name="card_number" placeholder="請輸入信用卡號">
