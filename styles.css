@@ -7,18 +7,18 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    min-height: 100vh; /* 確保表單在小螢幕上也能居中 */
+    min-height: 100vh;
 }
 
 /* 表單容器樣式 */
 .container {
-    width: 350px; /* 稍微加寬表單，提升可讀性 */
-    margin: 20px auto; /* 調整為更靈活的 margin */
+    width: 350px;
+    margin: 20px auto;
     padding: 25px;
     background: white;
     border-radius: 10px;
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
-    text-align: center; /* 讓內容置中 */
+    text-align: center;
 }
 
 /* 表單標題 */
@@ -33,9 +33,9 @@ body {
 .input-group {
     margin-bottom: 15px;
     text-align: left;
-    transition: opacity 0.3s ease, max-height 0.3s ease; /* 添加顯示/隱藏動畫 */
+    transition: opacity 0.3s ease, max-height 0.3s ease;
     opacity: 1;
-    max-height: 100px; /* 根據實際高度調整 */
+    max-height: 100px;
     overflow: hidden;
 }
 
@@ -60,7 +60,7 @@ body {
     border-radius: 5px;
     box-sizing: border-box;
     font-size: 16px;
-    transition: border-color 0.3s ease, box-shadow 0.3s ease; /* 添加聚焦效果 */
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
 }
 
 .input-group input:focus,
@@ -81,7 +81,7 @@ body {
 button {
     width: 100%;
     padding: 12px;
-    background: #007bff; /* 統一使用藍色，與其他按鈕一致 */
+    background: #007bff;
     color: white;
     border: none;
     border-radius: 5px;
@@ -93,11 +93,11 @@ button {
 
 button:hover {
     background: #0056b3;
-    transform: translateY(-1px); /* 懸停時輕微上移 */
+    transform: translateY(-1px);
 }
 
 button:active {
-    transform: translateY(0); /* 點擊時恢復原位 */
+    transform: translateY(0);
 }
 
 /* 錯誤訊息樣式 */
@@ -105,11 +105,19 @@ button:active {
     color: red;
     margin-top: 10px;
     font-size: 14px;
-    min-height: 20px; /* 避免佈局跳動 */
     text-align: center;
-    background: #ffe6e6; /* 添加背景色，突出錯誤訊息 */
-    padding: 5px;
+    min-height: 0; /* 移除固定高度，避免空內容時顯示框框 */
+    padding: 0; /* 移除 padding，避免空內容時顯示框框 */
+    background: none; /* 預設無背景色 */
     border-radius: 3px;
+    transition: background 0.3s ease; /* 添加背景色過渡效果 */
+}
+
+/* 當有錯誤訊息時才顯示背景色 */
+#errorMessage:not(:empty) {
+    background: #ffe6e6; /* 有內容時顯示紅色背景 */
+    padding: 5px; /* 有內容時添加 padding */
+    min-height: 20px; /* 有內容時設置最小高度 */
 }
 
 /* 切換鏈接樣式 */
@@ -364,6 +372,7 @@ button:active {
     }
 
     #errorMessage {
+        font  {
         font-size: 13px;
     }
 
