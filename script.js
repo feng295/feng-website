@@ -42,7 +42,6 @@ document.addEventListener("DOMContentLoaded", function () {
 
     // 當付款方式改變時，顯示或隱藏信用卡號輸入框
     paymentMethodInput.addEventListener("change", function () {
-        const eWalletContainer = document.getElementById("eWalletContainer");
         if (paymentMethodInput.value === "credit_card") {
             cardNumberContainer.style.display = "block";
         } else {
@@ -133,24 +132,32 @@ document.addEventListener("DOMContentLoaded", function () {
                 return;
             }
 
+            // 驗證電話號碼
+            const phoneRegex = /^[0-9]{10}$/;
+            if (!phoneRegex.test(phone)) {
+                errorMessage.textContent = "請提供有效的電話號碼（10位數字）";
+                return;
+            }
+
+            // 清理密碼中的不可見字符
+            password = password.replace(/[^\x20-\x7E]/g, ""); // 移除非可見字符
+            console.log("Password after cleanup:", password); // 添加日誌
+
             //驗證密碼格式
-            const passwordRegex = /^(=.[a-zA-Z])(=.[0-9]).{8,}$/;
-            if (!passwordRegex.test(password)) {
+            const hasLetter = /[a-zA-Z]/.test(password);
+            const hasNumber = /[0-9]/.test(password);
+            const isLongEnough = password.length >= 8;
+            if (!hasLetter || !hasNumber || !isLongEnough) {
+                console.log("Password validation failed:", { hasLetter, hasNumber, isLongEnough });
                 errorMessage.textContent = "密碼必須至少8個字符，包含字母和數字";
                 return;
             }
 
-            //當選擇 e_wallet 時，設置一個預設的 payment_info（或者要求用戶輸入）
-            if (payment_method === "e_wallet") {
-                if (!payment_info) {
-                    payment_info = "e_wallet_default";  //設置預設值，或者要求用戶輸入
-                }
-            } else if (payment_method === "credit_card" && !payment_info) {
-                errorMessage.textContent = "請輸入信用卡號！";
-                return;
-            }
-
-
+           // 只保留信用卡驗證邏輯
+        if (payment_method === "credit_card" && !payment_info) {
+            errorMessage.textContent = "請輸入信用卡號！";
+            return;
+        }
 
             try {
                 const response = await fetch(`${API_URL}/members/register`, {
