@@ -8,17 +8,6 @@ if (typeof L === 'undefined') {
 document.addEventListener("DOMContentLoaded", function () {
     console.log("DOM fully loaded");
 
-    document.getElementById('payment_method').addEventListener('change', function() {
-        var paymentMethod = this.value;
-        var cardNumberContainer = document.getElementById('cardNumberContainer');
-        
-        if (paymentMethod === 'credit_card') {
-            cardNumberContainer.style.display = 'block'; // Show the credit card input
-        } else {
-            cardNumberContainer.style.display = 'none'; // Hide the credit card input
-        }
-    });
-
     const authContainer = document.getElementById("authContainer");
     const parkingContainer = document.getElementById("parkingContainer");
     const authForm = document.getElementById("authForm");
@@ -35,6 +24,7 @@ document.addEventListener("DOMContentLoaded", function () {
     const paymentMethodInput = document.getElementById("payment_method");
     const cardNumberContainer = document.getElementById("cardNumberContainer");
     const cardNumberInput = document.getElementById("card_number");
+    const passwordInput = document.getElementById("password");
     
     let isLogin = true;
     let sharedMap, rentMap, sharedMarkers = [], rentMarkers = [];
@@ -50,11 +40,40 @@ document.addEventListener("DOMContentLoaded", function () {
         }
     });
 
+    // 電話號碼輸入驗證（只允許數字）
+    phoneInput.addEventListener("input", function (event) {
+        let value = phoneInput.value.replace(/\D/g, ""); // 移除非數字
+        phoneInput.value = value;
+        // 即時驗證電話號碼
+        const phoneRegex = /^[0-9]{10}$/;
+        if (phoneRegex.test(value)) {
+            errorMessage.textContent = "";
+        } else {
+            errorMessage.textContent = "請提供有效的電話號碼（10位數字）";
+            errorMessage.style.color = "red";
+        }
+    });
+
     // 信用卡號輸入格式化（自動加上 "-"）
     cardNumberInput.addEventListener("input", function (event) {
         let value = cardNumberInput.value.replace(/\D/g, ""); // 移除非數字
         value = value.replace(/(\d{4})(?=\d)/g, "$1-"); // 每 4 位數加 "-"
         cardNumberInput.value = value;
+    });
+
+    // 即時密碼驗證
+    passwordInput.addEventListener("input", function () {
+        const password = this.value.trim();
+        const hasLetter = /[a-zA-Z]/.test(password);
+        const hasNumber = /[0-9]/.test(password);
+        const isLongEnough = password.length >= 8;
+        if (hasLetter && hasNumber && isLongEnough) {
+            errorMessage.textContent = "密碼格式正確";
+            errorMessage.style.color = "green";
+        } else {
+            errorMessage.textContent = "密碼必須至少8個字符，包含字母和數字";
+            errorMessage.style.color = "red";
+        }
     });
 
     // 動態隱藏註冊專用欄位
@@ -96,7 +115,7 @@ document.addEventListener("DOMContentLoaded", function () {
     authForm.addEventListener("submit", async function (event) {
         event.preventDefault();
         const email = document.getElementById("email").value.trim();
-        const password = document.getElementById("password").value.trim();
+        let password = document.getElementById("password").value.trim();
 
         if (isLogin) {
             // 登入只需要 email 和 password
@@ -112,11 +131,13 @@ document.addEventListener("DOMContentLoaded", function () {
                     authContainer.style.display = "none";
                     parkingContainer.style.display = "block";
                 } else {
-                    errorMessage.textContent = result.message || "電子郵件或密碼錯誤！";
+                    errorMessage.textContent = result.error || "電子郵件或密碼錯誤！";
+                    errorMessage.style.color = "red";
                 }
             } catch (error) {
                 console.error("Login failed:", error);
                 errorMessage.textContent = "無法連接到伺服器，請檢查網路或後端服務";
+                errorMessage.style.color = "red";
             }
         } else {
             // 註冊需要所有欄位
@@ -126,44 +147,52 @@ document.addEventListener("DOMContentLoaded", function () {
             const payment_method = paymentMethodInput.value;
             let payment_info = cardNumberInput.value.trim();
 
-            // 前端驗證
-            if (!name || !phone || !role || !payment_method ) {
-                errorMessage.textContent = "請填寫所有必填欄位！";
-                return;
-            }
+            // 收集所有驗證錯誤
+            const errors = [];
+
+            // 驗證必填欄位
+            if (!name) errors.push("請填寫姓名");
+            if (!phone) errors.push("請填寫電話號碼");
+            if (!role) errors.push("請選擇角色");
+            if (!payment_method) errors.push("請選擇付款方式");
 
             // 驗證電話號碼
             const phoneRegex = /^[0-9]{10}$/;
             if (!phoneRegex.test(phone)) {
-                errorMessage.textContent = "請提供有效的電話號碼（10位數字）";
-                return;
+                errors.push("請提供有效的電話號碼（10位數字）");
             }
 
             // 清理密碼中的不可見字符
-            password = password.replace(/[^\x20-\x7E]/g, ""); // 移除非可見字符
-            console.log("Password after cleanup:", password); // 添加日誌
+            password = password.replace(/[^\x20-\x7E]/g, "");
+            console.log("Password after cleanup:", password);
 
-            //驗證密碼格式
+            // 驗證密碼格式
             const hasLetter = /[a-zA-Z]/.test(password);
             const hasNumber = /[0-9]/.test(password);
             const isLongEnough = password.length >= 8;
             if (!hasLetter || !hasNumber || !isLongEnough) {
-                console.log("Password validation failed:", { hasLetter, hasNumber, isLongEnough });
-                errorMessage.textContent = "密碼必須至少8個字符，包含字母和數字";
-                return;
+                errors.push("密碼必須至少8個字符，包含字母和數字");
             }
 
-           // 只保留信用卡驗證邏輯
-        if (payment_method === "credit_card" && !payment_info) {
-            errorMessage.textContent = "請輸入信用卡號！";
-            return;
-        }
+            // 驗證 payment_info
+            if (payment_method === "credit_card" && !payment_info) {
+                errors.push("請輸入信用卡號");
+            }
+            // 如果 payment_method 為 e_wallet，允許 payment_info 為空（根據後端需求調整）
+            // 如果後端要求 e_wallet 必須提供 payment_info，則需要添加相應的輸入框和驗證
+
+            // 如果有錯誤，顯示所有錯誤訊息
+            if (errors.length > 0) {
+                errorMessage.textContent = errors.join("；");
+                errorMessage.style.color = "red";
+                return;
+            }
 
             try {
                 const response = await fetch(`${API_URL}/members/register`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ name, email, password, phone, role, payment_method, payment_info})
+                    body: JSON.stringify({ name, email, password, phone, role, payment_method, payment_info })
                 });
                 const result = await response.json();
                 if (response.ok) {
@@ -174,12 +203,14 @@ document.addEventListener("DOMContentLoaded", function () {
                     toggleMessage.innerHTML = '還沒有帳號？<a href="#" id="toggleLink">註冊</a>';
                     toggleFormFields();
                 } else {
-                    console.log("Register failed:", response.status, result); // 添加日誌
-                    errorMessage.textContent = result.message || `註冊失敗！（錯誤碼：${response.status}）`;
+                    console.log("Register failed:", response.status, result);
+                    errorMessage.textContent = result.error || `註冊失敗！（錯誤碼：${response.status}）`;
+                    errorMessage.style.color = "red";
                 }
             } catch (error) {
                 console.error("Register failed:", error);
                 errorMessage.textContent = "無法連接到伺服器，請檢查網路或後端服務";
+                errorMessage.style.color = "red";
             }
         }
     });
@@ -192,7 +223,6 @@ document.addEventListener("DOMContentLoaded", function () {
             section.style.display = "none";
         });
     });
-
 
     // 以下為地圖和其他功能的程式碼，保持不變
     function initMap(mapId, spots, markersArray) {
