@@ -7,7 +7,7 @@ if (typeof L === 'undefined') {
 
 document.addEventListener("DOMContentLoaded", function () {
     console.log("DOM fully loaded");
-
+    // 確保所有 DOM 元素都存在
     const authContainer = document.getElementById("authContainer");
     const parkingContainer = document.getElementById("parkingContainer");
     const authForm = document.getElementById("authForm");
@@ -26,6 +26,12 @@ document.addEventListener("DOMContentLoaded", function () {
     const cardNumberInput = document.getElementById("card_number");
     const passwordInput = document.getElementById("password");
     
+    // 檢查必要的 DOM 元素是否存在
+    if (!emailInput || !passwordInput || !authForm) {
+        console.error("Required DOM elements are missing: emailInput, passwordInput, or authForm");
+        return;
+    }
+
     let isLogin = true;
     let sharedMap, rentMap, sharedMarkers = [], rentMarkers = [];
     const API_URL = '/api/v1'; // 後端 URL
@@ -136,8 +142,8 @@ document.addEventListener("DOMContentLoaded", function () {
     // 處理登入/註冊
     authForm.addEventListener("submit", async function (event) {
         event.preventDefault();
-        const email = document.getElementById("email").value.trim();
-        let password = document.getElementById("password").value.trim();
+        const email = emailInput.value.trim();
+        const password = passwordInput.value.trim();
 
         if (isLogin) {
             // 登入只需要 email 和 password
@@ -168,6 +174,12 @@ document.addEventListener("DOMContentLoaded", function () {
             const role = roleInput.value;
             const payment_method = paymentMethodInput.value;
             let payment_info = cardNumberInput.value.trim();
+            
+            // 前端驗證
+            if (!name || !phone || !role || !payment_method) {
+                errorMessage.textContent = "請填寫所有必填欄位！";
+                return;
+            }
 
             // 收集所有驗證錯誤
             const errors = [];
