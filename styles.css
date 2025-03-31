@@ -14,6 +14,7 @@ body {
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
 }
 
+/* 表單欄位樣式 */
 .input-group {
     margin-bottom: 15px;
 }
@@ -21,15 +22,28 @@ body {
 .input-group label {
     display: block;
     margin-bottom: 5px;
+    font-size: 14px;
+    color: #333;
 }
 
-.input-group input {
+.input-group input,
+.input-group select {
     width: 100%;
     padding: 8px;
     border: 1px solid #ccc;
     border-radius: 3px;
+    box-sizing: border-box; /* 確保 padding 不影響寬度 */
+    font-size: 14px;
 }
 
+.input-group select {
+    appearance: none; /* 移除瀏覽器預設的下拉箭頭 */
+    background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="10" height="5" viewBox="0 0 10 5"><path fill="%23333" d="M0 0h10L5 5z"/></svg>') no-repeat right 10px center;
+    background-size: 10px;
+    padding-right: 30px; /* 為下拉箭頭留出空間 */
+}
+
+/* 按鈕樣式 */
 button {
     width: 100%;
     padding: 10px;
@@ -38,15 +52,20 @@ button {
     border: none;
     border-radius: 3px;
     cursor: pointer;
+    font-size: 16px;
+    transition: background 0.3s ease; /* 添加過渡效果 */
 }
 
 button:hover {
     background: #218838;
 }
 
-.error-message {
+/* 錯誤訊息樣式 */
+#errorMessage {
     color: red;
     margin-top: 10px;
+    font-size: 14px;
+    min-height: 20px; /* 確保錯誤訊息區域有固定高度，避免跳動 */
 }
 
 /* 停車管理系統佈局 */
@@ -80,6 +99,7 @@ button:hover {
     text-decoration: none;
     color: #007bff;
     cursor: pointer;
+    font-size: 16px;
 }
 
 .function-list ul li a:hover {
@@ -115,16 +135,16 @@ button:hover {
     border-radius: 5px;
     font-weight: bold;
     cursor: pointer;
-    transition: transform 0.2s, opacity 0.2s; /* 加入點擊動畫效果 */
+    transition: transform 0.2s, opacity 0.2s;
 }
 
 .parking-space:hover {
-    transform: scale(1.05); /* 滑鼠懸停時稍微放大 */
-    opacity: 0.9; /* 略微降低透明度 */
+    transform: scale(1.05);
+    opacity: 0.9;
 }
 
 .parking-space:active {
-    transform: scale(0.95); /* 點擊時縮小 */
+    transform: scale(0.95);
 }
 
 .available {
@@ -142,12 +162,15 @@ button:hover {
     color: white;
 }
 
+/* 登出按鈕 */
 #logoutButton {
     margin: 20px auto;
     display: block;
     width: 200px;
+    transition: background 0.3s ease;
 }
 
+/* 歷史紀錄 */
 #historyList {
     list-style: none;
     padding: 0;
@@ -156,6 +179,7 @@ button:hover {
 #historyList li {
     padding: 5px 0;
     border-bottom: 1px solid #eee;
+    font-size: 14px;
 }
 
 /* 地圖和搜尋樣式 */
@@ -170,19 +194,21 @@ button:hover {
     margin-top: 10px;
     display: flex;
     align-items: center;
-    flex-wrap: wrap; /* 允許元素換行，避免過長時溢出 */
-    gap: 10px; /* 新增間距，確保元素之間有適當距離 */
+    flex-wrap: wrap;
+    gap: 10px;
 }
 
 .search-container label {
     margin-right: 10px;
+    font-size: 14px;
 }
 
 .search-container select {
     padding: 5px;
     border: 1px solid #ccc;
     border-radius: 3px;
-    margin-right: 10px; /* 調整間距為更緊湊的 10px */
+    margin-right: 10px;
+    font-size: 14px;
 }
 
 .search-container input {
@@ -190,14 +216,16 @@ button:hover {
     border: 1px solid #ccc;
     border-radius: 3px;
     width: 200px;
+    font-size: 14px;
 }
 
 .search-container button {
     width: auto;
-    padding: 5px 10px; /* 調整為更適合的按鈕大小 */
+    padding: 5px 10px;
     background: #007bff;
     margin-left: 10px;
     font-size: 14px;
+    transition: background 0.3s ease;
 }
 
 .search-container button:hover {
@@ -206,8 +234,17 @@ button:hover {
 
 /* 信用卡輸入框樣式 */
 #cardNumberContainer {
-    display: none; /* 預設隱藏信用卡輸入框 */
+    display: none;
     margin-top: 15px;
+    transition: opacity 0.3s ease, max-height 0.3s ease; /* 添加顯示/隱藏動畫 */
+    opacity: 0;
+    max-height: 0;
+    overflow: hidden;
+}
+
+#cardNumberContainer[style*="display: block"] {
+    opacity: 1;
+    max-height: 100px; /* 根據實際高度調整 */
 }
 
 #cardNumberContainer input {
@@ -215,4 +252,40 @@ button:hover {
     padding: 8px;
     border: 1px solid #ccc;
     border-radius: 3px;
+    font-size: 14px;
+}
+
+/* 響應式設計 */
+@media (max-width: 768px) {
+    .system-container {
+        flex-direction: column;
+        width: 90%;
+    }
+
+    .function-list,
+    .content-container {
+        width: 100%;
+    }
+
+    .search-container {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .search-container select,
+    .search-container input {
+        width: 100%;
+        margin-right: 0;
+        margin-bottom: 10px;
+    }
+
+    .search-container button {
+        width: 100%;
+        margin-left: 0;
+    }
+
+    .container {
+        width: 90%;
+        margin: 50px auto;
+    }
 }
