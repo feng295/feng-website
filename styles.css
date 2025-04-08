@@ -16,7 +16,7 @@ form, input {
     width: 100%;
     max-width: 400px;
     margin: 100px auto;
-    padding: 15px; /* 調整為 15px，確保左右間距對稱且不過大 */
+    padding: 15px; /* 上下左右間距為 15px */
     background: white;
     border-radius: 5px;
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
@@ -29,7 +29,7 @@ form, input {
 
 .input-group {
     margin-bottom: 15px;
-    padding: 0; /* 移除左右 padding，讓間距由 .container 控制 */
+    padding: 0 10px; /* 增加左右 10px 的 padding，使總間距為 25px */
 }
 
 .input-group label {
@@ -69,7 +69,7 @@ button:hover {
 }
 
 #toggleMessage {
-    margin: 10px 0 0 0;
+    margin: 10px 10px 0; /* 與 .input-group 的 padding 一致 */
     text-align: center;
 }
 
