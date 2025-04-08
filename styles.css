@@ -14,7 +14,7 @@ form, input {
 
 .container {
     width: 100%;
-    max-width: 400px;
+    max-width: 300px;
     margin: 100px auto;
     padding: 15px 15px; /* 調整左右間距為 20px，與圖片更接近 */
     background: white;
@@ -41,13 +41,14 @@ form, input {
 
 .input-group input,
 .input-group select {
-    width: 100%;
+    width: 250px;
     padding: 8px 12px;
     border: 1px solid #ccc;
     border-radius: 3px;
     box-sizing: border-box;
     font-size: 14px;
     margin: 0;
+    display: block;
 }
 
 .input-group select {
