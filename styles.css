@@ -16,7 +16,7 @@ form, input {
     width: 100%;
     max-width: 400px;
     margin: 100px auto;
-    padding: 15px 20px; /* 調整左右間距為 20px，與圖片更接近 */
+    padding: 15px 15px; /* 調整左右間距為 20px，與圖片更接近 */
     background: white;
     border-radius: 5px;
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
@@ -42,7 +42,7 @@ form, input {
 .input-group input,
 .input-group select {
     width: 100%;
-    padding: 8px;
+    padding: 8px 12px;
     border: 1px solid #ccc;
     border-radius: 3px;
     box-sizing: border-box;
