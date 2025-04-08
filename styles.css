@@ -5,8 +5,15 @@ body {
     background-color: #f4f4f4;
 }
 
+/* 重置瀏覽器預設樣式 */
+form, input {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
 .container {
-    width: 90px;
+    width: 100%;
     max-width: 400px;
     margin: 100px auto;
     padding: 20px;
@@ -15,8 +22,14 @@ body {
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
 }
 
+#authForm {
+    margin: 0;
+    padding: 0;
+}
+
 .input-group {
     margin-bottom: 15px;
+    padding: 0 10px; /* 確保左右間距對稱 */
 }
 
 .input-group label {
@@ -24,37 +37,16 @@ body {
     margin-bottom: 5px;
 }
 
-.input-group input,
-.input-group select {
-    width: 100%; /* 確保寬度一致 */
-    height: 36px; /* 明確指定高度 */
-    padding: 8px; /* 統一內邊距 */
-    border: 1px solid #ccc; /* 統一邊框 */
-    border-radius: 3px; /* 統一圓角 */
-    box-sizing: border-box; /* 確保padding不影響寬度 */
-    font-size: 14px; /* 統一字體大小 */
-    line-height: 1.5; /* 統一行高 */
-    background-color: white; /* 確保背景一致 */
-    color: #333; /* 統一文字顏色 */
+.input-group input {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 3px;
+    box-sizing: border-box;
+    font-size: 14px;
+    margin: 0;
 }
 
-/* 針對 <select> 移除預設樣式並自訂 */
-.input-group select {
-    appearance: none; /* 移除瀏覽器預設樣式 */
-    -webkit-appearance: none; /* 針對 Safari */
-    -moz-appearance: none; /* 針對 Firefox */
-    background-image: url('data:image/svg+xml;utf8,<svg fill="black" height="24" viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg"><path d="M7 10l5 5 5-5z"/></svg>'); /* 自訂下拉箭頭 */
-    background-repeat: no-repeat;
-    background-position: right 8px center; /* 箭頭位置 */
-    background-size: 16px; /* 箭頭大小 */
-    cursor: pointer; /* 滑鼠懸停時顯示指針 */
-}
-
-/* 確保父容器寬度一致 */
-.input-group {
-    margin-bottom: 15px;
-    width: 100%; /* 確保父容器寬度一致 */
-}
 button {
     width: 100%;
     padding: 10px;
@@ -69,9 +61,14 @@ button:hover {
     background: #218838;
 }
 
-.error-message {
-    color: red;
-    margin-top: 10px;
+#formTitle {
+    margin: 0 0 20px 0;
+    text-align: center;
+}
+
+#toggleMessage {
+    margin: 10px 0 0 0;
+    text-align: center;
 }
 
 a {
@@ -82,7 +79,6 @@ a {
 a:hover {
     text-decoration: underline;
 }
-
 /* 停車管理系統佈局 */
 .system-container {
     display: flex;
