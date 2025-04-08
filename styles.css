@@ -16,7 +16,7 @@ form, input {
     width: 100%;
     max-width: 400px;
     margin: 100px auto;
-    padding: 20px;
+    padding: 15px; /* 調整為 15px，確保左右間距對稱且不過大 */
     background: white;
     border-radius: 5px;
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
@@ -29,12 +29,14 @@ form, input {
 
 .input-group {
     margin-bottom: 15px;
-    padding: 0 10px; /* 確保左右間距對稱 */
+    padding: 0; /* 移除左右 padding，讓間距由 .container 控制 */
 }
 
 .input-group label {
     display: block;
     margin-bottom: 5px;
+    margin-left: 0;
+    margin-right: 0;
 }
 
 .input-group input {
@@ -79,7 +81,8 @@ a {
 a:hover {
     text-decoration: underline;
 }
-/* 停車管理系統佈局 */
+
+/* 以下是其他部分的 CSS，保持不變 */
 .system-container {
     display: flex;
     width: 80%;
@@ -88,7 +91,6 @@ a:hover {
     gap: 20px;
 }
 
-/* 功能清單 */
 .function-list {
     width: 25%;
     background: white;
@@ -116,7 +118,6 @@ a:hover {
     color: #0056b3;
 }
 
-/* 右側內容區塊 */
 .content-container {
     width: 75%;
     background: white;
@@ -125,7 +126,6 @@ a:hover {
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
 }
 
-/* 車位狀態 */
 .parking-status {
     margin-top: 20px;
 }
@@ -145,16 +145,16 @@ a:hover {
     border-radius: 5px;
     font-weight: bold;
     cursor: pointer;
-    transition: transform 0.2s, opacity 0.2s; /* 加入點擊動畫效果 */
+    transition: transform 0.2s, opacity 0.2s;
 }
 
 .parking-space:hover {
-    transform: scale(1.05); /* 滑鼠懸停時稍微放大 */
-    opacity: 0.9; /* 略微降低透明度 */
+    transform: scale(1.05);
+    opacity: 0.9;
 }
 
 .parking-space:active {
-    transform: scale(0.95); /* 點擊時縮小 */
+    transform: scale(0.95);
 }
 
 .available {
@@ -188,7 +188,6 @@ a:hover {
     border-bottom: 1px solid #eee;
 }
 
-/* 地圖和搜尋樣式 */
 .map-container {
     height: 400px;
     width: 100%;
@@ -200,8 +199,8 @@ a:hover {
     margin-top: 10px;
     display: flex;
     align-items: center;
-    flex-wrap: wrap; /* 允許元素換行，避免過長時溢出 */
-    gap: 10px; /* 新增間距，確保元素之間有適當距離 */
+    flex-wrap: wrap;
+    gap: 10px;
 }
 
 .search-container label {
@@ -212,7 +211,7 @@ a:hover {
     padding: 5px;
     border: 1px solid #ccc;
     border-radius: 3px;
-    margin-right: 10px; /* 調整間距為更緊湊的 10px */
+    margin-right: 10px;
 }
 
 .search-container input {
@@ -224,7 +223,7 @@ a:hover {
 
 .search-container button {
     width: auto;
-    padding: 5px 10px; /* 調整為更適合的按鈕大小 */
+    padding: 5px 10px;
     background: #007bff;
     margin-left: 10px;
     font-size: 14px;
@@ -234,9 +233,8 @@ a:hover {
     background: #0056b3;
 }
 
-/* 信用卡輸入框樣式 */
 #cardNumberContainer {
-    display: none; /* 預設隱藏信用卡輸入框 */
+    display: none;
     margin-top: 15px;
 }
 
