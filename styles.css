@@ -23,11 +23,13 @@ body {
     margin-bottom: 5px;
 }
 
-.input-group input {
-    width: 100%;
+.input-group input,
+.input-group select {
+    width: 100%; /* 確保所有輸入框和下拉選單寬度一致 */
     padding: 8px;
     border: 1px solid #ccc;
     border-radius: 3px;
+    box-sizing: border-box; /* 確保padding不影響寬度 */
 }
 
 button {
