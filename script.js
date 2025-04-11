@@ -551,15 +551,23 @@ document.addEventListener("DOMContentLoaded", async function () {
 
         if (space.classList.contains("available")) {
             try {
+                // 將 spotId 轉換為整數（移除前綴 'r' 並轉為數字）
+                const numericSpotId = parseInt(spotId.replace("r", ""), 10);
+                if (isNaN(numericSpotId)) {
+                    alert("無效的車位 ID！");
+                    return;
+                }
+
                 const response = await fetch(`${API_URL}/rent`, {
                     method: "POST",
                     headers: {
                         "Authorization": `Bearer ${token}`,
                         "Content-Type": "application/json",
                     },
-                    body: JSON.stringify({ parking_spot_id: spotId }),
+                    body: JSON.stringify({ parking_spot_id: numericSpotId }),
                 });
                 const result = await response.json();
+                console.log("Reserve response:", response.status, result);
                 if (response.ok) {
                     space.classList.remove("available");
                     space.classList.add("reserved");
@@ -573,7 +581,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                         authContainer.style.display = "block";
                         parkingContainer.style.display = "none";
                     } else {
-                        alert(result.message || "預約失敗！");
+                        alert(result.message || `預約失敗！（錯誤碼：${response.status}）`);
                     }
                 }
             } catch (error) {
