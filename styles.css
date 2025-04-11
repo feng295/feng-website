@@ -16,7 +16,7 @@ form, input {
     width: 100%;
     max-width: 400px;
     margin: 100px auto;
-    padding: 15px 5px; /* 左右間距減少到 5px，上下保持 15px */
+    padding: 15px 10px; /* 增加左右 padding 至 10px，與 toggleMessage 一致 */
     background: white;
     border-radius: 5px;
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
@@ -45,7 +45,7 @@ form, input {
     padding: 8px;
     border: 1px solid #ccc;
     border-radius: 3px;
-    box-sizing: border-box;
+    box-sizing: border-box;/* 已設置，確保一致 */
     font-size: 14px;
     margin: 0;
 }
@@ -63,13 +63,15 @@ form, input {
 
 button {
     width: 100%;
+    max-width: 100%; /* 防止超出 */
     padding: 10px;
     background: #28a745;
     color: white;
     border: none;
     border-radius: 3px;
     cursor: pointer;
-    margin: 0 10px;
+    box-sizing: border-box; /* 確保 box-sizing 生效 */
+    margin: 0; /* 移除左右 margin，確保按鈕不超出外框 */
 }
 
 button:hover {
@@ -93,6 +95,21 @@ a {
 
 a:hover {
     text-decoration: underline;
+}
+
+#errorMessage {
+    margin: 10px 0 0 0;
+    text-align: center;
+    font-size: 14px;
+    color: red;
+    padding: 5px;
+    border-radius: 3px;
+}
+
+#errorMessage.success {
+    color: green;
+    background: rgba(40, 167, 69, 0.1); /* 淺綠色背景 */
+    border: 1px solid #28a745;
 }
 
 /* 以下是其他部分的 CSS，保持不變 */
@@ -205,6 +222,7 @@ a:hover {
     width: 100%;
     margin-top: 20px;
     border: 1px solid #ccc;
+    min-height: 400px; /* 確保初始高度 */
 }
 
 .search-container {
@@ -255,4 +273,11 @@ a:hover {
     padding: 8px;
     border: 1px solid #ccc;
     border-radius: 3px;
+}
+
+.loading {
+    text-align: center;
+    padding: 20px;
+    color: #666;
+    font-size: 16px;
 }

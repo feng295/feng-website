@@ -48,9 +48,9 @@
                 <label for="card_number">信用卡號</label>
                 <input type="text" id="card_number" name="card_number" placeholder="請輸入信用卡號">
             </div>
+            <p id="errorMessage"></p>
             <button type="submit" id="submitButton">登入</button>
             <p id="toggleMessage">還沒有帳號？<a href="#" id="toggleLink">註冊</a></p>
-            <p id="errorMessage"></p>
         </form>
     </div>
 
@@ -102,7 +102,9 @@
                         <input type="text" id="sharedSearchInput" placeholder="輸入地點或編號">
                         <button id="sharedSearchButton" style="margin-left: 10px;">查詢</button>
                     </div>
-                    <div id="sharedMap" class="map-container"></div>
+                    <div id="sharedMap" class="map-container">
+                        <div class="loading" style="display: none;">載入中...</div>
+                    </div>
                 </div>
                 <div id="rentParking" class="content-section" style="display: none;">
                     <h2>租用車位</h2>
@@ -139,7 +141,9 @@
                         <input type="text" id="rentSearchInput" placeholder="輸入地點或編號">
                         <button id="rentSearchButton" style="margin-left: 10px;">查詢</button>
                     </div>
-                    <div id="rentMap" class="map-container"></div>
+                    <div id="rentMap" class="map-container">
+                        <div class="loading" style="display: none;">載入中...</div>
+                    </div>
                 </div>
                 <div id="viewParking" class="content-section" style="display: none;">
                     <h2>查看車位</h2>
@@ -147,12 +151,12 @@
                     <div class="parking-status">
                         <h2>車位狀態</h2>
                         <div class="parking-spaces">
-                            <div class="parking-space available" data-id="v1"><span>可用</span></div>
-                            <div class="parking-space occupied" data-id="v2"><span>已佔用</span></div>
-                            <div class="parking-space reserved" data-id="v3"><span>預約</span></div>
-                            <div class="parking-space available" data-id="v4"><span>可用</span></div>
-                            <div class="parking-space occupied" data-id="v5"><span>已佔用</span></div>
-                            <div class="parking-space reserved" data-id="v6"><span>預約</span></div>
+                            <div class="parking-space available" data-space-id="v1" aria-label="車位 v1，狀態：可用"></div>
+                            <div class="parking-space occupied" data-space-id="v2" aria-label="車位 v2，狀態：已佔用"></div>
+                            <div class="parking-space reserved" data-space-id="v3" aria-label="車位 v3，狀態：預約"></div>
+                            <div class="parking-space available" data-space-id="v4" aria-label="車位 v4，狀態：可用"></div>
+                            <div class="parking-space occupied" data-space-id="v5" aria-label="車位 v5，狀態：已佔用"></div>
+                            <div class="parking-space reserved" data-space-id="v6" aria-label="車位 v6，狀態：預約"></div>
                         </div>
                     </div>
                 </div>
@@ -162,18 +166,19 @@
                     <div class="parking-status">
                         <h2>車位狀態</h2>
                         <div class="parking-spaces">
-                            <div class="parking-space available" data-space-id="r1"><span>可用</span></div>
-                            <div class="parking-space occupied" data-space-id="r2"><span>已佔用</span></div>
-                            <div class="parking-space reserved" data-space-id="r3"><span>預約</span></div>
-                            <div class="parking-space available" data-space-id="r4"><span>可用</span></div>
-                            <div class="parking-space occupied" data-space-id="r5"><span>已佔用</span></div>
-                            <div class="parking-space reserved" data-space-id="r6"><span>預約</span></div>
+                            <div class="parking-space available" data-space-id="r1" aria-label="車位 r1，狀態：可用"></div>
+                            <div class="parking-space occupied" data-space-id="r2" aria-label="車位 r2，狀態：已佔用"></div>
+                            <div class="parking-space reserved" data-space-id="r3" aria-label="車位 r3，狀態：預約"></div>
+                            <div class="parking-space available" data-space-id="r4" aria-label="車位 r4，狀態：可用"></div>
+                            <div class="parking-space occupied" data-space-id="r5" aria-label="車位 r5，狀態：已佔用"></div>
+                            <div class="parking-space reserved" data-space-id="r6" aria-label="車位 r6，狀態：預約"></div>
                         </div>
                     </div>
                 </div>
                 <div id="history" class="content-section" style="display: none;">
                     <h2>歷史紀錄</h2>
                     <p>在這裡你可以查看停車歷史紀錄。</p>
+                    <div class="loading" style="display: none;">載入中...</div>
                     <ul id="historyList"></ul>
                 </div>
             </div>
