@@ -199,6 +199,16 @@ a:hover {
     color: white;
 }
 
+.parking-space.loading {
+    background-color: #ccc;
+    color: white;
+}
+
+.parking-space.unavailable {
+    background-color: #666;
+    color: white;
+}
+
 #logoutButton {
     margin: 20px auto;
     display: block;

@@ -576,83 +576,103 @@ document.addEventListener("DOMContentLoaded", async function () {
         }
     }
 
-// 設置預約停車
-async function setupReserveParking() {
+    // 設置預約停車
+    async function setupReserveParking() {
     setTimeout(async () => {
         const parkingSpaces = document.querySelectorAll("#reserveParking .parking-space");
         if (parkingSpaces.length === 0) console.warn("No parking spaces found in #reserveParking");
 
-        // 從後端獲取車位狀態
-        try {
-            const token = localStorage.getItem("token");
-            const response = await fetch(`${API_URL}/parking/available`, {
-                headers: {
-                    "Authorization": `Bearer ${token}`,
-                    "Content-Type": "application/json",
-                },
-            });
-            if (!response.ok) {
-                if (response.status === 401) {
-                    alert("登入憑證已過期，請重新登入！");
-                    localStorage.removeItem("token");
-                    authContainer.style.display = "block";
-                    parkingContainer.style.display = "none";
+        // 顯示載入中狀態
+        parkingSpaces.forEach(space => {
+            space.classList.remove("available", "occupied", "reserved");
+            space.classList.add("loading");
+            space.querySelector("span").textContent = "載入中...";
+            space.setAttribute("aria-label", `車位 ${space.getAttribute("data-id")}，狀態：載入中`);
+        });
+
+        // 嘗試從後端獲取車位狀態，最多重試 3 次
+        let retries = 3;
+        let spots = null;
+        while (retries > 0) {
+            try {
+                const token = localStorage.getItem("token");
+                const response = await fetch(`${API_URL}/parking/available`, {
+                    headers: {
+                        "Authorization": `Bearer ${token}`,
+                        "Content-Type": "application/json",
+                    },
+                });
+                if (!response.ok) {
+                    if (response.status === 401) {
+                        alert("登入憑證已過期，請重新登入！");
+                        localStorage.removeItem("token");
+                        authContainer.style.display = "block";
+                        parkingContainer.style.display = "none";
+                        return;
+                    }
+                    throw new Error(`HTTP error! Status: ${response.status}`);
+                }
+                spots = await response.json();
+                console.log("Available spots for reserve:", spots);
+                break; // 成功獲取資料，跳出重試迴圈
+            } catch (error) {
+                console.error(`Failed to fetch available spots (attempt ${4 - retries}/3):`, error);
+                retries--;
+                if (retries === 0) {
+                    // 重試失敗，顯示錯誤訊息
+                    alert(`無法載入車位狀態，請檢查後端服務 (錯誤: ${error.message})`);
+                    parkingSpaces.forEach(space => {
+                        space.classList.remove("available", "occupied", "reserved", "loading");
+                        space.classList.add("unavailable");
+                        space.querySelector("span").textContent = "服務不可用";
+                        space.setAttribute("aria-label", `車位 ${space.getAttribute("data-id")}，狀態：服務不可用`);
+                    });
                     return;
                 }
-                throw new Error(`HTTP error! Status: ${response.status}`);
+                // 等待 1 秒後重試
+                await new Promise(resolve => setTimeout(resolve, 1000));
             }
-            const spots = await response.json();
-            console.log("Available spots for reserve:", spots);
+        }
 
-            // 更新前端車位狀態
-            parkingSpaces.forEach(space => {
-                const spotId = space.getAttribute("data-id");
-                const numericSpotId = parseInt(spotId.replace("v", ""), 10);
-                const spot = spots.find(s => s.id === numericSpotId);
+        // 更新前端車位狀態
+        parkingSpaces.forEach(space => {
+            const spotId = space.getAttribute("data-id");
+            const numericSpotId = parseInt(spotId.replace("v", ""), 10);
+            const spot = spots.find(s => s.id === numericSpotId);
 
-                // 先移除所有狀態類別
-                space.classList.remove("available", "occupied", "reserved");
+            // 先移除所有狀態類別
+            space.classList.remove("available", "occupied", "reserved", "loading", "unavailable");
 
-                if (spot) {
-                    // 根據後端返回的狀態更新類別
-                    if (spot.status === "可用") {
-                        space.classList.add("available");
-                        space.querySelector("span").textContent = "可用";
-                    } else if (spot.status === "已佔用") {
-                        space.classList.add("occupied");
-                        space.querySelector("span").textContent = "已佔用";
-                    } else if (spot.status === "預約") {
-                        space.classList.add("reserved");
-                        space.querySelector("span").textContent = "預約";
-                    } else {
-                        // 如果後端返回未知狀態，設為已佔用
-                        space.classList.add("occupied");
-                        space.querySelector("span").textContent = "已佔用";
-                    }
-                    space.setAttribute("aria-label", `車位 ${spotId}，狀態：${spot.status}`);
-                } else {
-                    // 如果後端沒有該車位資料，設為不可用
+            if (spot) {
+                // 根據後端返回的狀態更新類別
+                if (spot.status === "可用") {
+                    space.classList.add("available");
+                    space.querySelector("span").textContent = "可用";
+                } else if (spot.status === "已佔用") {
                     space.classList.add("occupied");
                     space.querySelector("span").textContent = "已佔用";
-                    space.setAttribute("aria-label", `車位 ${spotId}，狀態：不可用`);
+                } else if (spot.status === "預約") {
+                    space.classList.add("reserved");
+                    space.querySelector("span").textContent = "預約";
+                } else {
+                    // 如果後端返回未知狀態，設為已佔用
+                    space.classList.add("occupied");
+                    space.querySelector("span").textContent = "已佔用";
                 }
-            });
-
-            // 重新綁定點擊事件
-            parkingSpaces.forEach(space => {
-                space.removeEventListener("click", handleReserveParkingClick);
-                space.addEventListener("click", handleReserveParkingClick);
-            });
-        } catch (error) {
-            console.error("Failed to fetch available spots for reserve:", error);
-            alert("無法載入車位狀態，請檢查後端服務");
-            // 如果無法載入，設為不可用
-            parkingSpaces.forEach(space => {
-                space.classList.remove("available", "occupied", "reserved");
+                space.setAttribute("aria-label", `車位 ${spotId}，狀態：${spot.status}`);
+            } else {
+                // 如果後端沒有該車位資料，設為不可用
                 space.classList.add("occupied");
                 space.querySelector("span").textContent = "已佔用";
-            });
-        }
+                space.setAttribute("aria-label", `車位 ${spotId}，狀態：不可用`);
+            }
+        });
+
+        // 重新綁定點擊事件
+        parkingSpaces.forEach(space => {
+            space.removeEventListener("click", handleReserveParkingClick);
+            space.addEventListener("click", handleReserveParkingClick);
+        });
     }, 100);
 }
 
