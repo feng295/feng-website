@@ -527,14 +527,52 @@ document.addEventListener("DOMContentLoaded", async function () {
     }
 
     // 設置預約停車
-    function setupReserveParking() {
-        setTimeout(() => {
+    async function setupReserveParking() {
+        setTimeout(async () => {
             const parkingSpaces = document.querySelectorAll("#reserveParking .parking-space");
             if (parkingSpaces.length === 0) console.warn("No parking spaces found in #reserveParking");
-            parkingSpaces.forEach(space => {
-                space.removeEventListener("click", handleReserveParkingClick);
-                space.addEventListener("click", handleReserveParkingClick);
-            });
+
+            // 從後端獲取車位狀態
+            try {
+                const token = localStorage.getItem("token");
+                const response = await fetch(`${API_URL}/parking/available`, {
+                    headers: {
+                        "Authorization": `Bearer ${token}`,
+                        "Content-Type": "application/json",
+                    },
+                });
+                if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
+                const spots = await response.json();
+                console.log("Available spots:", spots);
+
+                // 更新前端車位狀態
+                parkingSpaces.forEach(space => {
+                    const spotId = space.getAttribute("data-space-id");
+                    const numericSpotId = parseInt(spotId.replace("r", ""), 10);
+                    const spot = spots.find(s => s.id === numericSpotId);
+
+                    if (spot) {
+                        space.classList.remove("available", "occupied", "reserved");
+                        if (spot.status === "可用") {
+                            space.classList.add("available");
+                        } else if (spot.status === "已佔用") {
+                            space.classList.add("occupied");
+                        } else if (spot.status === "預約") {
+                            space.classList.add("reserved");
+                        }
+                        space.setAttribute("aria-label", `車位 ${spotId}，狀態：${spot.status}`);
+                    }
+                });
+
+                // 重新綁定點擊事件
+                parkingSpaces.forEach(space => {
+                    space.removeEventListener("click", handleReserveParkingClick);
+                    space.addEventListener("click", handleReserveParkingClick);
+                });
+            } catch (error) {
+                console.error("Failed to fetch available spots:", error);
+                alert("無法載入車位狀態，請檢查後端服務");
+            }
         }, 100);
     }
 
@@ -551,8 +589,8 @@ document.addEventListener("DOMContentLoaded", async function () {
 
         if (space.classList.contains("available")) {
             try {
-                // 將 spotId 轉換為整數（移除前綴 'r' 並轉為數字）
                 const numericSpotId = parseInt(spotId.replace("r", ""), 10);
+                console.log("numericSpotId:", numericSpotId);
                 if (isNaN(numericSpotId)) {
                     alert("無效的車位 ID！");
                     return;
@@ -581,7 +619,8 @@ document.addEventListener("DOMContentLoaded", async function () {
                         authContainer.style.display = "block";
                         parkingContainer.style.display = "none";
                     } else {
-                        alert(result.message || `預約失敗！（錯誤碼：${response.status}）`);
+                        const errorMessage = result.message || result.error || `預約失敗！（錯誤碼：${response.status}）`;
+                        alert(errorMessage);
                     }
                 }
             } catch (error) {
