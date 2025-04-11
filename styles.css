@@ -108,8 +108,6 @@ a:hover {
 
 #errorMessage.success {
     color: green;
-    background: rgba(40, 167, 69, 0.1); /* 淺綠色背景 */
-    border: 1px solid #28a745;
 }
 
 /* 以下是其他部分的 CSS，保持不變 */
