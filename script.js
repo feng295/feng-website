@@ -43,6 +43,12 @@ document.addEventListener("DOMContentLoaded", async function () {
         const token = localStorage.getItem("token");
         let isTokenValid = false;
 
+        // 顯示載入中提示
+        const loadingOverlay = document.createElement("div");
+        loadingOverlay.className = "loading-overlay";
+        loadingOverlay.innerHTML = "<div class='spinner'>載入中...</div>";
+        document.body.appendChild(loadingOverlay);
+
         if (token) {
             try {
                 const response = await fetch(`${API_URL}/members/validate-token`, {
@@ -74,6 +80,8 @@ document.addEventListener("DOMContentLoaded", async function () {
                 section.style.display = "none";
             });
         }
+        // 移除載入中提示
+        document.body.removeChild(loadingOverlay);
         return isTokenValid;
     }
 
@@ -733,20 +741,36 @@ document.addEventListener("DOMContentLoaded", async function () {
     // 載入歷史紀錄
     async function loadHistory() {
         const token = localStorage.getItem("token");
-        if (!token || !(await checkAuth())) {
-            alert("請先登入！");
+        if (!token) {
+            const shouldLogin = confirm("您尚未登入或登入已過期，請重新登入！");
+            if (shouldLogin) {
+                localStorage.removeItem("token");
+                await checkAuth();
+            }
             return;
         }
-
+    
+        // 顯示載入中提示
+        if (historyList) {
+            historyList.innerHTML = "<li>載入中...</li>";
+        }
+    
         try {
             const response = await fetch(`${API_URL}/rent`, {
                 headers: { "Authorization": `Bearer ${token}` },
             });
             if (!response.ok) {
                 if (response.status === 401) {
-                    alert("登入憑證已過期，請重新登入！");
-                    localStorage.removeItem("token");
-                    await checkAuth();
+                    const shouldLogin = confirm("登入憑證已過期，請重新登入！");
+                    if (shouldLogin) {
+                        localStorage.removeItem("token");
+                        await checkAuth();
+                    } else {
+                        // 如果用戶選擇不重新登入，顯示提示並清空歷史紀錄
+                        if (historyList) {
+                            historyList.innerHTML = "<li>請先登入以查看歷史紀錄</li>";
+                        }
+                    }
                     return;
                 }
                 throw new Error(`HTTP error! Status: ${response.status}`);
@@ -754,15 +778,22 @@ document.addEventListener("DOMContentLoaded", async function () {
             const data = await response.json();
             if (historyList) {
                 historyList.innerHTML = "";
-                data.forEach(record => {
-                    const listItem = document.createElement("li");
-                    listItem.textContent = `${record.action} - ${record.timestamp}`;
-                    historyList.appendChild(listItem);
-                });
+                if (data.length === 0) {
+                    historyList.innerHTML = "<li>暫無歷史紀錄</li>";
+                } else {
+                    data.forEach(record => {
+                        const listItem = document.createElement("li");
+                        listItem.textContent = `${record.action} - ${record.timestamp}`;
+                        historyList.appendChild(listItem);
+                    });
+                }
             }
         } catch (error) {
             console.error("Failed to load history:", error);
             alert("無法載入歷史紀錄，請檢查後端服務");
+            if (historyList) {
+                historyList.innerHTML = "<li>無法載入歷史紀錄</li>";
+            }
         }
     }
 
