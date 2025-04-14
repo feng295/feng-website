@@ -38,52 +38,86 @@ document.addEventListener("DOMContentLoaded", async function () {
     let sharedMap, rentMap, sharedMarkers = [], rentMarkers = [];
     const API_URL = "/api/v1"; // 後端 URL
 
-    // 檢查 token 是否有效並控制頁面顯示
-    async function checkAuth() {
-        const token = localStorage.getItem("token");
-        let isTokenValid = false;
+// 檢查 token 是否有效並控制頁面顯示
+async function checkAuth() {
+    const token = localStorage.getItem("token");
+    let isTokenValid = false;
 
-        // 顯示載入中提示
-        const loadingOverlay = document.createElement("div");
-        loadingOverlay.className = "loading-overlay";
-        loadingOverlay.innerHTML = "<div class='spinner'>載入中...</div>";
-        document.body.appendChild(loadingOverlay);
+    // 顯示載入中提示
+    const loadingOverlay = document.createElement("div");
+    loadingOverlay.className = "loading-overlay";
+    loadingOverlay.innerHTML = "<div class='spinner'>載入中...</div>";
+    document.body.appendChild(loadingOverlay);
 
-        if (token) {
-            try {
-                const response = await fetch(`${API_URL}/members/validate-token`, {
-                    headers: {
-                        "Authorization": `Bearer ${token}`,
-                        "Content-Type": "application/json",
-                    },
-                });
-                if (response.ok) {
-                    console.log("User is logged in with valid token:", token);
-                    isTokenValid = true;
-                    authContainer.style.display = "none";
-                    parkingContainer.style.display = "block";
+    if (token) {
+        try {
+            const response = await fetch(`${API_URL}/members/validate-token`, {
+                headers: {
+                    "Authorization": `Bearer ${token}`,
+                    "Content-Type": "application/json",
+                },
+            });
+            if (response.ok) {
+                console.log("User is logged in with valid token:", token);
+                isTokenValid = true;
+                authContainer.style.display = "none";
+                parkingContainer.style.display = "block";
+
+                // 預設顯示「共享車位」區域
+                const defaultSection = document.getElementById("sharedParking");
+                if (defaultSection) {
+                    document.querySelectorAll(".content-section").forEach(section => {
+                        section.style.display = "none";
+                    });
+                    defaultSection.style.display = "block";
+                    console.log("Default section sharedParking displayed");
+
+                    // 初始化共享車位地圖
+                    if (!sharedMap) {
+                        try {
+                            const spots = await fetch(`${API_URL}/parking/shared`, {
+                                headers: { "Authorization": `Bearer ${token}` },
+                            }).then(res => {
+                                if (!res.ok) throw new Error(`Failed to fetch shared spots: ${res.status}`);
+                                return res.json();
+                            });
+                            console.log("Default shared spots fetched:", spots);
+                            sharedMap = initMap("sharedMap", spots, sharedMarkers);
+                            if (sharedMap) {
+                                sharedMap.invalidateSize();
+                                console.log("Default shared map initialized");
+                            }
+                        } catch (error) {
+                            console.error("Failed to initialize default shared map:", error);
+                            alert("無法載入共享車位資料，請檢查後端服務");
+                        }
+                    }
                 } else {
-                    console.log("Token is invalid or expired");
-                    localStorage.removeItem("token");
+                    console.error("Default section sharedParking not found");
                 }
-            } catch (error) {
-                console.error("Token validation failed:", error);
+            } else {
+                console.log("Token is invalid or expired");
                 localStorage.removeItem("token");
             }
+        } catch (error) {
+            console.error("Token validation failed:", error);
+            localStorage.removeItem("token");
         }
-
-        if (!isTokenValid) {
-            console.log("No valid token found, showing login form");
-            authContainer.style.display = "block";
-            parkingContainer.style.display = "none";
-            document.querySelectorAll(".content-section").forEach(section => {
-                section.style.display = "none";
-            });
-        }
-        // 移除載入中提示
-        document.body.removeChild(loadingOverlay);
-        return isTokenValid;
     }
+
+    if (!isTokenValid) {
+        console.log("No valid token found, showing login form");
+        authContainer.style.display = "block";
+        parkingContainer.style.display = "none";
+        document.querySelectorAll(".content-section").forEach(section => {
+            section.style.display = "none";
+        });
+    }
+
+    // 移除載入中提示
+    document.body.removeChild(loadingOverlay);
+    return isTokenValid;
+}
 
     // 監聽 parkingContainer 的顯示狀態，防止未授權修改
     const observer = new MutationObserver(async () => {
@@ -406,63 +440,93 @@ document.addEventListener("DOMContentLoaded", async function () {
         }
     }
 
-    // 導航切換
-    const navLinks = document.querySelectorAll(".nav-link");
-    navLinks.forEach(link => {
-        link.addEventListener("click", async function (event) {
-            event.preventDefault();
-            if (!(await checkAuth())) return; // 確保 token 有效
+   // 導航切換
+const navLinks = document.querySelectorAll(".nav-link");
+navLinks.forEach(link => {
+    link.addEventListener("click", async function (event) {
+        event.preventDefault();
+        if (!(await checkAuth())) return; // 確保 token 有效
 
-            const targetId = this.getAttribute("data-target");
-            document.querySelectorAll(".content-section").forEach(section => {
-                section.style.display = "none";
-            });
-            const targetSection = document.getElementById(targetId);
-            if (!targetSection) {
-                console.error(`Target section "${targetId}" not found`);
-                return;
-            }
-            targetSection.style.display = "block";
+        const targetId = this.getAttribute("data-target");
+        console.log("Navigating to section:", targetId); // 添加日誌
 
-            if (targetId === "sharedParking") {
-                if (!sharedMap) {
-                    try {
-                        const token = localStorage.getItem("token");
-                        const spots = await fetch(`${API_URL}/parking/shared`, {
-                            headers: { "Authorization": `Bearer ${token}` },
-                        }).then(res => res.json());
-                        sharedMap = initMap("sharedMap", spots, sharedMarkers);
-                        if (sharedMap) sharedMap.invalidateSize();
-                    } catch (error) {
-                        console.error("Failed to initialize shared map:", error);
-                    }
-                } else {
-                    sharedMap.invalidateSize();
-                }
-            } else if (targetId === "rentParking") {
-                if (!rentMap) {
-                    try {
-                        const token = localStorage.getItem("token");
-                        const spots = await fetch(`${API_URL}/parking/rent`, {
-                            headers: { "Authorization": `Bearer ${token}` },
-                        }).then(res => res.json());
-                        rentMap = initMap("rentMap", spots, rentMarkers);
-                        if (rentMap) rentMap.invalidateSize();
-                    } catch (error) {
-                        console.error("Failed to initialize rent map:", error);
-                    }
-                } else {
-                    rentMap.invalidateSize();
-                }
-            } else if (targetId === "viewParking") {
-                setupViewParking();
-            } else if (targetId === "reserveParking") {
-                setupReserveParking();
-            } else if (targetId === "history") {
-                loadHistory();
-            }
+        // 隱藏所有內容區域
+        document.querySelectorAll(".content-section").forEach(section => {
+            section.style.display = "none";
         });
+
+        // 顯示目標區域
+        const targetSection = document.getElementById(targetId);
+        if (!targetSection) {
+            console.error(`Target section "${targetId}" not found`);
+            return;
+        }
+        targetSection.style.display = "block";
+        console.log(`Displayed section ${targetId}`); // 確認顯示
+
+        // 處理地圖或其他功能
+        if (targetId === "sharedParking") {
+            if (!sharedMap) {
+                try {
+                    const token = localStorage.getItem("token");
+                    console.log("Fetching shared parking spots...");
+                    const spots = await fetch(`${API_URL}/parking/shared`, {
+                        headers: { "Authorization": `Bearer ${token}` },
+                    }).then(res => {
+                        if (!res.ok) throw new Error(`Failed to fetch shared spots: ${res.status}`);
+                        return res.json();
+                    });
+                    console.log("Shared spots fetched:", spots);
+                    sharedMap = initMap("sharedMap", spots, sharedMarkers);
+                    if (sharedMap) {
+                        sharedMap.invalidateSize();
+                        console.log("Shared map initialized");
+                    }
+                } catch (error) {
+                    console.error("Failed to initialize shared map:", error);
+                    alert("無法載入共享車位資料，請檢查後端服務");
+                }
+            } else {
+                sharedMap.invalidateSize();
+                console.log("Shared map resized");
+            }
+        } else if (targetId === "rentParking") {
+            if (!rentMap) {
+                try {
+                    const token = localStorage.getItem("token");
+                    console.log("Fetching rent parking spots...");
+                    const spots = await fetch(`${API_URL}/parking/rent`, {
+                        headers: { "Authorization": `Bearer ${token}` },
+                    }).then(res => {
+                        if (!res.ok) throw new Error(`Failed to fetch rent spots: ${res.status}`);
+                        return res.json();
+                    });
+                    console.log("Rent spots fetched:", spots);
+                    rentMap = initMap("rentMap", spots, rentMarkers);
+                    if (rentMap) {
+                        rentMap.invalidateSize();
+                        console.log("Rent map initialized");
+                    }
+                } catch (error) {
+                    console.error("Failed to initialize rent map:", error);
+                    alert("無法載入租用車位資料，請檢查後端服務");
+                }
+            } else {
+                rentMap.invalidateSize();
+                console.log("Rent map resized");
+            }
+        } else if (targetId === "viewParking") {
+            setupViewParking();
+            console.log("View parking setup completed");
+        } else if (targetId === "reserveParking") {
+            setupReserveParking();
+            console.log("Reserve parking setup completed");
+        } else if (targetId === "history") {
+            loadHistory();
+            console.log("History loaded");
+        }
     });
+});
 
     // 設置共享停車篩選
     function setupSharedParkingFilters() {
