@@ -69,20 +69,6 @@ document.addEventListener("DOMContentLoaded", async function () {
         document.querySelector(".function-list").style.display = "none";
         document.querySelector(".content-container").style.display = "none";
         document.getElementById("logoutButton").style.display = "none";
-
-        const existingMessage = document.querySelector(".not-logged-in-message");
-        if (existingMessage) existingMessage.remove();
-        const notLoggedInMessage = document.createElement("div");
-        notLoggedInMessage.className = "not-logged-in-message";
-        notLoggedInMessage.innerHTML = `
-            <h2>尚未登入</h2>
-            <p>請登入以繼續使用系統功能。</p>
-            <button id="returnToLoginButton">返回登入</button>
-        `;
-        parkingContainer.appendChild(notLoggedInMessage);
-        document.getElementById("returnToLoginButton").addEventListener("click", () => {
-            showLoginPage();
-        });
     }
 
     // 初始化時顯示登入畫面
