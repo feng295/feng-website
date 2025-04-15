@@ -69,21 +69,33 @@ document.addEventListener("DOMContentLoaded", async function () {
     async function checkAuth() {
         const token = safeGetItem("token");
         let isTokenValid = false;
-
+    
         // 顯示載入中提示
         const loadingOverlay = document.createElement("div");
         loadingOverlay.className = "loading-overlay";
         loadingOverlay.innerHTML = "<div class='spinner'>載入中...</div>";
         document.body.appendChild(loadingOverlay);
-
+    
         if (token) {
             try {
-                // 檢查 token 是否過期（假設 token 是 JWT 格式）
-                const payload = JSON.parse(atob(token.split('.')[1]));
+                // 檢查 token 是否符合 JWT 格式（應有三部分，由點分隔）
+                const tokenParts = token.split('.');
+                if (tokenParts.length !== 3) {
+                    throw new Error("Token format is invalid (not a JWT)");
+                }
+    
+                // 檢查 payload 是否為有效的 Base64 字串並解碼
+                const payloadStr = tokenParts[1];
+                if (!/^[A-Za-z0-9+/=]+$/.test(payloadStr)) {
+                    throw new Error("Token payload is not a valid Base64 string");
+                }
+    
+                const payload = JSON.parse(atob(payloadStr));
                 const exp = payload.exp * 1000; // 轉為毫秒
                 if (Date.now() >= exp) {
                     console.log("Token has expired");
                     safeRemoveItem("token");
+                    showError("登入憑證已過期，請重新登入！");
                 } else {
                     const response = await fetch(`${API_URL}/members/validate-token`, {
                         headers: {
@@ -96,7 +108,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                         isTokenValid = true;
                         authContainer.style.display = "none";
                         parkingContainer.style.display = "block";
-
+    
                         // 確保功能區域可見
                         document.querySelector(".function-list").style.display = "block";
                         document.querySelector(".content-container").style.display = "block";
@@ -104,14 +116,16 @@ document.addEventListener("DOMContentLoaded", async function () {
                     } else {
                         console.log("Token is invalid or expired");
                         safeRemoveItem("token");
+                        showError("登入憑證無效，請重新登入！");
                     }
                 }
             } catch (error) {
-                console.error("Token validation failed:", error);
+                console.error("Token validation failed:", error.message);
                 safeRemoveItem("token");
+                showError("無法驗證登入憑證，請重新登入！錯誤：" + error.message);
             }
         }
-
+    
         if (!isTokenValid) {
             console.log("No valid token found, showing login form");
             authContainer.style.display = "block";
@@ -119,12 +133,12 @@ document.addEventListener("DOMContentLoaded", async function () {
             document.querySelectorAll(".content-section").forEach(section => {
                 section.style.display = "none";
             });
-
+    
             // 隱藏功能區域
             document.querySelector(".function-list").style.display = "none";
             document.querySelector(".content-container").style.display = "none";
             document.getElementById("logoutButton").style.display = "none";
-
+    
             // 顯示未登入提示
             const existingMessage = document.querySelector(".not-logged-in-message");
             if (existingMessage) existingMessage.remove();
@@ -141,7 +155,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                 await checkAuth();
             });
         }
-
+    
         // 移除載入中提示
         document.body.removeChild(loadingOverlay);
         return isTokenValid;
@@ -262,12 +276,15 @@ document.addEventListener("DOMContentLoaded", async function () {
         event.preventDefault();
         const email = emailInput.value.trim();
         const password = passwordInput.value.trim();
-
+    
+        // 清除即時驗證訊息
+        errorMessage.textContent = "";
+    
         if (!password) {
             showError("密碼不能為空！");
             return;
         }
-
+    
         if (isLogin) {
             try {
                 const response = await fetch(`${API_URL}/members/login`, {
@@ -277,15 +294,21 @@ document.addEventListener("DOMContentLoaded", async function () {
                 });
                 const result = await response.json();
                 if (response.ok) {
-                    safeSetItem("token", result.token);
+                    // 檢查返回的 token 是否為有效的 JWT 格式
+                    const token = result.token;
+                    const tokenParts = token.split('.');
+                    if (tokenParts.length !== 3 || !/^[A-Za-z0-9+/=]+$/.test(tokenParts[1])) {
+                        throw new Error("Received token is not a valid JWT");
+                    }
+                    safeSetItem("token", token);
                     alert("登入成功！");
                     await checkAuth(); // 使用 checkAuth 控制頁面顯示
                 } else {
                     showError(result.error || "電子郵件或密碼錯誤！");
                 }
             } catch (error) {
-                console.error("Login failed:", error);
-                showError("無法連接到伺服器，請檢查網路或後端服務");
+                console.error("Login failed:", error.message);
+                showError("無法連接到伺服器或 token 格式錯誤，請檢查後端服務！錯誤：" + error.message);
             }
         } else {
             const name = nameInput.value.trim();
@@ -293,42 +316,42 @@ document.addEventListener("DOMContentLoaded", async function () {
             const role = roleInput.value;
             const payment_method = paymentMethodInput.value;
             let payment_info = cardNumberInput.value.trim();
-
+    
             if (!name || !phone || !role || !payment_method) {
                 showError("請填寫所有必填欄位！");
                 return;
             }
-
+    
             const errors = [];
             if (!name) errors.push("請填寫姓名");
             if (!phone) errors.push("請填寫電話號碼");
             if (!role) errors.push("請選擇身份");
             if (!payment_method) errors.push("請選擇付款方式");
-
+    
             const phoneRegex = /^[0-9]{10}$/;
             if (!phoneRegex.test(phone)) {
                 errors.push("請提供有效的電話號碼（10位數字）");
             }
-
+    
             const cleanedPassword = password.replace(/[^\x20-\x7E]/g, "");
             console.log("Password after cleanup:", cleanedPassword);
-
+    
             const hasLetter = /[a-zA-Z]/.test(cleanedPassword);
             const hasNumber = /[0-9]/.test(cleanedPassword);
             const isLongEnough = cleanedPassword.length >= 8;
             if (!hasLetter || !hasNumber || !isLongEnough) {
                 errors.push("密碼必須至少8個字符，包含字母和數字");
             }
-
+    
             if (payment_method === "credit_card" && !payment_info) {
                 errors.push("請輸入信用卡號");
             }
-
+    
             if (errors.length > 0) {
                 showError(errors.join("；"));
                 return;
             }
-
+    
             try {
                 const response = await fetch(`${API_URL}/members/register`, {
                     method: 'POST',
@@ -337,7 +360,13 @@ document.addEventListener("DOMContentLoaded", async function () {
                 });
                 const result = await response.json();
                 if (response.ok) {
-                    safeSetItem("token", result.token);
+                    // 檢查返回的 token 是否為有效的 JWT 格式
+                    const token = result.token;
+                    const tokenParts = token.split('.');
+                    if (tokenParts.length !== 3 || !/^[A-Za-z0-9+/=]+$/.test(tokenParts[1])) {
+                        throw new Error("Received token is not a valid JWT");
+                    }
+                    safeSetItem("token", token);
                     alert("註冊成功！請使用此帳號登入。");
                     isLogin = true;
                     formTitle.textContent = "登入";
@@ -349,8 +378,8 @@ document.addEventListener("DOMContentLoaded", async function () {
                     showError(result.error || `註冊失敗！（錯誤碼：${response.status}）`);
                 }
             } catch (error) {
-                console.error("Register failed:", error);
-                showError("無法連接到伺服器，請檢查網路或後端服務");
+                console.error("Register failed:", error.message);
+                showError("無法連接到伺服器或 token 格式錯誤，請檢查後端服務！錯誤：" + error.message);
             }
         }
     });
