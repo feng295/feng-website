@@ -294,6 +294,11 @@ document.addEventListener("DOMContentLoaded", async function () {
                 });
                 const result = await response.json();
                 if (response.ok) {
+                    // 檢查 result.token 是否存在
+                    if (!result.token) {
+                        throw new Error("後端未返回 token，請檢查後端服務！");
+                    }
+    
                     // 檢查返回的 token 是否為有效的 JWT 格式
                     const token = result.token;
                     const tokenParts = token.split('.');
@@ -360,6 +365,11 @@ document.addEventListener("DOMContentLoaded", async function () {
                 });
                 const result = await response.json();
                 if (response.ok) {
+                    // 檢查 result.token 是否存在
+                    if (!result.token) {
+                        throw new Error("後端未返回 token，請檢查後端服務！");
+                    }
+    
                     // 檢查返回的 token 是否為有效的 JWT 格式
                     const token = result.token;
                     const tokenParts = token.split('.');
