@@ -38,132 +38,6 @@ document.addEventListener("DOMContentLoaded", async function () {
     let sharedMap, rentMap, sharedMarkers = [], rentMarkers = [];
     const API_URL = '/api/v1'; // 後端 URL
 
-    // 安全的 localStorage 存取
-    function safeGetItem(key) {
-        try {
-            return localStorage.getItem(key);
-        } catch (error) {
-            console.error("Failed to access localStorage.getItem:", error);
-            return null;
-        }
-    }
-
-    function safeSetItem(key, value) {
-        try {
-            localStorage.setItem(key, value);
-        } catch (error) {
-            console.error("Failed to access localStorage.setItem:", error);
-            alert("無法儲存資料，請檢查瀏覽器設置（可能是存儲空間已滿或存儲被禁用）");
-        }
-    }
-
-    function safeRemoveItem(key) {
-        try {
-            localStorage.removeItem(key);
-        } catch (error) {
-            console.error("Failed to access localStorage.removeItem:", error);
-        }
-    }
-
-    // 檢查 token 是否有效並控制頁面顯示
-    async function checkAuth() {
-        const token = safeGetItem("token");
-        let isTokenValid = false;
-    
-        // 顯示載入中提示
-        const loadingOverlay = document.createElement("div");
-        loadingOverlay.className = "loading-overlay";
-        loadingOverlay.innerHTML = "<div class='spinner'>載入中...</div>";
-        document.body.appendChild(loadingOverlay);
-    
-        if (token) {
-            try {
-                // 檢查 token 是否符合 JWT 格式（應有三部分，由點分隔）
-                const tokenParts = token.split('.');
-                if (tokenParts.length !== 3) {
-                    throw new Error("Token format is invalid (not a JWT)");
-                }
-    
-                // 檢查 payload 是否為有效的 Base64 字串並解碼
-                const payloadStr = tokenParts[1];
-                if (!/^[A-Za-z0-9+/=]+$/.test(payloadStr)) {
-                    throw new Error("Token payload is not a valid Base64 string");
-                }
-    
-                const payload = JSON.parse(atob(payloadStr));
-                const exp = payload.exp * 1000; // 轉為毫秒
-                if (Date.now() >= exp) {
-                    console.log("Token has expired");
-                    safeRemoveItem("token");
-                    showError("登入憑證已過期，請重新登入！");
-                } else {
-                    const response = await fetch(`${API_URL}/members/validate-token`, {
-                        headers: {
-                            "Authorization": `Bearer ${token}`,
-                            "Content-Type": "application/json",
-                        },
-                    });
-                    if (response.ok) {
-                        console.log("User is logged in with valid token:", token);
-                        isTokenValid = true;
-                        authContainer.style.display = "none";
-                        parkingContainer.style.display = "block";
-    
-                        // 確保功能區域可見
-                        document.querySelector(".function-list").style.display = "block";
-                        document.querySelector(".content-container").style.display = "block";
-                        document.getElementById("logoutButton").style.display = "block";
-                    } else {
-                        console.log("Token is invalid or expired");
-                        safeRemoveItem("token");
-                        showError("登入憑證無效，請重新登入！");
-                    }
-                }
-            } catch (error) {
-                console.error("Token validation failed:", error.message);
-                safeRemoveItem("token");
-                showError("無法驗證登入憑證，請重新登入！錯誤：" + error.message);
-            }
-        }
-    
-        if (!isTokenValid) {
-            console.log("No valid token found, showing login form");
-            authContainer.style.display = "block";
-            parkingContainer.style.display = "none";
-            document.querySelectorAll(".content-section").forEach(section => {
-                section.style.display = "none";
-            });
-    
-            // 隱藏功能區域
-            document.querySelector(".function-list").style.display = "none";
-            document.querySelector(".content-container").style.display = "none";
-            document.getElementById("logoutButton").style.display = "none";
-    
-            // 顯示未登入提示
-            const existingMessage = document.querySelector(".not-logged-in-message");
-            if (existingMessage) existingMessage.remove();
-            const notLoggedInMessage = document.createElement("div");
-            notLoggedInMessage.className = "not-logged-in-message";
-            notLoggedInMessage.innerHTML = `
-                <h2>尚未登入</h2>
-                <p>請登入以繼續使用系統功能。</p>
-                <button id="returnToLoginButton">返回登入</button>
-            `;
-            parkingContainer.appendChild(notLoggedInMessage);
-            document.getElementById("returnToLoginButton").addEventListener("click", async () => {
-                safeRemoveItem("token");
-                await checkAuth();
-            });
-        }
-    
-        // 移除載入中提示
-        document.body.removeChild(loadingOverlay);
-        return isTokenValid;
-    }
-
-    // 初始化時檢查 token
-    await checkAuth();
-
     // 顯示錯誤訊息
     function showError(message) {
         errorMessage.textContent = message;
@@ -175,6 +49,44 @@ document.addEventListener("DOMContentLoaded", async function () {
         errorMessage.textContent = message;
         errorMessage.classList.add("success");
     }
+
+    // 顯示主畫面
+    function showMainPage() {
+        authContainer.style.display = "none";
+        parkingContainer.style.display = "block";
+        document.querySelector(".function-list").style.display = "block";
+        document.querySelector(".content-container").style.display = "block";
+        document.getElementById("logoutButton").style.display = "block";
+    }
+
+    // 顯示登入畫面
+    function showLoginPage() {
+        authContainer.style.display = "block";
+        parkingContainer.style.display = "none";
+        document.querySelectorAll(".content-section").forEach(section => {
+            section.style.display = "none";
+        });
+        document.querySelector(".function-list").style.display = "none";
+        document.querySelector(".content-container").style.display = "none";
+        document.getElementById("logoutButton").style.display = "none";
+
+        const existingMessage = document.querySelector(".not-logged-in-message");
+        if (existingMessage) existingMessage.remove();
+        const notLoggedInMessage = document.createElement("div");
+        notLoggedInMessage.className = "not-logged-in-message";
+        notLoggedInMessage.innerHTML = `
+            <h2>尚未登入</h2>
+            <p>請登入以繼續使用系統功能。</p>
+            <button id="returnToLoginButton">返回登入</button>
+        `;
+        parkingContainer.appendChild(notLoggedInMessage);
+        document.getElementById("returnToLoginButton").addEventListener("click", () => {
+            showLoginPage();
+        });
+    }
+
+    // 初始化時顯示登入畫面
+    showLoginPage();
 
     // 當付款方式改變時，顯示或隱藏信用卡號輸入框
     paymentMethodInput.addEventListener("change", function () {
@@ -276,15 +188,15 @@ document.addEventListener("DOMContentLoaded", async function () {
         event.preventDefault();
         const email = emailInput.value.trim();
         const password = passwordInput.value.trim();
-    
+
         // 清除即時驗證訊息
         errorMessage.textContent = "";
-    
+
         if (!password) {
             showError("密碼不能為空！");
             return;
         }
-    
+
         if (isLogin) {
             try {
                 const response = await fetch(`${API_URL}/members/login`, {
@@ -294,26 +206,14 @@ document.addEventListener("DOMContentLoaded", async function () {
                 });
                 const result = await response.json();
                 if (response.ok) {
-                    // 檢查 result.token 是否存在
-                    if (!result.token) {
-                        throw new Error("後端未返回 token，請檢查後端服務！");
-                    }
-    
-                    // 檢查返回的 token 是否為有效的 JWT 格式
-                    const token = result.token;
-                    const tokenParts = token.split('.');
-                    if (tokenParts.length !== 3 || !/^[A-Za-z0-9+/=]+$/.test(tokenParts[1])) {
-                        throw new Error("Received token is not a valid JWT");
-                    }
-                    safeSetItem("token", token);
                     alert("登入成功！");
-                    await checkAuth(); // 使用 checkAuth 控制頁面顯示
+                    showMainPage(); // 直接顯示主畫面
                 } else {
                     showError(result.error || "電子郵件或密碼錯誤！");
                 }
             } catch (error) {
                 console.error("Login failed:", error.message);
-                showError("無法連接到伺服器或 token 格式錯誤，請檢查後端服務！錯誤：" + error.message);
+                showError("無法連接到伺服器，請檢查網路或後端服務！");
             }
         } else {
             const name = nameInput.value.trim();
@@ -321,42 +221,42 @@ document.addEventListener("DOMContentLoaded", async function () {
             const role = roleInput.value;
             const payment_method = paymentMethodInput.value;
             let payment_info = cardNumberInput.value.trim();
-    
+
             if (!name || !phone || !role || !payment_method) {
                 showError("請填寫所有必填欄位！");
                 return;
             }
-    
+
             const errors = [];
             if (!name) errors.push("請填寫姓名");
             if (!phone) errors.push("請填寫電話號碼");
             if (!role) errors.push("請選擇身份");
             if (!payment_method) errors.push("請選擇付款方式");
-    
+
             const phoneRegex = /^[0-9]{10}$/;
             if (!phoneRegex.test(phone)) {
                 errors.push("請提供有效的電話號碼（10位數字）");
             }
-    
+
             const cleanedPassword = password.replace(/[^\x20-\x7E]/g, "");
             console.log("Password after cleanup:", cleanedPassword);
-    
+
             const hasLetter = /[a-zA-Z]/.test(cleanedPassword);
             const hasNumber = /[0-9]/.test(cleanedPassword);
             const isLongEnough = cleanedPassword.length >= 8;
             if (!hasLetter || !hasNumber || !isLongEnough) {
                 errors.push("密碼必須至少8個字符，包含字母和數字");
             }
-    
+
             if (payment_method === "credit_card" && !payment_info) {
                 errors.push("請輸入信用卡號");
             }
-    
+
             if (errors.length > 0) {
                 showError(errors.join("；"));
                 return;
             }
-    
+
             try {
                 const response = await fetch(`${API_URL}/members/register`, {
                     method: 'POST',
@@ -365,18 +265,6 @@ document.addEventListener("DOMContentLoaded", async function () {
                 });
                 const result = await response.json();
                 if (response.ok) {
-                    // 檢查 result.token 是否存在
-                    if (!result.token) {
-                        throw new Error("後端未返回 token，請檢查後端服務！");
-                    }
-    
-                    // 檢查返回的 token 是否為有效的 JWT 格式
-                    const token = result.token;
-                    const tokenParts = token.split('.');
-                    if (tokenParts.length !== 3 || !/^[A-Za-z0-9+/=]+$/.test(tokenParts[1])) {
-                        throw new Error("Received token is not a valid JWT");
-                    }
-                    safeSetItem("token", token);
                     alert("註冊成功！請使用此帳號登入。");
                     isLogin = true;
                     formTitle.textContent = "登入";
@@ -389,14 +277,13 @@ document.addEventListener("DOMContentLoaded", async function () {
                 }
             } catch (error) {
                 console.error("Register failed:", error.message);
-                showError("無法連接到伺服器或 token 格式錯誤，請檢查後端服務！錯誤：" + error.message);
+                showError("無法連接到伺服器，請檢查網路或後端服務！");
             }
         }
     });
 
     // 登出功能
-    logoutButton.addEventListener("click", async function () {
-        safeRemoveItem("token");
+    logoutButton.addEventListener("click", function () {
         // 重置地圖
         if (sharedMap) {
             sharedMap.remove();
@@ -408,7 +295,7 @@ document.addEventListener("DOMContentLoaded", async function () {
             rentMap = null;
             rentMarkers = [];
         }
-        await checkAuth(); // 使用 checkAuth 控制頁面顯示並重置狀態
+        showLoginPage(); // 直接顯示登入畫面
     });
 
     // 地圖初始化
@@ -449,16 +336,13 @@ document.addEventListener("DOMContentLoaded", async function () {
             console.error("Map object is not initialized");
             return;
         }
-        if (!(await checkAuth())) return; // 確保 token 有效
 
         markersArray.forEach(marker => marker.remove());
         markersArray.length = 0;
 
         try {
-            const token = safeGetItem("token");
             const response = await fetch(`${API_URL}/parking/${category}`, {
                 headers: {
-                    "Authorization": `Bearer ${token}`,
                     "Content-Type": "application/json",
                 },
             });
@@ -505,7 +389,6 @@ document.addEventListener("DOMContentLoaded", async function () {
     navLinks.forEach(link => {
         link.addEventListener("click", async function (event) {
             event.preventDefault();
-            if (!(await checkAuth())) return; // 確保 token 有效
 
             const targetId = this.getAttribute("data-target");
             document.querySelectorAll(".content-section").forEach(section => {
@@ -521,9 +404,8 @@ document.addEventListener("DOMContentLoaded", async function () {
             if (targetId === "sharedParking") {
                 if (!sharedMap) {
                     try {
-                        const token = safeGetItem("token");
                         const spots = await fetch(`${API_URL}/parking/shared`, {
-                            headers: { "Authorization": `Bearer ${token}` }
+                            headers: { "Content-Type": "application/json" }
                         }).then(res => res.json());
                         sharedMap = initMap("sharedMap", spots, sharedMarkers);
                         if (sharedMap) sharedMap.invalidateSize();
@@ -536,9 +418,8 @@ document.addEventListener("DOMContentLoaded", async function () {
             } else if (targetId === "rentParking") {
                 if (!rentMap) {
                     try {
-                        const token = safeGetItem("token");
                         const spots = await fetch(`${API_URL}/parking/rent`, {
-                            headers: { "Authorization": `Bearer ${token}` }
+                            headers: { "Content-Type": "application/json" }
                         }).then(res => res.json());
                         rentMap = initMap("rentMap", spots, rentMarkers);
                         if (rentMap) rentMap.invalidateSize();
@@ -574,7 +455,7 @@ document.addEventListener("DOMContentLoaded", async function () {
         }
 
         async function applySharedFilters() {
-            if (sharedMap && (await checkAuth())) {
+            if (sharedMap) {
                 updateMap(sharedMap, 'shared', sharedMarkers,
                     filterType.value,
                     filterFloor.value,
@@ -609,7 +490,7 @@ document.addEventListener("DOMContentLoaded", async function () {
         }
 
         async function applyRentFilters() {
-            if (rentMap && (await checkAuth())) {
+            if (rentMap) {
                 updateMap(rentMap, 'rent', rentMarkers,
                     filterType.value, filterFloor.value, filterPricing.value, filterStatus.value, searchInput.value
                 );
@@ -630,9 +511,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 
         parkingSpaces.forEach(space => {
             space.removeEventListener("click", handleViewParkingClick);
-            space.addEventListener("click", async function (event) {
-                if (await checkAuth()) handleViewParkingClick(event);
-            });
+            space.addEventListener("click", handleViewParkingClick);
         });
     }
 
@@ -641,13 +520,11 @@ document.addEventListener("DOMContentLoaded", async function () {
         const space = event.currentTarget;
         const spaceId = space.getAttribute("data-id");
         const numericSpaceId = parseInt(spaceId.replace("v", ""), 10);
-        const token = safeGetItem("token");
 
         try {
             const response = await fetch(`${API_URL}/parking/${numericSpaceId}`, {
                 method: "GET",
                 headers: {
-                    "Authorization": `Bearer ${token}`,
                     "Content-Type": "application/json",
                 },
             });
@@ -655,13 +532,7 @@ document.addEventListener("DOMContentLoaded", async function () {
             if (response.ok) {
                 alert(`車位 ${spaceId} 狀態：${result.status}`);
             } else {
-                if (response.status === 401) {
-                    safeRemoveItem("token");
-                    alert("登入憑證已過期，請重新登入！");
-                    await checkAuth();
-                } else {
-                    showError(result.error || "無法獲取車位狀態！");
-                }
+                showError(result.error || "無法獲取車位狀態！");
             }
         } catch (error) {
             console.error("Failed to fetch parking space status:", error);
@@ -691,35 +562,13 @@ document.addEventListener("DOMContentLoaded", async function () {
             let spots = null;
             while (retries > 0) {
                 try {
-                    const token = safeGetItem("token");
-                    if (!token) {
-                        throw new Error("請先登入");
-                    }
-                    // 檢查 token 是否過期
-                    try {
-                        const payload = JSON.parse(atob(token.split('.')[1]));
-                        const exp = payload.exp * 1000; // 轉為毫秒
-                        if (Date.now() >= exp) {
-                            throw new Error("token 已過期");
-                        }
-                    } catch (e) {
-                        throw new Error("無法解析 token 或 token 已過期");
-                    }
-
                     const response = await fetch(`${API_URL}/parking/available?date=${encodeURIComponent(today)}`, {
                         headers: {
                             "Content-Type": "application/json",
-                            "Authorization": `Bearer ${token}`,
                         },
                     });
                     if (!response.ok) {
                         const errorData = await response.json();
-                        if (response.status === 401) {
-                            safeRemoveItem("token");
-                            alert("登入憑證已過期，請重新登入！");
-                            await checkAuth();
-                            return;
-                        }
                         throw new Error(`HTTP error! Status: ${response.status}, Message: ${errorData.error || '未知錯誤'}`);
                     }
                     spots = await response.json();
@@ -763,7 +612,6 @@ document.addEventListener("DOMContentLoaded", async function () {
                 space.classList.remove("available", "occupied", "reserved", "loading", "unavailable");
 
                 if (spot) {
-                    // 映射後端返回的 status 值
                     let displayStatus = spot.status;
                     if (spot.status === "available") {
                         space.classList.add("available");
@@ -778,14 +626,12 @@ document.addEventListener("DOMContentLoaded", async function () {
                         space.querySelector("span").textContent = "預約";
                         displayStatus = "預約";
                     } else {
-                        // 如果後端返回未知狀態，設為已佔用
                         space.classList.add("occupied");
                         space.querySelector("span").textContent = "已佔用";
                         displayStatus = "已佔用";
                     }
                     space.setAttribute("aria-label", `車位 ${spotId}，狀態：${displayStatus}`);
                 } else {
-                    // 如果後端沒有該車位資料，設為已佔用
                     space.classList.add("occupied");
                     space.querySelector("span").textContent = "已佔用";
                     space.setAttribute("aria-label", `車位 ${spotId}，狀態：已佔用`);
@@ -795,9 +641,7 @@ document.addEventListener("DOMContentLoaded", async function () {
             // 重新綁定點擊事件
             parkingSpaces.forEach(space => {
                 space.removeEventListener("click", handleReserveParkingClick);
-                space.addEventListener("click", async function (event) {
-                    if (await checkAuth()) handleReserveParkingClick(event);
-                });
+                space.addEventListener("click", handleReserveParkingClick);
             });
         }, 100);
     }
@@ -807,7 +651,6 @@ document.addEventListener("DOMContentLoaded", async function () {
         const space = event.currentTarget;
         const spotId = space.getAttribute("data-id");
         const numericSpotId = parseInt(spotId.replace("v", ""), 10);
-        const token = safeGetItem("token");
 
         if (!space.classList.contains("available")) {
             alert("此車位不可預約！");
@@ -823,7 +666,6 @@ document.addEventListener("DOMContentLoaded", async function () {
             const response = await fetch(`${API_URL}/rent`, {
                 method: "POST",
                 headers: {
-                    "Authorization": `Bearer ${token}`,
                     "Content-Type": "application/json",
                 },
                 body: JSON.stringify({ parking_spot_id: numericSpotId }),
@@ -838,14 +680,8 @@ document.addEventListener("DOMContentLoaded", async function () {
                 alert(`車位 ${spotId} 已成功預約！`);
                 setupReserveParking();
             } else {
-                if (response.status === 401) {
-                    safeRemoveItem("token");
-                    alert("登入憑證已過期，請重新登入！");
-                    await checkAuth();
-                } else {
-                    const errorMessage = result.error || `預約失敗！（錯誤碼：${response.status}）`;
-                    alert(errorMessage);
-                }
+                const errorMessage = result.error || `預約失敗！（錯誤碼：${response.status}）`;
+                alert(errorMessage);
             }
         } catch (error) {
             console.error("Reserve failed:", error);
@@ -864,23 +700,11 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     // 載入歷史紀錄
     async function loadHistory() {
-        const token = safeGetItem("token");
-        if (!token) {
-            alert("請先登入！");
-            return;
-        }
-
         try {
             const response = await fetch(`${API_URL}/rent`, {
-                headers: { "Authorization": `Bearer ${token}` }
+                headers: { "Content-Type": "application/json" }
             });
             if (!response.ok) {
-                if (response.status === 401) {
-                    safeRemoveItem("token");
-                    alert("登入憑證已過期，請重新登入！");
-                    await checkAuth();
-                    return;
-                }
                 throw new Error(`HTTP error! Status: ${response.status}`);
             }
             const data = await response.json();
