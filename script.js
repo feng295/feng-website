@@ -368,14 +368,18 @@ document.addEventListener("DOMContentLoaded", async function () {
             console.error("Map object is not initialized");
             return;
         }
-
+    
         if (!checkAuth()) return; // 確保已登入
-
+    
         markersArray.forEach(marker => marker.remove());
         markersArray.length = 0;
-
+    
         try {
             const token = getToken();
+            if (!token) {
+                throw new Error("認證令牌缺失，請重新登入！");
+            }
+    
             const response = await fetch(`${API_URL}/parking/${category}`, {
                 headers: {
                     "Content-Type": "application/json",
@@ -383,17 +387,18 @@ document.addEventListener("DOMContentLoaded", async function () {
                 },
             });
             if (!response.ok) {
+                const errorData = await response.json();
                 if (response.status === 401) {
                     removeToken();
                     showLoginPage();
                     alert("認證失敗，請重新登入！");
                     return;
                 }
-                throw new Error(`HTTP error! Status: ${response.status}`);
+                throw new Error(`HTTP error! Status: ${response.status}, Message: ${errorData.error || '未知錯誤'}`);
             }
             const spots = await response.json();
             console.log(`Fetched spots for ${category}:`, spots);
-
+    
             let filteredSpots = spots;
             if (filterType && filterType !== "all") filteredSpots = filteredSpots.filter(spot => spot.type === filterType);
             if (filterFloor && filterFloor !== "all") filteredSpots = filteredSpots.filter(spot => spot.floor === filterFloor);
@@ -413,7 +418,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                     (spot.status && spot.status.toLowerCase().includes(searchQuery.toLowerCase()))
                 );
             }
-
+    
             filteredSpots.forEach(spot => {
                 if (spot.lat && spot.lng) {
                     const marker = L.marker([spot.lat, spot.lng]).addTo(map);
@@ -424,7 +429,7 @@ document.addEventListener("DOMContentLoaded", async function () {
             map.invalidateSize();
         } catch (error) {
             console.error(`Failed to fetch parking spots for ${category}:`, error);
-            alert("無法載入車位資料，請檢查後端服務是否運行");
+            alert(`無法載入車位資料：${error.message || '請檢查後端服務是否運行'}`);
         }
     }
 
@@ -614,18 +619,22 @@ document.addEventListener("DOMContentLoaded", async function () {
     // 查看車位狀態
     async function handleViewParkingClick(event) {
         if (!checkAuth()) return; // 確保已登入
-
+    
         const space = event.currentTarget;
         const spaceId = space.getAttribute("data-id");
         const numericSpaceId = parseInt(spaceId.replace("v", ""), 10);
-
+    
         if (isNaN(numericSpaceId)) {
             alert("無效的車位 ID！");
             return;
         }
-
+    
         try {
             const token = getToken();
+            if (!token) {
+                throw new Error("認證令牌缺失，請重新登入！");
+            }
+    
             const response = await fetch(`${API_URL}/parking/${numericSpaceId}`, {
                 method: "GET",
                 headers: {
@@ -634,13 +643,16 @@ document.addEventListener("DOMContentLoaded", async function () {
                 },
             });
             if (!response.ok) {
+                const result = await response.json();
                 if (response.status === 401) {
                     removeToken();
                     showLoginPage();
                     alert("認證失敗，請重新登入！");
                     return;
                 }
-                const result = await response.json();
+                if (response.status === 404) {
+                    throw new Error("車位不存在，請確認車位 ID 是否正確！");
+                }
                 throw new Error(result.error || "無法獲取車位狀態！");
             }
             const result = await response.json();
