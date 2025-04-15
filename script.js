@@ -55,41 +55,40 @@ document.addEventListener("DOMContentLoaded", async function () {
     // 從 localStorage 安全地獲取 token
     function getToken() {
         try {
-            return localStorage.getItem("access_token") || "";
+            return localStorage.getItem("token") || "";
         } catch (error) {
-            console.error("Failed to get access token from localStorage:", error);
-            return "";
-        }
-    }
-
-    // 從 localStorage 獲取 refresh token
-    function getRefreshToken() {
-        try {
-            return localStorage.getItem("refresh_token") || "";
-        } catch (error) {
-            console.error("Failed to get refresh token from localStorage:", error);
+            console.error("Failed to get token from localStorage:", error);
             return "";
         }
     }
 
     // 存儲 token 到 localStorage
-    function setToken(accessToken, refreshToken) {
+    function setToken(token) {
         try {
-            if (accessToken) localStorage.setItem("access_token", accessToken);
-            if (refreshToken) localStorage.setItem("refresh_token", refreshToken);
+            localStorage.setItem("token", token);
         } catch (error) {
-            console.error("Failed to set tokens in localStorage:", error);
+            console.error("Failed to set token in localStorage:", error);
         }
     }
 
     // 移除 token
     function removeToken() {
         try {
-            localStorage.removeItem("access_token");
-            localStorage.removeItem("refresh_token");
+            localStorage.removeItem("token");
         } catch (error) {
-            console.error("Failed to remove tokens from localStorage:", error);
+            console.error("Failed to remove token from localStorage:", error);
         }
+    }
+
+    // 檢查是否已登入（檢查 token 是否存在）
+    function checkAuth() {
+        const token = getToken();
+        if (!token || token.trim() === "") { // 增強檢查，確保 token 不為空字符串
+            showLoginPage();
+            alert("請先登入！");
+            return false;
+        }
+        return true;
     }
 
     // 顯示主畫面
@@ -113,110 +112,12 @@ document.addEventListener("DOMContentLoaded", async function () {
         logoutButton.style.display = "none";
     }
 
-    // 驗證 token 是否有效
-    async function verifyToken(token) {
-        // 檢查 token 是否有效
-        if (!token || token.trim() === "") {
-            console.error("Token is empty or invalid");
-            return false;
-        }
-
-        try {
-            const response = await fetch(`${API_URL}/members/verify`, {
-                method: 'GET',
-                headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": `Bearer ${token}`
-                }
-            });
-            if (!response.ok) {
-                const errorData = await response.json();
-                if (response.status === 401) {
-                    console.warn("Token is invalid or expired");
-                    return false; // token 無效
-                }
-                throw new Error(`HTTP error! Status: ${response.status}, Message: ${errorData.error || '未知錯誤'}`);
-            }
-            return true; // token 有效
-        } catch (error) {
-            console.error("Failed to verify token:", error.message);
-            return false;
-        }
+    // 初始化時檢查是否已登入
+    if (checkAuth()) {
+        showMainPage();
+    } else {
+        showLoginPage();
     }
-
-    // 刷新 token
-    async function refreshToken() {
-        const refreshToken = getRefreshToken();
-        if (!refreshToken) {
-            console.warn("Refresh token is missing");
-            return false;
-        }
-
-        try {
-            const response = await fetch(`${API_URL}/members/refresh`, {
-                method: 'POST',
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify({ refresh_token: refreshToken })
-            });
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(`HTTP error! Status: ${response.status}, Message: ${errorData.error || '未知錯誤'}`);
-            }
-            const result = await response.json();
-            if (result.access_token) {
-                setToken(result.access_token, refreshToken);
-                return true;
-            }
-            return false;
-        } catch (error) {
-            console.error("Failed to refresh token:", error.message);
-            return false;
-        }
-    }
-
-    // 檢查是否已登入（檢查 token 是否存在並有效）
-    async function checkAuth(silent = false) {
-        let token = getToken();
-        if (!token || token.trim() === "") {
-            if (!silent) {
-                alert("請先登入！");
-            }
-            showLoginPage();
-            return false;
-        }
-
-        // 驗證 token 是否有效
-        let isValid = await verifyToken(token);
-        if (!isValid) {
-            const refreshed = await refreshToken();
-            if (refreshed) {
-                token = getToken();
-                isValid = await verifyToken(token);
-            }
-        }
-
-        if (!isValid) {
-            removeToken();
-            if (!silent) {
-                alert("認證失敗，請重新登入！");
-            }
-            showLoginPage();
-            return false;
-        }
-        return true;
-    }
-
-    // 初始化時檢查是否已登入（靜默模式）
-    (async () => {
-        const isAuthenticated = await checkAuth(true); // 靜默檢查
-        if (isAuthenticated) {
-            showMainPage();
-        } else {
-            showLoginPage();
-        }
-    })();
 
     // 當付款方式改變時，顯示或隱藏信用卡號輸入框
     paymentMethodInput.addEventListener("change", function () {
@@ -337,11 +238,11 @@ document.addEventListener("DOMContentLoaded", async function () {
                 const result = await response.json();
                 if (response.ok) {
                     // 檢查後端返回的 token
-                    if (!result.access_token || !result.refresh_token) {
-                        showError("後端未返回完整的 token 資料，請檢查後端服務！");
+                    if (!result.token) {
+                        showError("後端未返回 token，請檢查後端服務！");
                         return;
                     }
-                    setToken(result.access_token, result.refresh_token); // 存儲 access token 和 refresh token
+                    setToken(result.token); // 存儲 token
                     alert("登入成功！");
                     showMainPage();
                 } else {
@@ -469,7 +370,7 @@ document.addEventListener("DOMContentLoaded", async function () {
             return;
         }
 
-        if (!await checkAuth()) return; // 確保已登入
+        if (!checkAuth()) return; // 確保已登入
 
         markersArray.forEach(marker => marker.remove());
         markersArray.length = 0;
@@ -489,40 +390,16 @@ document.addEventListener("DOMContentLoaded", async function () {
             if (!response.ok) {
                 const errorData = await response.json();
                 if (response.status === 401) {
-                    const refreshed = await refreshToken();
-                    if (refreshed) {
-                        // 重試請求
-                        const newToken = getToken();
-                        const retryResponse = await fetch(`${API_URL}/parking/${category}`, {
-                            headers: {
-                                "Content-Type": "application/json",
-                                "Authorization": `Bearer ${newToken}`
-                            },
-                        });
-                        if (!retryResponse.ok) {
-                            throw new Error(`HTTP error after token refresh! Status: ${retryResponse.status}`);
-                        }
-                        const spots = await retryResponse.json();
-                        processSpots(spots);
-                        return;
-                    } else {
-                        removeToken();
-                        showLoginPage();
-                        alert("認證失敗，請重新登入！");
-                        return;
-                    }
+                    removeToken();
+                    showLoginPage();
+                    alert("認證失敗，請重新登入！");
+                    return;
                 }
                 throw new Error(`HTTP error! Status: ${response.status}, Message: ${errorData.error || '未知錯誤'}`);
             }
             const spots = await response.json();
-            processSpots(spots);
-        } catch (error) {
-            console.error(`Failed to fetch parking spots for ${category}:`, error);
-            alert(`無法載入車位資料：${error.message || '請檢查後端服務是否運行'}`);
-        }
-
-        function processSpots(spots) {
             console.log(`Fetched spots for ${category}:`, spots);
+
             let filteredSpots = spots;
             if (filterType && filterType !== "all") filteredSpots = filteredSpots.filter(spot => spot.type === filterType);
             if (filterFloor && filterFloor !== "all") filteredSpots = filteredSpots.filter(spot => spot.floor === filterFloor);
@@ -551,6 +428,9 @@ document.addEventListener("DOMContentLoaded", async function () {
                 }
             });
             map.invalidateSize();
+        } catch (error) {
+            console.error(`Failed to fetch parking spots for ${category}:`, error);
+            alert(`無法載入車位資料：${error.message || '請檢查後端服務是否運行'}`);
         }
     }
 
@@ -560,7 +440,7 @@ document.addEventListener("DOMContentLoaded", async function () {
         link.addEventListener("click", async function (event) {
             event.preventDefault();
 
-            if (!await checkAuth()) return; // 確保已登入
+            if (!checkAuth()) return; // 確保已登入
 
             const targetId = this.getAttribute("data-target");
             document.querySelectorAll(".content-section").forEach(section => {
@@ -762,7 +642,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     // 查看車位狀態
     async function handleViewParkingClick(event) {
-        if (!await checkAuth()) return; // 確保已登入
+        if (!checkAuth()) return; // 確保已登入
 
         const space = event.currentTarget;
         const spaceId = space.getAttribute("data-id");
@@ -809,7 +689,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     // 設置預約停車
     async function setupReserveParking() {
-        if (!await checkAuth()) return; // 確保已登入
+        if (!checkAuth()) return; // 確保已登入
 
         const parkingSpaces = document.querySelectorAll("#reserveParking .parking-space");
         if (parkingSpaces.length === 0) {
@@ -847,27 +727,10 @@ document.addEventListener("DOMContentLoaded", async function () {
                 if (!response.ok) {
                     const errorData = await response.json();
                     if (response.status === 401) {
-                        const refreshed = await refreshToken();
-                        if (refreshed) {
-                            // 重試請求
-                            const newToken = getToken();
-                            const retryResponse = await fetch(`${API_URL}/parking/available?date=${encodeURIComponent(today)}`, {
-                                headers: {
-                                    "Content-Type": "application/json",
-                                    "Authorization": `Bearer ${newToken}`
-                                },
-                            });
-                            if (!retryResponse.ok) {
-                                throw new Error(`HTTP error after token refresh! Status: ${retryResponse.status}`);
-                            }
-                            spots = await retryResponse.json();
-                            break;
-                        } else {
-                            removeToken();
-                            showLoginPage();
-                            alert("認證失敗，請重新登入！");
-                            return;
-                        }
+                        removeToken();
+                        showLoginPage();
+                        alert("認證失敗，請重新登入！");
+                        return;
                     }
                     throw new Error(`HTTP error! Status: ${response.status}, Message: ${errorData.error || '未知錯誤'}`);
                 }
@@ -891,14 +754,15 @@ document.addEventListener("DOMContentLoaded", async function () {
             }
         }
 
-        // 檢查 spots 是否為物件並提取數據
-        let spotData = null;
-        if (Array.isArray(spots)) {
-            spotData = spots; // 如果 spots 本身是陣列，直接使用
-        } else if (spots && typeof spots === 'object' && Array.isArray(spots.data)) {
-            spotData = spots.data; // 如果 spots 包含 data 欄位且為陣列，使用 spots.data
-        } else {
-            console.error("Spots data format is invalid:", spots);
+        // 檢查 spots 是否為物件並包含 data 欄位
+        let spotData = spots;
+        if (spots && spots.data) {
+            spotData = spots.data;
+        }
+
+        // 確保 spotData 是陣列，如果不是陣列或為空，顯示錯誤
+        if (!Array.isArray(spotData)) {
+            console.error("Spots data is not an array:", spotData);
             alert("後端返回的車位資料格式錯誤，請檢查後端服務");
             parkingSpaces.forEach(space => {
                 space.classList.remove("available", "occupied", "reserved", "loading");
@@ -909,7 +773,6 @@ document.addEventListener("DOMContentLoaded", async function () {
             return;
         }
 
-        // 確保 spotData 是陣列，如果為空則顯示無車位
         if (spotData.length === 0) {
             console.warn("No parking spots available from backend");
             alert("目前沒有可用的車位！");
@@ -967,7 +830,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     // 預約停車點擊處理
     async function handleReserveParkingClick(event) {
-        if (!await checkAuth()) return; // 確保已登入
+        if (!checkAuth()) return; // 確保已登入
 
         const space = event.currentTarget;
         const spotId = space.getAttribute("data-id");
@@ -995,34 +858,10 @@ document.addEventListener("DOMContentLoaded", async function () {
             });
             if (!response.ok) {
                 if (response.status === 401) {
-                    const refreshed = await refreshToken();
-                    if (refreshed) {
-                        const newToken = getToken();
-                        const retryResponse = await fetch(`${API_URL}/rent`, {
-                            method: "POST",
-                            headers: {
-                                "Content-Type": "application/json",
-                                "Authorization": `Bearer ${newToken}`
-                            },
-                            body: JSON.stringify({ parking_spot_id: numericSpotId }),
-                        });
-                        if (!retryResponse.ok) {
-                            throw new Error(`HTTP error after token refresh! Status: ${retryResponse.status}`);
-                        }
-                        const result = await retryResponse.json();
-                        space.classList.remove("available");
-                        space.classList.add("reserved");
-                        space.querySelector("span").textContent = "預約";
-                        addToHistory(`預約車位 ${spotId}`);
-                        alert(`車位 ${spotId} 已成功預約！`);
-                        setupReserveParking();
-                        return;
-                    } else {
-                        removeToken();
-                        showLoginPage();
-                        alert("認證失敗，請重新登入！");
-                        return;
-                    }
+                    removeToken();
+                    showLoginPage();
+                    alert("認證失敗，請重新登入！");
+                    return;
                 }
                 const result = await response.json();
                 throw new Error(result.error || `預約失敗！（錯誤碼：${response.status}）`);
@@ -1051,7 +890,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     // 載入歷史紀錄
     async function loadHistory() {
-        if (!await checkAuth()) return; // 確保已登入
+        if (!checkAuth()) return; // 確保已登入
 
         try {
             const token = getToken();
@@ -1063,38 +902,14 @@ document.addEventListener("DOMContentLoaded", async function () {
             });
             if (!response.ok) {
                 if (response.status === 401) {
-                    const refreshed = await refreshToken();
-                    if (refreshed) {
-                        const newToken = getToken();
-                        const retryResponse = await fetch(`${API_URL}/rent`, {
-                            headers: {
-                                "Content-Type": "application/json",
-                                "Authorization": `Bearer ${newToken}`
-                            },
-                        });
-                        if (!retryResponse.ok) {
-                            throw new Error(`HTTP error after token refresh! Status: ${retryResponse.status}`);
-                        }
-                        const data = await retryResponse.json();
-                        processHistory(data);
-                        return;
-                    } else {
-                        removeToken();
-                        showLoginPage();
-                        alert("認證失敗，請重新登入！");
-                        return;
-                    }
+                    removeToken();
+                    showLoginPage();
+                    alert("認證失敗，請重新登入！");
+                    return;
                 }
                 throw new Error(`HTTP error! Status: ${response.status}`);
             }
             const data = await response.json();
-            processHistory(data);
-        } catch (error) {
-            console.error("Failed to load history:", error);
-            alert("無法載入歷史紀錄，請檢查後端服務");
-        }
-
-        function processHistory(data) {
             historyList.innerHTML = "";
             if (!Array.isArray(data)) {
                 console.error("History data is not an array:", data);
@@ -1106,6 +921,9 @@ document.addEventListener("DOMContentLoaded", async function () {
                 listItem.textContent = `${record.action || '未知操作'} - ${record.timestamp || '未知時間'}`;
                 historyList.appendChild(listItem);
             });
+        } catch (error) {
+            console.error("Failed to load history:", error);
+            alert("無法載入歷史紀錄，請檢查後端服務");
         }
     }
 
