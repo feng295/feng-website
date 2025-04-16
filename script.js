@@ -392,9 +392,9 @@ document.addEventListener("DOMContentLoaded", async function () {
         }
 
         spots.forEach(spot => {
-            if (spot.lat && spot.lng) {
-                const marker = L.marker([spot.lat, spot.lng]).addTo(map);
-                marker.bindPopup(`編號: ${spot.id}<br>縣市: ${spot.city || '未知'}<br>類型: ${spot.type === "flat" ? "平面" : "機械"}<br>樓層: ${spot.floor === "ground" ? "地面" : "地下" + spot.floor.slice(1) + "樓"}<br>計價: ${spot.pricing === "hourly" ? "按小時" : spot.pricing === "daily" ? "按日" : "按月"}<br><br>狀態: ${spot.status}`);
+            if (spot.latitude && spot.longitude) {
+                const marker = L.marker([spot.latitude, spot.longitude]).addTo(map);
+                marker.bindPopup(`編號: ${spot.id}<br>縣市: ${spot.location || '未知'}<br>類型: ${spot.parking_type === "flat" ? "平面" : "機械"}<br>樓層: ${spot.floor_level === "ground" ? "地面" : "地下" + (spot.floor_level.startsWith("B") ? spot.floor_level.slice(1) : spot.floor_level) + "樓"}<br>計價: ${spot.pricing_type === "hourly" ? "按小時" : "按月"}<br><br>狀態: ${spot.status}`);
                 markersArray.push(marker);
             } else {
                 console.warn("Invalid spot data:", spot);
@@ -451,9 +451,9 @@ document.addEventListener("DOMContentLoaded", async function () {
             }
 
             let filteredSpots = spots;
-            if (filterType && filterType !== "all") filteredSpots = filteredSpots.filter(spot => spot.type === filterType);
-            if (filterFloor && filterFloor !== "all") filteredSpots = filteredSpots.filter(spot => spot.floor === filterFloor);
-            if (filterPricing && filterPricing !== "all") filteredSpots = filteredSpots.filter(spot => spot.pricing === filterPricing);
+            if (filterType && filterType !== "all") filteredSpots = filteredSpots.filter(spot => spot.parking_type === filterType);
+            if (filterFloor && filterFloor !== "all") filteredSpots = filteredSpots.filter(spot => spot.floor_level === filterFloor);
+            if (filterPricing && filterPricing !== "all") filteredSpots = filteredSpots.filter(spot => spot.pricing_type === filterPricing);
             if (filterStatus && filterStatus !== "all") {
                 filteredSpots = filteredSpots.filter(spot =>
                     filterStatus === "available" ? spot.status === "可用" :
@@ -461,7 +461,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                 );
             }
             if (filterCity && filterCity !== "all") {
-                filteredSpots = filteredSpots.filter(spot => spot.city === filterCity);
+                filteredSpots = filteredSpots.filter(spot => spot.location === filterCity);
             }
             if (searchQuery) {
                 filteredSpots = filteredSpots.filter(spot =>
@@ -471,9 +471,9 @@ document.addEventListener("DOMContentLoaded", async function () {
             }
 
             filteredSpots.forEach(spot => {
-                if (spot.lat && spot.lng) {
-                    const marker = L.marker([spot.lat, spot.lng]).addTo(map);
-                    marker.bindPopup(`編號: ${spot.id}<br>縣市: ${spot.city || '未知'}<br>類型: ${spot.type === "flat" ? "平面" : "機械"}<br>樓層: ${spot.floor === "ground" ? "地面" : "地下" + spot.floor.slice(1) + "樓"}<br>計價: ${spot.pricing === "hourly" ? "按小時" : spot.pricing === "daily" ? "按日" : "按月"}<br><br>狀態: ${spot.status}`);
+                if (spot.latitude && spot.longitude) {
+                    const marker = L.marker([spot.latitude, spot.longitude]).addTo(map);
+                    marker.bindPopup(`編號: ${spot.id}<br>縣市: ${spot.location || '未知'}<br>類型: ${spot.parking_type === "flat" ? "平面" : "機械"}<br>樓層: ${spot.floor_level === "ground" ? "地面" : "地下" + (spot.floor_level.startsWith("B") ? spot.floor_level.slice(1) : spot.floor_level) + "樓"}<br>計價: ${spot.pricing_type === "hourly" ? "按小時" : "按月"}<br><br>狀態: ${spot.status}`);
                     markersArray.push(marker);
                 }
             });
@@ -541,7 +541,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                             throw new Error("後端返回的車位資料格式錯誤，應為陣列");
                         }
                         if (spots.length === 0) {
-                            alert("目前沒有可用的共享車位！請選擇其他日期查看。");
+                            alert(`所選日期（${today}）目前沒有可用的共享車位！請選擇其他日期查看。`);
                             return;
                         }
                         sharedMap = initMap("sharedMap", spots, sharedMarkers);
@@ -589,7 +589,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                             throw new Error("後端返回的車位資料格式錯誤，應為陣列");
                         }
                         if (spots.length === 0) {
-                            alert("目前沒有可用的租用車位！請選擇其他日期查看。");
+                            alert(`所選日期（${today}）目前沒有可用的租用車位！請選擇其他日期查看。`);
                             return;
                         }
                         rentMap = initMap("rentMap", spots, rentMarkers);
@@ -938,6 +938,10 @@ document.addEventListener("DOMContentLoaded", async function () {
             return;
         }
 
+        // 獲取日期選擇輸入框的值
+        const dateInput = document.getElementById("reserveDateInput");
+        const selectedDate = dateInput ? dateInput.value : new Date().toISOString().split('T')[0];
+
         try {
             if (isNaN(numericSpotId)) {
                 alert("無效的車位 ID！");
@@ -951,7 +955,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                     "Content-Type": "application/json",
                     "Authorization": `Bearer ${token}`
                 },
-                body: JSON.stringify({ parking_spot_id: numericSpotId }),
+                body: JSON.stringify({ parking_spot_id: numericSpotId, date: selectedDate }),
             });
             if (!response.ok) {
                 if (response.status === 401) {
@@ -964,7 +968,7 @@ document.addEventListener("DOMContentLoaded", async function () {
             space.classList.remove("available");
             space.classList.add("reserved");
             space.querySelector("span").textContent = "預約";
-            addToHistory(`預約車位 ${spotId}`);
+            addToHistory(`預約車位 ${spotId} 於 ${selectedDate}`);
             alert(`車位 ${spotId} 已成功預約！`);
             setupReserveParking();
         } catch (error) {
