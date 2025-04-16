@@ -45,7 +45,7 @@ form, input {
     padding: 8px;
     border: 1px solid #ccc;
     border-radius: 3px;
-    box-sizing: border-box;/* 已設置，確保一致 */
+    box-sizing: border-box;
     font-size: 14px;
     margin: 0;
 }
@@ -70,12 +70,32 @@ button {
     border: none;
     border-radius: 3px;
     cursor: pointer;
-    box-sizing: border-box; /* 確保 box-sizing 生效 */
+    box-sizing: border-box;
     margin: 0; /* 移除左右 margin，確保按鈕不超出外框 */
+    transition: background 0.3s ease; /* 添加過渡效果 */
 }
 
 button:hover {
     background: #218838;
+}
+
+/* 為「查詢」按鈕添加專屬樣式 */
+#reserveSearchButton {
+    width: auto;
+    padding: 5px 10px;
+    background: #007bff;
+    margin-left: 10px;
+    font-size: 14px;
+    transition: background 0.3s ease, transform 0.1s ease; /* 添加過渡效果 */
+}
+
+#reserveSearchButton:hover {
+    background: #0056b3;
+    transform: scale(1.05); /* 懸停時放大 */
+}
+
+#reserveSearchButton:active {
+    transform: scale(0.95); /* 點擊時縮小 */
 }
 
 #formTitle {
@@ -110,7 +130,6 @@ a:hover {
     color: green;
 }
 
-/* 以下是其他部分的 CSS，保持不變 */
 .system-container {
     display: flex;
     width: 90%; /* 改為更大範圍 */
