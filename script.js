@@ -299,7 +299,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                     alert("登入成功！");
                     showMainPage();
                 } else {
-                    showError(result.error || "電子 Beckett's 電子郵件或密碼錯誤！");
+                    showError(result.error || "電子郵件或密碼錯誤！");
                 }
             } catch (error) {
                 console.error("Login failed:", error.message);
@@ -406,7 +406,7 @@ document.addEventListener("DOMContentLoaded", async function () {
     }
 
     // 更新地圖
-    async function updateMap(map, category, markersArray, filterType, filterFloor, filterPricing, filterStatus, filterCity, searchQuery) {
+    async function updateMap(map, markersArray, filterType, filterFloor, filterPricing, filterStatus, filterCity, searchQuery) {
         if (!map) {
             console.error("Map object is not initialized");
             return;
@@ -423,7 +423,10 @@ document.addEventListener("DOMContentLoaded", async function () {
                 throw new Error("認證令牌缺失，請重新登入！");
             }
 
-            let response = await fetch(`${API_URL}/parking/${category}`, {
+            // 動態生成當前日期（格式為 YYYY-MM-DD）
+            const today = new Date().toISOString().split('T')[0]; // 例如 "2025-04-16"
+
+            let response = await fetch(`${API_URL}/parking/available?date=${encodeURIComponent(today)}`, {
                 headers: {
                     "Content-Type": "application/json",
                     "Authorization": `Bearer ${token}`
@@ -436,8 +439,19 @@ document.addEventListener("DOMContentLoaded", async function () {
                 const errorData = await response.json();
                 throw new Error(`HTTP error! Status: ${response.status}, Message: ${errorData.error || '未知錯誤'}`);
             }
-            const spots = await response.json();
-            console.log(`Fetched spots for ${category}:`, spots);
+            const data = await response.json();
+            console.log(`Fetched spots:`, data);
+
+            // 檢查後端返回的數據結構，提取陣列
+            let spots = data;
+            if (!Array.isArray(spots) && data.data && Array.isArray(data.data)) {
+                spots = data.data; // 如果後端返回 { "data": [...] } 結構，提取 data 字段
+            }
+
+            if (!Array.isArray(spots)) {
+                console.error("Spots data format is invalid:", spots);
+                throw new Error("後端返回的車位資料格式錯誤，應為陣列");
+            }
 
             let filteredSpots = spots;
             if (filterType && filterType !== "all") filteredSpots = filteredSpots.filter(spot => spot.type === filterType);
@@ -468,7 +482,7 @@ document.addEventListener("DOMContentLoaded", async function () {
             });
             map.invalidateSize();
         } catch (error) {
-            console.error(`Failed to fetch parking spots for ${category}:`, error);
+            console.error(`Failed to fetch parking spots:`, error);
             alert(`無法載入車位資料：${error.message || '請檢查後端服務是否運行'}`);
             if (error.message === "認證失敗，請重新登入！") {
                 removeToken();
@@ -504,8 +518,8 @@ document.addEventListener("DOMContentLoaded", async function () {
                             throw new Error("認證令牌缺失，請重新登入！");
                         }
 
-                        const queryParams = new URLSearchParams({});
-                        const url = `${API_URL}/parking/shared?${queryParams.toString()}`;
+                        const today = new Date().toISOString().split('T')[0]; // 例如 "2025-04-16"
+                        const url = `${API_URL}/parking/available?date=${encodeURIComponent(today)}`;
 
                         let response = await fetch(url, {
                             headers: {
@@ -520,8 +534,18 @@ document.addEventListener("DOMContentLoaded", async function () {
                             const result = await response.json();
                             throw new Error(`HTTP error! Status: ${response.status}, Message: ${result.error || '未知錯誤'}`);
                         }
-                        const spots = await response.json();
-                        if (spots.length === 0) return;
+                        const data = await response.json();
+                        let spots = data;
+                        if (!Array.isArray(spots) && data.data && Array.isArray(data.data)) {
+                            spots = data.data; // 提取 data 字段
+                        }
+                        if (!Array.isArray(spots)) {
+                            throw new Error("後端返回的車位資料格式錯誤，應為陣列");
+                        }
+                        if (spots.length === 0) {
+                            alert("目前沒有可用的共享車位！");
+                            return;
+                        }
                         sharedMap = initMap("sharedMap", spots, sharedMarkers);
                         if (sharedMap) sharedMap.invalidateSize();
                     } catch (error) {
@@ -543,8 +567,8 @@ document.addEventListener("DOMContentLoaded", async function () {
                             throw new Error("認證令牌缺失，請重新登入！");
                         }
 
-                        const queryParams = new URLSearchParams({});
-                        const url = `${API_URL}/parking/rent?${queryParams.toString()}`
+                        const today = new Date().toISOString().split('T')[0]; // 例如 "2025-04-16"
+                        const url = `${API_URL}/parking/available?date=${encodeURIComponent(today)}`;
 
                         let response = await fetch(url, {
                             headers: {
@@ -559,8 +583,18 @@ document.addEventListener("DOMContentLoaded", async function () {
                             const result = await response.json();
                             throw new Error(`HTTP error! Status: ${response.status}, Message: ${result.error || '未知錯誤'}`);
                         }
-                        const spots = await response.json();
-                        if (spots.length === 0) return;
+                        const data = await response.json();
+                        let spots = data;
+                        if (!Array.isArray(spots) && data.data && Array.isArray(data.data)) {
+                            spots = data.data; // 提取 data 字段
+                        }
+                        if (!Array.isArray(spots)) {
+                            throw new Error("後端返回的車位資料格式錯誤，應為陣列");
+                        }
+                        if (spots.length === 0) {
+                            alert("目前沒有可用的租用車位！");
+                            return;
+                        }
                         rentMap = initMap("rentMap", spots, rentMarkers);
                         if (rentMap) rentMap.invalidateSize();
                     } catch (error) {
@@ -601,7 +635,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 
         async function applySharedFilters() {
             if (sharedMap) {
-                updateMap(sharedMap, 'shared', sharedMarkers,
+                updateMap(sharedMap, sharedMarkers,
                     filterType.value,
                     filterFloor.value,
                     filterPricing.value,
@@ -641,7 +675,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 
         async function applyRentFilters() {
             if (rentMap) {
-                updateMap(rentMap, 'rent', rentMarkers,
+                updateMap(rentMap, rentMarkers,
                     filterType.value,
                     filterFloor.value,
                     filterPricing.value,
@@ -770,8 +804,19 @@ document.addEventListener("DOMContentLoaded", async function () {
                     const errorData = await response.json();
                     throw new Error(`HTTP error! Status: ${response.status}, Message: ${errorData.error || '未知錯誤'}`);
                 }
-                spots = await response.json();
-                console.log("Available spots for reserve:", spots);
+                const data = await response.json();
+                console.log("Available spots for reserve:", data);
+
+                // 檢查後端返回的數據結構，提取陣列
+                spots = data;
+                if (!Array.isArray(spots) && data.data && Array.isArray(data.data)) {
+                    spots = data.data; // 如果後端返回 { "data": [...] } 結構，提取 data 字段
+                }
+
+                if (!Array.isArray(spots)) {
+                    console.error("Spots data format is invalid:", spots);
+                    throw new Error("後端返回的車位資料格式錯誤，應為陣列");
+                }
                 break; // 成功獲取資料，跳出重試迴圈
             } catch (error) {
                 console.error(`Failed to fetch available spots (attempt ${4 - retries}/3):`, error);
@@ -792,19 +837,6 @@ document.addEventListener("DOMContentLoaded", async function () {
                 }
                 await new Promise(resolve => setTimeout(resolve, 1000));
             }
-        }
-
-        // 檢查 spots 是否為陣列
-        if (!Array.isArray(spots)) {
-            console.error("Spots data format is invalid:", spots);
-            alert("後端返回的車位資料格式錯誤，請檢查後端服務");
-            parkingSpaces.forEach(space => {
-                space.classList.remove("available", "occupied", "reserved", "loading");
-                space.classList.add("unavailable");
-                space.querySelector("span").textContent = "服務不可用";
-                space.setAttribute("aria-label", `車位 ${space.getAttribute("data-id")}，狀態：服務不可用`);
-            });
-            return;
         }
 
         // 確保 spots 不為空
