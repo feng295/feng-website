@@ -149,30 +149,7 @@ document.addEventListener("DOMContentLoaded", async function () {
         }
     }
 
-    // 驗證 token 是否有效
-    async function verifyToken(token) {
-        try {
-            const response = await fetch(`${API_URL}/members/verify`, {
-                method: 'GET',
-                headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": `Bearer ${token}`
-                }
-            });
-            if (!response.ok) {
-                if (response.status === 401) {
-                    return false; // token 無效
-                }
-                throw new Error(`HTTP error! Status: ${response.status}`);
-            }
-            return true; // token 有效
-        } catch (error) {
-            console.error("Failed to verify token:", error);
-            return false;
-        }
-    }
-
-    // 檢查是否已登入（檢查 token 是否存在並有效）
+    // 檢查是否已登入（檢查 token 是否存在）
     async function checkAuth(silent = false) {
         const token = getToken();
         if (!token || token.trim() === "") {
@@ -180,18 +157,6 @@ document.addEventListener("DOMContentLoaded", async function () {
                 alert("請先登入！");
             }
             showLoginPage();
-            return false;
-        }
-
-        // 驗證 token 是否有效
-        const isValid = await verifyToken(token);
-        if (!isValid) {
-            removeToken();
-            if (!silent) {
-                showLoginPage(true); // 顯示 token 過期提示
-            } else {
-                showLoginPage();
-            }
             return false;
         }
         return true;
@@ -334,7 +299,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                     alert("登入成功！");
                     showMainPage();
                 } else {
-                    showError(result.error || "電子郵件或密碼錯誤！");
+                    showError(result.error || "電子 Beckett's 電子郵件或密碼錯誤！");
                 }
             } catch (error) {
                 console.error("Login failed:", error.message);
@@ -481,7 +446,7 @@ document.addEventListener("DOMContentLoaded", async function () {
             if (filterStatus && filterStatus !== "all") {
                 filteredSpots = filteredSpots.filter(spot =>
                     filterStatus === "available" ? spot.status === "可用" :
-                        filterStatus === "occupied" ? (spot.status === "已佔用" || spot.status === "預約") : true
+                    filterStatus === "occupied" ? (spot.status === "已佔用" || spot.status === "預約") : true
                 );
             }
             if (filterCity && filterCity !== "all") {
@@ -780,7 +745,7 @@ document.addEventListener("DOMContentLoaded", async function () {
         });
 
         // 動態生成當前日期（格式為 YYYY-MM-DD）
-        const today = new Date().toISOString().split('T')[0]; // 例如 "2025-04-15"
+        const today = new Date().toISOString().split('T')[0]; // 例如 "2025-04-16"
 
         // 嘗試從後端獲取車位狀態，最多重試 3 次
         let retries = 3;
