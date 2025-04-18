@@ -294,11 +294,11 @@ document.addEventListener("DOMContentLoaded", async function () {
                 }
                 const result = await response.json();
                 if (response.ok) {
-                    if (!result.token) {
+                    if (!result.data.token) {
                         showError("後端未返回 token，請檢查後端服務！");
                         return;
                     }
-                    setToken(result.token);
+                    setToken(result.data.token);
                     console.log("Login successful, token stored");
                     alert("登入成功！");
                     showMainPage();
