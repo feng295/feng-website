@@ -38,7 +38,6 @@ document.addEventListener("DOMContentLoaded", async function () {
     let sharedMap, rentMap, sharedMarkers = [], rentMarkers = [];
     const API_URL = '/api/v1'; // 後端 URL
 
-
     // 顯示錯誤訊息
     function showError(message) {
         errorMessage.textContent = message;
@@ -284,30 +283,34 @@ document.addEventListener("DOMContentLoaded", async function () {
 
         if (isLogin) {
             try {
+                console.log("Sending login request to:", `${API_URL}/members/login`);
+                console.log("Request body:", JSON.stringify({ email, password }));
+
                 const response = await fetch(`${API_URL}/members/login`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ email, password })
                 });
-                const result = await response.json();
-                console.log("Login response:", result); // 記錄回應以便診斷
 
-                if (response.ok) {
+                const result = await response.json();
+                console.log("Login response:", JSON.stringify(result, null, 2));
+
+                if (response.ok && result.status !== false) {
                     if (!result.token) {
                         console.error("Token not found in response:", result);
-                        showError("後端未返回 token，請檢查後端服務！");
+                        showError("後端未返回 token，請檢查後端服務！回應內容：" + JSON.stringify(result));
                         return;
                     }
                     setToken(result.token);
                     showSuccess("登入成功！");
                     showMainPage();
                 } else {
-                    console.error("Login failed:", result);
-                    showError(result.error || "電子郵件或密碼錯誤！");
+                    console.error("Login failed with status:", response.status, "Response:", result);
+                    showError(result.message || result.error || `登入失敗！（錯誤碼：${response.status}）`);
                 }
             } catch (error) {
                 console.error("Login request failed:", error);
-                showError("無法連接到伺服器，請檢查網路或後端服務！");
+                showError("無法連接到伺服器，請檢查網路或後端服務！錯誤：" + error.message);
             }
         } else {
             const name = nameInput.value.trim();
@@ -347,13 +350,18 @@ document.addEventListener("DOMContentLoaded", async function () {
             }
 
             try {
+                console.log("Sending register request to:", `${API_URL}/members/register`);
+                console.log("Request body:", JSON.stringify({ name, email, password: cleanedPassword, phone, role, payment_method, payment_info }));
+
                 const response = await fetch(`${API_URL}/members/register`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ name, email, password: cleanedPassword, phone, role, payment_method, payment_info })
                 });
                 const result = await response.json();
-                if (response.ok) {
+                console.log("Register response:", JSON.stringify(result, null, 2));
+
+                if (response.ok && result.status !== false) {
                     showSuccess("註冊成功！請使用此帳號登入。");
                     isLogin = true;
                     formTitle.textContent = "登入";
@@ -361,12 +369,12 @@ document.addEventListener("DOMContentLoaded", async function () {
                     toggleMessage.innerHTML = '還沒有帳號？<a href="#" id="toggleLink">註冊</a>';
                     toggleFormFields();
                 } else {
-                    console.log("Register failed:", response.status, result);
-                    showError(result.error || `註冊失敗！（錯誤碼：${response.status}）`);
+                    console.error("Register failed:", response.status, result);
+                    showError(result.message || result.error || `註冊失敗！（錯誤碼：${response.status}）`);
                 }
             } catch (error) {
                 console.error("Register failed:", error);
-                showError("無法連接到伺服器，請檢查網路或後端服務！");
+                showError("無法連接到伺服器，請檢查網路或後端服務！錯誤：" + error.message);
             }
         }
     });
@@ -398,7 +406,7 @@ document.addEventListener("DOMContentLoaded", async function () {
         spots.forEach(spot => {
             if (spot.latitude && spot.longitude) {
                 const marker = L.marker([spot.latitude, spot.longitude]).addTo(map);
-                marker.bindPopup(`編號: ${spot.id}<br>縣市: ${spot.location || '未知'}<br>類型: ${spot.parking_type === "flat" ? "平面" : "機械"}<br>樓層: ${spot.floor_level === "ground" ? "地面" : "地下" + (spot.floor_level.startsWith("B") ? spot.floor_level.slice(1) : spot.floor_level) + "樓"}<br>計價: ${spot.pricing_type === "hourly" ? "按小時" : "按月"}<br><br>狀態: ${spot.status}`);
+                marker.bindPopup(`編號: ${spot.id}<br>縣市: ${spot.location || '未知'}<br>類型: ${spot.parking_type === "flat" ? "平面" : "機械"}<br>樓層: ${spot.floor_level === "ground" ? "地面" : "地下" + (spot.floor_level.startsWith("B") ? spot.floor_level.slice(1) : spot.floor_level) + "樓"}<br>計價: ${spot.pricing_type === "hourly" ? "按小時" : "按月"}<br><br>狀態: ${spot.status === "available" ? "可用" : spot.status === "occupied" ? "已佔用" : "預約"}`);
                 markersArray.push(marker);
             } else {
                 console.warn("Invalid spot data:", spot);
@@ -427,25 +435,26 @@ document.addEventListener("DOMContentLoaded", async function () {
                 throw new Error("認證令牌缺失，請重新登入！");
             }
 
+            console.log("Fetching parking spots from:", `${API_URL}/parking/available?date=${encodeURIComponent(date)}`);
             const response = await fetch(`${API_URL}/parking/available?date=${encodeURIComponent(date)}`, {
                 headers: {
                     "Content-Type": "application/json",
                     "Authorization": `Bearer ${token}`
                 },
             });
+            const data = await response.json();
+            console.log(`Fetched spots for date ${date}:`, JSON.stringify(data, null, 2));
+
             if (!response.ok) {
                 if (response.status === 401) {
                     throw new Error("認證失敗，請重新登入！");
                 }
-                const errorData = await response.json();
-                throw new Error(`HTTP error! Status: ${response.status}, Message: ${errorData.error || '未知錯誤'}`);
+                throw new Error(`HTTP error! Status: ${response.status}, Message: ${data.message || data.error || '未知錯誤'}`);
             }
-            const data = await response.json();
-            console.log(`Fetched spots for date ${date}:`, data);
 
             let spots = Array.isArray(data) ? data : data.data;
             if (!Array.isArray(spots)) {
-                console.error("Spots data format is invalid:", spots);
+                console.error("Spots data format is invalid:", data);
                 throw new Error("後端返回的車位資料格式錯誤，應為陣列");
             }
 
@@ -517,20 +526,23 @@ document.addEventListener("DOMContentLoaded", async function () {
                             throw new Error("認證令牌缺失，請重新登入！");
                         }
 
+                        console.log("Fetching shared parking spots from:", `${API_URL}/parking/available?date=${encodeURIComponent(today)}`);
                         const response = await fetch(`${API_URL}/parking/available?date=${encodeURIComponent(today)}`, {
                             headers: {
                                 "Content-Type": "application/json",
                                 "Authorization": `Bearer ${token}`
                             }
                         });
+                        const data = await response.json();
+                        console.log("Shared parking response:", JSON.stringify(data, null, 2));
+
                         if (!response.ok) {
                             if (response.status === 401) {
                                 throw new Error("認證失敗，請重新登入！");
                             }
-                            const result = await response.json();
-                            throw new Error(`HTTP error! Status: ${response.status}, Message: ${result.error || '未知錯誤'}`);
+                            throw new Error(`HTTP error! Status: ${response.status}, Message: ${data.message || data.error || '未知錯誤'}`);
                         }
-                        const data = await response.json();
+
                         let spots = Array.isArray(data) ? data : data.data;
                         if (!Array.isArray(spots)) {
                             throw new Error("後端返回的車位資料格式錯誤，應為陣列");
@@ -560,20 +572,23 @@ document.addEventListener("DOMContentLoaded", async function () {
                             throw new Error("認證令牌缺失，請重新登入！");
                         }
 
+                        console.log("Fetching rent parking spots from:", `${API_URL}/parking/available?date=${encodeURIComponent(today)}`);
                         const response = await fetch(`${API_URL}/parking/available?date=${encodeURIComponent(today)}`, {
                             headers: {
                                 "Content-Type": "application/json",
                                 "Authorization": `Bearer ${token}`
                             }
                         });
+                        const data = await response.json();
+                        console.log("Rent parking response:", JSON.stringify(data, null, 2));
+
                         if (!response.ok) {
                             if (response.status === 401) {
                                 throw new Error("認證失敗，請重新登入！");
                             }
-                            const result = await response.json();
-                            throw new Error(`HTTP error! Status: ${response.status}, Message: ${result.error || '未知錯誤'}`);
+                            throw new Error(`HTTP error! Status: ${response.status}, Message: ${data.message || data.error || '未知錯誤'}`);
                         }
-                        const data = await response.json();
+
                         let spots = Array.isArray(data) ? data : data.data;
                         if (!Array.isArray(spots)) {
                             throw new Error("後端返回的車位資料格式錯誤，應為陣列");
@@ -732,6 +747,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                 throw new Error("認證令牌缺失，請重新登入！");
             }
 
+            console.log("Fetching parking spot from:", `${API_URL}/parking/${numericSpaceId}`);
             const response = await fetch(`${API_URL}/parking/${numericSpaceId}`, {
                 method: "GET",
                 headers: {
@@ -739,17 +755,19 @@ document.addEventListener("DOMContentLoaded", async function () {
                     "Authorization": `Bearer ${token}`
                 },
             });
+            const result = await response.json();
+            console.log("Parking spot response:", JSON.stringify(result, null, 2));
+
             if (!response.ok) {
                 if (response.status === 401) {
                     throw new Error("認證失敗，請重新登入！");
                 }
-                const result = await response.json();
                 if (response.status === 404) {
                     throw new Error("車位不存在，請確認車位 ID 是否正確！");
                 }
-                throw new Error(result.error || "無法獲取車位狀態！");
+                throw new Error(result.message || result.error || "無法獲取車位狀態！");
             }
-            const result = await response.json();
+
             alert(`車位 ${spaceId} 狀態：${result.status === "available" ? "可用" : result.status === "occupied" ? "已佔用" : "預約"}`);
         } catch (error) {
             console.error("Failed to fetch parking space status:", error);
@@ -806,25 +824,26 @@ document.addEventListener("DOMContentLoaded", async function () {
                         throw new Error("認證令牌缺失，請重新登入！");
                     }
 
+                    console.log("Fetching available spots from:", `${API_URL}/parking/available?date=${encodeURIComponent(selectedDate)}`);
                     const response = await fetch(`${API_URL}/parking/available?date=${encodeURIComponent(selectedDate)}`, {
                         headers: {
                             "Content-Type": "application/json",
                             "Authorization": `Bearer ${token}`
                         },
                     });
+                    const data = await response.json();
+                    console.log(`Available spots for ${selectedDate}:`, JSON.stringify(data, null, 2));
+
                     if (!response.ok) {
                         if (response.status === 401) {
                             throw new Error("認證失敗，請重新登入！");
                         }
-                        const errorData = await response.json();
-                        throw new Error(`HTTP error! Status: ${response.status}, Message: ${errorData.error || '未知錯誤'}`);
+                        throw new Error(`HTTP error! Status: ${response.status}, Message: ${data.message || data.error || '未知錯誤'}`);
                     }
-                    const data = await response.json();
-                    console.log(`Available spots for ${selectedDate}:`, data);
 
                     spots = Array.isArray(data) ? data : data.data;
                     if (!Array.isArray(spots)) {
-                        console.error("Spots data format is invalid:", spots);
+                        console.error("Spots data format is invalid:", data);
                         throw new Error("後端返回的車位資料格式錯誤，應為陣列");
                     }
                     break;
@@ -916,6 +935,8 @@ document.addEventListener("DOMContentLoaded", async function () {
             }
 
             const token = getToken();
+            console.log("Sending rent request to:", `${API_URL}/rent`);
+            console.log("Request body:", JSON.stringify({ parking_spot_id: numericSpotId, date: selectedDate }));
             const response = await fetch(`${API_URL}/rent`, {
                 method: "POST",
                 headers: {
@@ -924,14 +945,16 @@ document.addEventListener("DOMContentLoaded", async function () {
                 },
                 body: JSON.stringify({ parking_spot_id: numericSpotId, date: selectedDate }),
             });
+            const result = await response.json();
+            console.log("Rent response:", JSON.stringify(result, null, 2));
+
             if (!response.ok) {
                 if (response.status === 401) {
                     throw new Error("認證失敗，請重新登入！");
                 }
-                const result = await response.json();
-                throw new Error(result.error || `預約失敗！（錯誤碼：${response.status}）`);
+                throw new Error(result.message || result.error || `預約失敗！（錯誤碼：${response.status}）`);
             }
-            const result = await response.json();
+
             space.classList.remove("available");
             space.classList.add("reserved");
             space.querySelector("span").textContent = "預約";
@@ -963,19 +986,23 @@ document.addEventListener("DOMContentLoaded", async function () {
 
         try {
             const token = getToken();
+            console.log("Fetching rent records from:", `${API_URL}/rent`);
             const response = await fetch(`${API_URL}/rent`, {
                 headers: {
                     "Content-Type": "application/json",
                     "Authorization": `Bearer ${token}`
                 }
             });
+            const data = await response.json();
+            console.log("Rent records response:", JSON.stringify(data, null, 2));
+
             if (!response.ok) {
                 if (response.status === 401) {
                     throw new Error("認證失敗，請重新登入！");
                 }
-                throw new Error(`HTTP error! Status: ${response.status}`);
+                throw new Error(`HTTP error! Status: ${response.status}, Message: ${data.message || data.error || '未知錯誤'}`);
             }
-            const data = await response.json();
+
             historyList.innerHTML = "";
             if (!Array.isArray(data)) {
                 console.error("History data is not an array:", data);
