@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>智慧停車管理系統</title>
-    <link rel="stylesheet" href="/feng-website/styles.css">
+    <link rel="stylesheet" href="./styles.css">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 </head>
 
@@ -134,6 +134,32 @@
                     <h2>租用車位</h2>
                     <p>在這裡你可以租用車位。</p>
                     <div class="search-container">
+                        <label for="rentCity" style="margin-left: 20px;">縣市：</label>
+                        <select id="rentCity">
+                            <option value="all">全部</option>
+                            <option value="taipei">台北市</option>
+                            <option value="new_taipei">新北市</option>
+                            <option value="taoyuan">桃園市</option>
+                            <option value="taichung">台中市</option>
+                            <option value="tainan">台南市</option>
+                            <option value="kaohsiung">高雄市</option>
+                            <option value="keelung">基隆市</option>
+                            <option value="hsinchu">新竹市</option>
+                            <option value="chiayi">嘉義市</option>
+                            <option value="yilan">宜蘭縣</option>
+                            <option value="hsinchu_county">新竹縣</option>
+                            <option value="miaoli">苗栗縣</option>
+                            <option value="changhua">彰化縣</option>
+                            <option value="nantou">南投縣</option>
+                            <option value="yunlin">雲林縣</option>
+                            <option value="chiayi_county">嘉義縣</option>
+                            <option value="pingtung">屏東縣</option>
+                            <option value="taitung">台東縣</option>
+                            <option value="hualien">花蓮縣</option>
+                            <option value="penghu">澎湖縣</option>
+                            <option value="kinmen">金門縣</option>
+                            <option value="lienchiang">連江縣</option>
+                        </select>
                         <label for="rentParkingType">車位類型：</label>
                         <select id="rentParkingType">
                             <option value="all">全部</option>
@@ -185,7 +211,62 @@
                     <h2>預約車位</h2>
                     <p>在這裡你可以預約車位。</p>
                     <div class="search-container">
-                        <label for="reserveDate">選擇日期：</label>
+                        <label for="reserveSearchInput">車位編號：</label>
+                        <input type="text" id="reserveSearchInput" placeholder="輸入車位編號（如 v1）">
+                        <label for="reserveCity" style="margin-left: 20px;">縣市：</label>
+                        <select id="reserveCity">
+                            <option value="all">全部</option>
+                            <option value="taipei">台北市</option>
+                            <option value="new_taipei">新北市</option>
+                            <option value="taoyuan">桃園市</option>
+                            <option value="taichung">台中市</option>
+                            <option value="tainan">台南市</option>
+                            <option value="kaohsiung">高雄市</option>
+                            <option value="keelung">基隆市</option>
+                            <option value="hsinchu">新竹市</option>
+                            <option value="chiayi">嘉義市</option>
+                            <option value="yilan">宜蘭縣</option>
+                            <option value="hsinchu_county">新竹縣</option>
+                            <option value="miaoli">苗栗縣</option>
+                            <option value="changhua">彰化縣</option>
+                            <option value="nantou">南投縣</option>
+                            <option value="yunlin">雲林縣</option>
+                            <option value="chiayi_county">嘉義縣</option>
+                            <option value="pingtung">屏東縣</option>
+                            <option value="taitung">台東縣</option>
+                            <option value="hualien">花蓮縣</option>
+                            <option value="penghu">澎湖縣</option>
+                            <option value="kinmen">金門縣</option>
+                            <option value="lienchiang">連江縣</option>
+                        </select>
+                        <label for="reserveParkingType" style="margin-left: 20px;">車位類型：</label>
+                        <select id="reserveParkingType">
+                            <option value="all">全部</option>
+                            <option value="flat">平面車位</option>
+                            <option value="mechanical">機械車位</option>
+                        </select>
+                        <label for="reserveFloor" style="margin-left: 20px;">樓層：</label>
+                        <select id="reserveFloor">
+                            <option value="all">全部</option>
+                            <option value="ground">地面</option>
+                            <option value="b1">地下1樓</option>
+                            <option value="b2">地下2樓</option>
+                            <option value="b3">地下3樓</option>
+                        </select>
+                        <label for="reservePricing" style="margin-left: 20px;">計價方式：</label>
+                        <select id="reservePricing">
+                            <option value="all">全部</option>
+                            <option value="hourly">按小時計費</option>
+                            <option value="daily">按日計費</option>
+                            <option value="monthly">按月計費</option>
+                        </select>
+                        <label for="reserveStatus" style="margin-left: 20px;">車位狀態：</label>
+                        <select id="reserveStatus">
+                            <option value="all">全部</option>
+                            <option value="available">空閒</option>
+                            <option value="occupied">使用中</option>
+                        </select>
+                        <label for="reserveDate" style="margin-left: 20px;">選擇日期：</label>
                         <input type="date" id="reserveDate" value="">
                         <button id="reserveSearchButton" style="margin-left: 10px;">查詢</button>
                     </div>
@@ -219,7 +300,6 @@
     </div>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script src="script.js"></script>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'932273bb0be1bd00',t:'MTc0NDk2MTM3Ni4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
-
+    <script src="./script.js"></script>
+</body>
 </html>
