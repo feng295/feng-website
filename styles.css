@@ -370,3 +370,78 @@ a:hover {
     padding: 20px 0;
     margin: 0;
 }
+
+/* 表格樣式 */
+.parking-spaces-table {
+    margin-top: 20px;
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+#parkingTable {
+    width: 100%;
+    border-collapse: collapse;
+    background-color: #fff;
+}
+
+#parkingTable th,
+#parkingTable td {
+    padding: 12px;
+    border: 1px solid #ddd;
+    text-align: left;
+    font-size: 14px;
+}
+
+#parkingTable th {
+    background-color: #f4f4f4;
+    position: sticky;
+    top: 0;
+    font-weight: bold;
+}
+
+#parkingTable tr.available {
+    background-color: #e0ffe0; /* 淺綠色，可用 */
+}
+
+#parkingTable tr.occupied,
+#parkingTable tr.reserved {
+    background-color: #ffe0e0; /* 淺紅色，已佔用或預約 */
+}
+
+#parkingTable button {
+    padding: 6px 12px;
+    background-color: #28a745;
+    color: white;
+    border: none;
+    border-radius: 3px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background 0.3s ease;
+}
+
+#parkingTable button:hover:not(:disabled) {
+    background-color: #218838;
+}
+
+#parkingTable button:disabled {
+    background-color: #ccc;
+    cursor: not-allowed;
+}
+
+/* 響應式調整 */
+@media (max-width: 768px) {
+    #parkingTable th,
+    #parkingTable td {
+        padding: 8px;
+        font-size: 12px;
+    }
+
+    #parkingTable button {
+        padding: 5px 10px;
+        font-size: 12px;
+    }
+
+    .parking-spaces-table {
+        overflow-x: auto;
+    }
+}

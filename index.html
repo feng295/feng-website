@@ -54,7 +54,6 @@
         </form>
     </div>
 
-
     <div id="parkingContainer" style="display: none;">
         <div class="system-container">
             <div class="function-list">
@@ -179,7 +178,7 @@
                             <div class="parking-space available" data-id="v3"><span>可用</span></div>
                             <div class="parking-space available" data-id="v4"><span>可用</span></div>
                             <div class="parking-space occupied" data-id="v5"><span>已佔用</span></div>
-                         </div>
+                        </div>
                     </div>
                 </div>
                 <div id="reserveParking" class="content-section" style="display: none;">
@@ -190,18 +189,25 @@
                         <input type="date" id="reserveDate" value="">
                         <button id="reserveSearchButton" style="margin-left: 10px;">查詢</button>
                     </div>
-                    <div class="parking-status">
-                        <h2>車位狀態</h2>
-                        <div class="parking-spaces">
-                            <div class="parking-space available" data-id="v1"><span>可用</span></div>
-                            <div class="parking-space occupied" data-id="v2"><span>已佔用</span></div>
-                            <div class="parking-space available" data-id="v3"><span>可用</span></div>
-                            <div class="parking-space available" data-id="v4"><span>可用</span></div>
-                            <div class="parking-space occupied" data-id="v5"><span>已佔用</span></div>
-                        </div>
+                    <div class="parking-spaces-table">
+                        <table id="parkingTable">
+                            <thead>
+                                <tr>
+                                    <th>車位編號</th>
+                                    <th>縣市</th>
+                                    <th>類型</th>
+                                    <th>樓層</th>
+                                    <th>計價方式</th>
+                                    <th>狀態</th>
+                                    <th>操作</th>
+                                </tr>
+                            </thead>
+                            <tbody id="parkingTableBody">
+                                <tr><td colspan="7">請選擇日期並點擊查詢以查看可用車位</td></tr>
+                            </tbody>
+                        </table>
                     </div>
                 </div>
-
                 <div id="history" class="content-section" style="display: none;">
                     <h2>歷史紀錄</h2>
                     <p>在這裡你可以查看停車歷史紀錄。</p>
@@ -214,6 +220,6 @@
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="script.js"></script>
-</body>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'932273bb0be1bd00',t:'MTc0NDk2MTM3Ni4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 
 </html>
