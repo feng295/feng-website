@@ -36,7 +36,8 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     let isLogin = true;
     let sharedMap, rentMap, sharedMarkers = [], rentMarkers = [];
-    const API_URL = 'http://localhost:8080/api/v1'; // 修改為後端實際地址，請根據你的環境調整
+    const API_URL = '/api/v1'; // 後端 URL
+
 
     // 顯示錯誤訊息
     function showError(message) {
