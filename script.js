@@ -773,12 +773,11 @@ document.addEventListener("DOMContentLoaded", async function () {
         }
     }
 
-    // 設置預約停車
 // 設置預約停車
 async function setupReserveParking() {
     if (!await checkAuth()) return; // 確保已登入
 
-    // 修正：使用正確的容器 ID（parkingSpaces 應為動態生成）
+    // 修正容器選擇器，假設 HTML 使用 <div class="parking-spaces"> 包含車位
     const parkingSpacesContainer = document.querySelector("#reserveParking .parking-spaces");
     const reserveDateInput = document.getElementById("reserveDate"); // 修正 ID 為 reserveDate
     const reserveSearchButton = document.getElementById("reserveSearchButton");
@@ -788,10 +787,10 @@ async function setupReserveParking() {
         return;
     }
 
-    // 清空現有車位元素並顯示初始提示
+    // 初始顯示提示訊息
     parkingSpacesContainer.innerHTML = '<p>請選擇日期並點擊查詢以查看可用車位</p>';
 
-    // 確保日期輸入框初始為空
+    // 確保日期輸入框為空
     reserveDateInput.value = '';
 
     // 為查詢按鈕添加事件監聽器
@@ -815,7 +814,7 @@ async function setupReserveParking() {
         // 顯示載入中狀態
         parkingSpacesContainer.innerHTML = '<p>載入中...</p>';
 
-        // 嘗試從後端獲取車位狀態，最多重試 3 次
+        // 從後端獲取車位狀態，最多重試 3 次
         let retries = 3;
         let spots = null;
         while (retries > 0) {
@@ -841,15 +840,8 @@ async function setupReserveParking() {
                 const data = await response.json();
                 console.log(`Available spots for reserve on ${selectedDate}:`, data);
 
-                // 檢查後端返回的數據結構，提取陣列
-                if (data.error) {
-                    throw new Error(data.error);
-                }
-                spots = data;
-                if (!Array.isArray(spots) && data.data && Array.isArray(data.data)) {
-                    spots = data.data; // 如果後端返回 { "data": [...] } 結構，提取 data 字段
-                }
-
+                // 檢查後端返回的數據結構
+                spots = Array.isArray(data) ? data : data.data;
                 if (!Array.isArray(spots)) {
                     console.error("Spots data format is invalid:", spots);
                     throw new Error("後端返回的車位資料格式錯誤，應為陣列");
@@ -872,7 +864,7 @@ async function setupReserveParking() {
         }
 
         // 如果沒有車位
-        if (spots.length === 0) {
+        if (!spots || spots.length === 0) {
             console.warn("No parking spots available from backend");
             alert(`所選日期（${selectedDate}）目前沒有可用的車位！請選擇其他日期。`);
             parkingSpacesContainer.innerHTML = '<p>無可用車位</p>';
@@ -948,7 +940,7 @@ async function handleReserveParkingClick(event) {
         }
 
         const token = getToken();
-        let response = await fetch(`${API_URL}/rent`, {
+        const response = await fetch(`${API_URL}/rent`, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
@@ -969,7 +961,7 @@ async function handleReserveParkingClick(event) {
         space.querySelector("span").textContent = "預約";
         addToHistory(`預約車位 ${spotId} 於 ${selectedDate}`);
         alert(`車位 ${spotId} 已成功預約！`);
-        setupReserveParking();
+        setupReserveParking(); // 重新載入車位狀態
     } catch (error) {
         console.error("Reserve failed:", error);
         alert(error.message || "伺服器錯誤，請稍後再試！");

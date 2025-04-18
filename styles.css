@@ -16,7 +16,7 @@ form, input {
     width: 100%;
     max-width: 400px;
     margin: 100px auto;
-    padding: 15px 10px; /* 增加左右 padding 至 10px，與 toggleMessage 一致 */
+    padding: 15px 10px;
     background: white;
     border-radius: 5px;
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
@@ -29,7 +29,7 @@ form, input {
 
 .input-group {
     margin-bottom: 15px;
-    padding: 0; /* 移除左右 padding */
+    padding: 0;
 }
 
 .input-group label {
@@ -63,7 +63,7 @@ form, input {
 
 button {
     width: 100%;
-    max-width: 100%; /* 防止超出 */
+    max-width: 100%;
     padding: 10px;
     background: #28a745;
     color: white;
@@ -71,8 +71,8 @@ button {
     border-radius: 3px;
     cursor: pointer;
     box-sizing: border-box;
-    margin: 0; /* 移除左右 margin，確保按鈕不超出外框 */
-    transition: background 0.3s ease; /* 添加過渡效果 */
+    margin: 0;
+    transition: background 0.3s ease;
 }
 
 button:hover {
@@ -82,20 +82,21 @@ button:hover {
 /* 為「查詢」按鈕添加專屬樣式 */
 #reserveSearchButton {
     width: auto;
-    padding: 5px 10px;
+    padding: 8px 16px; /* 增加內邊距，與其他按鈕更一致 */
     background: #007bff;
     margin-left: 10px;
     font-size: 14px;
-    transition: background 0.3s ease, transform 0.1s ease; /* 添加過渡效果 */
+    border-radius: 3px;
+    transition: background 0.3s ease, transform 0.1s ease;
 }
 
 #reserveSearchButton:hover {
     background: #0056b3;
-    transform: scale(1.05); /* 懸停時放大 */
+    transform: scale(1.05);
 }
 
 #reserveSearchButton:active {
-    transform: scale(0.95); /* 點擊時縮小 */
+    transform: scale(0.95);
 }
 
 #formTitle {
@@ -104,7 +105,7 @@ button:hover {
 }
 
 #toggleMessage {
-    margin: 10px 10px 0; /* 與 .input-group 的 padding 一致 */
+    margin: 10px 10px 0;
     text-align: center;
 }
 
@@ -132,8 +133,8 @@ a:hover {
 
 .system-container {
     display: flex;
-    width: 90%; /* 改為更大範圍 */
-    max-width: 1600px; /* 增加最大寬度 */
+    width: 90%;
+    max-width: 1600px;
     margin: 50px auto;
     gap: 20px;
 }
@@ -180,23 +181,28 @@ a:hover {
 .parking-spaces {
     display: flex;
     flex-wrap: wrap;
-    gap: 10px;
+    gap: 15px; /* 增加間距，提升視覺效果 */
+    margin-top: 20px;
+    min-height: 100px; /* 確保初始高度，避免閃爍 */
 }
 
 .parking-space {
-    width: 100px;
-    height: 50px;
+    width: 120px; /* 稍微加寬，提升可點擊性 */
+    height: 60px;
     display: flex;
     align-items: center;
     justify-content: center;
     border-radius: 5px;
     font-weight: bold;
+    font-size: 14px;
     cursor: pointer;
-    transition: all 0.3s ease; /* 添加過渡效果 */
+    border: 1px solid #ddd; /* 添加邊框，提升視覺區分 */
+    transition: all 0.3s ease;
 }
 
 .parking-space:hover {
-    transform: scale(1.05); /* 鼠標懸停時放大 */
+    transform: scale(1.05);
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2); /* 懸停時增加陰影 */
 }
 
 .parking-space:active {
@@ -204,28 +210,30 @@ a:hover {
 }
 
 .available {
-    background-color: green;
+    background-color: #28a745; /* 綠色，可用 */
     color: white;
 }
 
 .occupied {
-    background-color: red;
+    background-color: #dc3545; /* 紅色，已佔用 */
     color: white;
 }
 
 .reserved {
-    background-color: blue;
+    background-color: #007bff; /* 藍色，預約 */
     color: white;
 }
 
 .parking-space.loading {
     background-color: #ccc;
-    color: white;
+    color: #666;
+    cursor: default; /* 載入中禁用點擊 */
 }
 
 .parking-space.unavailable {
-    background-color: #666;
+    background-color: #6c757d; /* 灰色，服務不可用 */
     color: white;
+    cursor: not-allowed; /* 禁用狀態明確 */
 }
 
 #logoutButton {
@@ -249,7 +257,7 @@ a:hover {
     width: 100%;
     margin-top: 20px;
     border: 1px solid #ccc;
-    min-height: 400px; /* 確保初始高度 */
+    min-height: 400px;
 }
 
 .search-container {
@@ -258,21 +266,27 @@ a:hover {
     align-items: center;
     flex-wrap: wrap;
     gap: 10px;
+    padding: 10px 0; /* 添加垂直內邊距，與其他區域一致 */
 }
 
 .search-container label {
     margin-right: 10px;
+    font-size: 14px;
+    color: #333;
 }
 
-.search-container select {
-    padding: 5px;
+.search-container select,
+.search-container input[type="date"] {
+    padding: 8px; /* 與其他輸入框一致 */
     border: 1px solid #ccc;
     border-radius: 3px;
-    margin-right: 10px;
+    font-size: 14px;
+    width: auto; /* 讓日期輸入框更靈活 */
+    min-width: 150px; /* 防止過窄 */
 }
 
 .search-container input {
-    padding: 5px;
+    padding: 8px;
     border: 1px solid #ccc;
     border-radius: 3px;
     width: 200px;
@@ -280,10 +294,11 @@ a:hover {
 
 .search-container button {
     width: auto;
-    padding: 5px 10px;
+    padding: 8px 16px;
     background: #007bff;
     margin-left: 10px;
     font-size: 14px;
+    border-radius: 3px;
 }
 
 .search-container button:hover {
@@ -307,4 +322,51 @@ a:hover {
     padding: 20px;
     color: #666;
     font-size: 16px;
+}
+
+/* 響應式設計 */
+@media (max-width: 768px) {
+    .system-container {
+        flex-direction: column;
+        width: 95%;
+    }
+
+    .function-list {
+        width: 100%;
+    }
+
+    .content-container {
+        width: 100%;
+    }
+
+    .parking-spaces {
+        justify-content: center; /* 行動裝置上居中顯示車位 */
+    }
+
+    .parking-space {
+        width: 100px; /* 縮小以適應小螢幕 */
+        height: 50px;
+    }
+
+    .search-container {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .search-container input[type="date"],
+    .search-container button {
+        width: 100%;
+        margin-left: 0;
+        margin-top: 10px;
+    }
+}
+
+/* 提示文字樣式 */
+.parking-spaces p {
+    width: 100%;
+    text-align: center;
+    color: #666;
+    font-size: 16px;
+    padding: 20px 0;
+    margin: 0;
 }
