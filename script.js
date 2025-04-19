@@ -1063,7 +1063,14 @@ document.addEventListener("DOMContentLoaded", async function () {
             }
             data.forEach(record => {
                 const listItem = document.createElement("li");
-                listItem.textContent = `${record.action || '未知操作'} - ${record.timestamp || '未知時間'}`;
+                // 使用 start_time 作為時間戳，並格式化為本地時間
+                const startTime = new Date(record.start_time).toLocaleString("zh-TW", { hour12: false });
+                // 構建顯示的歷史記錄描述
+                const action = `租用車位 ${record.spot_id} (Rent ID: ${record.rent_id})`;
+                const endTime = record.actual_end_time
+                    ? new Date(record.actual_end_time).toLocaleString("zh-TW", { hour12: false })
+                    : "尚未結束";
+                listItem.textContent = `${action} - 開始時間: ${startTime}, 結束時間: ${endTime}, 費用: ${record.total_cost} 元`;
                 historyList.appendChild(listItem);
             });
         } catch (error) {
@@ -1075,6 +1082,7 @@ document.addEventListener("DOMContentLoaded", async function () {
             }
         }
     }
+
 
     setupSharedParkingFilters();
     setupRentParkingFilters();
