@@ -1035,7 +1035,7 @@ document.addEventListener("DOMContentLoaded", async function () {
     // 載入歷史紀錄
     async function loadHistory() {
         if (!await checkAuth()) return;
-
+    
         try {
             const token = getToken();
             const response = await fetch(`${API_URL}/rent`, {
@@ -1054,18 +1054,29 @@ document.addEventListener("DOMContentLoaded", async function () {
                 }
                 throw new Error(`HTTP error! Status: ${response.status}`);
             }
-            const data = await response.json();
+            const responseData = await response.json();
             historyList.innerHTML = "";
+    
+            // 檢查回應是否為物件，且包含 data 欄位
+            let data = responseData;
+            if (!Array.isArray(responseData) && responseData.data && Array.isArray(responseData.data)) {
+                data = responseData.data; // 提取 data 欄位
+            }
+    
             if (!Array.isArray(data)) {
-                console.error("History data is not an array:", data);
+                console.error("History data is not an array:", responseData);
                 alert("歷史紀錄格式錯誤，請檢查後端服務");
                 return;
             }
+    
+            if (data.length === 0) {
+                historyList.innerHTML = "<li>目前沒有租賃記錄</li>";
+                return;
+            }
+    
             data.forEach(record => {
                 const listItem = document.createElement("li");
-                // 使用 start_time 作為時間戳，並格式化為本地時間
                 const startTime = new Date(record.start_time).toLocaleString("zh-TW", { hour12: false });
-                // 構建顯示的歷史記錄描述
                 const action = `租用車位 ${record.spot_id} (Rent ID: ${record.rent_id})`;
                 const endTime = record.actual_end_time
                     ? new Date(record.actual_end_time).toLocaleString("zh-TW", { hour12: false })
