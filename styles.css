@@ -211,7 +211,7 @@ a:hover {
 
 .available {
     background-color: #28a745; /* 綠色，可用 */
-    color: white;
+    color: black;
 }
 
 .occupied {
@@ -387,7 +387,7 @@ a:hover {
 #parkingTable th,
 #parkingTable td {
     padding: 12px;
-    border: 1px solid #ddd;
+    border: 1px solid black;
     text-align: left;
     font-size: 14px;
 }
@@ -420,7 +420,7 @@ a:hover {
 }
 
 #parkingTable button:hover:not(:disabled) {
-    background-color: #ccc;
+    background-color: #218838;
 }
 
 #parkingTable button:disabled {
