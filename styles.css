@@ -410,8 +410,8 @@ a:hover {
 
 #parkingTable button {
     padding: 6px 12px;
-    background-color: #ccc;
-    color: black;
+    background-color: #28a745;
+    color: white;
     border: none;
     border-radius: 3px;
     cursor: pointer;
@@ -420,7 +420,7 @@ a:hover {
 }
 
 #parkingTable button:hover:not(:disabled) {
-    background-color: #218838;
+    background-color: #ccc;
 }
 
 #parkingTable button:disabled {
