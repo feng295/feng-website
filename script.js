@@ -1011,7 +1011,7 @@ document.addEventListener("DOMContentLoaded", async function () {
             row.classList.add("reserved");
             row.querySelector("button").disabled = true;
             row.querySelector("td:nth-child(6)").textContent = "預約";
-            addToHistory(`預約車位 v${spotId} 於 ${selectedDate}`);
+            addToHistory(`預約車位 ${spotId} 於 ${selectedDate}`);
             alert(`車位 ${spotId} 已成功預約！`);
         } catch (error) {
             console.error("Reserve failed:", error);
