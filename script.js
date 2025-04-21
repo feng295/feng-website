@@ -936,11 +936,11 @@ document.addEventListener("DOMContentLoaded", async function () {
             console.log("Generating parking table with filtered spots:", filteredSpots);
             filteredSpots.forEach(spot => {
                 const row = document.createElement("tr");
-                row.setAttribute("data-id", `v${spot.spot_id}`);
+                row.setAttribute("data-id", `${spot.spot_id}`);
                 row.classList.add(spot.status === "available" || spot.status === "可用" ? "available" : "occupied");
 
                 const idCell = document.createElement("td");
-                idCell.textContent = `v${spot.spot_id}`;
+                idCell.textContent = `${spot.spot_id}`;
                 row.appendChild(idCell);
 
                 const locationCell = document.createElement("td");
