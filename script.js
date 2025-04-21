@@ -403,7 +403,7 @@ document.addEventListener("DOMContentLoaded", async function () {
         spots.forEach(spot => {
             if (spot.latitude && spot.longitude) {
                 const marker = L.marker([spot.latitude, spot.longitude]).addTo(map);
-                marker.bindPopup(`編號: ${spot.id}<br>縣市: ${spot.location || '未知'}<br>類型: ${spot.parking_type === "flat" ? "平面" : "機械"}<br>樓層: ${spot.floor_level === "ground" ? "地面" : "地下" + (spot.floor_level.startsWith("B") ? spot.floor_level.slice(1) : spot.floor_level) + "樓"}<br>計價: ${spot.pricing_type === "hourly" ? "按小時" : spot.pricing_type === "daily" ? "按日" : "按月"}<br><br>狀態: ${spot.status}`);
+                marker.bindPopup(`編號: ${spot.spot_id}<br>縣市: ${spot.location || '未知'}<br>類型: ${spot.parking_type === "flat" ? "平面" : "機械"}<br>樓層: ${spot.floor_level === "ground" ? "地面" : "地下" + (spot.floor_level.startsWith("B") ? spot.floor_level.slice(1) : spot.floor_level) + "樓"}<br>計價: ${spot.pricing_type === "hourly" ? "按小時" : spot.pricing_type === "daily" ? "按日" : "按月"}<br><br>狀態: ${spot.status}`);
                 markersArray.push(marker);
             } else {
                 console.warn("Invalid spot data:", spot);
@@ -485,7 +485,7 @@ document.addEventListener("DOMContentLoaded", async function () {
             filteredSpots.forEach(spot => {
                 if (spot.latitude && spot.longitude) {
                     const marker = L.marker([spot.latitude, spot.longitude]).addTo(map);
-                    marker.bindPopup(`編號: ${spot.id}<br>縣市: ${spot.location || '未知'}<br>類型: ${spot.parking_type === "flat" ? "平面" : "機械"}<br>樓層: ${spot.floor_level === "ground" ? "地面" : "地下" + (spot.floor_level.startsWith("B") ? spot.floor_level.slice(1) : spot.floor_level) + "樓"}<br>計價: ${spot.pricing_type === "hourly" ? "按小時" : spot.pricing_type === "daily" ? "按日" : "按月"}<br><br>狀態: ${spot.status}`);
+                    marker.bindPopup(`編號: ${spot.spot_id}<br>縣市: ${spot.location || '未知'}<br>類型: ${spot.parking_type === "flat" ? "平面" : "機械"}<br>樓層: ${spot.floor_level === "ground" ? "地面" : "地下" + (spot.floor_level.startsWith("B") ? spot.floor_level.slice(1) : spot.floor_level) + "樓"}<br>計價: ${spot.pricing_type === "hourly" ? "按小時" : spot.pricing_type === "daily" ? "按日" : "按月"}<br><br>狀態: ${spot.status}`);
                     markersArray.push(marker);
                 }
             });
@@ -936,11 +936,11 @@ document.addEventListener("DOMContentLoaded", async function () {
             console.log("Generating parking table with filtered spots:", filteredSpots);
             filteredSpots.forEach(spot => {
                 const row = document.createElement("tr");
-                row.setAttribute("data-id", `v${spot.id}`);
+                row.setAttribute("data-id", `v${spot.spot_id}`);
                 row.classList.add(spot.status === "available" || spot.status === "可用" ? "available" : "occupied");
 
                 const idCell = document.createElement("td");
-                idCell.textContent = `v${spot.id}`;
+                idCell.textContent = `v${spot.spot_id}`;
                 row.appendChild(idCell);
 
                 const locationCell = document.createElement("td");
@@ -1012,7 +1012,7 @@ document.addEventListener("DOMContentLoaded", async function () {
             row.querySelector("button").disabled = true;
             row.querySelector("td:nth-child(6)").textContent = "預約";
             addToHistory(`預約車位 v${spotId} 於 ${selectedDate}`);
-            alert(`車位 v${spotId} 已成功預約！`);
+            alert(`車位 ${spotId} 已成功預約！`);
         } catch (error) {
             console.error("Reserve failed:", error);
             alert(error.message || "伺服器錯誤，請稍後再試！");
@@ -1077,7 +1077,7 @@ document.addEventListener("DOMContentLoaded", async function () {
             data.forEach(record => {
                 const listItem = document.createElement("li");
                 const startTime = new Date(record.start_time).toLocaleString("zh-TW", { hour12: false });
-                const action = `租用車位 ${record.spot_id} (Rent ID: ${record.rent_id})`;
+                const action = `租用車位 ${record.spot.spot_id} (Rent ID: ${record.rent_id})`;
                 const endTime = record.actual_end_time
                     ? new Date(record.actual_end_time).toLocaleString("zh-TW", { hour12: false })
                     : "尚未結束";
