@@ -255,7 +255,7 @@ document.addEventListener("DOMContentLoaded", async function () {
             paymentMethodInput.parentElement.style.display = "none";
             cardNumberContainer.style.display = "none";
             licensePlateContainer.style.display = "none";
-            vehicleTypeContainer.style.display = "none";
+            card_modelContainer.style.display = "none";
 
             nameInput.removeAttribute("required");
             phoneInput.removeAttribute("required");
@@ -263,7 +263,7 @@ document.addEventListener("DOMContentLoaded", async function () {
             paymentMethodInput.removeAttribute("required");
             cardNumberInput.removeAttribute("required");
             licensePlateInput.removeAttribute("required");
-            vehicleTypeInput.removeAttribute("required");
+            card_modelInput.removeAttribute("required");
 
             emailInput.setAttribute("required", "true");
             passwordInput.setAttribute("required", "true");
@@ -290,7 +290,7 @@ document.addEventListener("DOMContentLoaded", async function () {
             }
             if (isRenter) {
                 licensePlateInput.setAttribute("required", "true");
-                vehicleTypeInput.setAttribute("required", "true");
+                card_modelInput.setAttribute("required", "true");
             }
         }
     }
