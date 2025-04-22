@@ -304,28 +304,33 @@ document.addEventListener("DOMContentLoaded", async function () {
         }
     
         if (isLogin) {
-            // 登入邏輯保持不變
             try {
                 const response = await fetch(`${API_URL}/members/login`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ email, password })
                 });
+                console.log(`Login response status: ${response.status}`);
+                if (!response.headers.get('content-type')?.includes('application/json')) {
+                    throw new Error("後端返回非 JSON 響應，請檢查伺服器配置");
+                }
                 const result = await response.json();
                 if (response.ok) {
-                    if (!result.token) {
+                    if (!result.data.token) {
                         showError("後端未返回 token，請檢查後端服務！");
                         return;
                     }
-                    setToken(result.token);
+                    setToken(result.data.token);
+                    console.log("Login successful, token stored");
                     alert("登入成功！");
                     showMainPage();
                 } else {
+                    console.error("Login failed:", result);
                     showError(result.error || "電子郵件或密碼錯誤！");
                 }
             } catch (error) {
                 console.error("Login failed:", error.message);
-                showError("無法連接到伺服器，請檢查網路或後端服務！");
+                showError(error.message || "無法連接到伺服器，請檢查網路或後端服務！");
             }
         } else {
             const name = nameInput.value.trim();
