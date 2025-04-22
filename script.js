@@ -12,10 +12,7 @@ document.addEventListener("DOMContentLoaded", async function () {
     const toggleMessage = document.getElementById("toggleMessage");
     const errorMessage = document.getElementById("errorMessage");
     const logoutButton = document.getElementById("logoutButton");
-    const functionList = document.getElementById("functionList");
     const historyList = document.getElementById("historyList");
-    const viewParkingTableBody = document.getElementById("viewParkingTableBody");
-    const incomeTableBody = document.getElementById("incomeTableBody");
 
     const emailInput = document.getElementById("email");
     const passwordInput = document.getElementById("password");
@@ -24,7 +21,7 @@ document.addEventListener("DOMContentLoaded", async function () {
     const roleInput = document.getElementById("role");
     const paymentMethodInput = document.getElementById("payment_method");
     const cardNumberContainer = document.getElementById("cardNumberContainer");
-    const cardNumberInput = document.getElementById("car_number");
+    const cardNumberInput = document.getElementById("card_number");
     const licensePlateContainer = document.getElementById("licensePlateContainer");
     const car_modelContainer = document.getElementById("car_modelContainer");
     const licensePlateInput = document.getElementById("licensePlate");
@@ -32,9 +29,9 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     // 檢查必要的 DOM 元素是否存在
     const requiredElements = {
-        emailInput, passwordInput, authForm, logoutButton, functionList, historyList, 
-        viewParkingTableBody, incomeTableBody, nameInput, phoneInput, roleInput, 
-        paymentMethodInput, cardNumberContainer, licensePlateContainer, car_modelContainer
+        emailInput, passwordInput, authForm, logoutButton, historyList,
+        nameInput, phoneInput, roleInput, paymentMethodInput, cardNumberContainer,
+        licensePlateContainer, car_modelContainer, cardNumberInput, licensePlateInput, car_modelInput
     };
     for (const [key, element] of Object.entries(requiredElements)) {
         if (!element) {
@@ -44,8 +41,7 @@ document.addEventListener("DOMContentLoaded", async function () {
     }
 
     let isLogin = true;
-    let userRole = null; // 儲存用戶身份
-    const API_URL = '/api/v1'; // 後端 API 網址
+    const API_URL = '/api/v1'; // 後端 URL
 
     // 顯示錯誤訊息
     function showError(message) {
@@ -89,29 +85,6 @@ document.addEventListener("DOMContentLoaded", async function () {
         }
     }
 
-    // 動態生成功能清單
-    function setupFunctionList() {
-        functionList.innerHTML = '';
-        const functions = userRole === "shared_owner" ? [
-            { target: "viewParking", label: "查看車位" },
-            { target: "history", label: "個人歷史紀錄" },
-            { target: "incomeQuery", label: "收入查詢" }
-        ] : [
-            { target: "reserveParking", label: "預約車位" },
-            { target: "history", label: "個人歷史紀錄" }
-        ];
-        functions.forEach(func => {
-            const li = document.createElement("li");
-            const a = document.createElement("a");
-            a.href = "#";
-            a.className = "nav-link";
-            a.dataset.target = func.target;
-            a.textContent = func.label;
-            li.appendChild(a);
-            functionList.appendChild(li);
-        });
-    }
-
     // 顯示主畫面
     function showMainPage() {
         authContainer.style.display = "none";
@@ -120,19 +93,14 @@ document.addEventListener("DOMContentLoaded", async function () {
         document.querySelector(".content-container").style.display = "block";
         logoutButton.style.display = "block";
 
-        // 動態設置功能清單
-        setupFunctionList();
-
-        // 預設顯示第一個功能
-        document.querySelectorAll(".content-section").forEach(section => {
-            section.style.display = "none";
-        });
-        const defaultSection = userRole === "shared_owner" ? "viewParking" : "reserveParking";
-        document.getElementById(defaultSection).style.display = "block";
-        if (defaultSection === "viewParking") {
-            setupViewParking();
-        } else {
-            setupReserveParking();
+        // 初始化主頁面內容
+        const activeSection = document.querySelector(".content-section[style='display: block;']");
+        if (activeSection) {
+            if (activeSection.id === "reserveParking") {
+                setupReserveParking();
+            } else if (activeSection.id === "history") {
+                loadHistory();
+            }
         }
     }
 
@@ -162,7 +130,7 @@ document.addEventListener("DOMContentLoaded", async function () {
         }
     }
 
-    // 檢查是否已登入
+    // 檢查是否已登入（檢查 token 是否存在）
     async function checkAuth(silent = false) {
         const token = getToken();
         if (!token || token.trim() === "") {
@@ -175,9 +143,9 @@ document.addEventListener("DOMContentLoaded", async function () {
         return true;
     }
 
-    // 初始化時檢查是否已登入
+    // 初始化時檢查是否已登入（靜默模式）
     (async () => {
-        const isAuthenticated = await checkAuth(true);
+        const isAuthenticated = await checkAuth(true); // 靜默檢查
         if (isAuthenticated) {
             showMainPage();
         } else {
@@ -185,26 +153,26 @@ document.addEventListener("DOMContentLoaded", async function () {
         }
     })();
 
-    // 當身份改變時，顯示或隱藏車牌號碼和卡型輸入框
+    // 當身份改變時，顯示或隱藏車牌號碼和車型輸入框
     roleInput.addEventListener("change", function () {
         const isRenter = roleInput.value === "renter";
-        if (licensePlateContainer) licensePlateContainer.style.display = isRenter ? "block" : "none";
-        if (car_modelContainer) car_modelContainer.style.display = isRenter ? "block" : "none";
-        if (licensePlateInput) licensePlateInput.required = isRenter;
-        if (car_modelInput) car_modelInput.required = isRenter;
+        licensePlateContainer.style.display = isRenter ? "block" : "none";
+        car_modelContainer.style.display = isRenter ? "block" : "none";
+        licensePlateInput.required = isRenter;
+        car_modelInput.required = isRenter;
     });
 
     // 當付款方式改變時，顯示或隱藏信用卡號輸入框
     paymentMethodInput.addEventListener("change", function () {
-        const isCreditCard = paymentMethodInput.value === "credit_card";
-        if (cardNumberContainer) cardNumberContainer.style.display = isCreditCard ? "block" : "none";
-        if (cardNumberInput) {
-            cardNumberInput.required = isCreditCard;
-            if (!isCreditCard) cardNumberInput.value = "";
+        if (paymentMethodInput.value === "credit_card") {
+            cardNumberContainer.style.display = "block";
+        } else {
+            cardNumberContainer.style.display = "none";
+            cardNumberInput.value = "";
         }
     });
 
-    // 電話號碼輸入驗證
+    // 電話號碼輸入驗證（只允許數字）
     phoneInput.addEventListener("input", function () {
         let value = phoneInput.value.replace(/\D/g, "");
         phoneInput.value = value;
@@ -227,17 +195,22 @@ document.addEventListener("DOMContentLoaded", async function () {
         }
     });
 
-    // 信用卡號輸入格式化
+    // 車型輸入驗證（假設為 4 位數字，根據實際需求調整）
+    car_modelInput.addEventListener("input", function () {
+        let value = car_modelInput.value.trim();
+        const carModelRegex = /^[0-9]{4}$/;
+        if (carModelRegex.test(value)) {
+            showSuccess("車型格式正確");
+        } else {
+            showError("請輸入有效車型（4位數字，例如 1234）");
+        }
+    });
+
+    // 信用卡號輸入格式化（自動加上 "-"）
     cardNumberInput.addEventListener("input", function () {
         let value = cardNumberInput.value.replace(/\D/g, "");
         value = value.replace(/(\d{4})(?=\d)/g, "$1-");
         cardNumberInput.value = value;
-        const cardRegex = /^(\d{4}-){3}\d{4}$/;
-        if (cardRegex.test(value)) {
-            showSuccess("信用卡號格式正確");
-        } else {
-            showError("請輸入有效信用卡號（16位數字，格式如 1234-5678-9012-3456）");
-        }
     });
 
     // 即時密碼驗證
@@ -256,58 +229,54 @@ document.addEventListener("DOMContentLoaded", async function () {
     // 動態隱藏註冊專用欄位
     function toggleFormFields() {
         if (isLogin) {
-            if (nameInput?.parentElement) nameInput.parentElement.style.display = "none";
-            if (phoneInput?.parentElement) phoneInput.parentElement.style.display = "none";
-            if (roleInput?.parentElement) roleInput.parentElement.style.display = "none";
-            if (paymentMethodInput?.parentElement) paymentMethodInput.parentElement.style.display = "none";
-            if (cardNumberContainer) cardNumberContainer.style.display = "none";
-            if (licensePlateContainer) licensePlateContainer.style.display = "none";
-            if (car_modelContainer) car_modelContainer.style.display = "none";
+            nameInput.parentElement.style.display = "none";
+            phoneInput.parentElement.style.display = "none";
+            roleInput.parentElement.style.display = "none";
+            paymentMethodInput.parentElement.style.display = "none";
+            cardNumberContainer.style.display = "none";
+            licensePlateContainer.style.display = "none";
+            car_modelContainer.style.display = "none";
 
-            if (nameInput) nameInput.removeAttribute("required");
-            if (phoneInput) phoneInput.removeAttribute("required");
-            if (roleInput) roleInput.removeAttribute("required");
-            if (paymentMethodInput) paymentMethodInput.removeAttribute("required");
-            if (cardNumberInput) cardNumberInput.removeAttribute("required");
-            if (licensePlateInput) licensePlateInput.removeAttribute("required");
-            if (car_modelInput) car_modelInput.removeAttribute("required");
+            nameInput.removeAttribute("required");
+            phoneInput.removeAttribute("required");
+            roleInput.removeAttribute("required");
+            paymentMethodInput.removeAttribute("required");
+            cardNumberInput.removeAttribute("required");
+            licensePlateInput.removeAttribute("required");
+            car_modelInput.removeAttribute("required");
 
-            if (emailInput) emailInput.setAttribute("required", "true");
-            if (passwordInput) passwordInput.setAttribute("required", "true");
+            emailInput.setAttribute("required", "true");
+            passwordInput.setAttribute("required", "true");
         } else {
-            if (nameInput?.parentElement) nameInput.parentElement.style.display = "block";
-            if (phoneInput?.parentElement) phoneInput.parentElement.style.display = "block";
-            if (roleInput?.parentElement) roleInput.parentElement.style.display = "block";
-            if (paymentMethodInput?.parentElement) paymentMethodInput.parentElement.style.display = "block";
-            const isRenter = roleInput?.value === "renter";
-            if (licensePlateContainer) licensePlateContainer.style.display = isRenter ? "block" : "none";
-            if (car_modelContainer) car_modelContainer.style.display = isRenter ? "block" : "none";
-            if (paymentMethodInput?.value === "credit_card" && cardNumberContainer) {
+            nameInput.parentElement.style.display = "block";
+            phoneInput.parentElement.style.display = "block";
+            roleInput.parentElement.style.display = "block";
+            paymentMethodInput.parentElement.style.display = "block";
+            const isRenter = roleInput.value === "renter";
+            licensePlateContainer.style.display = isRenter ? "block" : "none";
+            car_modelContainer.style.display = isRenter ? "block" : "none";
+            if (paymentMethodInput.value === "credit_card") {
                 cardNumberContainer.style.display = "block";
             }
 
-            if (emailInput) emailInput.setAttribute("required", "true");
-            if (passwordInput) passwordInput.setAttribute("required", "true");
-            if (nameInput) nameInput.setAttribute("required", "true");
-            if (phoneInput) phoneInput.setAttribute("required", "true");
-            if (roleInput) roleInput.setAttribute("required", "true");
-            if (paymentMethodInput) paymentMethodInput.setAttribute("required", "true");
-            if (paymentMethodInput?.value === "credit_card" && cardNumberInput) {
+            emailInput.setAttribute("required", "true");
+            passwordInput.setAttribute("required", "true");
+            nameInput.setAttribute("required", "true");
+            phoneInput.setAttribute("required", "true");
+            roleInput.setAttribute("required", "true");
+            paymentMethodInput.setAttribute("required", "true");
+            if (paymentMethodInput.value === "credit_card") {
                 cardNumberInput.setAttribute("required", "true");
             }
             if (isRenter) {
-                if (licensePlateInput) licensePlateInput.setAttribute("required", "true");
-                if (car_modelInput) car_modelInput.setAttribute("required", "true");
+                licensePlateInput.setAttribute("required", "true");
+                car_modelInput.setAttribute("required", "true");
             }
         }
     }
 
-    // 初始化表單顯示（確保 DOM 元素存在）
-    if (authForm) {
-        toggleFormFields();
-    } else {
-        console.error("authForm not found, skipping toggleFormFields");
-    }
+    // 初始化表單顯示
+    toggleFormFields();
 
     // 切換登入/註冊
     toggleMessage.addEventListener("click", function (event) {
@@ -328,6 +297,7 @@ document.addEventListener("DOMContentLoaded", async function () {
         const email = emailInput.value.trim();
         const password = passwordInput.value.trim();
 
+        // 清除即時驗證訊息
         errorMessage.textContent = "";
 
         if (!email || !password) {
@@ -342,28 +312,22 @@ document.addEventListener("DOMContentLoaded", async function () {
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ email, password })
                 });
-                console.log(`Login response status: ${response.status}`);
-                if (!response.headers.get('content-type')?.includes('application/json')) {
-                    throw new Error("後端返回非 JSON 響應，請檢查伺服器配置");
-                }
                 const result = await response.json();
                 if (response.ok) {
-                    if (!result.data.token || !result.data.role) {
-                        showError("後端未返回 token 或 role，請檢查後端服務！");
+                    // 檢查後端返回的 token
+                    if (!result.token) {
+                        showError("後端未返回 token，請檢查後端服務！");
                         return;
                     }
-                    setToken(result.data.token);
-                    userRole = result.data.role; // 儲存用戶身份
-                    console.log("Login successful, token and role stored:", userRole);
+                    setToken(result.token); // 存儲 token
                     alert("登入成功！");
                     showMainPage();
                 } else {
-                    console.error("Login failed:", result);
                     showError(result.error || "電子郵件或密碼錯誤！");
                 }
             } catch (error) {
                 console.error("Login failed:", error.message);
-                showError(error.message || "無法連接到伺服器，請檢查網路或後端服務！");
+                showError("無法連接到伺服器，請檢查網路或後端服務！");
             }
         } else {
             const name = nameInput.value.trim();
@@ -380,7 +344,7 @@ document.addEventListener("DOMContentLoaded", async function () {
             if (!role) errors.push("請選擇身份");
             if (!payment_method) errors.push("請選擇付款方式");
             if (role === "renter" && !license_plate) errors.push("請填寫車牌號碼");
-            if (role === "renter" && !car_model) errors.push("請填寫卡型");
+            if (role === "renter" && !car_model) errors.push("請填寫車型");
 
             const phoneRegex = /^[0-9]{10}$/;
             if (!phoneRegex.test(phone)) {
@@ -388,11 +352,18 @@ document.addEventListener("DOMContentLoaded", async function () {
             }
 
             const plateRegex = /^[A-Z]{2,3}-[0-9]{2,4}$|^[0-9]{2,4}-[A-Z]{2,3}$/;
-            if (role === "renter" && !plateRegex.test(license_plate)) {
+            if (role === "renter" && license_plate && !plateRegex.test(license_plate)) {
                 errors.push("請提供有效的車牌號碼（例如 ABC-1234 或 1234-ABC）");
             }
 
+            const carModelRegex = /^[0-9]{4}$/;
+            if (role === "renter" && car_model && !carModelRegex.test(car_model)) {
+                errors.push("請提供有效的車型（4位數字，例如 1234）");
+            }
+
             const cleanedPassword = password.replace(/[^\x20-\x7E]/g, "");
+            console.log("Password after cleanup:", cleanedPassword);
+
             const hasLetter = /[a-zA-Z]/.test(cleanedPassword);
             const hasNumber = /[0-9]/.test(cleanedPassword);
             const isLongEnough = cleanedPassword.length >= 8;
@@ -403,38 +374,37 @@ document.addEventListener("DOMContentLoaded", async function () {
             if (payment_method === "credit_card" && !payment_info) {
                 errors.push("請輸入信用卡號");
             }
-            if (payment_method === "credit_card") {
-                const cardRegex = /^(\d{4}-){3}\d{4}$/;
-                if (!cardRegex.test(payment_info)) {
-                    errors.push("請輸入有效信用卡號（16位數字，格式如 1234-5678-9012-3456）");
-                }
-            }
 
             if (errors.length > 0) {
                 showError(errors.join("；"));
                 return;
             }
 
+            // 構建請求體，僅包含非空值
+            const requestBody = {
+                name,
+                email,
+                password: cleanedPassword,
+                phone,
+                role,
+                payment_method
+            };
+            if (payment_method === "credit_card" && payment_info) {
+                requestBody.payment_info = payment_info;
+            }
+            if (role === "renter" && license_plate) {
+                requestBody.license_plate = license_plate;
+            }
+            if (role === "renter" && car_model) {
+                requestBody.car_model = car_model;
+            }
+
             try {
                 const response = await fetch(`${API_URL}/members/register`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ 
-                        name, 
-                        email, 
-                        password: cleanedPassword, 
-                        phone, 
-                        role, 
-                        payment_method, 
-                        payment_info,
-                        license_plate: role === "renter" ? license_plate : undefined,
-                        car_model: role === "renter" ? car_model : undefined
-                    })
+                    body: JSON.stringify(requestBody)
                 });
-                console.log(`Register response status: ${response.status}`);
-                if (!response.headers.get('content-type')?.includes('application/json')) {
-                    throw new Error("後端返回非 JSON 響應，請檢查伺服器配置");
-                }
                 const result = await response.json();
                 if (response.ok) {
                     alert("註冊成功！請使用此帳號登入。");
@@ -444,20 +414,19 @@ document.addEventListener("DOMContentLoaded", async function () {
                     toggleMessage.innerHTML = '還沒有帳號？<a href="#" id="toggleLink">註冊</a>';
                     toggleFormFields();
                 } else {
-                    console.error("Register failed:", result);
+                    console.log("Register failed:", response.status, result);
                     showError(result.error || `註冊失敗！（錯誤碼：${response.status}）`);
                 }
             } catch (error) {
                 console.error("Register failed:", error.message);
-                showError(error.message || "無法連接到伺服器，請檢查網路或後端服務！");
+                showError("無法連接到伺服器，請檢查網路或後端服務！");
             }
         }
     });
 
     // 登出功能
     logoutButton.addEventListener("click", function () {
-        removeToken();
-        userRole = null;
+        removeToken(); // 清除 token
         showLoginPage();
     });
 
