@@ -195,14 +195,13 @@ document.addEventListener("DOMContentLoaded", async function () {
         }
     });
 
-    // 車型輸入驗證（假設為 4 位數字，根據實際需求調整）
+    // 車型輸入驗證
     car_modelInput.addEventListener("input", function () {
         let value = car_modelInput.value.trim();
-        const carModelRegex = /^[0-9]{4}$/;
-        if (carModelRegex.test(value)) {
+        if (value.length > 0) {
             showSuccess("車型格式正確");
         } else {
-            showError("請輸入有效車型（4位數字，例如 1234）");
+            showError("請輸入車型");
         }
     });
 
@@ -296,7 +295,6 @@ document.addEventListener("DOMContentLoaded", async function () {
         event.preventDefault();
         const email = emailInput.value.trim();
         const password = passwordInput.value.trim();
-
         // 清除即時驗證訊息
         errorMessage.textContent = "";
 
@@ -304,8 +302,9 @@ document.addEventListener("DOMContentLoaded", async function () {
             showError("電子郵件和密碼不能為空！");
             return;
         }
-
+    
         if (isLogin) {
+            // 登入邏輯保持不變
             try {
                 const response = await fetch(`${API_URL}/members/login`, {
                     method: 'POST',
@@ -314,12 +313,11 @@ document.addEventListener("DOMContentLoaded", async function () {
                 });
                 const result = await response.json();
                 if (response.ok) {
-                    // 檢查後端返回的 token
                     if (!result.token) {
                         showError("後端未返回 token，請檢查後端服務！");
                         return;
                     }
-                    setToken(result.token); // 存儲 token
+                    setToken(result.token);
                     alert("登入成功！");
                     showMainPage();
                 } else {
@@ -337,7 +335,7 @@ document.addEventListener("DOMContentLoaded", async function () {
             const license_plate = licensePlateInput.value.trim();
             const car_model = car_modelInput.value.trim();
             let payment_info = cardNumberInput.value.trim();
-
+    
             const errors = [];
             if (!name) errors.push("請填寫姓名");
             if (!phone) errors.push("請填寫電話號碼");
@@ -345,41 +343,36 @@ document.addEventListener("DOMContentLoaded", async function () {
             if (!payment_method) errors.push("請選擇付款方式");
             if (role === "renter" && !license_plate) errors.push("請填寫車牌號碼");
             if (role === "renter" && !car_model) errors.push("請填寫車型");
-
+    
             const phoneRegex = /^[0-9]{10}$/;
             if (!phoneRegex.test(phone)) {
                 errors.push("請提供有效的電話號碼（10位數字）");
             }
-
+    
             const plateRegex = /^[A-Z]{2,3}-[0-9]{2,4}$|^[0-9]{2,4}-[A-Z]{2,3}$/;
             if (role === "renter" && license_plate && !plateRegex.test(license_plate)) {
                 errors.push("請提供有效的車牌號碼（例如 ABC-1234 或 1234-ABC）");
             }
-
-            const carModelRegex = /^[0-9]{4}$/;
-            if (role === "renter" && car_model && !carModelRegex.test(car_model)) {
-                errors.push("請提供有效的車型（4位數字，例如 1234）");
-            }
-
+    
             const cleanedPassword = password.replace(/[^\x20-\x7E]/g, "");
             console.log("Password after cleanup:", cleanedPassword);
-
+    
             const hasLetter = /[a-zA-Z]/.test(cleanedPassword);
             const hasNumber = /[0-9]/.test(cleanedPassword);
             const isLongEnough = cleanedPassword.length >= 8;
             if (!hasLetter || !hasNumber || !isLongEnough) {
                 errors.push("密碼必須至少8個字符，包含字母和數字");
             }
-
+    
             if (payment_method === "credit_card" && !payment_info) {
                 errors.push("請輸入信用卡號");
             }
-
+    
             if (errors.length > 0) {
                 showError(errors.join("；"));
                 return;
             }
-
+    
             // 構建請求體，僅包含非空值
             const requestBody = {
                 name,
@@ -398,7 +391,7 @@ document.addEventListener("DOMContentLoaded", async function () {
             if (role === "renter" && car_model) {
                 requestBody.car_model = car_model;
             }
-
+    
             try {
                 const response = await fetch(`${API_URL}/members/register`, {
                     method: 'POST',
