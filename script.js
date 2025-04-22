@@ -24,17 +24,17 @@ document.addEventListener("DOMContentLoaded", async function () {
     const roleInput = document.getElementById("role");
     const paymentMethodInput = document.getElementById("payment_method");
     const cardNumberContainer = document.getElementById("cardNumberContainer");
-    const cardNumberInput = document.getElementById("card_number");
+    const cardNumberInput = document.getElementById("car_number");
     const licensePlateContainer = document.getElementById("licensePlateContainer");
-    const card_modelContainer = document.getElementById("card_modelContainer");
+    const car_modelContainer = document.getElementById("car_modelContainer");
     const licensePlateInput = document.getElementById("licensePlate");
-    const card_modelInput = document.getElementById("card_model");
+    const car_modelInput = document.getElementById("car_model");
 
     // 檢查必要的 DOM 元素是否存在
     const requiredElements = {
         emailInput, passwordInput, authForm, logoutButton, functionList, historyList, 
         viewParkingTableBody, incomeTableBody, nameInput, phoneInput, roleInput, 
-        paymentMethodInput, cardNumberContainer, licensePlateContainer, card_modelContainer
+        paymentMethodInput, cardNumberContainer, licensePlateContainer, car_modelContainer
     };
     for (const [key, element] of Object.entries(requiredElements)) {
         if (!element) {
@@ -189,9 +189,9 @@ document.addEventListener("DOMContentLoaded", async function () {
     roleInput.addEventListener("change", function () {
         const isRenter = roleInput.value === "renter";
         if (licensePlateContainer) licensePlateContainer.style.display = isRenter ? "block" : "none";
-        if (card_modelContainer) card_modelContainer.style.display = isRenter ? "block" : "none";
+        if (car_modelContainer) car_modelContainer.style.display = isRenter ? "block" : "none";
         if (licensePlateInput) licensePlateInput.required = isRenter;
-        if (card_modelInput) card_modelInput.required = isRenter;
+        if (car_modelInput) car_modelInput.required = isRenter;
     });
 
     // 當付款方式改變時，顯示或隱藏信用卡號輸入框
@@ -262,7 +262,7 @@ document.addEventListener("DOMContentLoaded", async function () {
             if (paymentMethodInput?.parentElement) paymentMethodInput.parentElement.style.display = "none";
             if (cardNumberContainer) cardNumberContainer.style.display = "none";
             if (licensePlateContainer) licensePlateContainer.style.display = "none";
-            if (card_modelContainer) card_modelContainer.style.display = "none";
+            if (car_modelContainer) car_modelContainer.style.display = "none";
 
             if (nameInput) nameInput.removeAttribute("required");
             if (phoneInput) phoneInput.removeAttribute("required");
@@ -270,7 +270,7 @@ document.addEventListener("DOMContentLoaded", async function () {
             if (paymentMethodInput) paymentMethodInput.removeAttribute("required");
             if (cardNumberInput) cardNumberInput.removeAttribute("required");
             if (licensePlateInput) licensePlateInput.removeAttribute("required");
-            if (card_modelInput) card_modelInput.removeAttribute("required");
+            if (car_modelInput) car_modelInput.removeAttribute("required");
 
             if (emailInput) emailInput.setAttribute("required", "true");
             if (passwordInput) passwordInput.setAttribute("required", "true");
@@ -281,7 +281,7 @@ document.addEventListener("DOMContentLoaded", async function () {
             if (paymentMethodInput?.parentElement) paymentMethodInput.parentElement.style.display = "block";
             const isRenter = roleInput?.value === "renter";
             if (licensePlateContainer) licensePlateContainer.style.display = isRenter ? "block" : "none";
-            if (card_modelContainer) card_modelContainer.style.display = isRenter ? "block" : "none";
+            if (car_modelContainer) car_modelContainer.style.display = isRenter ? "block" : "none";
             if (paymentMethodInput?.value === "credit_card" && cardNumberContainer) {
                 cardNumberContainer.style.display = "block";
             }
@@ -297,7 +297,7 @@ document.addEventListener("DOMContentLoaded", async function () {
             }
             if (isRenter) {
                 if (licensePlateInput) licensePlateInput.setAttribute("required", "true");
-                if (card_modelInput) card_modelInput.setAttribute("required", "true");
+                if (car_modelInput) car_modelInput.setAttribute("required", "true");
             }
         }
     }
@@ -371,7 +371,7 @@ document.addEventListener("DOMContentLoaded", async function () {
             const role = roleInput.value;
             const payment_method = paymentMethodInput.value;
             const license_plate = licensePlateInput.value.trim();
-            const card_model = card_modelInput.value.trim();
+            const car_model = car_modelInput.value.trim();
             let payment_info = cardNumberInput.value.trim();
 
             const errors = [];
@@ -380,7 +380,7 @@ document.addEventListener("DOMContentLoaded", async function () {
             if (!role) errors.push("請選擇身份");
             if (!payment_method) errors.push("請選擇付款方式");
             if (role === "renter" && !license_plate) errors.push("請填寫車牌號碼");
-            if (role === "renter" && !card_model) errors.push("請填寫卡型");
+            if (role === "renter" && !car_model) errors.push("請填寫卡型");
 
             const phoneRegex = /^[0-9]{10}$/;
             if (!phoneRegex.test(phone)) {
@@ -428,7 +428,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                         payment_method, 
                         payment_info,
                         license_plate: role === "renter" ? license_plate : undefined,
-                        card_model: role === "renter" ? card_model : undefined
+                        car_model: role === "renter" ? car_model : undefined
                     })
                 });
                 console.log(`Register response status: ${response.status}`);
@@ -448,7 +448,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                     showError(result.error || `註冊失敗！（錯誤碼：${response.status}）`);
                 }
             } catch (error) {
-                console.error("Register failed:", error.message);
+                console.error("Register failed:", error);
                 showError(error.message || "無法連接到伺服器，請檢查網路或後端服務！");
             }
         }
