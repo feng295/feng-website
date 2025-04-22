@@ -26,14 +26,21 @@ document.addEventListener("DOMContentLoaded", async function () {
     const cardNumberContainer = document.getElementById("cardNumberContainer");
     const cardNumberInput = document.getElementById("card_number");
     const licensePlateContainer = document.getElementById("licensePlateContainer");
-    const vehicleTypeContainer = document.getElementById("vehicleTypeContainer");
+    const card_modelContainer = document.getElementById("card_modelContainer");
     const licensePlateInput = document.getElementById("licensePlate");
-    const vehicleTypeInput = document.getElementById("vehicleType");
+    const card_modelInput = document.getElementById("card_model");
 
     // 檢查必要的 DOM 元素是否存在
-    if (!emailInput || !passwordInput || !authForm || !logoutButton || !functionList || !historyList || !viewParkingTableBody || !incomeTableBody) {
-        console.error("Required DOM elements are missing");
-        return;
+    const requiredElements = {
+        emailInput, passwordInput, authForm, logoutButton, functionList, historyList, 
+        viewParkingTableBody, incomeTableBody, nameInput, phoneInput, roleInput, 
+        paymentMethodInput, cardNumberContainer, licensePlateContainer, card_modelContainer
+    };
+    for (const [key, element] of Object.entries(requiredElements)) {
+        if (!element) {
+            console.error(`Required DOM element "${key}" is missing`);
+            return;
+        }
     }
 
     let isLogin = true;
@@ -178,22 +185,22 @@ document.addEventListener("DOMContentLoaded", async function () {
         }
     })();
 
-    // 當身份改變時，顯示或隱藏車牌號碼和車型輸入框
+    // 當身份改變時，顯示或隱藏車牌號碼和卡型輸入框
     roleInput.addEventListener("change", function () {
         const isRenter = roleInput.value === "renter";
-        licensePlateContainer.style.display = isRenter ? "block" : "none";
-        vehicleTypeContainer.style.display = isRenter ? "block" : "none";
-        licensePlateInput.required = isRenter;
-        vehicleTypeInput.required = isRenter;
+        if (licensePlateContainer) licensePlateContainer.style.display = isRenter ? "block" : "none";
+        if (card_modelContainer) card_modelContainer.style.display = isRenter ? "block" : "none";
+        if (licensePlateInput) licensePlateInput.required = isRenter;
+        if (card_modelInput) card_modelInput.required = isRenter;
     });
 
     // 當付款方式改變時，顯示或隱藏信用卡號輸入框
     paymentMethodInput.addEventListener("change", function () {
         const isCreditCard = paymentMethodInput.value === "credit_card";
-        cardNumberContainer.style.display = isCreditCard ? "block" : "none";
-        cardNumberInput.required = isCreditCard;
-        if (!isCreditCard) {
-            cardNumberInput.value = "";
+        if (cardNumberContainer) cardNumberContainer.style.display = isCreditCard ? "block" : "none";
+        if (cardNumberInput) {
+            cardNumberInput.required = isCreditCard;
+            if (!isCreditCard) cardNumberInput.value = "";
         }
     });
 
@@ -249,54 +256,58 @@ document.addEventListener("DOMContentLoaded", async function () {
     // 動態隱藏註冊專用欄位
     function toggleFormFields() {
         if (isLogin) {
-            nameInput.parentElement.style.display = "none";
-            phoneInput.parentElement.style.display = "none";
-            roleInput.parentElement.style.display = "none";
-            paymentMethodInput.parentElement.style.display = "none";
-            cardNumberContainer.style.display = "none";
-            licensePlateContainer.style.display = "none";
-            card_modelContainer.style.display = "none";
+            if (nameInput?.parentElement) nameInput.parentElement.style.display = "none";
+            if (phoneInput?.parentElement) phoneInput.parentElement.style.display = "none";
+            if (roleInput?.parentElement) roleInput.parentElement.style.display = "none";
+            if (paymentMethodInput?.parentElement) paymentMethodInput.parentElement.style.display = "none";
+            if (cardNumberContainer) cardNumberContainer.style.display = "none";
+            if (licensePlateContainer) licensePlateContainer.style.display = "none";
+            if (card_modelContainer) card_modelContainer.style.display = "none";
 
-            nameInput.removeAttribute("required");
-            phoneInput.removeAttribute("required");
-            roleInput.removeAttribute("required");
-            paymentMethodInput.removeAttribute("required");
-            cardNumberInput.removeAttribute("required");
-            licensePlateInput.removeAttribute("required");
-            card_modelInput.removeAttribute("required");
+            if (nameInput) nameInput.removeAttribute("required");
+            if (phoneInput) phoneInput.removeAttribute("required");
+            if (roleInput) roleInput.removeAttribute("required");
+            if (paymentMethodInput) paymentMethodInput.removeAttribute("required");
+            if (cardNumberInput) cardNumberInput.removeAttribute("required");
+            if (licensePlateInput) licensePlateInput.removeAttribute("required");
+            if (card_modelInput) card_modelInput.removeAttribute("required");
 
-            emailInput.setAttribute("required", "true");
-            passwordInput.setAttribute("required", "true");
+            if (emailInput) emailInput.setAttribute("required", "true");
+            if (passwordInput) passwordInput.setAttribute("required", "true");
         } else {
-            nameInput.parentElement.style.display = "block";
-            phoneInput.parentElement.style.display = "block";
-            roleInput.parentElement.style.display = "block";
-            paymentMethodInput.parentElement.style.display = "block";
-            const isRenter = roleInput.value === "renter";
-            licensePlateContainer.style.display = isRenter ? "block" : "none";
-            vehicleTypeContainer.style.display = isRenter ? "block" : "none";
-            if (paymentMethodInput.value === "credit_card") {
+            if (nameInput?.parentElement) nameInput.parentElement.style.display = "block";
+            if (phoneInput?.parentElement) phoneInput.parentElement.style.display = "block";
+            if (roleInput?.parentElement) roleInput.parentElement.style.display = "block";
+            if (paymentMethodInput?.parentElement) paymentMethodInput.parentElement.style.display = "block";
+            const isRenter = roleInput?.value === "renter";
+            if (licensePlateContainer) licensePlateContainer.style.display = isRenter ? "block" : "none";
+            if (card_modelContainer) card_modelContainer.style.display = isRenter ? "block" : "none";
+            if (paymentMethodInput?.value === "credit_card" && cardNumberContainer) {
                 cardNumberContainer.style.display = "block";
             }
 
-            emailInput.setAttribute("required", "true");
-            passwordInput.setAttribute("required", "true");
-            nameInput.setAttribute("required", "true");
-            phoneInput.setAttribute("required", "true");
-            roleInput.setAttribute("required", "true");
-            paymentMethodInput.setAttribute("required", "true");
-            if (paymentMethodInput.value === "credit_card") {
+            if (emailInput) emailInput.setAttribute("required", "true");
+            if (passwordInput) passwordInput.setAttribute("required", "true");
+            if (nameInput) nameInput.setAttribute("required", "true");
+            if (phoneInput) phoneInput.setAttribute("required", "true");
+            if (roleInput) roleInput.setAttribute("required", "true");
+            if (paymentMethodInput) paymentMethodInput.setAttribute("required", "true");
+            if (paymentMethodInput?.value === "credit_card" && cardNumberInput) {
                 cardNumberInput.setAttribute("required", "true");
             }
             if (isRenter) {
-                licensePlateInput.setAttribute("required", "true");
-                card_modelInput.setAttribute("required", "true");
+                if (licensePlateInput) licensePlateInput.setAttribute("required", "true");
+                if (card_modelInput) card_modelInput.setAttribute("required", "true");
             }
         }
     }
 
-    // 初始化表單顯示
-    toggleFormFields();
+    // 初始化表單顯示（確保 DOM 元素存在）
+    if (authForm) {
+        toggleFormFields();
+    } else {
+        console.error("authForm not found, skipping toggleFormFields");
+    }
 
     // 切換登入/註冊
     toggleMessage.addEventListener("click", function (event) {
@@ -360,7 +371,7 @@ document.addEventListener("DOMContentLoaded", async function () {
             const role = roleInput.value;
             const payment_method = paymentMethodInput.value;
             const license_plate = licensePlateInput.value.trim();
-            const vehicle_type = vehicleTypeInput.value.trim();
+            const card_model = card_modelInput.value.trim();
             let payment_info = cardNumberInput.value.trim();
 
             const errors = [];
@@ -369,7 +380,7 @@ document.addEventListener("DOMContentLoaded", async function () {
             if (!role) errors.push("請選擇身份");
             if (!payment_method) errors.push("請選擇付款方式");
             if (role === "renter" && !license_plate) errors.push("請填寫車牌號碼");
-            if (role === "renter" && !vehicle_type) errors.push("請填寫車型");
+            if (role === "renter" && !card_model) errors.push("請填寫卡型");
 
             const phoneRegex = /^[0-9]{10}$/;
             if (!phoneRegex.test(phone)) {
@@ -417,7 +428,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                         payment_method, 
                         payment_info,
                         license_plate: role === "renter" ? license_plate : undefined,
-                        vehicle_type: role === "renter" ? vehicle_type : undefined
+                        card_model: role === "renter" ? card_model : undefined
                     })
                 });
                 console.log(`Register response status: ${response.status}`);
