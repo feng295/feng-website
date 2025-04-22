@@ -31,14 +31,21 @@ document.addEventListener("DOMContentLoaded", async function () {
     const car_modelInput = document.getElementById("car_model");
 
     // 檢查必要的 DOM 元素是否存在
-    if (!emailInput || !passwordInput || !authForm || !logoutButton || !historyList) {
-        console.error("Required DOM elements are missing: emailInput, passwordInput, authForm, logoutButton, or historyList");
-        return;
+    const requiredElements = {
+        emailInput, passwordInput, authForm, logoutButton, functionList, historyList, 
+        viewParkingTableBody, incomeTableBody, nameInput, phoneInput, roleInput, 
+        paymentMethodInput, cardNumberContainer, licensePlateContainer, car_modelContainer
+    };
+    for (const [key, element] of Object.entries(requiredElements)) {
+        if (!element) {
+            console.error(`Required DOM element "${key}" is missing`);
+            return;
+        }
     }
 
     let isLogin = true;
-    const API_URL = '/api/v1'; // 後端 URL
-
+    let userRole = null; // 儲存用戶身份
+    const API_URL = '/api/v1'; // 後端 API 網址
 
     // 顯示錯誤訊息
     function showError(message) {
@@ -64,7 +71,6 @@ document.addEventListener("DOMContentLoaded", async function () {
         }
     }
 
-
     // 存儲 token 到 localStorage
     function setToken(token) {
         try {
@@ -82,7 +88,6 @@ document.addEventListener("DOMContentLoaded", async function () {
             console.error("Failed to remove token from localStorage:", error);
         }
     }
-
 
     // 動態生成功能清單
     function setupFunctionList() {
@@ -107,25 +112,29 @@ document.addEventListener("DOMContentLoaded", async function () {
         });
     }
 
-   // 顯示主畫面
-   function showMainPage() {
-    authContainer.style.display = "none";
-    parkingContainer.style.display = "block";
-    document.querySelector(".function-list").style.display = "block";
-    document.querySelector(".content-container").style.display = "block";
-    logoutButton.style.display = "block";
+    // 顯示主畫面
+    function showMainPage() {
+        authContainer.style.display = "none";
+        parkingContainer.style.display = "block";
+        document.querySelector(".function-list").style.display = "block";
+        document.querySelector(".content-container").style.display = "block";
+        logoutButton.style.display = "block";
 
-    // 初始化主頁面內容
-    const activeSection = document.querySelector(".content-section[style='display: block;']");
-    if (activeSection) {
-        if (activeSection.id === "reserveParking") {
+        // 動態設置功能清單
+        setupFunctionList();
+
+        // 預設顯示第一個功能
+        document.querySelectorAll(".content-section").forEach(section => {
+            section.style.display = "none";
+        });
+        const defaultSection = userRole === "shared_owner" ? "viewParking" : "reserveParking";
+        document.getElementById(defaultSection).style.display = "block";
+        if (defaultSection === "viewParking") {
+            setupViewParking();
+        } else {
             setupReserveParking();
-        } else if (activeSection.id === "history") {
-            loadHistory();
         }
     }
-}
-
 
     // 顯示登入畫面
     function showLoginPage(sessionExpired = false) {
@@ -153,7 +162,7 @@ document.addEventListener("DOMContentLoaded", async function () {
         }
     }
 
-    // 檢查是否已登入（檢查 token 是否存在）
+    // 檢查是否已登入
     async function checkAuth(silent = false) {
         const token = getToken();
         if (!token || token.trim() === "") {
@@ -166,17 +175,15 @@ document.addEventListener("DOMContentLoaded", async function () {
         return true;
     }
 
-
-   // 初始化時檢查是否已登入（靜默模式）
-   (async () => {
-    const isAuthenticated = await checkAuth(true); // 靜默檢查
-    if (isAuthenticated) {
-        showMainPage();
-    } else {
-        showLoginPage();
-    }
-})();
-
+    // 初始化時檢查是否已登入
+    (async () => {
+        const isAuthenticated = await checkAuth(true);
+        if (isAuthenticated) {
+            showMainPage();
+        } else {
+            showLoginPage();
+        }
+    })();
 
     // 當身份改變時，顯示或隱藏車牌號碼和卡型輸入框
     roleInput.addEventListener("change", function () {
@@ -189,17 +196,16 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     // 當付款方式改變時，顯示或隱藏信用卡號輸入框
     paymentMethodInput.addEventListener("change", function () {
-        if (paymentMethodInput.value === "credit_card") {
-            cardNumberContainer.style.display = "block";
-        } else {
-            cardNumberContainer.style.display = "none";
-            cardNumberInput.value = "";
+        const isCreditCard = paymentMethodInput.value === "credit_card";
+        if (cardNumberContainer) cardNumberContainer.style.display = isCreditCard ? "block" : "none";
+        if (cardNumberInput) {
+            cardNumberInput.required = isCreditCard;
+            if (!isCreditCard) cardNumberInput.value = "";
         }
     });
 
-
-    // 電話號碼輸入驗證（只允許數字）
-    phoneInput.addEventListener("input", function (event) {
+    // 電話號碼輸入驗證
+    phoneInput.addEventListener("input", function () {
         let value = phoneInput.value.replace(/\D/g, "");
         phoneInput.value = value;
         const phoneRegex = /^[0-9]{10}$/;
@@ -209,7 +215,6 @@ document.addEventListener("DOMContentLoaded", async function () {
             showError("請提供有效的電話號碼（10位數字）");
         }
     });
-
 
     // 車牌號碼輸入驗證
     licensePlateInput.addEventListener("input", function () {
@@ -222,13 +227,18 @@ document.addEventListener("DOMContentLoaded", async function () {
         }
     });
 
-    // 信用卡號輸入格式化（自動加上 "-"）
-    cardNumberInput.addEventListener("input", function (event) {
+    // 信用卡號輸入格式化
+    cardNumberInput.addEventListener("input", function () {
         let value = cardNumberInput.value.replace(/\D/g, "");
         value = value.replace(/(\d{4})(?=\d)/g, "$1-");
         cardNumberInput.value = value;
+        const cardRegex = /^(\d{4}-){3}\d{4}$/;
+        if (cardRegex.test(value)) {
+            showSuccess("信用卡號格式正確");
+        } else {
+            showError("請輸入有效信用卡號（16位數字，格式如 1234-5678-9012-3456）");
+        }
     });
-
 
     // 即時密碼驗證
     passwordInput.addEventListener("input", function () {
@@ -242,7 +252,6 @@ document.addEventListener("DOMContentLoaded", async function () {
             showError("密碼必須至少8個字符，包含字母和數字");
         }
     });
-
 
     // 動態隱藏註冊專用欄位
     function toggleFormFields() {
@@ -293,22 +302,25 @@ document.addEventListener("DOMContentLoaded", async function () {
         }
     }
 
-   // 初始化表單顯示
-   toggleFormFields();
+    // 初始化表單顯示（確保 DOM 元素存在）
+    if (authForm) {
+        toggleFormFields();
+    } else {
+        console.error("authForm not found, skipping toggleFormFields");
+    }
 
-   // 切換登入/註冊
-   toggleMessage.addEventListener("click", function (event) {
-       event.preventDefault();
-       isLogin = !isLogin;
-       formTitle.textContent = isLogin ? "登入" : "註冊";
-       submitButton.textContent = isLogin ? "登入" : "註冊";
-       toggleMessage.innerHTML = isLogin
-           ? '還沒有帳號？<a href="#" id="toggleLink">註冊</a>'
-           : '已有帳號？<a href="#" id="toggleLink">登入</a>';
-       errorMessage.textContent = "";
-       toggleFormFields();
-   });
-
+    // 切換登入/註冊
+    toggleMessage.addEventListener("click", function (event) {
+        event.preventDefault();
+        isLogin = !isLogin;
+        formTitle.textContent = isLogin ? "登入" : "註冊";
+        submitButton.textContent = isLogin ? "登入" : "註冊";
+        toggleMessage.innerHTML = isLogin
+            ? '還沒有帳號？<a href="#" id="toggleLink">註冊</a>'
+            : '已有帳號？<a href="#" id="toggleLink">登入</a>';
+        errorMessage.textContent = "";
+        toggleFormFields();
+    });
 
     // 處理登入/註冊
     authForm.addEventListener("submit", async function (event) {
@@ -391,7 +403,13 @@ document.addEventListener("DOMContentLoaded", async function () {
             if (payment_method === "credit_card" && !payment_info) {
                 errors.push("請輸入信用卡號");
             }
-            
+            if (payment_method === "credit_card") {
+                const cardRegex = /^(\d{4}-){3}\d{4}$/;
+                if (!cardRegex.test(payment_info)) {
+                    errors.push("請輸入有效信用卡號（16位數字，格式如 1234-5678-9012-3456）");
+                }
+            }
+
             if (errors.length > 0) {
                 showError(errors.join("；"));
                 return;
@@ -430,7 +448,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                     showError(result.error || `註冊失敗！（錯誤碼：${response.status}）`);
                 }
             } catch (error) {
-                console.error("Register failed:", error);
+                console.error("Register failed:", error.message);
                 showError(error.message || "無法連接到伺服器，請檢查網路或後端服務！");
             }
         }
