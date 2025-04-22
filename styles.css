@@ -79,10 +79,11 @@ button:hover {
     background: #218838;
 }
 
-/* 為「查詢」按鈕添加專屬樣式 */
-#reserveSearchButton {
+/* 查詢按鈕樣式 */
+#reserveSearchButton,
+#incomeSearchButton {
     width: auto;
-    padding: 8px 16px; /* 增加內邊距，與其他按鈕更一致 */
+    padding: 8px 16px;
     background: #007bff;
     margin-left: 10px;
     font-size: 14px;
@@ -90,12 +91,14 @@ button:hover {
     transition: background 0.3s ease, transform 0.1s ease;
 }
 
-#reserveSearchButton:hover {
+#reserveSearchButton:hover,
+#incomeSearchButton:hover {
     background: #0056b3;
     transform: scale(1.05);
 }
 
-#reserveSearchButton:active {
+#reserveSearchButton:active,
+#incomeSearchButton:active {
     transform: scale(0.95);
 }
 
@@ -134,7 +137,7 @@ a:hover {
 .system-container {
     display: flex;
     width: 90%;
-    max-width: 1600px;
+    max-width: 1200px;
     margin: 50px auto;
     gap: 20px;
 }
@@ -174,68 +177,6 @@ a:hover {
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
 }
 
-.parking-status {
-    margin-top: 20px;
-}
-
-.parking-spaces {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 15px; /* 增加間距，提升視覺效果 */
-    margin-top: 20px;
-    min-height: 100px; /* 確保初始高度，避免閃爍 */
-}
-
-.parking-space {
-    width: 120px; /* 稍微加寬，提升可點擊性 */
-    height: 60px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 5px;
-    font-weight: bold;
-    font-size: 14px;
-    cursor: pointer;
-    border: 1px solid #ddd; /* 添加邊框，提升視覺區分 */
-    transition: all 0.3s ease;
-}
-
-.parking-space:hover {
-    transform: scale(1.05);
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2); /* 懸停時增加陰影 */
-}
-
-.parking-space:active {
-    transform: scale(0.95);
-}
-
-.available {
-    background-color: #28a745; /* 綠色，可用 */
-    color: black;
-}
-
-.occupied {
-    background-color: #dc3545; /* 紅色，已佔用 */
-    color: white;
-}
-
-.reserved {
-    background-color: #007bff; /* 藍色，預約 */
-    color: white;
-}
-
-.parking-space.loading {
-    background-color: #ccc;
-    color: #666;
-    cursor: default; /* 載入中禁用點擊 */
-}
-
-.parking-space.unavailable {
-    background-color: #6c757d; /* 灰色，服務不可用 */
-    color: white;
-    cursor: not-allowed; /* 禁用狀態明確 */
-}
-
 #logoutButton {
     margin: 20px auto;
     display: block;
@@ -252,21 +193,13 @@ a:hover {
     border-bottom: 1px solid #eee;
 }
 
-.map-container {
-    height: 400px;
-    width: 100%;
-    margin-top: 20px;
-    border: 1px solid #ccc;
-    min-height: 400px;
-}
-
 .search-container {
     margin-top: 10px;
     display: flex;
     align-items: center;
     flex-wrap: wrap;
     gap: 10px;
-    padding: 10px 0; /* 添加垂直內邊距，與其他區域一致 */
+    padding: 10px 0;
 }
 
 .search-container label {
@@ -277,12 +210,12 @@ a:hover {
 
 .search-container select,
 .search-container input[type="date"] {
-    padding: 8px; /* 與其他輸入框一致 */
+    padding: 8px;
     border: 1px solid #ccc;
     border-radius: 3px;
     font-size: 14px;
-    width: auto; /* 讓日期輸入框更靈活 */
-    min-width: 150px; /* 防止過窄 */
+    width: auto;
+    min-width: 150px;
 }
 
 .search-container input {
@@ -324,88 +257,52 @@ a:hover {
     font-size: 16px;
 }
 
-/* 響應式設計 */
-@media (max-width: 768px) {
-    .system-container {
-        flex-direction: column;
-        width: 95%;
-    }
-
-    .function-list {
-        width: 100%;
-    }
-
-    .content-container {
-        width: 100%;
-    }
-
-    .parking-spaces {
-        justify-content: center; /* 行動裝置上居中顯示車位 */
-    }
-
-    .parking-space {
-        width: 100px; /* 縮小以適應小螢幕 */
-        height: 50px;
-    }
-
-    .search-container {
-        flex-direction: column;
-        align-items: flex-start;
-    }
-
-    .search-container input[type="date"],
-    .search-container button {
-        width: 100%;
-        margin-left: 0;
-        margin-top: 10px;
-    }
-}
-
-/* 提示文字樣式 */
-.parking-spaces p {
-    width: 100%;
-    text-align: center;
-    color: #666;
-    font-size: 16px;
-    padding: 20px 0;
-    margin: 0;
-}
-
 /* 表格樣式 */
-.parking-spaces-table {
+.parking-spaces-table,
+.income-table {
     margin-top: 20px;
     max-height: 400px;
     overflow-y: auto;
 }
 
-#parkingTable {
+#parkingTable,
+#viewParkingTable,
+#incomeTable {
     width: 100%;
     border-collapse: collapse;
     background-color: #fff;
 }
 
 #parkingTable th,
-#parkingTable td {
+#parkingTable td,
+#viewParkingTable th,
+#viewParkingTable td,
+#incomeTable th,
+#incomeTable td {
     padding: 12px;
     border: 1px solid black;
     text-align: left;
     font-size: 14px;
 }
 
-#parkingTable th {
+#parkingTable th,
+#viewParkingTable th,
+#incomeTable th {
     background-color: #f4f4f4;
     position: sticky;
     top: 0;
     font-weight: bold;
 }
 
-#parkingTable tr.available {
-    background-color: #e0ffe0; /* 淺綠色，可用 */
+#parkingTable tr.available,
+#viewParkingTable tr.available {
+    background-color: #e0ffe0;
 }
 
 #parkingTable tr.occupied,
-#parkingTable tr.reserved {
-    background-color: #ffe0e0; /* 淺紅色，已佔用或預約 */
+#parkingTable tr.reserved,
+#viewParkingTable tr.occupied {
+    background-color: #ffe0e0;
 }
 
 #parkingTable button {
@@ -428,10 +325,39 @@ a:hover {
     cursor: not-allowed;
 }
 
-/* 響應式調整 */
+/* 響應式設計 */
 @media (max-width: 768px) {
+    .system-container {
+        flex-direction: column;
+        width: 95%;
+    }
+
+    .function-list {
+        width: 100%;
+    }
+
+    .content-container {
+        width: 100%;
+    }
+
+    .search-container {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .search-container input[type="date"],
+    .search-container button {
+        width: 100%;
+        margin-left: 0;
+        margin-top: 10px;
+    }
+
     #parkingTable th,
-    #parkingTable td {
+    #parkingTable td,
+    #viewParkingTable th,
+    #viewParkingTable td,
+    #incomeTable th,
+    #incomeTable td {
         padding: 8px;
         font-size: 12px;
     }
@@ -441,7 +367,8 @@ a:hover {
         font-size: 12px;
     }
 
-    .parking-spaces-table {
+    .parking-spaces-table,
+    .income-table {
         overflow-x: auto;
     }
 }

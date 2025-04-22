@@ -6,7 +6,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>智慧停車管理系統</title>
     <link rel="stylesheet" href="./styles.css">
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 </head>
 
 <body>
@@ -37,6 +36,14 @@
                     <option value="renter">租用者</option>
                 </select>
             </div>
+            <div class="input-group" id="licensePlateContainer" style="display: none;">
+                <label for="licensePlate">車牌號碼</label>
+                <input type="text" id="licensePlate" name="licensePlate" placeholder="請輸入車牌號碼（例如 ABC-1234）">
+            </div>
+            <div class="input-group" id="vehicleTypeContainer" style="display: none;">
+                <label for="vehicleType">車型</label>
+                <input type="text" id="vehicleType" name="vehicleType" placeholder="請輸入車型，例如轎車">
+            </div>
             <div class="input-group">
                 <label for="payment_method">付款方式</label>
                 <select id="payment_method" name="payment_method">
@@ -58,155 +65,11 @@
         <div class="system-container">
             <div class="function-list">
                 <h1>功能清單</h1>
-                <ul>
-                    <li><a href="#" class="nav-link" data-target="sharedParking">共享車位</a></li>
-                    <li><a href="#" class="nav-link" data-target="rentParking">租用車位</a></li>
-                    <li><a href="#" class="nav-link" data-target="viewParking">查看車位</a></li>
-                    <li><a href="#" class="nav-link" data-target="reserveParking">預約車位</a></li>
-                    <li><a href="#" class="nav-link" data-target="history">歷史紀錄</a></li>
+                <ul id="functionList">
+                    <!-- 功能清單將根據用戶身份動態生成 -->
                 </ul>
             </div>
             <div class="content-container">
-                <div id="sharedParking" class="content-section" style="display: none;">
-                    <h2>共享車位</h2>
-                    <p>在這裡你可以共享你的車位。</p>
-                    <div class="search-container">
-                        <label for="sharedCity" style="margin-left: 20px;">縣市：</label>
-                        <select id="sharedCity">
-                            <option value="all">全部</option>
-                            <option value="taipei">台北市</option>
-                            <option value="new_taipei">新北市</option>
-                            <option value="taoyuan">桃園市</option>
-                            <option value="taichung">台中市</option>
-                            <option value="tainan">台南市</option>
-                            <option value="kaohsiung">高雄市</option>
-                            <option value="keelung">基隆市</option>
-                            <option value="hsinchu">新竹市</option>
-                            <option value="chiayi">嘉義市</option>
-                            <option value="yilan">宜蘭縣</option>
-                            <option value="hsinchu_county">新竹縣</option>
-                            <option value="miaoli">苗栗縣</option>
-                            <option value="changhua">彰化縣</option>
-                            <option value="nantou">南投縣</option>
-                            <option value="yunlin">雲林縣</option>
-                            <option value="chiayi_county">嘉義縣</option>
-                            <option value="pingtung">屏東縣</option>
-                            <option value="taitung">台東縣</option>
-                            <option value="hualien">花蓮縣</option>
-                            <option value="penghu">澎湖縣</option>
-                            <option value="kinmen">金門縣</option>
-                            <option value="lienchiang">連江縣</option>
-                        </select>
-                        <label for="sharedParkingType">車位類型：</label>
-                        <select id="sharedParkingType">
-                            <option value="all">全部</option>
-                            <option value="flat">平面車位</option>
-                            <option value="mechanical">機械車位</option>
-                        </select>
-                        <label for="sharedFloor" style="margin-left: 20px;">樓層：</label>
-                        <select id="sharedFloor">
-                            <option value="all">全部</option>
-                            <option value="ground">地面</option>
-                            <option value="b1">地下1樓</option>
-                            <option value="b2">地下2樓</option>
-                            <option value="b3">地下3樓</option>
-                        </select>
-                        <label for="sharedPricing" style="margin-left: 20px;">計價方式：</label>
-                        <select id="sharedPricing">
-                            <option value="all">全部</option>
-                            <option value="hourly">按小時計費</option>
-                            <option value="daily">按日計費</option>
-                            <option value="monthly">按月計費</option>
-                        </select>
-                        <label for="sharedStatus" style="margin-left: 20px;">車位狀態：</label>
-                        <select id="sharedStatus">
-                            <option value="all">全部</option>
-                            <option value="available">空閒</option>
-                            <option value="occupied">使用中</option>
-                        </select>
-                        <label for="sharedSearchInput" style="margin-left: 20px;">搜尋：</label>
-                        <input type="text" id="sharedSearchInput" placeholder="輸入地點或編號">
-                        <button id="sharedSearchButton" style="margin-left: 10px;">查詢</button>
-                    </div>
-                    <div id="sharedMap" class="map-container"></div>
-                </div>
-                <div id="rentParking" class="content-section" style="display: none;">
-                    <h2>租用車位</h2>
-                    <p>在這裡你可以租用車位。</p>
-                    <div class="search-container">
-                        <label for="rentCity" style="margin-left: 20px;">縣市：</label>
-                        <select id="rentCity">
-                            <option value="all">全部</option>
-                            <option value="taipei">台北市</option>
-                            <option value="new_taipei">新北市</option>
-                            <option value="taoyuan">桃園市</option>
-                            <option value="taichung">台中市</option>
-                            <option value="tainan">台南市</option>
-                            <option value="kaohsiung">高雄市</option>
-                            <option value="keelung">基隆市</option>
-                            <option value="hsinchu">新竹市</option>
-                            <option value="chiayi">嘉義市</option>
-                            <option value="yilan">宜蘭縣</option>
-                            <option value="hsinchu_county">新竹縣</option>
-                            <option value="miaoli">苗栗縣</option>
-                            <option value="changhua">彰化縣</option>
-                            <option value="nantou">南投縣</option>
-                            <option value="yunlin">雲林縣</option>
-                            <option value="chiayi_county">嘉義縣</option>
-                            <option value="pingtung">屏東縣</option>
-                            <option value="taitung">台東縣</option>
-                            <option value="hualien">花蓮縣</option>
-                            <option value="penghu">澎湖縣</option>
-                            <option value="kinmen">金門縣</option>
-                            <option value="lienchiang">連江縣</option>
-                        </select>
-                        <label for="rentParkingType">車位類型：</label>
-                        <select id="rentParkingType">
-                            <option value="all">全部</option>
-                            <option value="flat">平面車位</option>
-                            <option value="mechanical">機械車位</option>
-                        </select>
-                        <label for="rentFloor" style="margin-left: 20px;">樓層：</label>
-                        <select id="rentFloor">
-                            <option value="all">全部</option>
-                            <option value="ground">地面</option>
-                            <option value="b1">地下1樓</option>
-                            <option value="b2">地下2樓</option>
-                            <option value="b3">地下3樓</option>
-                        </select>
-                        <label for="rentPricing" style="margin-left: 20px;">計價方式：</label>
-                        <select id="rentPricing">
-                            <option value="all">全部</option>
-                            <option value="hourly">按小時計費</option>
-                            <option value="daily">按日計費</option>
-                            <option value="monthly">按月計費</option>
-                        </select>
-                        <label for="rentStatus" style="margin-left: 20px;">車位狀態：</label>
-                        <select id="rentStatus">
-                            <option value="all">全部</option>
-                            <option value="available">空閒</option>
-                            <option value="occupied">使用中</option>
-                        </select>
-                        <label for="rentSearchInput" style="margin-left: 20px;">搜尋：</label>
-                        <input type="text" id="rentSearchInput" placeholder="輸入地點或編號">
-                        <button id="rentSearchButton" style="margin-left: 10px;">查詢</button>
-                    </div>
-                    <div id="rentMap" class="map-container"></div>
-                </div>
-                <div id="viewParking" class="content-section" style="display: none;">
-                    <h2>查看車位</h2>
-                    <p>在這裡你可以查看可用的車位。</p>
-                    <div class="parking-status">
-                        <h2>車位狀態</h2>
-                        <div class="parking-spaces">
-                            <div class="parking-space available" data-id="v1"><span>可用</span></div>
-                            <div class="parking-space occupied" data-id="v2"><span>已佔用</span></div>
-                            <div class="parking-space available" data-id="v3"><span>可用</span></div>
-                            <div class="parking-space available" data-id="v4"><span>可用</span></div>
-                            <div class="parking-space occupied" data-id="v5"><span>已佔用</span></div>
-                        </div>
-                    </div>
-                </div>
                 <div id="reserveParking" class="content-section" style="display: none;">
                     <h2>預約車位</h2>
                     <p>在這裡你可以預約車位。</p>
@@ -289,17 +152,68 @@
                         </table>
                     </div>
                 </div>
+                <div id="viewParking" class="content-section" style="display: none;">
+                    <h2>查看車位</h2>
+                    <p>在這裡你可以查看你的車位狀態。</p>
+                    <div class="parking-spaces-table">
+                        <table id="viewParkingTable">
+                            <thead>
+                                <tr>
+                                    <th>車位編號</th>
+                                    <th>縣市</th>
+                                    <th>類型</th>
+                                    <th>樓層</th>
+                                    <th>計價方式</th>
+                                    <th>狀態</th>
+                                    <th>租用者</th>
+                                    <th>開始時間</th>
+                                    <th>結束時間</th>
+                                    <th>費用</th>
+                                </tr>
+                            </thead>
+                            <tbody id="viewParkingTableBody">
+                                <tr><td colspan="10">載入中...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
                 <div id="history" class="content-section" style="display: none;">
-                    <h2>歷史紀錄</h2>
-                    <p>在這裡你可以查看停車歷史紀錄。</p>
+                    <h2>個人歷史紀錄</h2>
+                    <p>在這裡你可以查看個人歷史紀錄。</p>
                     <ul id="historyList"></ul>
+                </div>
+                <div id="incomeQuery" class="content-section" style="display: none;">
+                    <h2>收入查詢</h2>
+                    <p>在這裡你可以查詢車位共享的收入。</p>
+                    <div class="search-container">
+                        <label for="incomeStartDate">開始日期：</label>
+                        <input type="date" id="incomeStartDate">
+                        <label for="incomeEndDate" style="margin-left: 20px;">結束日期：</label>
+                        <input type="date" id="incomeEndDate">
+                        <button id="incomeSearchButton" style="margin-left: 10px;">查詢</button>
+                    </div>
+                    <div class="income-table">
+                        <table id="incomeTable">
+                            <thead>
+                                <tr>
+                                    <th>車位編號</th>
+                                    <th>租用者</th>
+                                    <th>開始時間</th>
+                                    <th>結束時間</th>
+                                    <th>收入</th>
+                                </tr>
+                            </thead>
+                            <tbody id="incomeTableBody">
+                                <tr><td colspan="5">請選擇日期範圍並點擊查詢</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
         </div>
         <button id="logoutButton">登出</button>
     </div>
 
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="./script.js"></script>
 </body>
 </html>
