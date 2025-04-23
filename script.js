@@ -41,6 +41,7 @@ document.addEventListener("DOMContentLoaded", async function () {
     }
 
     let isLogin = true;
+    let userRole = null; // 初始化 userRole 變量
     const API_URL = '/api/v1'; // 後端 URL
 
     // 顯示錯誤訊息
@@ -82,6 +83,25 @@ document.addEventListener("DOMContentLoaded", async function () {
             localStorage.removeItem("token");
         } catch (error) {
             console.error("Failed to remove token from localStorage:", error);
+        }
+    }
+
+    // 從 localStorage 獲取 userRole（假設在登入時已存儲）
+    function getUserRole() {
+        try {
+            return localStorage.getItem("userRole") || null;
+        } catch (error) {
+            console.error("Failed to get userRole from localStorage:", error);
+            return null;
+        }
+    }
+
+    // 存儲 userRole 到 localStorage
+    function setUserRole(role) {
+        try {
+            localStorage.setItem("userRole", role);
+        } catch (error) {
+            console.error("Failed to set userRole in localStorage:", error);
         }
     }
 
@@ -136,6 +156,17 @@ document.addEventListener("DOMContentLoaded", async function () {
             }
             showLoginPage();
             return false;
+        }
+        // 在檢查 token 的同時，確保 userRole 已獲取
+        if (!userRole) {
+            userRole = getUserRole();
+            if (!userRole) {
+                if (!silent) {
+                    alert("無法獲取用戶角色，請重新登入！");
+                }
+                showLoginPage();
+                return false;
+            }
         }
         return true;
     }
@@ -265,7 +296,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                 cardNumberInput.setAttribute("required", "true");
             }
             if (isRenter) {
-                licensePlateInput.setAttribute("required", "true");
+                licensePlateInput.setAttribute("required", "true"); // 修正語法錯誤
                 car_modelInput.setAttribute("required", "true");
             }
         }
@@ -318,6 +349,8 @@ document.addEventListener("DOMContentLoaded", async function () {
                         return;
                     }
                     setToken(result.data.token);
+                    setUserRole(result.data.role); // 假設後端返回的資料包含角色
+                    userRole = result.data.role; // 更新全局 userRole
                     console.log("Login successful, token stored");
                     alert("登入成功！");
                     showMainPage();
@@ -422,6 +455,8 @@ document.addEventListener("DOMContentLoaded", async function () {
     // 登出功能
     logoutButton.addEventListener("click", function () {
         removeToken(); // 清除 token
+        userRole = null; // 清除 userRole
+        localStorage.removeItem("userRole"); // 清除 localStorage 中的 userRole
         showLoginPage();
     });
 
@@ -487,7 +522,7 @@ document.addEventListener("DOMContentLoaded", async function () {
         if (reserveCity) reserveCity.value = 'all';
         if (reserveParkingType) reserveParkingType.value = 'all';
         if (reserveFloor) reserveFloor.value = 'all';
-        if (reservePricing) reservePricing.value = 'all';
+        if (reservePricing) reservePricing.value = "all";
         if (reserveStatus) reserveStatus.value = 'all';
 
         reserveSearchButton.removeEventListener("click", handleReserveSearch);
@@ -718,6 +753,12 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     // 設置查看車位
     function setupViewParking() {
+        if (!userRole) {
+            alert("無法獲取用戶角色，請重新登入！");
+            removeToken();
+            showLoginPage(true);
+            return;
+        }
         if (userRole !== "shared_owner") {
             alert("僅車位共享者可使用查看車位功能！");
             return;
@@ -729,13 +770,14 @@ document.addEventListener("DOMContentLoaded", async function () {
         const rentFloor = document.getElementById("rentFloor");
         const rentPricing = document.getElementById("rentPricing");
         const rentStatus = document.getElementById("rentStatus");
+        const viewParkingSearchButton = document.getElementById("viewParkingSearchButton");
 
-        if (!viewParkingTableBody || !rentCity || !rentParkingType || !rentFloor || !rentPricing || !rentStatus) {
+        if (!viewParkingTableBody || !rentCity || !rentParkingType || !rentFloor || !rentPricing || !rentStatus || !viewParkingSearchButton) {
             console.warn("Required elements not found for viewParking");
             return;
         }
 
-        viewParkingTableBody.innerHTML = '<tr><td colspan="7">請使用篩選條件查看車位</td></tr>';
+        viewParkingTableBody.innerHTML = '<tr><td colspan="7">請使用篩選條件並點擊查詢以查看車位</td></tr>';
 
         async function fetchParkingSpots() {
             try {
@@ -846,13 +888,10 @@ document.addEventListener("DOMContentLoaded", async function () {
             });
         }
 
-        // 為篩選選單添加事件監聽器
-        [rentCity, rentParkingType, rentFloor, rentPricing, rentStatus].forEach(select => {
-            select.addEventListener("change", fetchParkingSpots);
-        });
-
-        // 初次載入
-        fetchParkingSpots();
+        // 為查詢按鈕添加事件監聽器
+        viewParkingSearchButton.removeEventListener("click", fetchParkingSpots); // 防止重複綁定
+        viewParkingSearchButton.addEventListener("click", fetchParkingSpots);
+      
     }
 
     // 設置收入查詢

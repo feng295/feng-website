@@ -80,6 +80,7 @@ button:hover {
 }
 
 /* 查詢按鈕樣式 */
+#viewParkingSearchButton,
 #reserveSearchButton,
 #incomeSearchButton {
     width: auto;
@@ -91,12 +92,14 @@ button:hover {
     transition: background 0.3s ease, transform 0.1s ease;
 }
 
+#viewParkingSearchButton:hover,
 #reserveSearchButton:hover,
 #incomeSearchButton:hover {
     background: #0056b3;
     transform: scale(1.05);
 }
 
+#viewParkingSearchButton:active,
 #reserveSearchButton:active,
 #incomeSearchButton:active {
     transform: scale(0.95);
@@ -177,6 +180,7 @@ a:hover {
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
 }
 
+
 #logoutButton {
     margin: 20px auto;
     display: block;
@@ -198,19 +202,19 @@ a:hover {
     display: flex;
     align-items: center;
     flex-wrap: wrap;
-    gap: 10px;
+    gap: 8px;
     padding: 10px 0;
 }
 
 .search-container label {
-    margin-right: 10px;
+    margin-right: 5px;
     font-size: 14px;
     color: #333;
 }
 
 .search-container select,
 .search-container input[type="date"] {
-    padding: 8px;
+    padding: 6px;
     border: 1px solid #ccc;
     border-radius: 3px;
     font-size: 14px;
