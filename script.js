@@ -392,7 +392,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                     toggleFormFields();
                 } else {
                     console.error("Register failed:", response.status, result);
-                    showError(result.error || `註冊失敗！（錯誤碼：${response.status}）`);
+                    showError(result.error || `註冊失敗！（錯誤 zostaje：${response.status}）`);
                 }
             } catch (error) {
                 console.error("Register failed:", error.message);
@@ -558,7 +558,7 @@ document.addEventListener("DOMContentLoaded", async function () {
         });
     }
 
-    // 設置預約停車（替換為修改後的版本）
+    // 設置預約停車（修改後版本，移除 navigator.geolocation 依賴）
     async function setupReserveParking() {
         if (!await checkAuth()) return;
 
@@ -569,32 +569,6 @@ document.addEventListener("DOMContentLoaded", async function () {
         if (!reserveDateInput || !reserveSearchButton || !parkingTableBody) {
             console.warn("Required elements not found for reserveParking");
             return;
-        }
-
-        // 獲取使用者位置
-        async function getUserLocation() {
-            return new Promise((resolve, reject) => {
-                if (!navigator.geolocation) {
-                    reject(new Error("瀏覽器不支援地理位置功能"));
-                    return;
-                }
-
-                navigator.geolocation.getCurrentPosition(
-                    (position) => {
-                        const latitude = position.coords.latitude;
-                        const longitude = position.coords.longitude;
-                        resolve({ latitude, longitude });
-                    },
-                    (error) => {
-                        reject(new Error("無法獲取地理位置：" + error.message));
-                    },
-                    {
-                        enableHighAccuracy: true,
-                        timeout: 5000,
-                        maximumAge: 0,
-                    }
-                );
-            });
         }
 
         async function handleReserveSearch() {
@@ -614,21 +588,10 @@ document.addEventListener("DOMContentLoaded", async function () {
 
             parkingTableBody.innerHTML = '<tr><td colspan="6">載入中...</td></tr>';
 
-            // 獲取使用者位置
-            let latitude, longitude;
-            try {
-                const location = await getUserLocation();
-                latitude = location.latitude;
-                longitude = location.longitude;
-                console.log(`User location: latitude=${latitude}, longitude=${longitude}`);
-            } catch (error) {
-                console.error("Failed to get user location:", error);
-                alert(`無法獲取您的地理位置：${error.message}。請開啟定位權限或使用預設位置。`);
-                // 使用預設位置（台北市）
-                latitude = 25.0330;
-                longitude = 121.5654;
-                console.log(`Using default location: latitude=${latitude}, longitude=${longitude}`);
-            }
+            // 使用預設位置（台北市）
+            const latitude = 25.0330;
+            const longitude = 121.5654;
+            console.log(`Using default location: latitude=${latitude}, longitude=${longitude}`);
 
             let retries = 3;
             let spots = null;
