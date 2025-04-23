@@ -90,7 +90,6 @@ document.addEventListener("DOMContentLoaded", async function () {
         authContainer.style.display = "none";
         parkingContainer.style.display = "block";
         document.querySelector(".function-list").style.display = "block";
-        document.querySelector(".content-container").style.display = "block";
         logoutButton.style.display = "block";
 
         // 初始化主頁面內容
@@ -115,7 +114,6 @@ document.addEventListener("DOMContentLoaded", async function () {
                     section.style.display = "none";
                 });
                 document.querySelector(".function-list").style.display = "none";
-                document.querySelector(".content-container").style.display = "none";
                 logoutButton.style.display = "none";
             }, 1500);
         } else {
@@ -125,7 +123,6 @@ document.addEventListener("DOMContentLoaded", async function () {
                 section.style.display = "none";
             });
             document.querySelector(".function-list").style.display = "none";
-            document.querySelector(".content-container").style.display = "none";
             logoutButton.style.display = "none";
         }
     }
@@ -302,7 +299,7 @@ document.addEventListener("DOMContentLoaded", async function () {
             showError("電子郵件和密碼不能為空！");
             return;
         }
-    
+
         if (isLogin) {
             try {
                 const response = await fetch(`${API_URL}/members/login`, {
@@ -340,7 +337,7 @@ document.addEventListener("DOMContentLoaded", async function () {
             const license_plate = licensePlateInput.value.trim();
             const car_model = car_modelInput.value.trim();
             let payment_info = cardNumberInput.value.trim();
-    
+
             const errors = [];
             if (!name) errors.push("請填寫姓名");
             if (!phone) errors.push("請填寫電話號碼");
@@ -348,36 +345,36 @@ document.addEventListener("DOMContentLoaded", async function () {
             if (!payment_method) errors.push("請選擇付款方式");
             if (role === "renter" && !license_plate) errors.push("請填寫車牌號碼");
             if (role === "renter" && !car_model) errors.push("請填寫車型");
-    
+
             const phoneRegex = /^[0-9]{10}$/;
             if (!phoneRegex.test(phone)) {
                 errors.push("請提供有效的電話號碼（10位數字）");
             }
-    
+
             const plateRegex = /^[A-Z]{2,3}-[0-9]{2,4}$|^[0-9]{2,4}-[A-Z]{2,3}$/;
             if (role === "renter" && license_plate && !plateRegex.test(license_plate)) {
                 errors.push("請提供有效的車牌號碼（例如 ABC-1234 或 1234-ABC）");
             }
-    
+
             const cleanedPassword = password.replace(/[^\x20-\x7E]/g, "");
             console.log("Password after cleanup:", cleanedPassword);
-    
+
             const hasLetter = /[a-zA-Z]/.test(cleanedPassword);
             const hasNumber = /[0-9]/.test(cleanedPassword);
             const isLongEnough = cleanedPassword.length >= 8;
             if (!hasLetter || !hasNumber || !isLongEnough) {
                 errors.push("密碼必須至少8個字符，包含字母和數字");
             }
-    
+
             if (payment_method === "credit_card" && !payment_info) {
                 errors.push("請輸入信用卡號");
             }
-    
+
             if (errors.length > 0) {
                 showError(errors.join("；"));
                 return;
             }
-    
+
             // 構建請求體，僅包含非空值
             const requestBody = {
                 name,
@@ -396,7 +393,7 @@ document.addEventListener("DOMContentLoaded", async function () {
             if (role === "renter" && car_model) {
                 requestBody.car_model = car_model;
             }
-    
+
             try {
                 const response = await fetch(`${API_URL}/members/register`, {
                     method: 'POST',
@@ -604,7 +601,7 @@ document.addEventListener("DOMContentLoaded", async function () {
             if (filterStatus && filterStatus !== "all") {
                 filteredSpots = filteredSpots.filter(spot =>
                     filterStatus === "available" ? spot.status === "可用" :
-                    filterStatus === "occupied" ? (spot.status === "已佔用" || spot.status === "預約") : true
+                        filterStatus === "occupied" ? (spot.status === "已佔用" || spot.status === "預約") : true
                 );
             }
 
@@ -719,144 +716,144 @@ document.addEventListener("DOMContentLoaded", async function () {
         historyList.appendChild(listItem);
     }
 
-// 設置查看車位
-function setupViewParking() {
-    if (userRole !== "shared_owner") {
-        alert("僅車位共享者可使用查看車位功能！");
-        return;
-    }
-
-    const viewParkingTableBody = document.getElementById("viewParkingTableBody");
-    const rentCity = document.getElementById("rentCity");
-    const rentParkingType = document.getElementById("rentParkingType");
-    const rentFloor = document.getElementById("rentFloor");
-    const rentPricing = document.getElementById("rentPricing");
-    const rentStatus = document.getElementById("rentStatus");
-
-    if (!viewParkingTableBody || !rentCity || !rentParkingType || !rentFloor || !rentPricing || !rentStatus) {
-        console.warn("Required elements not found for viewParking");
-        return;
-    }
-
-    viewParkingTableBody.innerHTML = '<tr><td colspan="7">請使用篩選條件查看車位</td></tr>';
-
-    async function fetchParkingSpots() {
-        try {
-            const token = getToken();
-            const response = await fetch(`${API_URL}/parking/owned`, {
-                headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": `Bearer ${token}`
-                }
-            });
-            console.log(`View parking fetch response status: ${response.status}`);
-            if (!response.headers.get('content-type')?.includes('application/json')) {
-                throw new Error("後端返回非 JSON 響應，請檢查伺服器配置");
-            }
-            if (!response.ok) {
-                if (response.status === 401) {
-                    throw new Error("認證失敗，請重新登入！");
-                }
-                throw new Error(`HTTP error! Status: ${response.status}`);
-            }
-            const responseData = await response.json();
-            let spots = responseData.data || responseData;
-            if (!Array.isArray(spots)) {
-                console.error("Parking spots data is not an array:", spots);
-                alert("車位資料格式錯誤，請檢查後端服務");
-                return;
-            }
-
-            filterAndDisplaySpots(spots);
-        } catch (error) {
-            console.error("Failed to load parking spots:", error);
-            alert("無法載入車位資料，請檢查後端服務");
-            if (error.message === "認證失敗，請重新登入！") {
-                removeToken();
-                showLoginPage(true);
-            }
-        }
-    }
-
-    function filterAndDisplaySpots(spots) {
-        let filteredSpots = spots;
-
-        // 篩選條件
-        if (rentCity.value !== "all") {
-            filteredSpots = filteredSpots.filter(spot => spot.location === rentCity.value);
-        }
-        if (rentParkingType.value !== "all") {
-            filteredSpots = filteredSpots.filter(spot => spot.parking_type === rentParkingType.value);
-        }
-        if (rentFloor.value !== "all") {
-            filteredSpots = filteredSpots.filter(spot => spot.floor_level === rentFloor.value);
-        }
-        if (rentPricing.value !== "all") {
-            filteredSpots = filteredSpots.filter(spot => spot.pricing_type === rentPricing.value);
-        }
-        if (rentStatus.value !== "all") {
-            filteredSpots = filteredSpots.filter(spot =>
-                rentStatus.value === "available" ? spot.status === "可用" :
-                rentStatus.value === "occupied" ? spot.status === "已佔用" :
-                rentStatus.value === "reserved" ? spot.status === "預約" : true
-            );
-        }
-
-        if (filteredSpots.length === 0) {
-            viewParkingTableBody.innerHTML = '<tr><td colspan="7">目前沒有符合條件的車位</td></tr>';
+    // 設置查看車位
+    function setupViewParking() {
+        if (userRole !== "shared_owner") {
+            alert("僅車位共享者可使用查看車位功能！");
             return;
         }
 
-        viewParkingTableBody.innerHTML = '';
-        filteredSpots.forEach(spot => {
-            const row = document.createElement("tr");
-            row.setAttribute("data-id", `${spot.spot_id}`);
-            row.classList.add(spot.status === "可用" ? "available" : "occupied");
+        const viewParkingTableBody = document.getElementById("viewParkingTableBody");
+        const rentCity = document.getElementById("rentCity");
+        const rentParkingType = document.getElementById("rentParkingType");
+        const rentFloor = document.getElementById("rentFloor");
+        const rentPricing = document.getElementById("rentPricing");
+        const rentStatus = document.getElementById("rentStatus");
 
-            const idCell = document.createElement("td");
-            idCell.textContent = spot.spot_id;
-            row.appendChild(idCell);
+        if (!viewParkingTableBody || !rentCity || !rentParkingType || !rentFloor || !rentPricing || !rentStatus) {
+            console.warn("Required elements not found for viewParking");
+            return;
+        }
 
-            const locationCell = document.createElement("td");
-            locationCell.textContent = spot.location || '未知';
-            row.appendChild(locationCell);
+        viewParkingTableBody.innerHTML = '<tr><td colspan="7">請使用篩選條件查看車位</td></tr>';
 
-            const typeCell = document.createElement("td");
-            typeCell.textContent = spot.parking_type === "flat" ? "平面" : "機械";
-            row.appendChild(typeCell);
+        async function fetchParkingSpots() {
+            try {
+                const token = getToken();
+                const response = await fetch(`${API_URL}/parking/owned`, {
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Authorization": `Bearer ${token}`
+                    }
+                });
+                console.log(`View parking fetch response status: ${response.status}`);
+                if (!response.headers.get('content-type')?.includes('application/json')) {
+                    throw new Error("後端返回非 JSON 響應，請檢查伺服器配置");
+                }
+                if (!response.ok) {
+                    if (response.status === 401) {
+                        throw new Error("認證失敗，請重新登入！");
+                    }
+                    throw new Error(`HTTP error! Status: ${response.status}`);
+                }
+                const responseData = await response.json();
+                let spots = responseData.data || responseData;
+                if (!Array.isArray(spots)) {
+                    console.error("Parking spots data is not an array:", spots);
+                    alert("車位資料格式錯誤，請檢查後端服務");
+                    return;
+                }
 
-            const floorCell = document.createElement("td");
-            floorCell.textContent = spot.floor_level === "ground" ? "地面" : `地下${spot.floor_level.startsWith("B") ? spot.floor_level.slice(1) : spot.floor_level}樓`;
-            row.appendChild(floorCell);
+                filterAndDisplaySpots(spots);
+            } catch (error) {
+                console.error("Failed to load parking spots:", error);
+                alert("無法載入車位資料，請檢查後端服務");
+                if (error.message === "認證失敗，請重新登入！") {
+                    removeToken();
+                    showLoginPage(true);
+                }
+            }
+        }
 
-            const pricingCell = document.createElement("td");
-            pricingCell.textContent = spot.pricing_type === "hourly" ? "按小時" : spot.pricing_type === "daily" ? "按日" : "按月";
-            row.appendChild(pricingCell);
+        function filterAndDisplaySpots(spots) {
+            let filteredSpots = spots;
 
-            const statusCell = document.createElement("td");
-            statusCell.textContent = spot.status || '未知';
-            row.appendChild(statusCell);
+            // 篩選條件
+            if (rentCity.value !== "all") {
+                filteredSpots = filteredSpots.filter(spot => spot.location === rentCity.value);
+            }
+            if (rentParkingType.value !== "all") {
+                filteredSpots = filteredSpots.filter(spot => spot.parking_type === rentParkingType.value);
+            }
+            if (rentFloor.value !== "all") {
+                filteredSpots = filteredSpots.filter(spot => spot.floor_level === rentFloor.value);
+            }
+            if (rentPricing.value !== "all") {
+                filteredSpots = filteredSpots.filter(spot => spot.pricing_type === rentPricing.value);
+            }
+            if (rentStatus.value !== "all") {
+                filteredSpots = filteredSpots.filter(spot =>
+                    rentStatus.value === "available" ? spot.status === "可用" :
+                        rentStatus.value === "occupied" ? spot.status === "已佔用" :
+                            rentStatus.value === "reserved" ? spot.status === "預約" : true
+                );
+            }
 
-            const actionCell = document.createElement("td");
-            const actionButton = document.createElement("button");
-            actionButton.textContent = "操作";
-            actionButton.classList.add("action-btn");
-            actionButton.disabled = true; // 暫時禁用，後續可根據需求啟用
-            actionCell.appendChild(actionButton);
-            row.appendChild(actionCell);
+            if (filteredSpots.length === 0) {
+                viewParkingTableBody.innerHTML = '<tr><td colspan="7">目前沒有符合條件的車位</td></tr>';
+                return;
+            }
 
-            viewParkingTableBody.appendChild(row);
+            viewParkingTableBody.innerHTML = '';
+            filteredSpots.forEach(spot => {
+                const row = document.createElement("tr");
+                row.setAttribute("data-id", `${spot.spot_id}`);
+                row.classList.add(spot.status === "可用" ? "available" : "occupied");
+
+                const idCell = document.createElement("td");
+                idCell.textContent = spot.spot_id;
+                row.appendChild(idCell);
+
+                const locationCell = document.createElement("td");
+                locationCell.textContent = spot.location || '未知';
+                row.appendChild(locationCell);
+
+                const typeCell = document.createElement("td");
+                typeCell.textContent = spot.parking_type === "flat" ? "平面" : "機械";
+                row.appendChild(typeCell);
+
+                const floorCell = document.createElement("td");
+                floorCell.textContent = spot.floor_level === "ground" ? "地面" : `地下${spot.floor_level.startsWith("B") ? spot.floor_level.slice(1) : spot.floor_level}樓`;
+                row.appendChild(floorCell);
+
+                const pricingCell = document.createElement("td");
+                pricingCell.textContent = spot.pricing_type === "hourly" ? "按小時" : spot.pricing_type === "daily" ? "按日" : "按月";
+                row.appendChild(pricingCell);
+
+                const statusCell = document.createElement("td");
+                statusCell.textContent = spot.status || '未知';
+                row.appendChild(statusCell);
+
+                const actionCell = document.createElement("td");
+                const actionButton = document.createElement("button");
+                actionButton.textContent = "操作";
+                actionButton.classList.add("action-btn");
+                actionButton.disabled = true; // 暫時禁用，後續可根據需求啟用
+                actionCell.appendChild(actionButton);
+                row.appendChild(actionCell);
+
+                viewParkingTableBody.appendChild(row);
+            });
+        }
+
+        // 為篩選選單添加事件監聽器
+        [rentCity, rentParkingType, rentFloor, rentPricing, rentStatus].forEach(select => {
+            select.addEventListener("change", fetchParkingSpots);
         });
+
+        // 初次載入
+        fetchParkingSpots();
     }
-
-    // 為篩選選單添加事件監聽器
-    [rentCity, rentParkingType, rentFloor, rentPricing, rentStatus].forEach(select => {
-        select.addEventListener("change", fetchParkingSpots);
-    });
-
-    // 初次載入
-    fetchParkingSpots();
-}
 
     // 設置收入查詢
     function setupIncomeQuery() {
@@ -1009,7 +1006,7 @@ function setupViewParking() {
             data.forEach(record => {
                 const listItem = document.createElement("li");
                 const startTime = new Date(record.start_time).toLocaleString("zh-TW", { hour12: false });
-                const action = userRole === "shared_owner" 
+                const action = userRole === "shared_owner"
                     ? `車位 ${record.spot.spot_id} 被租用 (Rent ID: ${record.rent_id})`
                     : `租用車位 ${record.spot.spot_id} (Rent ID: ${record.rent_id})`;
                 const endTime = record.actual_end_time

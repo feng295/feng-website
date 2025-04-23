@@ -120,7 +120,6 @@
                 <select id="rentPricing">
                     <option value="all">全部</option>
                     <option value="hourly">按小時計費</option>
-                    <option value="daily">按日計費</option>
                     <option value="monthly">按月計費</option>
                 </select>
                 <label for="rentStatus" style="margin-left: 20px;">車位狀態：</label>
@@ -131,146 +130,146 @@
                     <option value="reserved">預約</option>
                 </select>
             </div>
+            <div class="parking-spaces-table">
+                <table id="viewParkingTable">
+                    <thead>
+                        <tr>
+                            <th>車位編號</th>
+                            <th>縣市</th>
+                            <th>類型</th>
+                            <th>樓層</th>
+                            <th>計價方式</th>
+                            <th>狀態</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody id="viewParkingTableBody">
+                        <tr>
+                            <td colspan="7">請使用篩選條件查看車位</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div id="rentMap" class="map-container"></div>
         </div>
-        <div class="parking-spaces-table">
-            <table id="viewParkingTable">
-                <thead>
-                    <tr>
-                        <th>車位編號</th>
-                        <th>縣市</th>
-                        <th>類型</th>
-                        <th>樓層</th>
-                        <th>計價方式</th>
-                        <th>狀態</th>
-                        <th>操作</th>
-                    </tr>
-                </thead>
-                <tbody id="viewParkingTableBody">
-                    <tr>
-                        <td colspan="7">請使用篩選條件查看車位</td>
-                    </tr>
-                </tbody>
-            </table>
+        <div id="reserveParking" class="content-section" style="display: none;">
+            <h2>預約車位</h2>
+            <p>在這裡你可以預約車位。</p>
+            <div class="search-container">
+                <label for="reserveSearchInput">車位編號：</label>
+                <input type="text" id="reserveSearchInput" placeholder="輸入車位編號">
+                <label for="reserveCity" style="margin-left: 20px;">縣市：</label>
+                <select id="reserveCity">
+                    <option value="all">全部</option>
+                    <option value="taipei">台北市</option>
+                    <option value="new_taipei">新北市</option>
+                    <option value="taoyuan">桃園市</option>
+                    <option value="taichung">台中市</option>
+                    <option value="tainan">台南市</option>
+                    <option value="kaohsiung">高雄市</option>
+                    <option value="keelung">基隆市</option>
+                    <option value="hsinchu">新竹市</option>
+                    <option value="chiayi">嘉義市</option>
+                    <option value="yilan">宜蘭縣</option>
+                    <option value="hsinchu_county">新竹縣</option>
+                    <option value="miaoli">苗栗縣</option>
+                    <option value="changhua">彰化縣</option>
+                    <option value="nantou">南投縣</option>
+                    <option value="yunlin">雲林縣</option>
+                    <option value="chiayi_county">嘉義縣</option>
+                    <option value="pingtung">屏東縣</option>
+                    <option value="taitung">台東縣</option>
+                    <option value="hualien">花蓮縣</option>
+                    <option value="penghu">澎湖縣</option>
+                    <option value="kinmen">金門縣</option>
+                    <option value="lienchiang">連江縣</option>
+                </select>
+                <label for="reserveParkingType" style="margin-left: 20px;">車位類型：</label>
+                <select id="reserveParkingType">
+                    <option value="all">全部</option>
+                    <option value="flat">平面車位</option>
+                    <option value="mechanical">機械車位</option>
+                </select>
+                <label for="reserveFloor" style="margin-left: 20px;">樓層：</label>
+                <select id="reserveFloor">
+                    <option value="all">全部</option>
+                    <option value="ground">地面</option>
+                    <option value="b1">地下1樓</option>
+                    <option value="b2">地下2樓</option>
+                    <option value="b3">地下3樓</option>
+                </select>
+                <label for="reservePricing" style="margin-left: 20px;">計價方式：</label>
+                <select id="reservePricing">
+                    <option value="all">全部</option>
+                    <option value="hourly">按小時計費</option>
+                    <option value="monthly">按月計費</option>
+                </select>
+                <label for="reserveStatus" style="margin-left: 20px;">車位狀態：</label>
+                <select id="reserveStatus">
+                    <option value="all">全部</option>
+                    <option value="available">可用</option>
+                    <option value="occupied">已占用</option>
+                    <option value="reserved">預約</option>
+                </select>
+                <label for="reserveDate" style="margin-left: 20px;">選擇日期：</label>
+                <input type="date" id="reserveDate" value="">
+                <button id="reserveSearchButton" style="margin-left: 10px;">查詢</button>
+            </div>
+            <div class="parking-spaces-table">
+                <table id="parkingTable">
+                    <thead>
+                        <tr>
+                            <th>車位編號</th>
+                            <th>縣市</th>
+                            <th>類型</th>
+                            <th>樓層</th>
+                            <th>計價方式</th>
+                            <th>狀態</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody id="parkingTableBody">
+                        <tr>
+                            <td colspan="7">請選擇日期並點擊查詢以查看可用車位</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
         </div>
-        <div id="rentMap" class="map-container"></div>
-    </div>
-    <div id="reserveParking" class="content-section" style="display: none;">
-        <h2>預約車位</h2>
-        <p>在這裡你可以預約車位。</p>
-        <div class="search-container">
-            <label for="reserveSearchInput">車位編號：</label>
-            <input type="text" id="reserveSearchInput" placeholder="輸入車位編號">
-            <label for="reserveCity" style="margin-left: 20px;">縣市：</label>
-            <select id="reserveCity">
-                <option value="all">全部</option>
-                <option value="taipei">台北市</option>
-                <option value="new_taipei">新北市</option>
-                <option value="taoyuan">桃園市</option>
-                <option value="taichung">台中市</option>
-                <option value="tainan">台南市</option>
-                <option value="kaohsiung">高雄市</option>
-                <option value="keelung">基隆市</option>
-                <option value="hsinchu">新竹市</option>
-                <option value="chiayi">嘉義市</option>
-                <option value="yilan">宜蘭縣</option>
-                <option value="hsinchu_county">新竹縣</option>
-                <option value="miaoli">苗栗縣</option>
-                <option value="changhua">彰化縣</option>
-                <option value="nantou">南投縣</option>
-                <option value="yunlin">雲林縣</option>
-                <option value="chiayi_county">嘉義縣</option>
-                <option value="pingtung">屏東縣</option>
-                <option value="taitung">台東縣</option>
-                <option value="hualien">花蓮縣</option>
-                <option value="penghu">澎湖縣</option>
-                <option value="kinmen">金門縣</option>
-                <option value="lienchiang">連江縣</option>
-            </select>
-            <label for="reserveParkingType" style="margin-left: 20px;">車位類型：</label>
-            <select id="reserveParkingType">
-                <option value="all">全部</option>
-                <option value="flat">平面車位</option>
-                <option value="mechanical">機械車位</option>
-            </select>
-            <label for="reserveFloor" style="margin-left: 20px;">樓層：</label>
-            <select id="reserveFloor">
-                <option value="all">全部</option>
-                <option value="ground">地面</option>
-                <option value="b1">地下1樓</option>
-                <option value="b2">地下2樓</option>
-                <option value="b3">地下3樓</option>
-            </select>
-            <label for="reservePricing" style="margin-left: 20px;">計價方式：</label>
-            <select id="reservePricing">
-                <option value="all">全部</option>
-                <option value="hourly">按小時計費</option>
-                <option value="monthly">按月計費</option>
-            </select>
-            <label for="reserveStatus" style="margin-left: 20px;">車位狀態：</label>
-            <select id="reserveStatus">
-                <option value="all">全部</option>
-                <option value="available">空閒</option>
-                <option value="occupied">使用中</option>
-            </select>
-            <label for="reserveDate" style="margin-left: 20px;">選擇日期：</label>
-            <input type="date" id="reserveDate" value="">
-            <button id="reserveSearchButton" style="margin-left: 10px;">查詢</button>
+        <div id="incomeQuery" class="content-section" style="display: none;">
+            <h2>收入查詢</h2>
+            <p>在這裡你可以查詢收入記錄。</p>
+            <div class="search-container">
+                <label for="incomeStartDate">開始日期：</label>
+                <input type="date" id="incomeStartDate" value="">
+                <label for="incomeEndDate" style="margin-left: 20px;">結束日期：</label>
+                <input type="date" id="incomeEndDate" value="">
+                <button id="incomeSearchButton" style="margin-left: 10px;">查詢</button>
+            </div>
+            <div class="income-table">
+                <table id="incomeTable">
+                    <thead>
+                        <tr>
+                            <th>車位編號</th>
+                            <th>租用者</th>
+                            <th>開始時間</th>
+                            <th>結束時間</th>
+                            <th>總金額</th>
+                        </tr>
+                    </thead>
+                    <tbody id="incomeTableBody">
+                        <tr>
+                            <td colspan="5">請選擇日期範圍並點擊查詢</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div id="history" class="content-section" style="display: none;">
+                <h2>歷史紀錄</h2>
+                <p>在這裡你可以查看停車歷史紀錄。</p>
+                <ul id="historyList"></ul>
+            </div>
         </div>
-        <div class="parking-spaces-table">
-            <table id="parkingTable">
-                <thead>
-                    <tr>
-                        <th>車位編號</th>
-                        <th>縣市</th>
-                        <th>類型</th>
-                        <th>樓層</th>
-                        <th>計價方式</th>
-                        <th>狀態</th>
-                        <th>操作</th>
-                    </tr>
-                </thead>
-                <tbody id="parkingTableBody">
-                    <tr>
-                        <td colspan="7">請選擇日期並點擊查詢以查看可用車位</td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-    </div>
-    <div id="incomeQuery" class="content-section" style="display: none;">
-        <h2>收入查詢</h2>
-        <p>在這裡你可以查詢收入記錄。</p>
-        <div class="search-container">
-            <label for="incomeStartDate">開始日期：</label>
-            <input type="date" id="incomeStartDate" value="">
-            <label for="incomeEndDate" style="margin-left: 20px;">結束日期：</label>
-            <input type="date" id="incomeEndDate" value="">
-            <button id="incomeSearchButton" style="margin-left: 10px;">查詢</button>
-        </div>
-        <div class="income-table">
-            <table id="incomeTable">
-                <thead>
-                    <tr>
-                        <th>車位編號</th>
-                        <th>租用者</th>
-                        <th>開始時間</th>
-                        <th>結束時間</th>
-                        <th>總金額</th>
-                    </tr>
-                </thead>
-                <tbody id="incomeTableBody">
-                    <tr>
-                        <td colspan="5">請選擇日期範圍並點擊查詢</td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-        <div id="history" class="content-section" style="display: none;">
-            <h2>歷史紀錄</h2>
-            <p>在這裡你可以查看停車歷史紀錄。</p>
-            <ul id="historyList"></ul>
-        </div>
-    </div>
     </div>
     <button id="logoutButton">登出</button>
     <script src="./script.js"></script>
