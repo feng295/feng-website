@@ -66,7 +66,7 @@ button {
     max-width: 100%;
     padding: 10px;
     background: #28a745;
-    color: white;
+    color:white;
     border: none;
     border-radius: 3px;
     cursor: pointer;
@@ -169,7 +169,7 @@ a:hover {
     color: #0056b3;
 }
 
-.content-container {
+.content-section {
     width: 75%;
     background: white;
     padding: 20px;
@@ -305,7 +305,8 @@ a:hover {
     background-color: #ffe0e0;
 }
 
-#parkingTable button {
+#parkingTable button,
+#viewParkingTable .action-btn {
     padding: 6px 12px;
     background-color: #28a745;
     color: white;
@@ -316,11 +317,13 @@ a:hover {
     transition: background 0.3s ease;
 }
 
-#parkingTable button:hover:not(:disabled) {
+#parkingTable button:hover:not(:disabled),
+#viewParkingTable .action-btn:hover:not(:disabled) {
     background-color: #218838;
 }
 
-#parkingTable button:disabled {
+#parkingTable button:disabled,
+#viewParkingTable .action-btn:disabled {
     background-color: #ccc;
     cursor: not-allowed;
 }
@@ -336,7 +339,7 @@ a:hover {
         width: 100%;
     }
 
-    .content-container {
+    .content-section {
         width: 100%;
     }
 
@@ -362,7 +365,8 @@ a:hover {
         font-size: 12px;
     }
 
-    #parkingTable button {
+    #parkingTable button,
+    #viewParkingTable .action-btn {
         padding: 5px 10px;
         font-size: 12px;
     }
