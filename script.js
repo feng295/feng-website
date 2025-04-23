@@ -558,59 +558,77 @@ document.addEventListener("DOMContentLoaded", async function () {
         });
     }
 
-    // 設置預約停車
+    // 設置預約停車（替換為修改後的版本）
     async function setupReserveParking() {
         if (!await checkAuth()) return;
 
-        const parkingTableBody = document.getElementById("parkingTableBody");
         const reserveDateInput = document.getElementById("reserveDate");
         const reserveSearchButton = document.getElementById("reserveSearchButton");
-        const reserveSearchInput = document.getElementById("reserveSearchInput");
-        const reserveCity = document.getElementById("reserveCity");
-        const reserveParkingType = document.getElementById("reserveParkingType");
-        const reserveFloor = document.getElementById("reserveFloor");
-        const reservePricing = document.getElementById("reservePricing");
-        const reserveStatus = document.getElementById("reserveStatus");
+        const parkingTableBody = document.getElementById("parkingTableBody");
 
-        if (!parkingTableBody || !reserveDateInput || !reserveSearchButton) {
+        if (!reserveDateInput || !reserveSearchButton || !parkingTableBody) {
             console.warn("Required elements not found for reserveParking");
             return;
         }
 
-        // 初始化表格和輸入框
-        parkingTableBody.innerHTML = '<tr><td colspan="7">請選擇日期並點擊查詢以查看可用車位</td></tr>';
-        reserveDateInput.value = '';
-        if (reserveSearchInput) reserveSearchInput.value = '';
-        if (reserveCity) reserveCity.value = 'all';
-        if (reserveParkingType) reserveParkingType.value = 'all';
-        if (reserveFloor) reserveFloor.value = 'all';
-        if (reservePricing) reservePricing.value = 'all';
-        if (reserveStatus) reserveStatus.value = 'all';
+        // 獲取使用者位置
+        async function getUserLocation() {
+            return new Promise((resolve, reject) => {
+                if (!navigator.geolocation) {
+                    reject(new Error("瀏覽器不支援地理位置功能"));
+                    return;
+                }
 
-        reserveSearchButton.removeEventListener("click", handleReserveSearch);
-        reserveSearchButton.addEventListener("click", handleReserveSearch);
+                navigator.geolocation.getCurrentPosition(
+                    (position) => {
+                        const latitude = position.coords.latitude;
+                        const longitude = position.coords.longitude;
+                        resolve({ latitude, longitude });
+                    },
+                    (error) => {
+                        reject(new Error("無法獲取地理位置：" + error.message));
+                    },
+                    {
+                        enableHighAccuracy: true,
+                        timeout: 5000,
+                        maximumAge: 0,
+                    }
+                );
+            });
+        }
 
         async function handleReserveSearch() {
-            const selectedDate = reserveDateInput.value;
-            const searchQuery = reserveSearchInput ? reserveSearchInput.value.trim().toLowerCase() : '';
-            const filterCity = reserveCity ? reserveCity.value : 'all';
-            const filterType = reserveParkingType ? reserveParkingType.value : 'all';
-            const filterFloor = reserveFloor ? reserveFloor.value : 'all';
-            const filterPricing = reservePricing ? reservePricing.value : 'all';
-            const filterStatus = reserveStatus ? reserveStatus.value : 'all';
+            const date = reserveDateInput.value;
 
-            if (!selectedDate) {
+            if (!date) {
                 alert("請選擇日期！");
                 return;
             }
 
-            const today = new Date().toISOString().split('T')[0];
-            if (selectedDate < today) {
-                alert("請選擇未來的日期！");
+            // 檢查日期格式
+            const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+            if (!dateRegex.test(date)) {
+                alert("日期格式不正確，請使用 YYYY-MM-DD 格式！");
                 return;
             }
 
-            parkingTableBody.innerHTML = '<tr><td colspan="7">載入中...</td></tr>';
+            parkingTableBody.innerHTML = '<tr><td colspan="6">載入中...</td></tr>';
+
+            // 獲取使用者位置
+            let latitude, longitude;
+            try {
+                const location = await getUserLocation();
+                latitude = location.latitude;
+                longitude = location.longitude;
+                console.log(`User location: latitude=${latitude}, longitude=${longitude}`);
+            } catch (error) {
+                console.error("Failed to get user location:", error);
+                alert(`無法獲取您的地理位置：${error.message}。請開啟定位權限或使用預設位置。`);
+                // 使用預設位置（台北市）
+                latitude = 25.0330;
+                longitude = 121.5654;
+                console.log(`Using default location: latitude=${latitude}, longitude=${longitude}`);
+            }
 
             let retries = 3;
             let spots = null;
@@ -621,14 +639,18 @@ document.addEventListener("DOMContentLoaded", async function () {
                         throw new Error("認證令牌缺失，請重新登入！");
                     }
 
-                    const response = await fetch(`${API_URL}/parking/available?date=${encodeURIComponent(selectedDate)}`, {
-                        headers: {
-                            "Content-Type": "application/json",
-                            "Authorization": `Bearer ${token}`
-                        },
-                    });
+                    // 添加 latitude 和 longitude 參數到請求
+                    const response = await fetch(
+                        `${API_URL}/parking/available?date=${encodeURIComponent(date)}&latitude=${encodeURIComponent(latitude)}&longitude=${encodeURIComponent(longitude)}`,
+                        {
+                            headers: {
+                                "Content-Type": "application/json",
+                                "Authorization": `Bearer ${token}`,
+                            },
+                        }
+                    );
                     console.log(`Reserve parking fetch response status: ${response.status}`);
-                    if (!response.headers.get('content-type')?.includes('application/json')) {
+                    if (!response.headers.get("content-type")?.includes("application/json")) {
                         throw new Error("後端返回非 JSON 響應，請檢查伺服器配置");
                     }
                     if (!response.ok) {
@@ -636,14 +658,15 @@ document.addEventListener("DOMContentLoaded", async function () {
                             throw new Error("認證失敗，請重新登入！");
                         }
                         const errorData = await response.json();
-                        throw new Error(`HTTP error! Status: ${response.status}, Message: ${errorData.error || '未知錯誤'}`);
+                        throw new Error(
+                            `HTTP error! Status: ${response.status}, Message: ${
+                                errorData.error || "未知錯誤"
+                            }`
+                        );
                     }
                     const data = await response.json();
-                    console.log(`Available spots for reserve on ${selectedDate}:`, data);
+                    console.log(`Available spots for ${date}:`, data);
 
-                    if (data.error) {
-                        throw new Error(data.error);
-                    }
                     spots = data;
                     if (!Array.isArray(spots) && data.data && Array.isArray(data.data)) {
                         spots = data.data;
@@ -655,79 +678,49 @@ document.addEventListener("DOMContentLoaded", async function () {
                     }
                     break;
                 } catch (error) {
-                    console.error(`Failed to fetch available spots (attempt ${4 - retries}/3):`, error);
+                    console.error(
+                        `Failed to fetch available spots (attempt ${4 - retries}/3):`,
+                        error
+                    );
                     retries--;
                     if (retries === 0) {
-                        alert(`無法載入車位狀態，請檢查後端服務 (錯誤: ${error.message})`);
-                        parkingTableBody.innerHTML = '<tr><td colspan="7">無法載入車位資料</td></tr>';
+                        alert(`無法載入車位資料，請檢查後端服務 (錯誤: ${error.message})`);
+                        parkingTableBody.innerHTML =
+                            '<tr><td colspan="6">無法載入車位資料</td></tr>';
                         if (error.message === "認證失敗，請重新登入！") {
                             removeToken();
                             showLoginPage(true);
                         }
                         return;
                     }
-                    await new Promise(resolve => setTimeout(resolve, 1000));
+                    await new Promise((resolve) => setTimeout(resolve, 1000));
                 }
             }
 
-            let filteredSpots = spots;
-            if (searchQuery) {
-                filteredSpots = filteredSpots.filter(spot =>
-                    spot.id.toString().toLowerCase().includes(searchQuery.replace(/^v/i, '')) ||
-                    (spot.location && spot.location.toLowerCase().includes(searchQuery))
-                );
+            // 渲染車位資料
+            if (spots.length === 0) {
+                parkingTableBody.innerHTML =
+                    '<tr><td colspan="6">該日期沒有可用的車位</td></tr>';
+            } else {
+                const fragment = document.createDocumentFragment();
+                spots.forEach((spot) => {
+                    const row = document.createElement("tr");
+                    row.innerHTML = `
+                        <td>${spot.spot_id}</td>
+                        <td>${spot.location}</td>
+                        <td>${spot.parking_type}</td>
+                        <td>${spot.floor_level}</td>
+                        <td>${spot.pricing_type}</td>
+                        <td>${spot.status}</td>
+                    `;
+                    fragment.appendChild(row);
+                });
+                parkingTableBody.innerHTML = "";
+                parkingTableBody.appendChild(fragment);
             }
-            if (filterCity && filterCity !== "all") {
-                filteredSpots = filteredSpots.filter(spot => spot.location === filterCity);
-            }
-            if (filterType && filterType !== "all") {
-                filteredSpots = filteredSpots.filter(spot => spot.parking_type === filterType);
-            }
-            if (filterFloor && filterFloor !== "all") {
-                filteredSpots = filteredSpots.filter(spot => spot.floor_level === filterFloor);
-            }
-            if (filterPricing && filterPricing !== "all") {
-                filteredSpots = filteredSpots.filter(spot => spot.pricing_type === filterPricing);
-            }
-            if (filterStatus && filterStatus !== "all") {
-                filteredSpots = filteredSpots.filter(spot =>
-                    filterStatus === "available" ? spot.status === "可用" :
-                        filterStatus === "occupied" ? (spot.status === "已佔用" || spot.status === "預約") : true
-                );
-            }
-
-            if (filteredSpots.length === 0) {
-                console.warn("No parking spots match the filters");
-                alert(`所選條件（日期：${selectedDate}）目前沒有符合的車位！請調整篩選條件。`);
-                parkingTableBody.innerHTML = '<tr><td colspan="7">無符合條件的車位</td></tr>';
-                return;
-            }
-
-            const fragment = document.createDocumentFragment();
-            console.log("Generating parking table with filtered spots:", filteredSpots);
-            filteredSpots.forEach(spot => {
-                const row = document.createElement("tr");
-                row.setAttribute("data-id", `${spot.spot_id}`);
-                row.classList.add(spot.status === "available" || spot.status === "可用" ? "available" : "occupied");
-
-                row.innerHTML = `
-                    <td>${spot.spot_id}</td>
-                    <td>${spot.location || '未知'}</td>
-                    <td>${spot.parking_type === "flat" ? "平面" : "機械"}</td>
-                    <td>${spot.floor_level === "ground" ? "地面" : `地下${spot.floor_level.startsWith("B") ? spot.floor_level.slice(1) : spot.floor_level}樓`}</td>
-                    <td>${spot.pricing_type === "hourly" ? "按小時" : spot.pricing_type === "daily" ? "按日" : "按月"}</td>
-                    <td>${spot.status === "available" || spot.status === "可用" ? "可用" : spot.status === "occupied" || spot.status === "已佔用" ? "已佔用" : "預約"}</td>
-                    <td><button ${!(spot.status === "available" || spot.status === "可用") ? "disabled" : ""}>預約</button></td>
-                `;
-
-                const reserveButton = row.querySelector("button");
-                reserveButton.addEventListener("click", () => handleReserveParkingClick(spot.id, selectedDate, row));
-                fragment.appendChild(row);
-            });
-
-            parkingTableBody.innerHTML = '';
-            parkingTableBody.appendChild(fragment);
         }
+
+        reserveSearchButton.addEventListener("click", handleReserveSearch);
     }
 
     // 預約停車點擊處理
