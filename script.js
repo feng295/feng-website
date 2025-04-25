@@ -838,9 +838,16 @@ document.addEventListener("DOMContentLoaded", async function () {
                     throw new Error("認證令牌缺失，請重新登入！");
                 }
 
-                // 使用 GET 請求，確保僅傳遞 start_date 和 end_date
-                const requestUrl = `${API_URL}/parking/income?start_date=${encodeURIComponent(startDate)}&end_date=${encodeURIComponent(endDate)}`;
-                console.log(`Sending request to: ${requestUrl}`); // 日誌記錄請求 URL
+                // 從 localStorage 獲取 parking_spot_id
+                const parkingSpotId = getParkingSpotId();
+                if (!parkingSpotId) {
+                    throw new Error("請先在「查看車位」或「預約車位」中選擇一個停車位！");
+                }
+
+                // 修正請求路徑為 /api/v1/parking/{parking_spot_id}/income
+                const requestUrl = `${API_URL}/parking/${parkingSpotId}/income?start_date=${encodeURIComponent(startDate)}&end_date=${encodeURIComponent(endDate)}`;
+                console.log(`Sending request to: ${requestUrl}`); // 記錄請求 URL
+
                 const response = await fetch(requestUrl, {
                     method: 'GET',
                     headers: {
@@ -853,14 +860,18 @@ document.addEventListener("DOMContentLoaded", async function () {
                 if (!response.headers.get('content-type')?.includes('application/json')) {
                     throw new Error("後端返回非 JSON 響應，請檢查伺服器配置");
                 }
+
+                const errorData = await response.json(); // 提前解析 JSON，以便記錄完整錯誤
+                console.log("Response data:", errorData); // 記錄完整響應
+
                 if (!response.ok) {
                     if (response.status === 401) {
                         throw new Error("認證失敗，請重新登入！");
                     }
-                    const errorData = await response.json();
                     throw new Error(`HTTP error! Status: ${response.status}, Message: ${errorData.error || '未知錯誤'}`);
                 }
-                const data = await response.json();
+
+                const data = errorData; // 如果響應成功，使用已解析的數據
                 console.log(`Income data for ${startDate} to ${endDate}:`, data);
 
                 const totalIncome = data.total_income || 0;
@@ -876,12 +887,12 @@ document.addEventListener("DOMContentLoaded", async function () {
                 records.forEach(record => {
                     const row = document.createElement("tr");
                     row.innerHTML = `
-                    <td>${record.rent_id}</td>
-                    <td>${record.parking_spot_id}</td>
-                    <td>${new Date(record.start_time).toLocaleString("zh-TW", { hour12: false })}</td>
-                    <td>${record.actual_end_time ? new Date(record.actual_end_time).toLocaleString("zh-TW", { hour12: false }) : '尚未結束'}</td>
-                    <td>${record.total_cost}</td>
-                `;
+                        <td>${record.rent_id}</td>
+                        <td>${record.parking_spot_id}</td>
+                        <td>${new Date(record.start_time).toLocaleString("zh-TW", { hour12: false })}</td>
+                        <td>${record.actual_end_time ? new Date(record.actual_end_time).toLocaleString("zh-TW", { hour12: false }) : '尚未結束'}</td>
+                        <td>${record.total_cost}</td>
+                    `;
                     fragment.appendChild(row);
                 });
                 incomeTableBody.innerHTML = '';
@@ -900,6 +911,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 
         incomeSearchButton.addEventListener("click", handleIncomeSearch);
     }
+
     // 添加歷史紀錄
     function addToHistory(action) {
         const now = new Date();
