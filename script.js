@@ -392,7 +392,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                     toggleFormFields();
                 } else {
                     console.error("Register failed:", response.status, result);
-                    showError(result.error || `註冊失敗！（錯誤 zostaje：${response.status}）`);
+                    showError(result.error || `註冊失敗！（錯誤碼：${response.status}）`);
                 }
             } catch (error) {
                 console.error("Register failed:", error.message);
@@ -558,7 +558,7 @@ document.addEventListener("DOMContentLoaded", async function () {
         });
     }
 
-    // 設置預約停車（修改後版本，移除 navigator.geolocation 依賴）
+    // 設置預約停車
     async function setupReserveParking() {
         if (!await checkAuth()) return;
 
@@ -767,7 +767,14 @@ document.addEventListener("DOMContentLoaded", async function () {
                     throw new Error("認證令牌缺失，請重新登入！");
                 }
 
-                const response = await fetch(`${API_URL}/rent/income?start_date=${encodeURIComponent(startDate)}&end_date=${encodeURIComponent(endDate)}`, {
+                // 假設 parkingId 從某處獲取（例如 localStorage、用戶選擇的車位，或後端返回的資料）
+                // TODO: 請根據實際情況替換以下 parkingId 的獲取邏輯
+                const parkingId = localStorage.getItem("selectedParkingId") || "default-id"; // 這是占位符，請替換
+                if (!parkingId || parkingId === "default-id") {
+                    throw new Error("無法獲取停車場或車位 ID，請選擇一個車位或檢查後端資料！");
+                }
+
+                const response = await fetch(`${API_URL}/parking/${parkingId}/income?start_date=${encodeURIComponent(startDate)}&end_date=${encodeURIComponent(endDate)}`, {
                     headers: {
                         "Content-Type": "application/json",
                         "Authorization": `Bearer ${token}`
