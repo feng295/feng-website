@@ -811,6 +811,7 @@ document.addEventListener("DOMContentLoaded", async function () {
             const startDate = startDateInput.value;
             const endDate = endDateInput.value;
 
+            // 驗證日期是否有效
             if (!startDate || !endDate) {
                 alert("請選擇開始和結束日期！");
                 return;
@@ -818,6 +819,13 @@ document.addEventListener("DOMContentLoaded", async function () {
 
             if (startDate > endDate) {
                 alert("開始日期不能晚於結束日期！");
+                return;
+            }
+
+            // 驗證日期格式
+            const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+            if (!dateRegex.test(startDate) || !dateRegex.test(endDate)) {
+                alert("日期格式不正確，請使用 YYYY-MM-DD 格式！");
                 return;
             }
 
@@ -830,12 +838,17 @@ document.addEventListener("DOMContentLoaded", async function () {
                     throw new Error("認證令牌缺失，請重新登入！");
                 }
 
-                const response = await fetch(`${API_URL}/parking/income?start_date=${encodeURIComponent(startDate)}&end_date=${encodeURIComponent(endDate)}`, {
+                // 使用 GET 請求，確保僅傳遞 start_date 和 end_date
+                const requestUrl = `${API_URL}/parking/income?start_date=${encodeURIComponent(startDate)}&end_date=${encodeURIComponent(endDate)}`;
+                console.log(`Sending request to: ${requestUrl}`); // 日誌記錄請求 URL
+                const response = await fetch(requestUrl, {
+                    method: 'GET',
                     headers: {
                         "Content-Type": "application/json",
                         "Authorization": `Bearer ${token}`
-                    },
+                    }
                 });
+
                 console.log(`Income inquiry fetch response status: ${response.status}`);
                 if (!response.headers.get('content-type')?.includes('application/json')) {
                     throw new Error("後端返回非 JSON 響應，請檢查伺服器配置");
@@ -863,12 +876,12 @@ document.addEventListener("DOMContentLoaded", async function () {
                 records.forEach(record => {
                     const row = document.createElement("tr");
                     row.innerHTML = `
-                        <td>${record.rent_id}</td>
-                        <td>${record.parking_spot_id}</td>
-                        <td>${new Date(record.start_time).toLocaleString("zh-TW", { hour12: false })}</td>
-                        <td>${record.actual_end_time ? new Date(record.actual_end_time).toLocaleString("zh-TW", { hour12: false }) : '尚未結束'}</td>
-                        <td>${record.total_cost}</td>
-                    `;
+                    <td>${record.rent_id}</td>
+                    <td>${record.parking_spot_id}</td>
+                    <td>${new Date(record.start_time).toLocaleString("zh-TW", { hour12: false })}</td>
+                    <td>${record.actual_end_time ? new Date(record.actual_end_time).toLocaleString("zh-TW", { hour12: false }) : '尚未結束'}</td>
+                    <td>${record.total_cost}</td>
+                `;
                     fragment.appendChild(row);
                 });
                 incomeTableBody.innerHTML = '';
@@ -887,7 +900,6 @@ document.addEventListener("DOMContentLoaded", async function () {
 
         incomeSearchButton.addEventListener("click", handleIncomeSearch);
     }
-
     // 添加歷史紀錄
     function addToHistory(action) {
         const now = new Date();
