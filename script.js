@@ -535,13 +535,13 @@ document.addEventListener("DOMContentLoaded", async function () {
                 row.classList.add(spot.status === "available" || spot.status === "可用" ? "available" : "occupied");
 
                 row.innerHTML = `
-                    <td>${spot.spot_id}</td>
-                    <td>${spot.location || '未知'}</td>
-                    <td>${spot.parking_type === "flat" ? "平面" : "機械"}</td>
-                    <td>${spot.floor_level === "ground" ? "地面" : `地下${spot.floor_level.startsWith("B") ? spot.floor_level.slice(1) : spot.floor_level}樓`}</td>
-                    <td>${spot.pricing_type === "hourly" ? "按小時" : spot.pricing_type === "daily" ? "按日" : "按月"}</td>
-                    <td>${spot.status === "available" || spot.status === "可用" ? "可用" : spot.status === "occupied" || spot.status === "已佔用" ? "已佔用" : "預約"}</td>
-                `;
+                <td>${spot.spot_id}</td>
+                <td>${spot.location || '未知'}</td>
+                <td>${spot.parking_type === "flat" ? "平面" : "機械"}</td>
+                <td>${spot.floor_level === "ground" ? "地面" : `地下${spot.floor_level.startsWith("B") ? spot.floor_level.slice(1) : spot.floor_level}樓`}</td>
+                <td>${spot.pricing_type === "hourly" ? "按小時" : spot.pricing_type === "daily" ? "按日" : "按月"}</td>
+                <td>${spot.status === "available" || spot.status === "可用" ? "可用" : spot.status === "occupied" || spot.status === "已佔用" ? "已佔用" : "預約"}</td>
+            `;
 
                 fragment.appendChild(row);
             });
@@ -622,8 +622,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                         }
                         const errorData = await response.json();
                         throw new Error(
-                            `HTTP error! Status: ${response.status}, Message: ${
-                                errorData.error || "未知錯誤"
+                            `HTTP error! Status: ${response.status}, Message: ${errorData.error || "未知錯誤"
                             }`
                         );
                     }
