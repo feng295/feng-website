@@ -672,15 +672,19 @@ document.addEventListener("DOMContentLoaded", async function () {
                     const data = await response.json();
                     console.log(`Available spots for ${date}:`, data);
 
+                    // 檢查並提取陣列數據
                     spots = data;
-                    if (!Array.isArray(spots) && data.data && Array.isArray(data.data)) {
-                        spots = data.data;
-                    }
-
                     if (!Array.isArray(spots)) {
-                        console.error("Spots data format is invalid:", spots);
-                        throw new Error("後端返回的車位資料格式錯誤，應為陣列");
+                        if (data.data && Array.isArray(data.data)) {
+                            spots = data.data; // 如果數據在 data 字段中
+                        } else if (data.spots && Array.isArray(data.spots)) {
+                            spots = data.spots; // 如果數據在 spots 字段中
+                        } else {
+                            console.error("Spots data format is invalid:", data);
+                            throw new Error("後端返回的車位資料格式錯誤，應為陣列");
+                        }
                     }
+                    console.log("Extracted spots array:", spots); // 記錄提取後的陣列
                     break;
                 } catch (error) {
                     console.error(
@@ -702,7 +706,18 @@ document.addEventListener("DOMContentLoaded", async function () {
                 }
             }
 
+            // 檢查 spots 是否為空陣列
+            if (!spots || spots.length === 0) {
+                console.warn("No parking spots returned from the server");
+                alert("後端未返回任何車位資料，請檢查日期或後端服務！");
+                parkingTableBody.innerHTML = '<tr><td colspan="7">無可用車位</td></tr>';
+                return;
+            }
+
             let filteredSpots = spots;
+            console.log("Before filtering:", filteredSpots); // 記錄過濾前的數據
+
+            // 應用過濾條件
             if (searchQuery) {
                 filteredSpots = filteredSpots.filter(spot =>
                     spot.spot_id.toString().toLowerCase().includes(searchQuery) ||
@@ -728,6 +743,8 @@ document.addEventListener("DOMContentLoaded", async function () {
                 );
             }
 
+            console.log("After filtering:", filteredSpots); // 記錄過濾後的數據
+
             if (filteredSpots.length === 0) {
                 console.warn("No parking spots match the filters");
                 alert(`所選條件目前沒有符合的車位！請調整篩選條件。`);
@@ -743,14 +760,14 @@ document.addEventListener("DOMContentLoaded", async function () {
                 row.classList.add(spot.status === "available" || spot.status === "可用" ? "available" : "occupied");
 
                 row.innerHTML = `
-                    <td>${spot.spot_id}</td>
-                    <td>${spot.location || '未知'}</td>
-                    <td>${spot.parking_type === "flat" ? "平面" : "機械"}</td>
-                    <td>${spot.floor_level === "ground" ? "地面" : `地下${spot.floor_level.startsWith("B") ? spot.floor_level.slice(1) : spot.floor_level}樓`}</td>
-                    <td>${spot.pricing_type === "hourly" ? "按小時" : spot.pricing_type === "daily" ? "按日" : "按月"}</td>
-                    <td>${spot.status === "available" || spot.status === "可用" ? "可用" : spot.status === "occupied" || spot.status === "已佔用" ? "已佔用" : "預約"}</td>
-                    <td><button class="reserve-btn" ${spot.status === "available" || spot.status === "可用" ? '' : 'disabled'}>預約</button></td>
-                `;
+                <td>${spot.spot_id}</td>
+                <td>${spot.location || '未知'}</td>
+                <td>${spot.parking_type === "flat" ? "平面" : "機械"}</td>
+                <td>${spot.floor_level === "ground" ? "地面" : `地下${spot.floor_level.startsWith("B") ? spot.floor_level.slice(1) : spot.floor_level}樓`}</td>
+                <td>${spot.pricing_type === "hourly" ? "按小時" : spot.pricing_type === "daily" ? "按日" : "按月"}</td>
+                <td>${spot.status === "available" || spot.status === "可用" ? "可用" : spot.status === "occupied" || spot.status === "已佔用" ? "已佔用" : "預約"}</td>
+                <td><button class="reserve-btn" ${spot.status === "available" || spot.status === "可用" ? '' : 'disabled'}>預約</button></td>
+            `;
 
                 if (spot.status === "available" || spot.status === "可用") {
                     row.querySelector(".reserve-btn").addEventListener("click", () => {
