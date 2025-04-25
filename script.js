@@ -739,18 +739,78 @@ document.addEventListener("DOMContentLoaded", async function () {
         const endDateInput = document.getElementById("endDate");
         const incomeSearchButton = document.getElementById("incomeSearchButton");
         const totalIncomeSpan = document.getElementById("totalIncome");
+        const parkingSpotSelect = document.getElementById("parkingSpotSelect");
 
-        if (!startDateInput || !endDateInput || !incomeSearchButton || !totalIncomeSpan) {
+        if (!startDateInput || !endDateInput || !incomeSearchButton || !totalIncomeSpan || !parkingSpotSelect) {
             console.warn("Required elements not found for incomeInquiry");
             return;
         }
 
+        // 動態載入車位選項
+        async function loadParkingSpots() {
+            try {
+                const token = getToken();
+                if (!token) {
+                    throw new Error("認證令牌缺失，請重新登入！");
+                }
+
+                const response = await fetch(`${API_URL}/parking/available`, {
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Authorization": `Bearer ${token}`
+                    },
+                });
+                if (!response.ok) {
+                    if (response.status === 401) {
+                        throw new Error("認證失敗，請重新登入！");
+                    }
+                    const errorData = await response.json();
+                    throw new Error(`HTTP error! Status: ${response.status}, Message: ${errorData.error || '未知錯誤'}`);
+                }
+                const data = await response.json();
+                let spots = data;
+                if (!Array.isArray(spots) && data.data && Array.isArray(data.data)) {
+                    spots = data.data;
+                }
+
+                if (!Array.isArray(spots)) {
+                    throw new Error("後端返回的車位資料格式錯誤，應為陣列");
+                }
+
+                // 填充車位選項到下拉選單
+                parkingSpotSelect.innerHTML = '<option value="">請選擇車位</option>'; // 清空現有選項並添加預設選項
+                spots.forEach(spot => {
+                    const option = document.createElement("option");
+                    option.value = spot.spot_id;
+                    option.textContent = `車位 ${spot.spot_id} (${spot.location || '未知'})`;
+                    parkingSpotSelect.appendChild(option);
+                });
+            } catch (error) {
+                console.error("Failed to load parking spots:", error);
+                alert(`無法載入車位列表，請檢查後端服務 (錯誤: ${error.message})`);
+                parkingSpotSelect.innerHTML = '<option value="">無法載入車位</option>';
+                if (error.message === "認證失敗，請重新登入！") {
+                    removeToken();
+                    showLoginPage(true);
+                }
+            }
+        }
+
+        // 頁面載入時自動載入車位選項
+        loadParkingSpots();
+
         async function handleIncomeSearch() {
             const startDate = startDateInput.value;
             const endDate = endDateInput.value;
+            const parkingId = parkingSpotSelect.value;
 
             if (!startDate || !endDate) {
                 alert("請選擇開始和結束日期！");
+                return;
+            }
+
+            if (!parkingId) {
+                alert("請選擇一個車位！");
                 return;
             }
 
@@ -765,13 +825,6 @@ document.addEventListener("DOMContentLoaded", async function () {
                 const token = getToken();
                 if (!token) {
                     throw new Error("認證令牌缺失，請重新登入！");
-                }
-
-                // 假設 parkingId 從某處獲取（例如 localStorage、用戶選擇的車位，或後端返回的資料）
-                // TODO: 請根據實際情況替換以下 parkingId 的獲取邏輯
-                const parkingId = localStorage.getItem("selectedParkingId") || "default-id"; // 這是占位符，請替換
-                if (!parkingId || parkingId === "default-id") {
-                    throw new Error("無法獲取停車場或車位 ID，請選擇一個車位或檢查後端資料！");
                 }
 
                 const response = await fetch(`${API_URL}/parking/${parkingId}/income?start_date=${encodeURIComponent(startDate)}&end_date=${encodeURIComponent(endDate)}`, {
