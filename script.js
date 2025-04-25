@@ -622,8 +622,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                         }
                         const errorData = await response.json();
                         throw new Error(
-                            `HTTP error! Status: ${response.status}, Message: ${
-                                errorData.error || "未知錯誤"
+                            `HTTP error! Status: ${response.status}, Message: ${errorData.error || "未知錯誤"
                             }`
                         );
                     }
@@ -747,14 +746,17 @@ document.addEventListener("DOMContentLoaded", async function () {
         }
 
         // 動態載入車位選項
-        async function loadParkingSpots() {
+        async function loadParkingSpots(date) {
             try {
                 const token = getToken();
                 if (!token) {
                     throw new Error("認證令牌缺失，請重新登入！");
                 }
 
-                const response = await fetch(`${API_URL}/parking/available`, {
+                // 如果沒有提供日期，則使用當前日期作為預設值
+                const queryDate = date || new Date().toISOString().split('T')[0];
+
+                const response = await fetch(`${API_URL}/parking/available?date=${encodeURIComponent(queryDate)}`, {
                     headers: {
                         "Content-Type": "application/json",
                         "Authorization": `Bearer ${token}`
@@ -796,8 +798,16 @@ document.addEventListener("DOMContentLoaded", async function () {
             }
         }
 
-        // 頁面載入時自動載入車位選項
+        // 頁面載入時，使用當前日期載入車位選項
         loadParkingSpots();
+
+        // 當用戶選擇開始日期時，重新載入車位選項
+        startDateInput.addEventListener("change", function () {
+            const selectedDate = startDateInput.value;
+            if (selectedDate) {
+                loadParkingSpots(selectedDate);
+            }
+        });
 
         async function handleIncomeSearch() {
             const startDate = startDateInput.value;
