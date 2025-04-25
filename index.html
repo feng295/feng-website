@@ -245,10 +245,6 @@
                     <h2>收入查詢</h2>
                     <p>在這裡你可以查詢收入紀錄。</p>
                     <div class="search-container">
-                        <label for="parkingSpotSelect">選擇車位：</label>
-                         <select id="parkingSpotSelect" name="parkingSpotSelect">
-                             <option value="">請選擇車位</option>
-                         </select>
                         <label for="startDate">開始日期：</label>
                         <input type="date" id="startDate" name="startDate">
                         <label for="endDate">結束日期：</label>
@@ -258,6 +254,22 @@
                     <div class="income-result">
                         <h3>查詢結果</h3>
                         <p>總收入：<span id="totalIncome">0</span> 元</p>
+                        <table id="incomeTable">
+                            <thead>
+                                <tr>
+                                    <th>租賃 ID</th>
+                                    <th>車位 ID</th>
+                                    <th>開始時間</th>
+                                    <th>結束時間</th>
+                                    <th>費用 (元)</th>
+                                </tr>
+                            </thead>
+                            <tbody id="incomeTableBody">
+                                <tr>
+                                    <td colspan="5">請選擇車位和日期以查看收入明細</td>
+                                </tr>
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </div>
