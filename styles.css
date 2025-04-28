@@ -80,6 +80,7 @@ button:hover {
 }
 
 /* 統一查詢按鈕樣式 */
+.search-btn,
 #reserveSearchButton,
 #incomeSearchButton,
 #viewSearchButton,
@@ -93,6 +94,7 @@ button:hover {
     transition: background 0.3s ease, transform 0.1s ease;
 }
 
+.search-btn:hover,
 #reserveSearchButton:hover,
 #incomeSearchButton:hover,
 #viewSearchButton:hover,
@@ -101,6 +103,7 @@ button:hover {
     transform: scale(1.05);
 }
 
+.search-btn:active,
 #reserveSearchButton:active,
 #incomeSearchButton:active,
 #viewSearchButton:active,
@@ -143,7 +146,7 @@ a:hover {
 .system-container {
     display: flex;
     width: 90%;
-    max-width: 1200px; /* 更新為第二份的 max-width */
+    max-width: 1600px;
     margin: 50px auto;
     gap: 20px;
 }
@@ -245,27 +248,10 @@ a:hover {
     cursor: not-allowed;
 }
 
-.logoutButton {
-    width: auto;
-    padding: 8px 16px;
-    background: #28a745;
-    color: white;
-    border: none;
-    border-radius: 3px;
-    cursor: pointer;
-    font-size: 14px;
-    margin-top: 10px;
-    margin-left: 0;
-    transition: background 0.3s ease, transform 0.1s ease;
-}
-
-.logoutButton:hover {
-    background: #218838;
-    transform: scale(1.05);
-}
-
-.logoutButton:active {
-    transform: scale(0.95);
+#logoutButton {
+    margin: 20px auto;
+    display: block;
+    width: 200px;
 }
 
 #historyList {
@@ -344,6 +330,53 @@ a:hover {
     padding: 20px;
     color: #666;
     font-size: 16px;
+}
+
+/* 響應式設計 */
+@media (max-width: 768px) {
+    .system-container {
+        flex-direction: column;
+        width: 95%;
+    }
+
+    .function-list {
+        width: 100%;
+    }
+
+    .content-container {
+        width: 100%;
+    }
+
+    .parking-spaces {
+        justify-content: center;
+    }
+
+    .parking-space {
+        width: 100px;
+        height: 50px;
+    }
+
+    .search-container {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .search-container input[type="date"],
+    .search-container button {
+        width: 100%;
+        margin-left: 0;
+        margin-top: 10px;
+    }
+}
+
+/* 提示文字樣式 */
+.parking-spaces p {
+    width: 100%;
+    text-align: center;
+    color: #666;
+    font-size: 16px;
+    padding: 20px 0;
+    margin: 0;
 }
 
 /* 表格樣式 */
@@ -489,42 +522,8 @@ a:hover {
     background-color: #c82333;
 }
 
-/* 響應式設計 */
+/* 響應式調整 */
 @media (max-width: 768px) {
-    .system-container {
-        flex-direction: column;
-        width: 95%;
-    }
-
-    .function-list {
-        width: 100%;
-    }
-
-    .content-container {
-        width: 100%;
-    }
-
-    .parking-spaces {
-        justify-content: center;
-    }
-
-    .parking-space {
-        width: 100px;
-        height: 50px;
-    }
-
-    .search-container {
-        flex-direction: column;
-        align-items: flex-start;
-    }
-
-    .search-container input[type="date"],
-    .search-container button {
-        width: 100%;
-        margin-left: 0;
-        margin-top: 10px;
-    }
-
     #parkingTable th,
     #parkingTable td,
     #viewParkingTable th,
@@ -550,14 +549,4 @@ a:hover {
     #editSpotForm select {
         width: 100%;
     }
-}
-
-/* 提示文字樣式 */
-.parking-spaces p {
-    width: 100%;
-    text-align: center;
-    color: #666;
-    font-size: 16px;
-    padding: 20px 0;
-    margin: 0;
 }
