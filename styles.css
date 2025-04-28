@@ -228,7 +228,7 @@ a:hover {
 
 .occupied {
     background-color: #dc3545;
-    color: black;
+    color: white;
 }
 
 .reserved {
@@ -248,10 +248,27 @@ a:hover {
     cursor: not-allowed;
 }
 
-#logoutButton {
-    margin: 20px auto;
-    display: block;
-    width: 200px;
+.logoutButton {
+    width: auto; /* 移除固定寬度，讓按鈕根據內容自適應 */
+    padding: 8px 16px; /* 與其他按鈕（如 .search-btn）保持一致 */
+    background: #28a745; /* 綠色背景，與圖2一致 */
+    color: white;
+    border: none;
+    border-radius: 3px;
+    cursor: pointer;
+    font-size: 14px; /* 與其他按鈕字體大小一致 */
+    margin-top: 10px; /* 與表格保持適當間距 */
+    margin-left: 0; /* 靠左對齊，與表格左邊對齊 */
+    transition: background 0.3s ease, transform 0.1s ease; /* 添加懸停和點擊效果 */
+}
+
+.logoutButton:hover {
+    background: #218838; /* 懸停時變深 */
+    transform: scale(1.05); /* 與其他按鈕一致的懸停效果 */
+}
+
+.logoutButton:active {
+    transform: scale(0.95); /* 與其他按鈕一致的點擊效果 */
 }
 
 #historyList {
@@ -332,6 +349,12 @@ a:hover {
     font-size: 16px;
 }
 
+#logoutButton {
+    margin: 20px auto;
+    display: block;
+    width: 200px;
+}
+
 /* 響應式設計 */
 @media (max-width: 768px) {
     .system-container {
@@ -367,6 +390,7 @@ a:hover {
         margin-left: 0;
         margin-top: 10px;
     }
+
 }
 
 /* 提示文字樣式 */
