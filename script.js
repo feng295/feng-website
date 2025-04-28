@@ -11,7 +11,7 @@ document.addEventListener("DOMContentLoaded", async function () {
     const submitButton = document.getElementById("submitButton");
     const toggleMessage = document.getElementById("toggleMessage");
     const errorMessage = document.getElementById("errorMessage");
-    const logoutButtons = document.querySelectorAll(".logoutButton"); // 修改為查詢所有 class="logoutButton" 元素
+    const logoutButton = document.getElementById("logoutButton");
     const historyList = document.getElementById("historyList");
 
     const emailInput = document.getElementById("email");
@@ -27,8 +27,8 @@ document.addEventListener("DOMContentLoaded", async function () {
     const vehicleTypeInput = document.getElementById("vehicle_type");
 
     // 檢查必要的 DOM 元素是否存在
-    if (!emailInput || !passwordInput || !authForm || !logoutButtons.length || !historyList) {
-        console.error("Required DOM elements are missing: emailInput, passwordInput, authForm, logoutButtons, or historyList");
+    if (!emailInput || !passwordInput || !authForm || !logoutButton || !historyList) {
+        console.error("Required DOM elements are missing: emailInput, passwordInput, authForm, logoutButton, or historyList");
         return;
     }
 
@@ -103,7 +103,7 @@ document.addEventListener("DOMContentLoaded", async function () {
         parkingContainer.style.display = "block";
         document.querySelector(".function-list").style.display = "block";
         document.querySelector(".content-container").style.display = "block";
-        logoutButtons.forEach(button => (button.style.display = "block")); // 顯示所有登出按鈕
+        logoutButton.style.display = "block";
 
         // 初始化主頁面內容
         const activeSection = document.querySelector(".content-section[style='display: block;']");
@@ -132,7 +132,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                 });
                 document.querySelector(".function-list").style.display = "none";
                 document.querySelector(".content-container").style.display = "none";
-                logoutButtons.forEach(button => (button.style.display = "none")); // 隱藏所有登出按鈕
+                logoutButton.style.display = "none";
             }, 1500);
         } else {
             authContainer.style.display = "block";
@@ -142,7 +142,7 @@ document.addEventListener("DOMContentLoaded", async function () {
             });
             document.querySelector(".function-list").style.display = "none";
             document.querySelector(".content-container").style.display = "none";
-            logoutButtons.forEach(button => (button.style.display = "none")); // 隱藏所有登出按鈕
+            logoutButton.style.display = "none";
         }
     }
 
@@ -328,7 +328,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                 });
                 console.log(`Login response status: ${response.status}`);
                 if (!response.headers.get('content-type')?.includes('application/json')) {
-                    throw new Error("後端返回非 JSON 響應，請檢查伺服器配置");
+                    throw new Error("後端返回非 JSON 響應kaa，請檢查伺服器配置");
                 }
                 const result = await response.json();
                 if (response.ok) {
@@ -424,32 +424,22 @@ document.addEventListener("DOMContentLoaded", async function () {
         }
     });
 
-    // 登出功能（為每個登出按鈕添加事件監聽器）
-    logoutButtons.forEach(button => {
-        button.addEventListener("click", function () {
-            removeToken();
-            showLoginPage();
-        });
+    // 登出功能
+    logoutButton.addEventListener("click", function () {
+        removeToken();
+        showLoginPage();
     });
 
     // 設置查看車位
     function setupViewParking() {
-        const parkingTableBody = document.getElementById("viewParkingTableBody"); // 更新為 viewParkingTableBody
+        const parkingTableBody = document.getElementById("parkingTableBody");
         const viewSearchButton = document.getElementById("viewSearchButton");
         const specificSpotInput = document.getElementById("specificSpotInput");
         const specificSpotButton = document.getElementById("specificSpotButton");
         const viewDateInput = document.getElementById("viewDate"); // 日期選擇欄位
 
-        // 改進錯誤提示，具體指出缺失的元素
-        const missingElements = [];
-        if (!parkingTableBody) missingElements.push("viewParkingTableBody");
-        if (!viewSearchButton) missingElements.push("viewSearchButton");
-        if (!specificSpotInput) missingElements.push("specificSpotInput");
-        if (!specificSpotButton) missingElements.push("specificSpotButton");
-        if (!viewDateInput) missingElements.push("viewDate");
-
-        if (missingElements.length > 0) {
-            console.warn(`Required elements not found for viewParking: ${missingElements.join(", ")}`);
+        if (!parkingTableBody || !viewSearchButton || !specificSpotInput || !specificSpotButton || !viewDateInput) {
+            console.warn("Required elements not found for viewParking");
             return;
         }
 
@@ -805,22 +795,10 @@ document.addEventListener("DOMContentLoaded", async function () {
         const reserveFloor = document.getElementById("reserveFloor");
         const reservePricing = document.getElementById("reservePricing");
         const reserveStatus = document.getElementById("reserveStatus");
-        const parkingTableBody = document.getElementById("reserveParkingTableBody"); // 更新為 reserveParkingTableBody
+        const parkingTableBody = document.getElementById("parkingTableBody");
 
-        // 改進錯誤提示
-        const missingElements = [];
-        if (!reserveDateInput) missingElements.push("reserveDate");
-        if (!reserveSearchButton) missingElements.push("reserveSearchButton");
-        if (!reserveSearchInput) missingElements.push("reserveSearchInput");
-        if (!reserveCity) missingElements.push("reserveCity");
-        if (!reserveParkingType) missingElements.push("reserveParkingType");
-        if (!reserveFloor) missingElements.push("reserveFloor");
-        if (!reservePricing) missingElements.push("reservePricing");
-        if (!reserveStatus) missingElements.push("reserveStatus");
-        if (!parkingTableBody) missingElements.push("reserveParkingTableBody");
-
-        if (missingElements.length > 0) {
-            console.warn(`Required elements not found for reserveParking: ${missingElements.join(", ")}`);
+        if (!reserveDateInput || !reserveSearchButton || !parkingTableBody) {
+            console.warn("Required elements not found for reserveParking");
             return;
         }
 
@@ -978,14 +956,14 @@ document.addEventListener("DOMContentLoaded", async function () {
                 row.classList.add(spot.status === "available" || spot.status === "可用" ? "available" : "occupied");
 
                 row.innerHTML = `
-                    <td>${spot.spot_id}</td>
-                    <td>${spot.location || '未知'}</td>
-                    <td>${spot.parking_type === "flat" ? "平面" : "機械"}</td>
-                    <td>${spot.floor_level === "ground" ? "地面" : `地下${spot.floor_level.startsWith("B") ? spot.floor_level.slice(1) : spot.floor_level}樓`}</td>
-                    <td>${spot.pricing_type === "hourly" ? "按小時" : spot.pricing_type === "daily" ? "按日" : "按月"}</td>
-                    <td>${spot.status === "available" || spot.status === "可用" ? "可用" : spot.status === "occupied" || spot.status === "已佔用" ? "已佔用" : "預約"}</td>
-                    <td><button class="reserve-btn" ${spot.status === "available" || spot.status === "可用" ? '' : 'disabled'}>預約</button></td>
-                `;
+                <td>${spot.spot_id}</td>
+                <td>${spot.location || '未知'}</td>
+                <td>${spot.parking_type === "flat" ? "平面" : "機械"}</td>
+                <td>${spot.floor_level === "ground" ? "地面" : `地下${spot.floor_level.startsWith("B") ? spot.floor_level.slice(1) : spot.floor_level}樓`}</td>
+                <td>${spot.pricing_type === "hourly" ? "按小時" : spot.pricing_type === "daily" ? "按日" : "按月"}</td>
+                <td>${spot.status === "available" || spot.status === "可用" ? "可用" : spot.status === "occupied" || spot.status === "已佔用" ? "已佔用" : "預約"}</td>
+                <td><button class="reserve-btn" ${spot.status === "available" || spot.status === "可用" ? '' : 'disabled'}>預約</button></td>
+            `;
 
                 if (spot.status === "available" || spot.status === "可用") {
                     row.querySelector(".reserve-btn").addEventListener("click", () => {
@@ -1145,12 +1123,12 @@ document.addEventListener("DOMContentLoaded", async function () {
                 records.forEach(record => {
                     const row = document.createElement("tr");
                     row.innerHTML = `
-                        <td>${record.rent_id}</td>
-                        <td>${record.parking_spot_id}</td>
-                        <td>${new Date(record.start_time).toLocaleString("zh-TW", { hour12: false })}</td>
-                        <td>${record.actual_end_time ? new Date(record.actual_end_time).toLocaleString("zh-TW", { hour12: false }) : '尚未結束'}</td>
-                        <td>${record.total_cost}</td>
-                    `;
+                    <td>${record.rent_id}</td>
+                    <td>${record.parking_spot_id}</td>
+                    <td>${new Date(record.start_time).toLocaleString("zh-TW", { hour12: false })}</td>
+                    <td>${record.actual_end_time ? new Date(record.actual_end_time).toLocaleString("zh-TW", { hour12: false }) : '尚未結束'}</td>
+                    <td>${record.total_cost}</td>
+                `;
                     fragment.appendChild(row);
                 });
                 incomeTableBody.innerHTML = '';
