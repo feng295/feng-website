@@ -228,7 +228,7 @@ a:hover {
 
 .occupied {
     background-color: #dc3545;
-    color: white;
+    color: black;
 }
 
 .reserved {

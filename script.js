@@ -328,7 +328,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                 });
                 console.log(`Login response status: ${response.status}`);
                 if (!response.headers.get('content-type')?.includes('application/json')) {
-                    throw new Error("後端返回非 JSON 響應，請檢查伺服器配置");
+                    throw new Error("後端返回非 JSON 響應kaa，請檢查伺服器配置");
                 }
                 const result = await response.json();
                 if (response.ok) {
@@ -434,21 +434,38 @@ document.addEventListener("DOMContentLoaded", async function () {
     function setupViewParking() {
         const parkingTableBody = document.getElementById("parkingTableBody");
         const viewSearchButton = document.getElementById("viewSearchButton");
-        const viewSearchInput = document.getElementById("viewSearchInput");
         const specificSpotInput = document.getElementById("specificSpotInput");
         const specificSpotButton = document.getElementById("specificSpotButton");
+        const viewDateInput = document.getElementById("viewDate"); // 日期選擇欄位
 
-        if (!parkingTableBody || !viewSearchButton || !specificSpotInput || !specificSpotButton) {
+        if (!parkingTableBody || !viewSearchButton || !specificSpotInput || !specificSpotButton || !viewDateInput) {
             console.warn("Required elements not found for viewParking");
             return;
         }
 
+        // 設置預設日期為今天
+        const today = new Date().toISOString().split('T')[0];
+        viewDateInput.value = today;
+
         // 初始化表格
-        parkingTableBody.innerHTML = '<tr><td colspan="7">請點擊查詢以查看車位</td></tr>';
+        parkingTableBody.innerHTML = '<tr><td colspan="7">請選擇日期並點擊查詢以查看車位</td></tr>';
 
         // 查詢所有車位（移除篩選邏輯）
         async function handleViewSearch() {
-            const searchQuery = viewSearchInput ? viewSearchInput.value.trim().toLowerCase() : '';
+            const date = viewDateInput.value; // 獲取用戶選擇的日期
+
+            // 檢查日期是否有效
+            if (!date) {
+                alert("請選擇日期！");
+                return;
+            }
+
+            // 檢查日期格式
+            const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+            if (!dateRegex.test(date)) {
+                alert("日期格式不正確，請使用 YYYY-MM-DD 格式！");
+                return;
+            }
 
             parkingTableBody.innerHTML = '<tr><td colspan="7">載入中...</td></tr>';
 
@@ -461,7 +478,8 @@ document.addEventListener("DOMContentLoaded", async function () {
                         throw new Error("認證令牌缺失，請重新登入！");
                     }
 
-                    const response = await fetch(`${API_URL}/parking/available`, {
+                    // 發送 API 請求，帶上 date 參數
+                    const response = await fetch(`${API_URL}/parking/available?date=${encodeURIComponent(date)}`, {
                         headers: {
                             "Content-Type": "application/json",
                             "Authorization": `Bearer ${token}`
@@ -479,7 +497,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                         throw new Error(`HTTP error! Status: ${response.status}, Message: ${errorData.error || '未知錯誤'}`);
                     }
                     const data = await response.json();
-                    console.log(`Available spots for view:`, data);
+                    console.log(`Available spots for view on ${date}:`, data);
 
                     if (data.error) {
                         throw new Error(data.error);
@@ -510,24 +528,16 @@ document.addEventListener("DOMContentLoaded", async function () {
                 }
             }
 
-            let filteredSpots = spots;
-            if (searchQuery) {
-                filteredSpots = filteredSpots.filter(spot =>
-                    spot.spot_id.toString().toLowerCase().includes(searchQuery) ||
-                    (spot.location && spot.location.toLowerCase().includes(searchQuery))
-                );
-            }
-
-            if (filteredSpots.length === 0) {
-                console.warn("No parking spots match the filters");
-                alert(`所選條件目前沒有符合的車位！請調整篩選條件。`);
-                parkingTableBody.innerHTML = '<tr><td colspan="7">無符合條件的車位</td></tr>';
+            if (spots.length === 0) {
+                console.warn("No parking spots returned from the server");
+                alert(`所選日期目前沒有可用車位！請調整日期。`);
+                parkingTableBody.innerHTML = '<tr><td colspan="7">無可用車位</td></tr>';
                 return;
             }
 
             const fragment = document.createDocumentFragment();
-            console.log("Generating parking table with filtered spots:", filteredSpots);
-            filteredSpots.forEach(spot => {
+            console.log("Generating parking table with spots:", spots);
+            spots.forEach(spot => {
                 const row = document.createElement("tr");
                 row.setAttribute("data-id", `${spot.spot_id}`);
                 row.classList.add(spot.status === "available" || spot.status === "可用" ? "available" : "occupied");
@@ -764,11 +774,6 @@ document.addEventListener("DOMContentLoaded", async function () {
         }
 
         viewSearchButton.addEventListener("click", handleViewSearch);
-        viewSearchInput.addEventListener("keypress", function (event) {
-            if (event.key === "Enter") {
-                handleViewSearch();
-            }
-        });
 
         specificSpotButton.addEventListener("click", handleSpecificSpotSearch);
         specificSpotInput.addEventListener("keypress", function (event) {
