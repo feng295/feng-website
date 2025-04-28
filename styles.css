@@ -83,6 +83,7 @@ button:hover {
 .search-btn,
 #reserveSearchButton,
 #incomeSearchButton,
+#viewSearchButton,
 #specificSpotButton {
     width: auto;
     padding: 8px 16px;
@@ -96,6 +97,7 @@ button:hover {
 .search-btn:hover,
 #reserveSearchButton:hover,
 #incomeSearchButton:hover,
+#viewSearchButton:hover,
 #specificSpotButton:hover {
     background: #0056b3;
     transform: scale(1.05);
@@ -104,6 +106,7 @@ button:hover {
 .search-btn:active,
 #reserveSearchButton:active,
 #incomeSearchButton:active,
+#viewSearchButton:active,
 #specificSpotButton:active {
     transform: scale(0.95);
 }
