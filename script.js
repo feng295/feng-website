@@ -433,16 +433,143 @@ document.addEventListener("DOMContentLoaded", async function () {
     // 設置查看車位
     function setupViewParking() {
         const parkingTableBody = document.getElementById("parkingTableBody");
+        const viewSearchButton = document.getElementById("viewSearchButton");
         const specificSpotInput = document.getElementById("specificSpotInput");
         const specificSpotButton = document.getElementById("specificSpotButton");
+        const viewDateInput = document.getElementById("viewDate"); // 日期選擇欄位
 
-        if (!parkingTableBody || !specificSpotInput || !specificSpotButton) {
+        if (!parkingTableBody || !viewSearchButton || !specificSpotInput || !specificSpotButton || !viewDateInput) {
             console.warn("Required elements not found for viewParking");
             return;
         }
 
+        // 設置預設日期為今天
+        const today = new Date().toISOString().split('T')[0];
+        viewDateInput.value = today;
+
         // 初始化表格
-        parkingTableBody.innerHTML = '<tr><td colspan="7">請輸入車位ID並點擊查詢以查看車位</td></tr>';
+        parkingTableBody.innerHTML = '<tr><td colspan="7">請選擇日期並點擊查詢以查看車位</td></tr>';
+
+        // 查詢所有車位（移除篩選邏輯）
+        async function handleViewSearch() {
+            const date = viewDateInput.value; // 獲取用戶選擇的日期
+
+            // 檢查日期是否有效
+            if (!date) {
+                alert("請選擇日期！");
+                return;
+            }
+
+            // 檢查日期格式
+            const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+            if (!dateRegex.test(date)) {
+                alert("日期格式不正確，請使用 YYYY-MM-DD 格式！");
+                return;
+            }
+
+            parkingTableBody.innerHTML = '<tr><td colspan="7">載入中...</td></tr>';
+
+            let retries = 3;
+            let spots = null;
+            while (retries > 0) {
+                try {
+                    const token = getToken();
+                    if (!token) {
+                        throw new Error("認證令牌缺失，請重新登入！");
+                    }
+
+                    // 發送 API 請求，帶上 date 參數
+                    const response = await fetch(`${API_URL}/parking/available?date=${encodeURIComponent(date)}`, {
+                        headers: {
+                            "Content-Type": "application/json",
+                            "Authorization": `Bearer ${token}`
+                        },
+                    });
+                    console.log(`View parking fetch response status: ${response.status}`);
+                    if (!response.headers.get('content-type')?.includes('application/json')) {
+                        throw new Error("後端返回非 JSON 響應，請檢查伺服器配置");
+                    }
+                    if (!response.ok) {
+                        if (response.status === 401) {
+                            throw new Error("認證失敗，請重新登入！");
+                        }
+                        const errorData = await response.json();
+                        throw new Error(`HTTP error! Status: ${response.status}, Message: ${errorData.error || '未知錯誤'}`);
+                    }
+                    const data = await response.json();
+                    console.log(`Available spots for view on ${date}:`, data);
+
+                    if (data.error) {
+                        throw new Error(data.error);
+                    }
+                    spots = data;
+                    if (!Array.isArray(spots) && data.data && Array.isArray(data.data)) {
+                        spots = data.data;
+                    }
+
+                    if (!Array.isArray(spots)) {
+                        console.error("Spots data format is invalid:", spots);
+                        throw new Error("後端返回的車位資料格式錯誤，應為陣列");
+                    }
+                    break;
+                } catch (error) {
+                    console.error(`Failed to fetch available spots (attempt ${4 - retries}/3):`, error);
+                    retries--;
+                    if (retries === 0) {
+                        alert(`無法載入車位資料，請檢查後端服務 (錯誤: ${error.message})`);
+                        parkingTableBody.innerHTML = '<tr><td colspan="7">無法載入車位資料</td></tr>';
+                        if (error.message === "認證失敗，請重新登入！") {
+                            removeToken();
+                            showLoginPage(true);
+                        }
+                        return;
+                    }
+                    await new Promise(resolve => setTimeout(resolve, 1000));
+                }
+            }
+
+            if (spots.length === 0) {
+                console.warn("No parking spots returned from the server");
+                alert(`所選日期目前沒有可用車位！請調整日期。`);
+                parkingTableBody.innerHTML = '<tr><td colspan="7">無可用車位</td></tr>';
+                return;
+            }
+
+            const fragment = document.createDocumentFragment();
+            console.log("Generating parking table with spots:", spots);
+            spots.forEach(spot => {
+                const row = document.createElement("tr");
+                row.setAttribute("data-id", `${spot.spot_id}`);
+                row.classList.add(spot.status === "available" || spot.status === "可用" ? "available" : "occupied");
+
+                row.innerHTML = `
+                    <td>${spot.spot_id}</td>
+                    <td>${spot.location || '未知'}</td>
+                    <td>${spot.parking_type === "flat" ? "平面" : "機械"}</td>
+                    <td>${spot.floor_level === "ground" ? "地面" : `地下${spot.floor_level.startsWith("B") ? spot.floor_level.slice(1) : spot.floor_level}樓`}</td>
+                    <td>${spot.pricing_type === "hourly" ? "按小時" : spot.pricing_type === "daily" ? "按日" : "按月"}</td>
+                    <td>${spot.status === "available" || spot.status === "可用" ? "可用" : spot.status === "occupied" || spot.status === "已佔用" ? "已佔用" : "預約"}</td>
+                    <td><button class="edit-btn">編輯</button></td>
+                `;
+
+                // 點擊編輯按鈕，顯示編輯表單
+                row.querySelector(".edit-btn").addEventListener("click", (e) => {
+                    e.stopPropagation(); // 防止點擊編輯按鈕時觸發行點擊事件
+                    showEditForm(spot);
+                });
+
+                // 點擊表格行時，將 spot_id 存入 localStorage
+                row.addEventListener("click", () => {
+                    setParkingSpotId(spot.spot_id);
+                    alert(`已選擇車位 ${spot.spot_id}，您現在可以查詢此車位的收入！`);
+                });
+
+                fragment.appendChild(row);
+            });
+
+            parkingTableBody.innerHTML = '';
+            parkingTableBody.appendChild(fragment);
+        }
 
         // 查詢特定車位（GET /api/v1/parking/:id）
         async function handleSpecificSpotSearch() {
@@ -645,6 +772,8 @@ document.addEventListener("DOMContentLoaded", async function () {
                 editForm.remove();
             });
         }
+
+        viewSearchButton.addEventListener("click", handleViewSearch);
 
         specificSpotButton.addEventListener("click", handleSpecificSpotSearch);
         specificSpotInput.addEventListener("keypress", function (event) {
