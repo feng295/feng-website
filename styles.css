@@ -391,6 +391,11 @@ a:hover {
         margin-top: 10px;
     }
 
+    .logoutButton {
+        width: 100%; /* 在小螢幕上，讓按鈕佔滿寬度 */
+        margin-left: 0;
+        margin-top: 10px;
+    }
 }
 
 /* 提示文字樣式 */
