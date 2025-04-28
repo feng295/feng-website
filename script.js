@@ -435,11 +435,6 @@ document.addEventListener("DOMContentLoaded", async function () {
         const parkingTableBody = document.getElementById("parkingTableBody");
         const viewSearchButton = document.getElementById("viewSearchButton");
         const viewSearchInput = document.getElementById("viewSearchInput");
-        const viewCity = document.getElementById("viewCity");
-        const viewParkingType = document.getElementById("viewParkingType");
-        const viewFloor = document.getElementById("viewFloor");
-        const viewPricing = document.getElementById("viewPricing");
-        const viewStatus = document.getElementById("viewStatus");
         const specificSpotInput = document.getElementById("specificSpotInput");
         const specificSpotButton = document.getElementById("specificSpotButton");
 
@@ -449,18 +444,13 @@ document.addEventListener("DOMContentLoaded", async function () {
         }
 
         // 初始化表格
-        parkingTableBody.innerHTML = '<tr><td colspan="6">請點擊查詢以查看車位</td></tr>';
+        parkingTableBody.innerHTML = '<tr><td colspan="7">請點擊查詢以查看車位</td></tr>';
 
-        // 查詢所有車位（現有功能）
+        // 查詢所有車位（移除篩選邏輯）
         async function handleViewSearch() {
             const searchQuery = viewSearchInput ? viewSearchInput.value.trim().toLowerCase() : '';
-            const filterCity = viewCity ? viewCity.value : 'all';
-            const filterType = viewParkingType ? viewParkingType.value : 'all';
-            const filterFloor = viewFloor ? viewFloor.value : 'all';
-            const filterPricing = viewPricing ? viewPricing.value : 'all';
-            const filterStatus = viewStatus ? viewStatus.value : 'all';
 
-            parkingTableBody.innerHTML = '<tr><td colspan="6">載入中...</td></tr>';
+            parkingTableBody.innerHTML = '<tr><td colspan="7">載入中...</td></tr>';
 
             let retries = 3;
             let spots = null;
@@ -509,7 +499,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                     retries--;
                     if (retries === 0) {
                         alert(`無法載入車位資料，請檢查後端服務 (錯誤: ${error.message})`);
-                        parkingTableBody.innerHTML = '<tr><td colspan="6">無法載入車位資料</td></tr>';
+                        parkingTableBody.innerHTML = '<tr><td colspan="7">無法載入車位資料</td></tr>';
                         if (error.message === "認證失敗，請重新登入！") {
                             removeToken();
                             showLoginPage(true);
@@ -527,29 +517,11 @@ document.addEventListener("DOMContentLoaded", async function () {
                     (spot.location && spot.location.toLowerCase().includes(searchQuery))
                 );
             }
-            if (filterCity && filterCity !== "all") {
-                filteredSpots = filteredSpots.filter(spot => spot.location === filterCity);
-            }
-            if (filterType && filterType !== "all") {
-                filteredSpots = filteredSpots.filter(spot => spot.parking_type === filterType);
-            }
-            if (filterFloor && filterFloor !== "all") {
-                filteredSpots = filteredSpots.filter(spot => spot.floor_level === filterFloor);
-            }
-            if (filterPricing && filterPricing !== "all") {
-                filteredSpots = filteredSpots.filter(spot => spot.pricing_type === filterPricing);
-            }
-            if (filterStatus && filterStatus !== "all") {
-                filteredSpots = filteredSpots.filter(spot =>
-                    filterStatus === "available" ? spot.status === "可用" :
-                        filterStatus === "occupied" ? (spot.status === "已佔用" || spot.status === "預約") : true
-                );
-            }
 
             if (filteredSpots.length === 0) {
                 console.warn("No parking spots match the filters");
                 alert(`所選條件目前沒有符合的車位！請調整篩選條件。`);
-                parkingTableBody.innerHTML = '<tr><td colspan="6">無符合條件的車位</td></tr>';
+                parkingTableBody.innerHTML = '<tr><td colspan="7">無符合條件的車位</td></tr>';
                 return;
             }
 
@@ -567,7 +539,14 @@ document.addEventListener("DOMContentLoaded", async function () {
                     <td>${spot.floor_level === "ground" ? "地面" : `地下${spot.floor_level.startsWith("B") ? spot.floor_level.slice(1) : spot.floor_level}樓`}</td>
                     <td>${spot.pricing_type === "hourly" ? "按小時" : spot.pricing_type === "daily" ? "按日" : "按月"}</td>
                     <td>${spot.status === "available" || spot.status === "可用" ? "可用" : spot.status === "occupied" || spot.status === "已佔用" ? "已佔用" : "預約"}</td>
+                    <td><button class="edit-btn">編輯</button></td>
                 `;
+
+                // 點擊編輯按鈕，顯示編輯表單
+                row.querySelector(".edit-btn").addEventListener("click", (e) => {
+                    e.stopPropagation(); // 防止點擊編輯按鈕時觸發行點擊事件
+                    showEditForm(spot);
+                });
 
                 // 點擊表格行時，將 spot_id 存入 localStorage
                 row.addEventListener("click", () => {
@@ -582,7 +561,7 @@ document.addEventListener("DOMContentLoaded", async function () {
             parkingTableBody.appendChild(fragment);
         }
 
-        // 新增：查詢特定車位（GET /api/v1/parking/:id）
+        // 查詢特定車位（GET /api/v1/parking/:id）
         async function handleSpecificSpotSearch() {
             const spotId = specificSpotInput.value.trim();
             if (!spotId) {
@@ -594,7 +573,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                 return;
             }
 
-            parkingTableBody.innerHTML = '<tr><td colspan="6">載入中...</td></tr>';
+            parkingTableBody.innerHTML = '<tr><td colspan="7">載入中...</td></tr>';
 
             try {
                 const token = getToken();
@@ -627,7 +606,6 @@ document.addEventListener("DOMContentLoaded", async function () {
                 console.log(`Specific spot data:`, spot);
 
                 // 假設後端返回的數據結構為 { spot_id, location, parking_type, floor_level, pricing_type, status }
-                // 如果後端返回的數據被包裹（例如 { data: {...} }），則提取實際數據
                 const spotData = spot.data || spot;
 
                 if (!spotData.spot_id) {
@@ -651,8 +629,15 @@ document.addEventListener("DOMContentLoaded", async function () {
                 `;
 
                 // 點擊編輯按鈕，顯示編輯表單
-                row.querySelector(".edit-btn").addEventListener("click", () => {
+                row.querySelector(".edit-btn").addEventListener("click", (e) => {
+                    e.stopPropagation(); // 防止點擊編輯按鈕時觸發行點擊事件
                     showEditForm(spotData);
+                });
+
+                // 點擊表格行時，將 spot_id 存入 localStorage
+                row.addEventListener("click", () => {
+                    setParkingSpotId(spotData.spot_id);
+                    alert(`已選擇車位 ${spotData.spot_id}，您現在可以查詢此車位的收入！`);
                 });
 
                 parkingTableBody.appendChild(row);
@@ -667,7 +652,7 @@ document.addEventListener("DOMContentLoaded", async function () {
             }
         }
 
-        // 新增：顯示編輯表單並處理更新（PUT /api/v1/parking/:id）
+        // 顯示編輯表單並處理更新（PUT /api/v1/parking/:id）
         function showEditForm(spot) {
             // 如果已經有編輯表單，先移除
             const existingForm = document.getElementById("editSpotForm");

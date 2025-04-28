@@ -79,10 +79,12 @@ button:hover {
     background: #218838;
 }
 
-/* 為「查詢」按鈕添加專屬樣式 */
+/* 統一查詢按鈕樣式 */
+.search-btn,
 #reserveSearchButton,
 #incomeSearchButton,
-#viewParkingSearchButton {
+#viewSearchButton,
+#specificSpotButton {
     width: auto;
     padding: 8px 16px;
     background: #007bff;
@@ -92,16 +94,20 @@ button:hover {
     transition: background 0.3s ease, transform 0.1s ease;
 }
 
+.search-btn:hover,
 #reserveSearchButton:hover,
 #incomeSearchButton:hover,
-#viewParkingSearchButton:hover {
+#viewSearchButton:hover,
+#specificSpotButton:hover {
     background: #0056b3;
     transform: scale(1.05);
 }
 
+.search-btn:active,
 #reserveSearchButton:active,
 #incomeSearchButton:active,
-#viewParkingSearchButton:active {
+#viewSearchButton:active,
+#specificSpotButton:active {
     transform: scale(0.95);
 }
 
@@ -445,6 +451,77 @@ a:hover {
     cursor: not-allowed;
 }
 
+/* 編輯按鈕樣式 */
+.edit-btn {
+    padding: 6px 12px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 3px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background 0.3s ease;
+}
+
+.edit-btn:hover {
+    background-color: #0056b3;
+}
+
+/* 編輯表單樣式 */
+#editSpotForm {
+    margin-top: 20px;
+    padding: 15px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    background-color: #f9f9f9;
+}
+
+#editSpotForm h3 {
+    margin: 0 0 15px 0;
+    font-size: 18px;
+}
+
+#editSpotForm div {
+    margin-bottom: 10px;
+}
+
+#editSpotForm label {
+    display: inline-block;
+    width: 100px;
+    font-size: 14px;
+}
+
+#editSpotForm input,
+#editSpotForm select {
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 3px;
+    font-size: 14px;
+    width: 200px;
+}
+
+#editSpotForm button {
+    width: auto;
+    padding: 8px 16px;
+    margin-right: 10px;
+}
+
+#editSpotForm #saveSpotButton {
+    background-color: #28a745;
+}
+
+#editSpotForm #saveSpotButton:hover {
+    background-color: #218838;
+}
+
+#editSpotForm #cancelEditButton {
+    background-color: #dc3545;
+}
+
+#editSpotForm #cancelEditButton:hover {
+    background-color: #c82333;
+}
+
 /* 響應式調整 */
 @media (max-width: 768px) {
     #parkingTable th,
@@ -455,387 +532,6 @@ a:hover {
     #incomeTable td {
         padding: 8px;
         font-size: 12px;
-    }body {
-        font-family: Arial, sans-serif;
-        margin: 0;
-        padding: 0;
-        background-color: #f4f4f4;
-    }
-    
-    /* 重置瀏覽器預設樣式 */
-    form, input {
-        margin: 0;
-        padding: 0;
-        box-sizing: border-box;
-    }
-    
-    .container {
-        width: 100%;
-        max-width: 400px;
-        margin: 100px auto;
-        padding: 15px 10px;
-        background: white;
-        border-radius: 5px;
-        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-    }
-    
-    #authForm {
-        margin: 0;
-        padding: 0;
-    }
-    
-    .input-group {
-        margin-bottom: 15px;
-        padding: 0;
-    }
-    
-    .input-group label {
-        display: block;
-        margin-bottom: 5px;
-        margin-left: 0;
-        margin-right: 0;
-    }
-    
-    .input-group input,
-    .input-group select {
-        width: 100%;
-        padding: 8px;
-        border: 1px solid #ccc;
-        border-radius: 3px;
-        box-sizing: border-box;
-        font-size: 14px;
-        margin: 0;
-    }
-    
-    .input-group select {
-        appearance: none;
-        -webkit-appearance: none;
-        -moz-appearance: none;
-        background-image: url('data:image/svg+xml;utf8,<svg fill="black" height="24" viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg"><path d="M7 10l5 5 5-5z"/></svg>');
-        background-repeat: no-repeat;
-        background-position: right 8px center;
-        background-size: 16px;
-        cursor: pointer;
-    }
-    
-    button {
-        width: 100%;
-        max-width: 100%;
-        padding: 10px;
-        background: #28a745;
-        color: white;
-        border: none;
-        border-radius: 3px;
-        cursor: pointer;
-        box-sizing: border-box;
-        margin: 0;
-        transition: background 0.3s ease;
-    }
-    
-    button:hover {
-        background: #218838;
-    }
-    
-    /* 為「查詢」按鈕添加專屬樣式 */
-    #reserveSearchButton,
-    #viewSearchButton,
-    #incomeSearchButton {
-        width: auto;
-        padding: 8px 16px;
-        background: #007bff;
-        margin-left: 10px;
-        font-size: 14px;
-        border-radius: 3px;
-        transition: background 0.3s ease, transform 0.1s ease;
-    }
-    
-    #reserveSearchButton:hover,
-    #viewSearchButton:hover,
-    #incomeSearchButton:hover {
-        background: #0056b3;
-        transform: scale(1.05);
-    }
-    
-    #reserveSearchButton:active,
-    #viewSearchButton:active,
-    #incomeSearchButton:active {
-        transform: scale(0.95);
-    }
-    
-    #formTitle {
-        margin: 0 0 20px 0;
-        text-align: center;
-    }
-    
-    #toggleMessage {
-        margin: 10px 10px 0;
-        text-align: center;
-    }
-    
-    a {
-        color: #007bff;
-        text-decoration: none;
-    }
-    
-    a:hover {
-        text-decoration: underline;
-    }
-    
-    #errorMessage {
-        margin: 10px 0 0 0;
-        text-align: center;
-        font-size: 14px;
-        color: red;
-        padding: 5px;
-        border-radius: 3px;
-    }
-    
-    #errorMessage.success {
-        color: green;
-    }
-    
-    .system-container {
-        display: flex;
-        width: 90%;
-        max-width: 1600px;
-        margin: 50px auto;
-        gap: 20px;
-    }
-    
-    .function-list {
-        width: 25%;
-        background: white;
-        padding: 20px;
-        border-radius: 5px;
-        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-    }
-    
-    .function-list ul {
-        list-style: none;
-        padding: 0;
-    }
-    
-    .function-list ul li {
-        margin: 10px 0;
-    }
-    
-    .function-list ul li a {
-        text-decoration: none;
-        color: #007bff;
-        cursor: pointer;
-    }
-    
-    .function-list ul li a:hover {
-        color: #0056b3;
-    }
-    
-    .content-container {
-        width: 75%;
-        background: white;
-        padding: 20px;
-        border-radius: 5px;
-        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-    }
-    
-    #logoutButton {
-        margin: 20px auto;
-        display: block;
-        width: 200px;
-    }
-    
-    #historyList {
-        list-style: none;
-        padding: 0;
-    }
-    
-    #historyList li {
-        padding: 5px 0;
-        border-bottom: 1px solid #eee;
-    }
-    
-    .search-container {
-        margin-top: 10px;
-        display: flex;
-        align-items: center;
-        flex-wrap: wrap;
-        gap: 10px;
-        padding: 10px 0;
-    }
-    
-    .search-container label {
-        margin-right: 10px;
-        font-size: 14px;
-        color: #333;
-    }
-    
-    .search-container select,
-    .search-container input[type="date"] {
-        padding: 8px;
-        border: 1px solid #ccc;
-        border-radius: 3px;
-        font-size: 14px;
-        width: auto;
-        min-width: 150px;
-    }
-    
-    .search-container input {
-        padding: 8px;
-        border: 1px solid #ccc;
-        border-radius: 3px;
-        width: 200px;
-    }
-    
-    .search-container button {
-        width: auto;
-        padding: 8px 16px;
-        background: #007bff;
-        margin-left: 10px;
-        font-size: 14px;
-        border-radius: 3px;
-    }
-    
-    .search-container button:hover {
-        background: #0056b3;
-    }
-    
-    #cardNumberContainer,
-    #renterFields {
-        display: none;
-        margin-top: 15px;
-    }
-    
-    #cardNumberContainer input,
-    #renterFields input {
-        width: 100%;
-        padding: 8px;
-        border: 1px solid #ccc;
-        border-radius: 3px;
-    }
-    
-    .income-result {
-        margin-top: 20px;
-        padding: 10px;
-        border: 1px solid #ccc;
-        border-radius: 3px;
-    }
-    
-    .income-result h3 {
-        margin: 0 0 10px 0;
-    }
-    
-    .income-result p {
-        margin: 5px 0;
-        font-size: 16px;
-    }
-    
-    .loading {
-        text-align: center;
-        padding: 20px;
-        color: #666;
-        font-size: 16px;
-    }
-    
-    /* 響應式設計 */
-    @media (max-width: 768px) {
-        .system-container {
-            flex-direction: column;
-            width: 95%;
-        }
-    
-        .function-list {
-            width: 100%;
-        }
-    
-        .content-container {
-            width: 100%;
-        }
-    
-        .search-container {
-            flex-direction: column;
-            align-items: flex-start;
-        }
-    
-        .search-container input[type="date"],
-        .search-container button {
-            width: 100%;
-            margin-left: 0;
-            margin-top: 10px;
-        }
-    }
-    
-    /* 表格樣式 */
-    .parking-spaces-table {
-        margin-top: 20px;
-        max-height: 400px;
-        overflow-y: auto;
-    }
-    
-    #parkingTable {
-        width: 100%;
-        border-collapse: collapse;
-        background-color: #fff;
-    }
-    
-    #parkingTable th,
-    #parkingTable td {
-        padding: 12px;
-        border: 1px solid black;
-        text-align: left;
-        font-size: 14px;
-    }
-    
-    #parkingTable th {
-        background-color: #f4f4f4;
-        position: sticky;
-        top: 0;
-        font-weight: bold;
-    }
-    
-    #parkingTable tr.available {
-        background-color: #e0ffe0;
-    }
-    
-    #parkingTable tr.occupied,
-    #parkingTable tr.reserved {
-        background-color: #ffe0e0;
-    }
-    
-    #parkingTable button {
-        padding: 6px 12px;
-        background-color: #28a745;
-        color: white;
-        border: none;
-        border-radius: 3px;
-        cursor: pointer;
-        font-size: 14px;
-        transition: background 0.3s ease;
-    }
-    
-    #parkingTable button:hover:not(:disabled) {
-        background-color: #218838;
-    }
-    
-    #parkingTable button:disabled {
-        background-color: #ccc;
-        cursor: not-allowed;
-    }
-    
-    /* 響應式調整 */
-    @media (max-width: 768px) {
-        #parkingTable th,
-        #parkingTable td {
-            padding: 8px;
-            font-size: 12px;
-        }
-    
-        #parkingTable button {
-            padding: 5px 10px;
-            font-size: 12px;
-        }
-    
-        .parking-spaces-table {
-            overflow-x: auto;
-        }
     }
 
     #parkingTable button,
@@ -847,5 +543,10 @@ a:hover {
     .parking-spaces-table,
     .income-table {
         overflow-x: auto;
+    }
+
+    #editSpotForm input,
+    #editSpotForm select {
+        width: 100%;
     }
 }
