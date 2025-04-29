@@ -432,7 +432,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     // 設置查看車位
     function setupViewParking() {
-        const parkingTableBody = document.getElementById("parkingTableBody");
+        const parkingTableBody = document.getElementById("viewParkingTableBody"); // 修改為 viewParkingTableBody
         const specificSpotInput = document.getElementById("specificSpotInput");
         const specificSpotButton = document.getElementById("specificSpotButton");
 
@@ -497,7 +497,6 @@ document.addEventListener("DOMContentLoaded", async function () {
                 parkingTableBody.innerHTML = '';
                 const row = document.createElement("tr");
                 row.setAttribute("data-id", `${spotData.spot_id}`);
-                // 修改這裏：添加對 "預約" 狀態的檢查
                 if (spotData.status === "available" || spotData.status === "可用") {
                     row.classList.add("available");
                 } else if (spotData.status === "預約") {
@@ -507,14 +506,14 @@ document.addEventListener("DOMContentLoaded", async function () {
                 }
 
                 row.innerHTML = `
-            <td>${spotData.spot_id}</td>
-            <td>${spotData.location || '未知'}</td>
-            <td>${spotData.parking_type === "flat" ? "平面" : "機械"}</td>
-            <td>${spotData.floor_level === "ground" ? "地面" : `地下${spotData.floor_level.startsWith("B") ? spotData.floor_level.slice(1) : spotData.floor_level}樓`}</td>
-            <td>${spotData.pricing_type === "hourly" ? "按小時" : spotData.pricing_type === "daily" ? "按日" : "按月"}</td>
-            <td>${spotData.status === "available" || spotData.status === "可用" ? "可用" : spotData.status === "occupied" || spotData.status === "已佔用" ? "已佔用" : "預約"}</td>
-            <td><button class="edit-btn">編輯</button></td>
-        `;
+                    <td>${spotData.spot_id}</td>
+                    <td>${spotData.location || '未知'}</td>
+                    <td>${spotData.parking_type === "flat" ? "平面" : "機械"}</td>
+                    <td>${spotData.floor_level === "ground" ? "地面" : `地下${spotData.floor_level.startsWith("B") ? spotData.floor_level.slice(1) : spotData.floor_level}樓`}</td>
+                    <td>${spotData.pricing_type === "hourly" ? "按小時" : spotData.pricing_type === "daily" ? "按日" : "按月"}</td>
+                    <td>${spotData.status === "available" || spotData.status === "可用" ? "可用" : spotData.status === "occupied" || spotData.status === "已佔用" ? "已佔用" : "預約"}</td>
+                    <td><button class="edit-btn">編輯</button></td>
+                `;
 
                 row.querySelector(".edit-btn").addEventListener("click", (e) => {
                     e.stopPropagation();
@@ -540,13 +539,11 @@ document.addEventListener("DOMContentLoaded", async function () {
 
         // 顯示編輯表單並處理更新（PUT /api/v1/parking/:id）
         function showEditForm(spot) {
-            // 如果已經有編輯表單，先移除
             const existingForm = document.getElementById("editSpotForm");
             if (existingForm) {
                 existingForm.remove();
             }
 
-            // 創建編輯表單
             const editForm = document.createElement("div");
             editForm.id = "editSpotForm";
             editForm.style.marginTop = "20px";
@@ -584,7 +581,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                     <select id="editStatus">
                         <option value="可用" ${spot.status === "可用" ? "selected" : ""}>可用</option>
                         <option value="已佔用" ${spot.status === "已佔用" ? "selected" : ""}>已佔用</option>
-                        <option value="預約" ${-spot.status === "預約" ? "selected" : ""}>預約</option>
+                        <option value="預約" ${spot.status === "預約" ? "selected" : ""}>預約</option>
                     </select>
                 </div>
                 <button id="saveSpotButton">保存</button>
@@ -593,7 +590,6 @@ document.addEventListener("DOMContentLoaded", async function () {
 
             parkingTableBody.parentElement.appendChild(editForm);
 
-            // 保存更新
             document.getElementById("saveSpotButton").addEventListener("click", async () => {
                 const updatedSpot = {
                     location: document.getElementById("editLocation").value.trim(),
@@ -632,7 +628,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                     console.log("Spot updated successfully:", result);
                     alert("車位信息已成功更新！");
                     editForm.remove();
-                    handleSpecificSpotSearch(); // 刷新車位數據
+                    handleSpecificSpotSearch();
                 } catch (error) {
                     console.error("Failed to update spot:", error);
                     alert(`無法更新車位資料，請檢查後端服務 (錯誤: ${error.message})`);
@@ -643,7 +639,6 @@ document.addEventListener("DOMContentLoaded", async function () {
                 }
             });
 
-            // 取消編輯
             document.getElementById("cancelEditButton").addEventListener("click", () => {
                 editForm.remove();
             });
@@ -661,6 +656,11 @@ document.addEventListener("DOMContentLoaded", async function () {
     async function setupReserveParking() {
         if (!await checkAuth()) return;
 
+        const reserveSection = document.getElementById("reserveParking");
+        console.log("Reserve section display before setup:", reserveSection.style.display);
+        reserveSection.style.display = "block";
+        console.log("Reserve section display after setup:", reserveSection.style.display);
+
         const reserveDateInput = document.getElementById("reserveDate");
         const reserveSearchButton = document.getElementById("reserveSearchButton");
         const reserveSearchInput = document.getElementById("reserveSearchInput");
@@ -669,7 +669,7 @@ document.addEventListener("DOMContentLoaded", async function () {
         const reserveFloor = document.getElementById("reserveFloor");
         const reservePricing = document.getElementById("reservePricing");
         const reserveStatus = document.getElementById("reserveStatus");
-        const parkingTableBody = document.getElementById("parkingTableBody");
+        const parkingTableBody = document.getElementById("reserveParkingTableBody"); // 修改為 reserveParkingTableBody
 
         if (!reserveDateInput || !reserveSearchButton || !parkingTableBody) {
             console.warn("Required elements not found for reserveParking");
@@ -694,7 +694,6 @@ document.addEventListener("DOMContentLoaded", async function () {
                 return;
             }
 
-            // 檢查日期格式
             const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
             if (!dateRegex.test(date)) {
                 alert("日期格式不正確，請使用 YYYY-MM-DD 格式！");
@@ -703,7 +702,6 @@ document.addEventListener("DOMContentLoaded", async function () {
 
             parkingTableBody.innerHTML = '<tr><td colspan="7">載入中...</td></tr>';
 
-            // 使用預設位置（台北市）
             const latitude = 25.0330;
             const longitude = 121.5654;
             console.log(`Using default location: latitude=${latitude}, longitude=${longitude}`);
@@ -742,19 +740,18 @@ document.addEventListener("DOMContentLoaded", async function () {
                     const data = await response.json();
                     console.log(`Available spots for ${date}:`, data);
 
-                    // 檢查並提取陣列數據
                     spots = data;
                     if (!Array.isArray(spots)) {
                         if (data.data && Array.isArray(data.data)) {
-                            spots = data.data; // 如果數據在 data 字段中
+                            spots = data.data;
                         } else if (data.spots && Array.isArray(data.spots)) {
-                            spots = data.spots; // 如果數據在 spots 字段中
+                            spots = data.spots;
                         } else {
                             console.error("Spots data format is invalid:", data);
                             throw new Error("後端返回的車位資料格式錯誤，應為陣列");
                         }
                     }
-                    console.log("Extracted spots array:", spots); // 記錄提取後的陣列
+                    console.log("Extracted spots array:", spots);
                     break;
                 } catch (error) {
                     console.error(
@@ -776,7 +773,6 @@ document.addEventListener("DOMContentLoaded", async function () {
                 }
             }
 
-            // 檢查 spots 是否為空陣列
             if (!spots || spots.length === 0) {
                 console.warn("No parking spots returned from the server");
                 alert("後端未返回任何車位資料，請檢查日期或後端服務！");
@@ -785,9 +781,8 @@ document.addEventListener("DOMContentLoaded", async function () {
             }
 
             let filteredSpots = spots;
-            console.log("Before filtering:", filteredSpots); // 記錄過濾前的數據
+            console.log("Before filtering:", filteredSpots);
 
-            // 應用過濾條件
             if (searchQuery) {
                 filteredSpots = filteredSpots.filter(spot =>
                     spot.spot_id.toString().toLowerCase().includes(searchQuery) ||
@@ -813,7 +808,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                 );
             }
 
-            console.log("After filtering:", filteredSpots); // 記錄過濾後的數據
+            console.log("After filtering:", filteredSpots);
             console.log("Filtered spots content:", JSON.stringify(filteredSpots, null, 2));
 
             if (filteredSpots.length === 0) {
@@ -829,7 +824,6 @@ document.addEventListener("DOMContentLoaded", async function () {
                 console.log("Processing spot:", spot);
                 const row = document.createElement("tr");
                 row.setAttribute("data-id", `${spot.spot_id}`);
-                // 修改這裏：添加對 "預約" 狀態的檢查
                 if (spot.status === "available" || spot.status === "可用") {
                     row.classList.add("available");
                 } else if (spot.status === "預約") {
@@ -861,6 +855,16 @@ document.addEventListener("DOMContentLoaded", async function () {
             parkingTableBody.innerHTML = '';
             parkingTableBody.appendChild(fragment);
             console.log("Table body after update:", parkingTableBody.innerHTML);
+
+            // 強制觸發重繪
+            parkingTableBody.style.display = 'none';
+            parkingTableBody.offsetHeight; // 觸發重排
+            parkingTableBody.style.display = 'table-row-group';
+
+            // 延遲檢查是否有其他程式碼干擾
+            setTimeout(() => {
+                console.log("Table body after 1 second:", parkingTableBody.innerHTML);
+            }, 1000);
         }
 
         reserveSearchButton.addEventListener("click", handleReserveSearch);
@@ -935,7 +939,6 @@ document.addEventListener("DOMContentLoaded", async function () {
             const startDate = startDateInput.value;
             const endDate = endDateInput.value;
 
-            // 驗證日期是否有效
             if (!startDate || !endDate) {
                 alert("請選擇開始和結束日期！");
                 return;
@@ -946,7 +949,6 @@ document.addEventListener("DOMContentLoaded", async function () {
                 return;
             }
 
-            // 驗證日期格式
             const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
             if (!dateRegex.test(startDate) || !dateRegex.test(endDate)) {
                 alert("日期格式不正確，請使用 YYYY-MM-DD 格式！");
@@ -962,15 +964,13 @@ document.addEventListener("DOMContentLoaded", async function () {
                     throw new Error("認證令牌缺失，請重新登入！");
                 }
 
-                // 從 localStorage 獲取 parking_spot_id
                 const parkingSpotId = getParkingSpotId();
                 if (!parkingSpotId) {
                     throw new Error("請先在「查看車位」或「預約車位」中選擇一個停車位！");
                 }
 
-                // 修正請求路徑為 /api/v1/parking/{parking_spot_id}/income
                 const requestUrl = `${API_URL}/parking/${parkingSpotId}/income?start_date=${encodeURIComponent(startDate)}&end_date=${encodeURIComponent(endDate)}`;
-                console.log(`Sending request to: ${requestUrl}`); // 日誌記錄請求 URL
+                console.log(`Sending request to: ${requestUrl}`);
                 const response = await fetch(requestUrl, {
                     method: 'GET',
                     headers: {
@@ -1006,12 +1006,12 @@ document.addEventListener("DOMContentLoaded", async function () {
                 records.forEach(record => {
                     const row = document.createElement("tr");
                     row.innerHTML = `
-                    <td>${record.rent_id}</td>
-                    <td>${record.parking_spot_id}</td>
-                    <td>${new Date(record.start_time).toLocaleString("zh-TW", { hour12: false })}</td>
-                    <td>${record.actual_end_time ? new Date(record.actual_end_time).toLocaleString("zh-TW", { hour12: false }) : '尚未結束'}</td>
-                    <td>${record.total_cost}</td>
-                `;
+                        <td>${record.rent_id}</td>
+                        <td>${record.parking_spot_id}</td>
+                        <td>${new Date(record.start_time).toLocaleString("zh-TW", { hour12: false })}</td>
+                        <td>${record.actual_end_time ? new Date(record.actual_end_time).toLocaleString("zh-TW", { hour12: false }) : '尚未結束'}</td>
+                        <td>${record.total_cost}</td>
+                    `;
                     fragment.appendChild(row);
                 });
                 incomeTableBody.innerHTML = '';
