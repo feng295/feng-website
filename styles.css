@@ -274,26 +274,31 @@ a:hover {
 }
 
 .search-container label {
-    margin-right: 10px;
+    margin-right: 5px; /* 修改：縮減 label 與輸入欄位間距，避免過於分散 */
     font-size: 14px;
     color: #333;
 }
 
+/* 修改：統一所有 search-container 內的輸入欄位樣式 */
 .search-container select,
-.search-container input[type="date"] {
+.search-container input[type="date"],
+.search-container input[type="time"] { /* 新增：為時間輸入欄位添加樣式 */
     padding: 8px;
     border: 1px solid #ccc;
     border-radius: 3px;
     font-size: 14px;
     width: auto;
-    min-width: 150px;
+    min-width: 120px; /* 修改：縮減最小寬度，適應更多欄位 */
+    box-sizing: border-box;
 }
 
-.search-container input {
+.search-container input[type="text"] { /* 修改：專門為文本輸入欄位設置寬度 */
     padding: 8px;
     border: 1px solid #ccc;
     border-radius: 3px;
-    width: 200px;
+    font-size: 14px;
+    width: 180px; /* 修改：稍微縮減寬度，避免過長 */
+    box-sizing: border-box;
 }
 
 .search-container button {
@@ -361,11 +366,20 @@ a:hover {
         align-items: flex-start;
     }
 
+    /* 修改：在小螢幕下統一調整所有輸入欄位 */
     .search-container input[type="date"],
+    .search-container input[type="time"], /* 新增：時間欄位的響應式樣式 */
+    .search-container input[type="text"],
+    .search-container select,
     .search-container button {
         width: 100%;
         margin-left: 0;
         margin-top: 10px;
+        min-width: unset; /* 移除最小寬度限制，適應小螢幕 */
+    }
+
+    .search-container label {
+        margin-right: 0; /* 在小螢幕下移除右邊距 */
     }
 }
 
@@ -388,7 +402,7 @@ a:hover {
 }
 
 #viewParkingTable,
-#reserveParkingTable, /* 添加 reserveParkingTable */
+#reserveParkingTable,
 #incomeTable {
     width: 100%;
     border-collapse: collapse;
@@ -397,7 +411,7 @@ a:hover {
 
 #viewParkingTable th,
 #viewParkingTable td,
-#reserveParkingTable th, /* 添加 reserveParkingTable */
+#reserveParkingTable th,
 #reserveParkingTable td,
 #incomeTable th,
 #incomeTable td {
@@ -408,7 +422,7 @@ a:hover {
 }
 
 #viewParkingTable th,
-#reserveParkingTable th, /* 添加 reserveParkingTable */
+#reserveParkingTable th,
 #incomeTable th {
     background-color: #f4f4f4;
     position: sticky;
@@ -417,19 +431,19 @@ a:hover {
 }
 
 #viewParkingTable tr.available,
-#reserveParkingTable tr.available { /* 添加 reserveParkingTable */
+#reserveParkingTable tr.available {
     background-color: #e0ffe0;
 }
 
 #viewParkingTable tr.occupied,
 #viewParkingTable tr.reserved,
-#reserveParkingTable tr.occupied, /* 添加 reserveParkingTable */
+#reserveParkingTable tr.occupied,
 #reserveParkingTable tr.reserved {
     background-color: #ffe0e0;
 }
 
 #viewParkingTable button,
-#reserveParkingTable button { /* 添加 reserveParkingTable */
+#reserveParkingTable button {
     padding: 6px 12px;
     background-color: #28a745;
     color: white;
@@ -441,12 +455,12 @@ a:hover {
 }
 
 #viewParkingTable button:hover:not(:disabled),
-#reserveParkingTable button:hover:not(:disabled) { /* 添加 reserveParkingTable */
+#reserveParkingTable button:hover:not(:disabled) {
     background-color: #218838;
 }
 
 #viewParkingTable button:disabled,
-#reserveParkingTable button:disabled { /* 添加 reserveParkingTable */
+#reserveParkingTable button:disabled {
     background-color: #ccc;
     cursor: not-allowed;
 }
@@ -526,7 +540,7 @@ a:hover {
 @media (max-width: 768px) {
     #viewParkingTable th,
     #viewParkingTable td,
-    #reserveParkingTable th, /* 添加 reserveParkingTable */
+    #reserveParkingTable th,
     #reserveParkingTable td,
     #incomeTable th,
     #incomeTable td {
@@ -535,7 +549,7 @@ a:hover {
     }
 
     #viewParkingTable button,
-    #reserveParkingTable button { /* 添加 reserveParkingTable */
+    #reserveParkingTable button {
         padding: 5px 10px;
         font-size: 12px;
     }
