@@ -488,36 +488,39 @@ document.addEventListener("DOMContentLoaded", async function () {
                 const spot = await response.json();
                 console.log(`Specific spot data:`, spot);
 
-                // 假設後端返回的數據結構為 { spot_id, location, parking_type, floor_level, pricing_type, status }
                 const spotData = spot.data || spot;
 
                 if (!spotData.spot_id) {
                     throw new Error("後端返回的車位資料格式錯誤，缺少必要字段！");
                 }
 
-                // 渲染單個車位數據，並添加編輯按鈕
                 parkingTableBody.innerHTML = '';
                 const row = document.createElement("tr");
                 row.setAttribute("data-id", `${spotData.spot_id}`);
-                row.classList.add(spotData.status === "available" || spotData.status === "可用" ? "available" : "occupied");
+                // 修改這裏：添加對 "預約" 狀態的檢查
+                if (spotData.status === "available" || spotData.status === "可用") {
+                    row.classList.add("available");
+                } else if (spotData.status === "預約") {
+                    row.classList.add("reserved");
+                } else {
+                    row.classList.add("occupied");
+                }
 
                 row.innerHTML = `
-                    <td>${spotData.spot_id}</td>
-                    <td>${spotData.location || '未知'}</td>
-                    <td>${spotData.parking_type === "flat" ? "平面" : "機械"}</td>
-                    <td>${spotData.floor_level === "ground" ? "地面" : `地下${spotData.floor_level.startsWith("B") ? spotData.floor_level.slice(1) : spotData.floor_level}樓`}</td>
-                    <td>${spotData.pricing_type === "hourly" ? "按小時" : spotData.pricing_type === "daily" ? "按日" : "按月"}</td>
-                    <td>${spotData.status === "available" || spotData.status === "可用" ? "可用" : spotData.status === "occupied" || spotData.status === "已佔用" ? "已佔用" : "預約"}</td>
-                    <td><button class="edit-btn">編輯</button></td>
-                `;
+            <td>${spotData.spot_id}</td>
+            <td>${spotData.location || '未知'}</td>
+            <td>${spotData.parking_type === "flat" ? "平面" : "機械"}</td>
+            <td>${spotData.floor_level === "ground" ? "地面" : `地下${spotData.floor_level.startsWith("B") ? spotData.floor_level.slice(1) : spotData.floor_level}樓`}</td>
+            <td>${spotData.pricing_type === "hourly" ? "按小時" : spotData.pricing_type === "daily" ? "按日" : "按月"}</td>
+            <td>${spotData.status === "available" || spotData.status === "可用" ? "可用" : spotData.status === "occupied" || spotData.status === "已佔用" ? "已佔用" : "預約"}</td>
+            <td><button class="edit-btn">編輯</button></td>
+        `;
 
-                // 點擊編輯按鈕，顯示編輯表單
                 row.querySelector(".edit-btn").addEventListener("click", (e) => {
-                    e.stopPropagation(); // 防止點擊編輯按鈕時觸發行點擊事件
+                    e.stopPropagation();
                     showEditForm(spotData);
                 });
 
-                // 點擊表格行時，將 spot_id 存入 localStorage
                 row.addEventListener("click", () => {
                     setParkingSpotId(spotData.spot_id);
                     alert(`已選擇車位 ${spotData.spot_id}，您現在可以查詢此車位的收入！`);

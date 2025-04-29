@@ -228,12 +228,12 @@ a:hover {
 
 .occupied {
     background-color: #dc3545;
-    color: white;
+    color: black;
 }
 
 .reserved {
     background-color: #007bff;
-    color: white;
+    color: black;
 }
 
 .parking-space.loading {
