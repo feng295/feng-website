@@ -584,7 +584,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                     <select id="editStatus">
                         <option value="可用" ${spot.status === "可用" ? "selected" : ""}>可用</option>
                         <option value="已佔用" ${spot.status === "已佔用" ? "selected" : ""}>已佔用</option>
-                        <option value="預約" ${spot.status === "預約" ? "selected" : ""}>預約</option>
+                        <option value="預約" ${-spot.status === "預約" ? "selected" : ""}>預約</option>
                     </select>
                 </div>
                 <button id="saveSpotButton">保存</button>
@@ -814,6 +814,7 @@ document.addEventListener("DOMContentLoaded", async function () {
             }
 
             console.log("After filtering:", filteredSpots); // 記錄過濾後的數據
+            console.log("Filtered spots content:", JSON.stringify(filteredSpots, null, 2));
 
             if (filteredSpots.length === 0) {
                 console.warn("No parking spots match the filters");
@@ -825,24 +826,31 @@ document.addEventListener("DOMContentLoaded", async function () {
             const fragment = document.createDocumentFragment();
             console.log("Generating parking table with filtered spots:", filteredSpots);
             filteredSpots.forEach(spot => {
+                console.log("Processing spot:", spot);
                 const row = document.createElement("tr");
                 row.setAttribute("data-id", `${spot.spot_id}`);
-                row.classList.add(spot.status === "available" || spot.status === "可用" ? "available" : "occupied");
+                // 修改這裏：添加對 "預約" 狀態的檢查
+                if (spot.status === "available" || spot.status === "可用") {
+                    row.classList.add("available");
+                } else if (spot.status === "預約") {
+                    row.classList.add("reserved");
+                } else {
+                    row.classList.add("occupied");
+                }
 
                 row.innerHTML = `
-                <td>${spot.spot_id}</td>
-                <td>${spot.location || '未知'}</td>
-                <td>${spot.parking_type === "flat" ? "平面" : "機械"}</td>
-                <td>${spot.floor_level === "ground" ? "地面" : `地下${spot.floor_level.startsWith("B") ? spot.floor_level.slice(1) : spot.floor_level}樓`}</td>
-                <td>${spot.pricing_type === "hourly" ? "按小時" : spot.pricing_type === "daily" ? "按日" : "按月"}</td>
-                <td>${spot.status === "available" || spot.status === "可用" ? "可用" : spot.status === "occupied" || spot.status === "已佔用" ? "已佔用" : "預約"}</td>
-                <td><button class="reserve-btn" ${spot.status === "available" || spot.status === "可用" ? '' : 'disabled'}>預約</button></td>
-            `;
+                    <td>${spot.spot_id}</td>
+                    <td>${spot.location || '未知'}</td>
+                    <td>${spot.parking_type === "flat" ? "平面" : "機械"}</td>
+                    <td>${spot.floor_level === "ground" ? "地面" : `地下${spot.floor_level.startsWith("B") ? spot.floor_level.slice(1) : spot.floor_level}樓`}</td>
+                    <td>${spot.pricing_type === "hourly" ? "按小時" : spot.pricing_type === "daily" ? "按日" : "按月"}</td>
+                    <td>${spot.status === "available" || spot.status === "可用" ? "可用" : spot.status === "occupied" || spot.status === "已佔用" ? "已佔用" : "預約"}</td>
+                    <td><button class="reserve-btn" ${spot.status === "available" || spot.status === "可用" ? '' : 'disabled'}>預約</button></td>
+                `;
 
                 if (spot.status === "available" || spot.status === "可用") {
                     row.querySelector(".reserve-btn").addEventListener("click", () => {
                         handleReserveParkingClick(spot.spot_id, date, row);
-                        // 預約成功後，將 spot_id 存入 localStorage
                         setParkingSpotId(spot.spot_id);
                     });
                 }
@@ -852,6 +860,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 
             parkingTableBody.innerHTML = '';
             parkingTableBody.appendChild(fragment);
+            console.log("Table body after update:", parkingTableBody.innerHTML);
         }
 
         reserveSearchButton.addEventListener("click", handleReserveSearch);
