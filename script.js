@@ -499,14 +499,14 @@ document.addEventListener("DOMContentLoaded", async function () {
                 row.setAttribute("data-id", `${spotData.spot_id}`);
 
                 row.innerHTML = `
-                    <td>${spotData.spot_id}</td>
-                    <td>${spotData.location || '未知'}</td>
-                    <td>${spotData.parking_type === "flat" ? "平面" : "機械"}</td>
-                    <td>${spotData.floor_level === "ground" ? "地面" : `地下${spotData.floor_level.startsWith("B") ? spotData.floor_level.slice(1) : spotData.floor_level}樓`}</td>
-                    <td>${spotData.pricing_type === "hourly" ? "按小時" : spotData.pricing_type === "daily" ? "按日" : "按月"}</td>
-                    <td>${spotData.hourly_rate || 0} 元/半小時</td>
-                    <td><button class="edit-btn">編輯</button></td>
-                `;
+                <td>${spotData.spot_id}</td>
+                <td>${spotData.location || '未知'}</td>
+                <td>${spotData.parking_type === "flat" ? "平面" : "機械"}</td>
+                <td>${spotData.floor_level === "ground" ? "地面" : `地下${spotData.floor_level.startsWith("B") ? spotData.floor_level.slice(1) : spotData.floor_level}樓`}</td>
+                <td>${spotData.pricing_type === "hourly" ? "按小時" : spotData.pricing_type === "daily" ? "按日" : "按月"}</td>
+                <td>${spotData.price_per_half_hour || 0} 元/半小時</td>
+                <td><button class="edit-btn">編輯</button></td>
+            `;
 
                 row.querySelector(".edit-btn").addEventListener("click", (e) => {
                     e.stopPropagation();
@@ -541,33 +541,33 @@ document.addEventListener("DOMContentLoaded", async function () {
             editForm.id = "editSpotForm";
             editForm.style.marginTop = "20px";
             editForm.innerHTML = `
-                <h3>編輯車位 ${spot.spot_id}</h3>
-                <div>
-                    <label>地址：</label>
-                    <input type="text" id="editLocation" value="${spot.location || ''}" />
-                </div>
-                <div>
-                    <label>停車類型：</label>
-                    <select id="editParkingType">
-                        <option value="flat" ${spot.parking_type === "flat" ? "selected" : ""}>平面</option>
-                        <option value="mechanical" ${spot.parking_type === "mechanical" ? "selected" : ""}>機械</option>
-                    </select>
-                </div>
-                <div>
-                    <label>計費方式：</label>
-                    <select id="editPricingType">
-                        <option value="hourly" ${spot.pricing_type === "hourly" ? "selected" : ""}>按小時</option>
-                        <option value="daily" ${spot.pricing_type === "daily" ? "selected" : ""}>按日</option>
-                        <option value="monthly" ${spot.pricing_type === "monthly" ? "selected" : ""}>按月</option>
-                    </select>
-                </div>
-                <div>
-                    <label>半小時費用（元）：</label>
-                    <span>${spot.hourly_rate || 0} 元/半小時</span>
-                </div>
-                <button id="saveSpotButton">保存</button>
-                <button id="cancelEditButton">取消</button>
-            `;
+            <h3>編輯車位 ${spot.spot_id}</h3>
+            <div>
+                <label>地址：</label>
+                <input type="text" id="editLocation" value="${spot.location || ''}" />
+            </div>
+            <div>
+                <label>停車類型：</label>
+                <select id="editParkingType">
+                    <option value="flat" ${spot.parking_type === "flat" ? "selected" : ""}>平面</option>
+                    <option value="mechanical" ${spot.parking_type === "mechanical" ? "selected" : ""}>機械</option>
+                </select>
+            </div>
+            <div>
+                <label>計費方式：</label>
+                <select id="editPricingType">
+                    <option value="hourly" ${spot.pricing_type === "hourly" ? "selected" : ""}>按小時</option>
+                    <option value="daily" ${spot.pricing_type === "daily" ? "selected" : ""}>按日</option>
+                    <option value="monthly" ${spot.pricing_type === "monthly" ? "selected" : ""}>按月</option>
+                </select>
+            </div>
+            <div>
+                <label>半小時費用（元）：</label>
+                <span>${spot.price_per_half_hour || 0} 元</span>
+            </div>
+            <button id="saveSpotButton">保存</button>
+            <button id="cancelEditButton">取消</button>
+        `;
 
             parkingTableBody.parentElement.appendChild(editForm);
 
