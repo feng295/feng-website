@@ -504,7 +504,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                 <td>${spotData.parking_type === "flat" ? "平面" : "機械"}</td>
                 <td>${spotData.floor_level === "ground" ? "地面" : `地下${spotData.floor_level.startsWith("B") ? spotData.floor_level.slice(1) : spotData.floor_level}樓`}</td>
                 <td>${spotData.pricing_type === "hourly" ? "按小時" : spotData.pricing_type === "daily" ? "按日" : "按月"}</td>
-                <td>${spotData.price_per_half_hour || 0} 元/半小時</td>
+                <td>${spotData.price_per_half_hour || 0} 元</td>
                 <td><button class="edit-btn">編輯</button></td>
             `;
 
