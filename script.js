@@ -432,7 +432,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     // 設置查看車位
     function setupViewParking() {
-        const parkingTableBody = document.getElementById("viewParkingTableBody"); // 修改為 viewParkingTableBody
+        const parkingTableBody = document.getElementById("viewParkingTableBody");
         const specificSpotInput = document.getElementById("specificSpotInput");
         const specificSpotButton = document.getElementById("specificSpotButton");
 
@@ -497,13 +497,6 @@ document.addEventListener("DOMContentLoaded", async function () {
                 parkingTableBody.innerHTML = '';
                 const row = document.createElement("tr");
                 row.setAttribute("data-id", `${spotData.spot_id}`);
-                if (spotData.status === "available" || spotData.status === "可用") {
-                    row.classList.add("available");
-                } else if (spotData.status === "預約") {
-                    row.classList.add("reserved");
-                } else {
-                    row.classList.add("occupied");
-                }
 
                 row.innerHTML = `
                     <td>${spotData.spot_id}</td>
@@ -511,7 +504,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                     <td>${spotData.parking_type === "flat" ? "平面" : "機械"}</td>
                     <td>${spotData.floor_level === "ground" ? "地面" : `地下${spotData.floor_level.startsWith("B") ? spotData.floor_level.slice(1) : spotData.floor_level}樓`}</td>
                     <td>${spotData.pricing_type === "hourly" ? "按小時" : spotData.pricing_type === "daily" ? "按日" : "按月"}</td>
-                    <td>${spotData.status === "available" || spotData.status === "可用" ? "可用" : spotData.status === "occupied" || spotData.status === "已佔用" ? "已佔用" : "預約"}</td>
+                    <td>${spotData.hourly_rate || 0} 元/半小時</td>
                     <td><button class="edit-btn">編輯</button></td>
                 `;
 
@@ -550,7 +543,7 @@ document.addEventListener("DOMContentLoaded", async function () {
             editForm.innerHTML = `
                 <h3>編輯車位 ${spot.spot_id}</h3>
                 <div>
-                    <label>位置：</label>
+                    <label>地址：</label>
                     <input type="text" id="editLocation" value="${spot.location || ''}" />
                 </div>
                 <div>
@@ -558,14 +551,6 @@ document.addEventListener("DOMContentLoaded", async function () {
                     <select id="editParkingType">
                         <option value="flat" ${spot.parking_type === "flat" ? "selected" : ""}>平面</option>
                         <option value="mechanical" ${spot.parking_type === "mechanical" ? "selected" : ""}>機械</option>
-                    </select>
-                </div>
-                <div>
-                    <label>樓層：</label>
-                    <select id="editFloorLevel">
-                        <option value="ground" ${spot.floor_level === "ground" ? "selected" : ""}>地面</option>
-                        <option value="B1" ${spot.floor_level === "B1" ? "selected" : ""}>地下1樓</option>
-                        <option value="B2" ${spot.floor_level === "B2" ? "selected" : ""}>地下2樓</option>
                     </select>
                 </div>
                 <div>
@@ -577,12 +562,8 @@ document.addEventListener("DOMContentLoaded", async function () {
                     </select>
                 </div>
                 <div>
-                    <label>狀態：</label>
-                    <select id="editStatus">
-                        <option value="可用" ${spot.status === "可用" ? "selected" : ""}>可用</option>
-                        <option value="已佔用" ${spot.status === "已佔用" ? "selected" : ""}>已佔用</option>
-                        <option value="預約" ${spot.status === "預約" ? "selected" : ""}>預約</option>
-                    </select>
+                    <label>半小時費用（元）：</label>
+                    <span>${spot.hourly_rate || 0} 元/半小時</span>
                 </div>
                 <button id="saveSpotButton">保存</button>
                 <button id="cancelEditButton">取消</button>
@@ -594,9 +575,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                 const updatedSpot = {
                     location: document.getElementById("editLocation").value.trim(),
                     parking_type: document.getElementById("editParkingType").value,
-                    floor_level: document.getElementById("editFloorLevel").value,
-                    pricing_type: document.getElementById("editPricingType").value,
-                    status: document.getElementById("editStatus").value
+                    pricing_type: document.getElementById("editPricingType").value
                 };
 
                 try {
