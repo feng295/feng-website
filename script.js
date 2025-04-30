@@ -506,7 +506,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                 // 根據計費方式顯示費用
                 const priceDisplay = spotData.pricing_type === "hourly"
                     ? `${spotData.price_per_half_hour || 0} 元/半小時`
-                    : `${spotData.daily_max_price || 0} 元/月`;
+                    : `${spotData.monthly_price || 0} 元/月`;
 
                 row.innerHTML = `
                 <td>${spotData.spot_id}</td>
@@ -555,7 +555,7 @@ document.addEventListener("DOMContentLoaded", async function () {
             const priceLabel = spot.pricing_type === "hourly" ? "半小時費用（元）：" : "每月費用（元）：";
             const priceValue = spot.pricing_type === "hourly"
                 ? `${spot.price_per_half_hour || 0} 元`
-                : `${spot.daily_max_price || 0} 元`;
+                : `${spot.monthly_price || 0} 元`;
 
             editForm.innerHTML = `
             <h3>編輯車位 ${spot.spot_id}</h3>
