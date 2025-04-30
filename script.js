@@ -686,17 +686,6 @@ document.addEventListener("DOMContentLoaded", async function () {
         startTimeInput.value = "09:00";
         endTimeInput.value = "17:00";
 
-        // 添加城市選擇下拉框，作為地理位置 API 的備用方案
-        const citySelect = document.createElement("select");
-        citySelect.id = "citySelect";
-        citySelect.innerHTML = `
-            <option value="taipei">台北市</option>
-            <option value="kaohsiung">高雄市</option>
-            <option value="taichung">台中市</option>
-        `;
-        citySelect.style.marginBottom = "10px";
-        reserveSection.insertBefore(citySelect, reserveDateInput);
-
         async function handleReserveSearch() {
             const date = reserveDateInput.value;
             const startTime = startTimeInput.value;
@@ -731,60 +720,25 @@ document.addEventListener("DOMContentLoaded", async function () {
             parkingTableBody.innerHTML = '<tr><td colspan="7">載入中...</td></tr>';
 
             // 動態獲取經緯度
-            let latitude, longitude, locationSource;
-            const selectedCity = citySelect.value;
-            const cityCoordinates = {
-                taipei: { latitude: 25.0330, longitude: 121.5654, name: "台北市" },
-                kaohsiung: { latitude: 22.6273, longitude: 120.3014, name: "高雄市" },
-                taichung: { latitude: 24.1477, longitude: 120.6736, name: "台中市" }
-            };
-
-            // 首先嘗試使用地理位置 API
-            const isSecureContext = window.location.protocol === 'https:' || window.location.hostname === 'localhost';
-            if (isSecureContext) {
-                try {
-                    const position = await new Promise((resolve, reject) => {
-                        if (!navigator.geolocation) {
-                            reject(new Error("瀏覽器不支援地理位置功能"));
-                        }
-                        navigator.geolocation.getCurrentPosition(resolve, reject, {
-                            timeout: 10000, // 10秒超時
-                            maximumAge: 0 // 不使用緩存
-                        });
+            let latitude = 25.0330; // 預設值（台北市）
+            let longitude = 121.5654;
+            try {
+                const position = await new Promise((resolve, reject) => {
+                    if (!navigator.geolocation) {
+                        reject(new Error("瀏覽器不支援地理位置功能"));
+                    }
+                    navigator.geolocation.getCurrentPosition(resolve, reject, {
+                        timeout: 10000, // 10秒超時
+                        maximumAge: 0 // 不使用緩存
                     });
-                    latitude = position.coords.latitude;
-                    longitude = position.coords.longitude;
-                    locationSource = "user location";
-                    console.log(`User location: latitude=${latitude}, longitude=${longitude}`);
-                } catch (error) {
-                    console.warn("Failed to get user location, falling back to selected city:", error.message);
-                    alert(
-                        "無法獲取您的位置，將使用您選擇的城市。可能原因：\n" +
-                        "1. 您拒絕了位置權限，請在瀏覽器設置中允許。\n" +
-                        "2. 頁面未通過 HTTPS 或 localhost 載入，請使用安全來源。\n" +
-                        "詳情見：https://goo.gl/Y0ZkNV"
-                    );
-                }
-            } else {
-                console.warn("Geolocation not attempted: Only secure origins are allowed (see: https://goo.gl/Y0ZkNV). Falling back to selected city.");
-                alert(
-                    "無法使用地理位置功能，因為頁面未通過 HTTPS 或 localhost 載入。請使用安全來源，或選擇城市作為位置。\n" +
-                    "詳情見：https://goo.gl/Y0ZkNV"
-                );
-            }
-
-            // 如果地理位置 API 失敗或不可用，使用選擇的城市
-            if (!latitude || !longitude) {
-                if (selectedCity && cityCoordinates[selectedCity]) {
-                    latitude = cityCoordinates[selectedCity].latitude;
-                    longitude = cityCoordinates[selectedCity].longitude;
-                    locationSource = `selected city (${cityCoordinates[selectedCity].name})`;
-                } else {
-                    latitude = 25.0330;
-                    longitude = 121.5654;
-                    locationSource = "default (台北市)";
-                }
-                console.log(`Using location: latitude=${latitude}, longitude=${longitude}, source=${locationSource}`);
+                });
+                latitude = position.coords.latitude;
+                longitude = position.coords.longitude;
+                console.log(`User location: latitude=${latitude}, longitude=${longitude}`);
+            } catch (error) {
+                console.warn("Failed to get user location, using default:", error.message);
+                console.log(`Using default location: latitude=${latitude}, longitude=${longitude}`);
+                alert("無法獲取您的位置，將使用預設位置（台北市）。請確保已允許位置權限。");
             }
 
             // 組合 start_time 和 end_time 為 ISO 8601 格式，包含時區
@@ -799,7 +753,6 @@ document.addEventListener("DOMContentLoaded", async function () {
                 end_time: endDateTime,
                 latitude,
                 longitude,
-                locationSource,
                 filterCity,
                 filterType,
                 filterFloor,
@@ -890,11 +843,11 @@ document.addEventListener("DOMContentLoaded", async function () {
                 console.warn("No parking spots returned from the server");
                 alert(
                     "後端未返回任何車位資料，可能原因：\n" +
-                    `1. 所選日期 (${date}) 或時間段 (${startTime} 至 ${endTime}) 沒有可用車位，請嘗試其他日期或時間。\n` +
-                    `2. 當前位置（${locationSource}）範圍內無車位，請選擇其他城市或確認位置設置。\n` +
+                    "1. 所選日期或時間段沒有可用車位，請嘗試其他日期或時間。\n" +
+                    "2. 當前位置範圍內無車位，請確認您的位置或允許位置權限。\n" +
                     "3. 後端服務異常，請聯繫管理員。"
                 );
-                parkingTableBody.innerHTML = '<tr><td colspan="7">無可用車位，請嘗試更改日期、時間或城市</td></tr>';
+                parkingTableBody.innerHTML = '<tr><td colspan="7">無可用車位，請嘗試更改日期、時間或位置</td></tr>';
                 return;
             }
 
@@ -932,12 +885,8 @@ document.addEventListener("DOMContentLoaded", async function () {
 
             if (filteredSpots.length === 0) {
                 console.warn("No parking spots match the filters");
-                alert(
-                    "所選條件目前沒有符合的車位！可能原因：\n" +
-                    "1. 篩選條件過於嚴格，請嘗試選擇「全部」。\n" +
-                    "2. 所選日期或時間段無可用車位，請嘗試其他日期或時間。"
-                );
-                parkingTableBody.innerHTML = '<tr><td colspan="7">無符合條件的車位，請嘗試更改篩選條件或日期</td></tr>';
+                alert(`所選條件目前沒有符合的車位！請調整篩選條件（例如選擇「全部」）。`);
+                parkingTableBody.innerHTML = '<tr><td colspan="7">無符合條件的車位，請嘗試更改篩選條件</td></tr>';
                 return;
             }
 
