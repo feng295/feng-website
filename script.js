@@ -494,17 +494,27 @@ document.addEventListener("DOMContentLoaded", async function () {
                     throw new Error("後端返回的車位資料格式錯誤，缺少必要字段！");
                 }
 
+                // 檢查計費方式是否為支援的類型
+                if (spotData.pricing_type === "daily") {
+                    throw new Error("此車位的計費方式為「按日」，目前不支援此類型！");
+                }
+
                 parkingTableBody.innerHTML = '';
                 const row = document.createElement("tr");
                 row.setAttribute("data-id", `${spotData.spot_id}`);
+
+                // 根據計費方式顯示費用
+                const priceDisplay = spotData.pricing_type === "hourly"
+                    ? `${spotData.price_per_half_hour || 0} 元/半小時`
+                    : `${spotData.daily_max_price || 0} 元/月`;
 
                 row.innerHTML = `
                 <td>${spotData.spot_id}</td>
                 <td>${spotData.location || '未知'}</td>
                 <td>${spotData.parking_type === "flat" ? "平面" : "機械"}</td>
                 <td>${spotData.floor_level === "ground" ? "地面" : `地下${spotData.floor_level.startsWith("B") ? spotData.floor_level.slice(1) : spotData.floor_level}樓`}</td>
-                <td>${spotData.pricing_type === "hourly" ? "按小時" : spotData.pricing_type === "daily" ? "按日" : "按月"}</td>
-                <td>${spotData.price_per_half_hour || 0} 元</td>
+                <td>${spotData.pricing_type === "hourly" ? "按小時" : spotData.pricing_type === "monthly" ? "按月" : "未知"}</td>
+                <td>${priceDisplay}</td>
                 <td><button class="edit-btn">編輯</button></td>
             `;
 
@@ -540,6 +550,13 @@ document.addEventListener("DOMContentLoaded", async function () {
             const editForm = document.createElement("div");
             editForm.id = "editSpotForm";
             editForm.style.marginTop = "20px";
+
+            // 根據計費方式顯示費用
+            const priceLabel = spot.pricing_type === "hourly" ? "半小時費用（元）：" : "每月費用（元）：";
+            const priceValue = spot.pricing_type === "hourly"
+                ? `${spot.price_per_half_hour || 0} 元`
+                : `${spot.daily_max_price || 0} 元`;
+
             editForm.innerHTML = `
             <h3>編輯車位 ${spot.spot_id}</h3>
             <div>
@@ -557,13 +574,12 @@ document.addEventListener("DOMContentLoaded", async function () {
                 <label>計費方式：</label>
                 <select id="editPricingType">
                     <option value="hourly" ${spot.pricing_type === "hourly" ? "selected" : ""}>按小時</option>
-                    <option value="daily" ${spot.pricing_type === "daily" ? "selected" : ""}>按日</option>
                     <option value="monthly" ${spot.pricing_type === "monthly" ? "selected" : ""}>按月</option>
                 </select>
             </div>
             <div>
-                <label>半小時費用（元）：</label>
-                <span>${spot.price_per_half_hour || 0} 元</span>
+                <label>${priceLabel}</label>
+                <span>${priceValue}</span>
             </div>
             <button id="saveSpotButton">保存</button>
             <button id="cancelEditButton">取消</button>
