@@ -465,7 +465,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                 const result = await response.json();
                 console.log("Login response data:", result); // 調試信息
                 if (response.ok) {
-                    if (!result.data.token) {
+                    if (!result.data || !result.data.token) {
                         showError("後端未返回 token，請檢查後端服務！");
                         return;
                     }
@@ -477,17 +477,26 @@ document.addEventListener("DOMContentLoaded", async function () {
                     } else if (result.data.user && typeof result.data.user.role === "string") {
                         role = result.data.user.role.toLowerCase().trim();
                     } else if (result.data.roles && Array.isArray(result.data.roles) && result.data.roles.length > 0) {
-                        role = result.data.roles[0].toLowerCase().trim(); // 假設 roles 是陣列，取第一個
-                    }
-                    if (!role) {
+                        role = result.data.roles[0].toLowerCase().trim();
+                    } else {
+                        // 如果 role 完全不存在，記錄詳細信息並提示
                         showError("後端未返回有效的角色資訊，請聯繫管理員或檢查後端 API！");
                         console.error("Role not provided by backend or invalid format:", result.data);
+                        // 額外記錄完整響應以便調試
+                        console.error("Full login response:", result);
+                        return;
+                    }
+                    // 驗證 role 是否有效
+                    const validRoles = ["shared_owner", "renter", "admin"];
+                    if (!validRoles.includes(role)) {
+                        showError(`後端返回的角色 "${role}" 無效，應為 shared_owner、renter 或 admin 之一，請聯繫管理員！`);
+                        console.error("Invalid role received from backend:", role);
                         return;
                     }
                     try {
                         setRole(role);
                     } catch (error) {
-                        showError("無效的角色資訊，請聯繫管理員！");
+                        showError("無法設置角色資訊，請聯繫管理員！");
                         console.error("Role setting failed:", error.message);
                         return;
                     }
