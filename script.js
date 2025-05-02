@@ -132,31 +132,29 @@ document.addEventListener("DOMContentLoaded", async function () {
 
         // 動態調整功能清單
         const navList = document.querySelector(".function-list ul");
-        if (role === "shared_owner") {
-            navList.innerHTML = `
-                <li><a href="#" class="nav-link" data-target="viewParking">查看車位</a></li>
-                <li><a href="#" class="nav-link" data-target="incomeInquiry">收入查詢</a></li>
-            `;
-        } else if (role === "renter") {
-            navList.innerHTML = `
-                <li><a href="#" class="nav-link" data-target="viewParking">查看車位</a></li>
-                <li><a href="#" class="nav-link" data-target="reserveParking">預約車位</a></li>
-                <li><a href="#" class="nav-link" data-target="history">歷史紀錄</a></li>
-            `;
-        } else if (role === "admin") {
-            navList.innerHTML = `
-                <li><a href="#" class="nav-link" data-target="viewParking">查看車位</a></li>
-                <li><a href="#" class="nav-link" data-target="incomeInquiry">收入查詢</a></li>
-                <li><a href="#" class="nav-link" data-target="adminPanel">管理員畫面</a></li>
-            `;
+        if (["shared_owner", "renter", "admin"].includes(role)) {
+            if (role === "shared_owner") {
+                navList.innerHTML = `
+                    <li><a href="#" class="nav-link" data-target="viewParking">查看車位</a></li>
+                    <li><a href="#" class="nav-link" data-target="incomeInquiry">收入查詢</a></li>
+                `;
+            } else if (role === "renter") {
+                navList.innerHTML = `
+                    <li><a href="#" class="nav-link" data-target="viewParking">查看車位</a></li>
+                    <li><a href="#" class="nav-link" data-target="reserveParking">預約車位</a></li>
+                    <li><a href="#" class="nav-link" data-target="history">歷史紀錄</a></li>
+                `;
+            } else if (role === "admin") {
+                navList.innerHTML = `
+                    <li><a href="#" class="nav-link" data-target="viewParking">查看車位</a></li>
+                    <li><a href="#" class="nav-link" data-target="incomeInquiry">收入查詢</a></li>
+                    <li><a href="#" class="nav-link" data-target="adminPanel">管理員畫面</a></li>
+                `;
+            }
         } else {
-            console.warn("Unrecognized role, showing default menu");
-            navList.innerHTML = `
-                <li><a href="#" class="nav-link" data-target="viewParking">查看車位</a></li>
-                <li><a href="#" class="nav-link" data-target="reserveParking">預約車位</a></li>
-                <li><a href="#" class="nav-link" data-target="history">歷史紀錄</a></li>
-                <li><a href="#" class="nav-link" data-target="incomeInquiry">收入查詢</a></li>
-            `;
+            console.warn("Unrecognized role, redirecting to login");
+            showLoginPage();
+            return;
         }
 
         // 設置預設畫面
@@ -260,7 +258,7 @@ document.addEventListener("DOMContentLoaded", async function () {
         if (isAuthenticated) {
             const role = getRole();
             console.log("Current role during initialization:", role);
-            if (!role) {
+            if (!role || !["shared_owner", "renter", "admin"].includes(role)) {
                 showLoginPage();
             } else {
                 showMainPage();
