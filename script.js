@@ -72,6 +72,7 @@ document.addEventListener("DOMContentLoaded", async function () {
     function removeToken() {
         try {
             localStorage.removeItem("token");
+            localStorage.removeItem("userRole"); // 清除用戶角色
         } catch (error) {
             console.error("Failed to remove token from localStorage:", error);
         }
@@ -97,7 +98,17 @@ document.addEventListener("DOMContentLoaded", async function () {
         }
     }
 
-    // 顯示主畫面
+    // 從 localStorage 獲取用戶角色
+    function getUserRole() {
+        try {
+            return localStorage.getItem("userRole") || "";
+        } catch (error) {
+            console.error("Failed to get user role from localStorage:", error);
+            return "";
+        }
+    }
+
+    // 顯示主畫面，並根據角色動態調整功能清單和預設畫面
     function showMainPage() {
         authContainer.style.display = "none";
         parkingContainer.style.display = "block";
@@ -105,19 +116,103 @@ document.addEventListener("DOMContentLoaded", async function () {
         document.querySelector(".content-container").style.display = "block";
         logoutButton.style.display = "block";
 
-        // 初始化主頁面內容
-        const activeSection = document.querySelector(".content-section[style='display: block;']");
-        if (activeSection) {
-            if (activeSection.id === "reserveParking") {
-                setupReserveParking();
-            } else if (activeSection.id === "history") {
-                loadHistory();
-            } else if (activeSection.id === "viewParking") {
-                setupViewParking();
-            } else if (activeSection.id === "incomeInquiry") {
-                setupIncomeInquiry();
-            }
+        // 獲取用戶角色
+        const userRole = getUserRole();
+        console.log("User role:", userRole);
+
+        // 動態調整功能清單
+        const navList = document.querySelector(".function-list ul");
+        if (userRole === "shared_owner") {
+            // 車位共享者：查看車位、收入查詢
+            navList.innerHTML = `
+                <li><a href="#" class="nav-link" data-target="viewParking">查看車位</a></li>
+                <li><a href="#" class="nav-link" data-target="incomeInquiry">收入查詢</a></li>
+            `;
+        } else if (userRole === "renter") {
+            // 租用者：查看車位、預約車位、歷史紀錄
+            navList.innerHTML = `
+                <li><a href="#" class="nav-link" data-target="viewParking">查看車位</a></li>
+                <li><a href="#" class="nav-link" data-target="reserveParking">預約車位</a></li>
+                <li><a href="#" class="nav-link" data-target="history">歷史紀錄</a></li>
+            `;
+        } else if (userRole === "admin") {
+            // 管理員：查看車位、收入查詢、管理員畫面
+            navList.innerHTML = `
+                <li><a href="#" class="nav-link" data-target="viewParking">查看車位</a></li>
+                <li><a href="#" class="nav-link" data-target="incomeInquiry">收入查詢</a></li>
+                <li><a href="#" class="nav-link" data-target="adminPanel">管理員畫面</a></li>
+            `;
+        } else {
+            // 未識別角色：顯示預設清單
+            navList.innerHTML = `
+                <li><a href="#" class="nav-link" data-target="viewParking">查看車位</a></li>
+                <li><a href="#" class="nav-link" data-target="reserveParking">預約車位</a></li>
+                <li><a href="#" class="nav-link" data-target="history">歷史紀錄</a></li>
+                <li><a href="#" class="nav-link" data-target="incomeInquiry">收入查詢</a></li>
+            `;
         }
+
+        // 設置預設畫面
+        document.querySelectorAll(".content-section").forEach(section => {
+            section.style.display = "none";
+        });
+
+        if (userRole === "shared_owner") {
+            // 車位共享者：預設顯示「查看車位」
+            const viewParkingSection = document.getElementById("viewParking");
+            viewParkingSection.style.display = "block";
+            setupViewParking();
+        } else if (userRole === "renter") {
+            // 租用者：預設顯示「預約車位」
+            const reserveParkingSection = document.getElementById("reserveParking");
+            reserveParkingSection.style.display = "block";
+            setupReserveParking();
+        } else if (userRole === "admin") {
+            // 管理員：預設顯示「管理員畫面」
+            const adminPanelSection = document.getElementById("adminPanel");
+            adminPanelSection.style.display = "block";
+            // 如果需要初始化管理員畫面，可以添加 setupAdminPanel 函數
+            // setupAdminPanel();
+        } else {
+            // 未識別角色：預設顯示「查看車位」
+            const viewParkingSection = document.getElementById("viewParking");
+            viewParkingSection.style.display = "block";
+            setupViewParking();
+        }
+
+        // 重新綁定導航事件
+        const navLinks = document.querySelectorAll(".nav-link");
+        navLinks.forEach(link => {
+            link.addEventListener("click", async function (event) {
+                event.preventDefault();
+
+                if (!await checkAuth()) return;
+
+                const targetId = this.getAttribute("data-target");
+                document.querySelectorAll(".content-section").forEach(section => {
+                    section.style.display = "none";
+                });
+                const targetSection = document.getElementById(targetId);
+                if (!targetSection) {
+                    console.error(`Target section "${targetId}" not found`);
+                    return;
+                }
+                targetSection.style.display = "block";
+
+                if (targetId === "viewParking") {
+                    setupViewParking();
+                } else if (targetId === "reserveParking") {
+                    setupReserveParking();
+                } else if (targetId === "history") {
+                    loadHistory();
+                } else if (targetId === "incomeInquiry") {
+                    setupIncomeInquiry();
+                } else if (targetId === "adminPanel") {
+                    // 如果需要初始化管理員畫面，可以添加 setupAdminPanel 函數
+                    // setupAdminPanel();
+                }
+            });
+        });
     }
 
     // 顯示登入畫面
@@ -163,7 +258,12 @@ document.addEventListener("DOMContentLoaded", async function () {
     (async () => {
         const isAuthenticated = await checkAuth(true); // 靜默檢查
         if (isAuthenticated) {
-            showMainPage();
+            const userRole = getUserRole();
+            if (!userRole) {
+                showLoginPage(); // 如果沒有角色信息，跳轉到登入頁面
+            } else {
+                showMainPage();
+            }
         } else {
             showLoginPage();
         }
@@ -336,8 +436,10 @@ document.addEventListener("DOMContentLoaded", async function () {
                         showError("後端未返回 token，請檢查後端服務！");
                         return;
                     }
+                    // 存儲 token 和 role
                     setToken(result.data.token);
-                    console.log("Login successful, token stored");
+                    localStorage.setItem("userRole", result.data.role || "");
+                    console.log("Login successful, token and role stored:", result.data.role);
                     alert("登入成功！");
                     showMainPage();
                 } else {
@@ -432,6 +534,13 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     // 設置查看車位
     function setupViewParking() {
+        // 檢查角色權限
+        const userRole = getUserRole();
+        if (!["shared_owner", "renter", "admin"].includes(userRole)) {
+            alert("您沒有權限訪問此功能！");
+            return;
+        }
+
         const parkingTableBody = document.getElementById("viewParkingTableBody");
         const specificSpotInput = document.getElementById("specificSpotInput");
         const specificSpotButton = document.getElementById("specificSpotButton");
@@ -649,6 +758,13 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     // 設置預約停車
     async function setupReserveParking() {
+        // 檢查角色權限
+        const userRole = getUserRole();
+        if (userRole !== "renter") {
+            alert("此功能僅限租用者使用！");
+            return;
+        }
+
         if (!await checkAuth()) return;
 
         const reserveSection = document.getElementById("reserveParking");
@@ -733,7 +849,7 @@ document.addEventListener("DOMContentLoaded", async function () {
             } catch (error) {
                 console.warn("Failed to get user location, using default:", error.message);
                 console.log(`Using default location: latitude=${latitude}, longitude=${longitude}`);
-                alert("無法獲取您的位置，將使用預設位置（台北市）。請確保已允許位置權限。");
+                alert("無法獲取您的位置，將使用預設位置（台北市）。請作用權限。");
             }
 
             // 組合 start_time 和 end_time 為 ISO 8601 格式，包含時區
@@ -945,6 +1061,13 @@ document.addEventListener("DOMContentLoaded", async function () {
     async function handleReserveParkingClick(spotId, selectedDate, startTime, endTime, row) {
         if (!await checkAuth()) return;
 
+        // 檢查角色權限（因為此函數由 setupReserveParking 調用，已檢查角色，但為安全起見再檢查一次）
+        const userRole = getUserRole();
+        if (userRole !== "renter") {
+            alert("此功能僅限租用者使用！");
+            return;
+        }
+
         try {
             if (isNaN(spotId)) {
                 alert("無效的車位 ID！");
@@ -998,6 +1121,13 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     // 設置收入查詢
     function setupIncomeInquiry() {
+        // 檢查角色權限
+        const userRole = getUserRole();
+        if (!["shared_owner", "admin"].includes(userRole)) {
+            alert("此功能僅限車位共享者和管理員使用！");
+            return;
+        }
+
         const startDateInput = document.getElementById("startDate");
         const endDateInput = document.getElementById("endDate");
         const incomeSearchButton = document.getElementById("incomeSearchButton");
@@ -1116,6 +1246,13 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     // 載入歷史紀錄
     async function loadHistory() {
+        // 檢查角色權限
+        const userRole = getUserRole();
+        if (userRole !== "renter") {
+            alert("此功能僅限租用者使用！");
+            return;
+        }
+
         if (!await checkAuth()) return;
 
         try {
@@ -1174,35 +1311,4 @@ document.addEventListener("DOMContentLoaded", async function () {
             }
         }
     }
-
-    // 導航切換
-    const navLinks = document.querySelectorAll(".nav-link");
-    navLinks.forEach(link => {
-        link.addEventListener("click", async function (event) {
-            event.preventDefault();
-
-            if (!await checkAuth()) return;
-
-            const targetId = this.getAttribute("data-target");
-            document.querySelectorAll(".content-section").forEach(section => {
-                section.style.display = "none";
-            });
-            const targetSection = document.getElementById(targetId);
-            if (!targetSection) {
-                console.error(`Target section "${targetId}" not found`);
-                return;
-            }
-            targetSection.style.display = "block";
-
-            if (targetId === "viewParking") {
-                setupViewParking();
-            } else if (targetId === "reserveParking") {
-                setupReserveParking();
-            } else if (targetId === "history") {
-                loadHistory();
-            } else if (targetId === "incomeInquiry") {
-                setupIncomeInquiry();
-            }
-        });
-    });
 });
