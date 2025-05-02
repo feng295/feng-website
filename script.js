@@ -445,15 +445,15 @@ document.addEventListener("DOMContentLoaded", async function () {
         event.preventDefault();
         const email = emailInput.value.trim();
         const password = passwordInput.value.trim();
-
+    
         // 清除即時驗證訊息
         errorMessage.textContent = "";
-
+    
         if (!email || !password) {
             showError("電子郵件和密碼不能為空！");
             return;
         }
-
+    
         if (isLogin) {
             try {
                 const response = await fetch(`${API_URL}/members/login`, {
@@ -466,7 +466,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                     throw new Error("後端返回非 JSON 響應，請檢查伺服器配置");
                 }
                 const result = await response.json();
-                console.log("Login response data:", JSON.stringify(result, null, 2)); // 改進日誌，顯示完整結構
+                console.log("Login response data:", JSON.stringify(result, null, 2));
                 if (response.ok) {
                     if (!result.data || !result.data.token) {
                         showError("後端未返回 token，請檢查後端服務！");
@@ -481,10 +481,12 @@ document.addEventListener("DOMContentLoaded", async function () {
                         role = result.data.user.role.toLowerCase().trim();
                     } else if (result.data.roles && Array.isArray(result.data.roles) && result.data.roles.length > 0) {
                         role = result.data.roles[0].toLowerCase().trim();
-                    } else if (typeof result.data.user_role === "string") { // 支援 user_role 字段
+                    } else if (typeof result.data.user_role === "string") {
                         role = result.data.user_role.toLowerCase().trim();
-                    } else if (typeof result.role === "string") { // 支援直接在 result 層級的 role
+                    } else if (typeof result.role === "string") {
                         role = result.role.toLowerCase().trim();
+                    } else if (result.data.member && typeof result.data.member.role === "string") { // 新增對 member.role 的檢查
+                        role = result.data.member.role.toLowerCase().trim();
                     } else {
                         showError("後端未返回有效的角色資訊，請聯繫管理員或檢查後端 API！");
                         console.error("Role not provided by backend or invalid format:", JSON.stringify(result.data, null, 2));
