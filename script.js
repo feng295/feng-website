@@ -109,10 +109,16 @@ document.addEventListener("DOMContentLoaded", async function () {
         }
     }
 
-    // 存儲角色到 localStorage
+    // 存儲角色到 localStorage，包含映射邏輯
     function setRole(role) {
         try {
-            localStorage.setItem("role", role.toLowerCase().trim());
+            const roleMapping = {
+                "administrator": "admin",
+                "sharedowner": "shared_owner",
+                // 可根據後端實際返回值添加更多映射
+            };
+            const normalizedRole = roleMapping[role.toLowerCase().trim()] || role.toLowerCase().trim();
+            localStorage.setItem("role", normalizedRole);
         } catch (error) {
             console.error("Failed to set role in localStorage:", error);
         }
@@ -142,6 +148,16 @@ document.addEventListener("DOMContentLoaded", async function () {
         const role = getRole();
         console.log("Current role in showMainPage:", role);
 
+        // 檢查角色是否有效
+        const validRoles = ["shared_owner", "renter", "admin"];
+        if (!role || !validRoles.includes(role)) {
+            console.error(`Invalid or unrecognized role: "${role}". Expected one of: ${validRoles.join(", ")}`);
+            alert("無效的用戶角色，請重新登入！");
+            removeToken();
+            showLoginPage();
+            return;
+        }
+
         // 動態調整功能清單
         const navList = document.querySelector(".function-list ul");
         if (!navList) {
@@ -150,7 +166,6 @@ document.addEventListener("DOMContentLoaded", async function () {
             return;
         }
 
-        // 根據角色設置功能清單，無效角色時提供默認選項
         if (role === "shared_owner") {
             navList.innerHTML = `
                 <li><a href="#" class="nav-link" data-target="viewParking">查看車位</a></li>
@@ -167,11 +182,6 @@ document.addEventListener("DOMContentLoaded", async function () {
                 <li><a href="#" class="nav-link" data-target="viewParking">查看車位</a></li>
                 <li><a href="#" class="nav-link" data-target="incomeInquiry">收入查詢</a></li>
                 <li><a href="#" class="nav-link" data-target="adminPanel">管理員畫面</a></li>
-            `;
-        } else {
-            console.warn("Unrecognized role, defaulting to basic navigation");
-            navList.innerHTML = `
-                <li><a href="#" class="nav-link" data-target="viewParking">查看車位</a></li>
             `;
         }
 
@@ -194,7 +204,7 @@ document.addEventListener("DOMContentLoaded", async function () {
         defaultSection.style.display = "block";
         if (defaultSectionId === "viewParking") setupViewParking();
         else if (defaultSectionId === "reserveParking") setupReserveParking();
-        else if (defaultSectionId === "adminPanel") setupAdminPanel(); // 新增對 adminPanel 的初始化
+        else if (defaultSectionId === "adminPanel") setupAdminPanel();
         else setupViewParking();
 
         // 重新綁定導航事件
@@ -270,7 +280,13 @@ document.addEventListener("DOMContentLoaded", async function () {
         if (isAuthenticated) {
             const role = getRole();
             console.log("Current role during initialization:", role);
-            showMainPage(); // 直接進入主畫面，無需檢查角色
+            if (["shared_owner", "renter", "admin"].includes(role)) {
+                showMainPage();
+            } else {
+                console.error(`Invalid role during initialization: "${role}". Redirecting to login.`);
+                removeToken();
+                showLoginPage();
+            }
         } else {
             showLoginPage();
         }
@@ -447,7 +463,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                     setToken(result.data.token);
                     const role = result.data.role ? result.data.role.toLowerCase().trim() : "";
                     setRole(role);
-                    console.log("Login successful, role stored:", role);
+                    console.log("Login successful, role stored:", getRole()); // 確認儲存後的角色
                     alert("登入成功！");
                     showMainPage();
                 } else {
@@ -548,7 +564,7 @@ document.addEventListener("DOMContentLoaded", async function () {
         }
 
         // 根據當前顯示的 section 選擇元素
-        const isAdminPanel = document.getElementById("adminPanel").style.display === "block";
+        const isAdminPanel = document.getElementById("adminPanel")?.style.display === "block";
         const parkingTableBody = document.getElementById(isAdminPanel ? "adminViewParkingTableBody" : "viewParkingTableBody");
         const specificSpotInput = document.getElementById(isAdminPanel ? "adminSpecificSpotInput" : "specificSpotInput");
         const specificSpotButton = document.getElementById(isAdminPanel ? "adminSpecificSpotButton" : "specificSpotButton");
@@ -979,7 +995,7 @@ document.addEventListener("DOMContentLoaded", async function () {
         }
 
         // 根據當前顯示的 section 選擇元素
-        const isAdminPanel = document.getElementById("adminPanel").style.display === "block";
+        const isAdminPanel = document.getElementById("adminPanel")?.style.display === "block";
         const startDateInput = document.getElementById(isAdminPanel ? "adminStartDate" : "startDate");
         const endDateInput = document.getElementById(isAdminPanel ? "adminEndDate" : "endDate");
         const incomeSearchButton = document.getElementById(isAdminPanel ? "adminIncomeSearchButton" : "incomeSearchButton");
