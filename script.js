@@ -198,7 +198,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 
         const defaultSectionId = role === "shared_owner" ? "viewParking" :
             role === "renter" ? "reserveParking" :
-            role === "admin" ? "adminPanel" : "viewParking";
+                role === "admin" ? "adminPanel" : "viewParking";
         const defaultSection = document.getElementById(defaultSectionId);
 
         if (!defaultSection) {
@@ -466,7 +466,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                     throw new Error("後端返回非 JSON 響應，請檢查伺服器配置");
                 }
                 const result = await response.json();
-                console.log("Login response data:", result);
+                console.log("Login response data:", JSON.stringify(result, null, 2)); // 改進日誌，顯示完整結構
                 if (response.ok) {
                     if (!result.data || !result.data.token) {
                         showError("後端未返回 token，請檢查後端服務！");
@@ -474,17 +474,21 @@ document.addEventListener("DOMContentLoaded", async function () {
                     }
                     setToken(result.data.token);
                     let role = "";
-                    // 嘗試從 result.data 中提取 role，支援多種可能結構
+                    // 嘗試從多種結構中提取 role
                     if (typeof result.data.role === "string") {
                         role = result.data.role.toLowerCase().trim();
                     } else if (result.data.user && typeof result.data.user.role === "string") {
                         role = result.data.user.role.toLowerCase().trim();
                     } else if (result.data.roles && Array.isArray(result.data.roles) && result.data.roles.length > 0) {
                         role = result.data.roles[0].toLowerCase().trim();
+                    } else if (typeof result.data.user_role === "string") { // 支援 user_role 字段
+                        role = result.data.user_role.toLowerCase().trim();
+                    } else if (typeof result.role === "string") { // 支援直接在 result 層級的 role
+                        role = result.role.toLowerCase().trim();
                     } else {
                         showError("後端未返回有效的角色資訊，請聯繫管理員或檢查後端 API！");
-                        console.error("Role not provided by backend or invalid format:", result.data);
-                        console.error("Full login response:", result);
+                        console.error("Role not provided by backend or invalid format:", JSON.stringify(result.data, null, 2));
+                        console.error("Full login response:", JSON.stringify(result, null, 2));
                         return;
                     }
                     const validRoles = ["shared_owner", "renter", "admin"];
