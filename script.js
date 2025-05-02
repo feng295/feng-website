@@ -118,12 +118,24 @@ document.addEventListener("DOMContentLoaded", async function () {
         }
     }
 
-    // 顯示主畫面，並根據角色動態調整功能清單和預設畫面
+    // 修改後的 showMainPage 函數
     function showMainPage() {
+        console.log("Entering showMainPage function");
+
+        // 檢查必要的 DOM 元素是否存在
+        const functionList = document.querySelector(".function-list");
+        const contentContainer = document.querySelector(".content-container");
+        if (!functionList || !contentContainer) {
+            console.error("Required DOM elements for main page are missing: .function-list or .content-container");
+            showError("頁面載入失敗，請檢查網頁結構！");
+            return;
+        }
+
+        // 切換顯示
         authContainer.style.display = "none";
         parkingContainer.style.display = "block";
-        document.querySelector(".function-list").style.display = "block";
-        document.querySelector(".content-container").style.display = "block";
+        functionList.style.display = "block";
+        contentContainer.style.display = "block";
         logoutButton.style.display = "block";
 
         // 獲取用戶角色
@@ -132,6 +144,13 @@ document.addEventListener("DOMContentLoaded", async function () {
 
         // 動態調整功能清單
         const navList = document.querySelector(".function-list ul");
+        if (!navList) {
+            console.error("Navigation list (.function-list ul) not found");
+            showError("功能清單載入失敗，請檢查網頁結構！");
+            return;
+        }
+
+        // 根據角色設置功能清單，無效角色時提供默認選項
         if (role === "shared_owner") {
             navList.innerHTML = `
                 <li><a href="#" class="nav-link" data-target="viewParking">查看車位</a></li>
@@ -150,8 +169,10 @@ document.addEventListener("DOMContentLoaded", async function () {
                 <li><a href="#" class="nav-link" data-target="adminPanel">管理員畫面</a></li>
             `;
         } else {
-            showLoginPage();
-            return;
+            console.warn("Unrecognized role, defaulting to basic navigation");
+            navList.innerHTML = `
+                <li><a href="#" class="nav-link" data-target="viewParking">查看車位</a></li>
+            `;
         }
 
         // 設置預設畫面
@@ -159,53 +180,47 @@ document.addEventListener("DOMContentLoaded", async function () {
             section.style.display = "none";
         });
 
-        if (role === "shared_owner") {
-            const viewParkingSection = document.getElementById("viewParking");
-            viewParkingSection.style.display = "block";
-            setupViewParking();
-        } else if (role === "renter") {
-            const reserveParkingSection = document.getElementById("reserveParking");
-            reserveParkingSection.style.display = "block";
-            setupReserveParking();
-        } else if (role === "admin") {
-            const adminPanelSection = document.getElementById("adminPanel");
-            adminPanelSection.style.display = "block";
-        } else {
-            const viewParkingSection = document.getElementById("viewParking");
-            viewParkingSection.style.display = "block";
-            setupViewParking();
+        const defaultSectionId = role === "shared_owner" ? "viewParking" :
+            role === "renter" ? "reserveParking" :
+            role === "admin" ? "adminPanel" : "viewParking";
+        const defaultSection = document.getElementById(defaultSectionId);
+
+        if (!defaultSection) {
+            console.error(`Default section "${defaultSectionId}" not found`);
+            showError("無法載入預設畫面，請檢查網頁結構！");
+            return;
         }
+
+        defaultSection.style.display = "block";
+        if (defaultSectionId === "viewParking") setupViewParking();
+        else if (defaultSectionId === "reserveParking") setupReserveParking();
+        else if (defaultSectionId === "adminPanel") setupAdminPanel(); // 新增對 adminPanel 的初始化
+        else setupViewParking();
 
         // 重新綁定導航事件
         const navLinks = document.querySelectorAll(".nav-link");
         navLinks.forEach(link => {
             link.addEventListener("click", async function (event) {
                 event.preventDefault();
-
                 if (!await checkAuth()) return;
 
                 const targetId = this.getAttribute("data-target");
                 document.querySelectorAll(".content-section").forEach(section => {
                     section.style.display = "none";
                 });
+
                 const targetSection = document.getElementById(targetId);
                 if (!targetSection) {
                     console.error(`Target section "${targetId}" not found`);
                     return;
                 }
-                targetSection.style.display = "block";
 
-                if (targetId === "viewParking") {
-                    setupViewParking();
-                } else if (targetId === "reserveParking") {
-                    setupReserveParking();
-                } else if (targetId === "history") {
-                    loadHistory();
-                } else if (targetId === "incomeInquiry") {
-                    setupIncomeInquiry();
-                } else if (targetId === "adminPanel") {
-                    // 初始化管理員畫面（待實現）
-                }
+                targetSection.style.display = "block";
+                if (targetId === "viewParking") setupViewParking();
+                else if (targetId === "reserveParking") setupReserveParking();
+                else if (targetId === "history") loadHistory();
+                else if (targetId === "incomeInquiry") setupIncomeInquiry();
+                else if (targetId === "adminPanel") setupAdminPanel();
             });
         });
     }
@@ -255,11 +270,7 @@ document.addEventListener("DOMContentLoaded", async function () {
         if (isAuthenticated) {
             const role = getRole();
             console.log("Current role during initialization:", role);
-            if (role === "shared_owner" || role === "renter" || role === "admin") {
-                showMainPage();
-            } else {
-                showLoginPage();
-            }
+            showMainPage(); // 直接進入主畫面，無需檢查角色
         } else {
             showLoginPage();
         }
@@ -527,7 +538,7 @@ document.addEventListener("DOMContentLoaded", async function () {
         showLoginPage();
     });
 
-    // 設置查看車位
+    // 修改後的 setupViewParking 函數，支援 adminPanel
     function setupViewParking() {
         const role = getRole();
         console.log("Current role in setupViewParking:", role);
@@ -536,9 +547,11 @@ document.addEventListener("DOMContentLoaded", async function () {
             return;
         }
 
-        const parkingTableBody = document.getElementById("viewParkingTableBody");
-        const specificSpotInput = document.getElementById("specificSpotInput");
-        const specificSpotButton = document.getElementById("specificSpotButton");
+        // 根據當前顯示的 section 選擇元素
+        const isAdminPanel = document.getElementById("adminPanel").style.display === "block";
+        const parkingTableBody = document.getElementById(isAdminPanel ? "adminViewParkingTableBody" : "viewParkingTableBody");
+        const specificSpotInput = document.getElementById(isAdminPanel ? "adminSpecificSpotInput" : "specificSpotInput");
+        const specificSpotButton = document.getElementById(isAdminPanel ? "adminSpecificSpotButton" : "specificSpotButton");
 
         if (!parkingTableBody || !specificSpotInput || !specificSpotButton) {
             console.warn("Required elements not found for viewParking");
@@ -956,7 +969,7 @@ document.addEventListener("DOMContentLoaded", async function () {
         }
     }
 
-    // 設置收入查詢
+    // 修改後的 setupIncomeInquiry 函數，支援 adminPanel
     function setupIncomeInquiry() {
         const role = getRole();
         console.log("Current role in setupIncomeInquiry:", role);
@@ -965,11 +978,13 @@ document.addEventListener("DOMContentLoaded", async function () {
             return;
         }
 
-        const startDateInput = document.getElementById("startDate");
-        const endDateInput = document.getElementById("endDate");
-        const incomeSearchButton = document.getElementById("incomeSearchButton");
-        const totalIncomeSpan = document.getElementById("totalIncome");
-        const incomeTableBody = document.getElementById("incomeTableBody");
+        // 根據當前顯示的 section 選擇元素
+        const isAdminPanel = document.getElementById("adminPanel").style.display === "block";
+        const startDateInput = document.getElementById(isAdminPanel ? "adminStartDate" : "startDate");
+        const endDateInput = document.getElementById(isAdminPanel ? "adminEndDate" : "endDate");
+        const incomeSearchButton = document.getElementById(isAdminPanel ? "adminIncomeSearchButton" : "incomeSearchButton");
+        const totalIncomeSpan = document.getElementById(isAdminPanel ? "adminTotalIncome" : "totalIncome");
+        const incomeTableBody = document.getElementById(isAdminPanel ? "adminIncomeTableBody" : "incomeTableBody");
 
         if (!startDateInput || !endDateInput || !incomeSearchButton || !totalIncomeSpan || !incomeTableBody) {
             console.warn("Required elements not found for incomeInquiry");
@@ -1052,6 +1067,19 @@ document.addEventListener("DOMContentLoaded", async function () {
         }
 
         incomeSearchButton.addEventListener("click", handleIncomeSearch);
+    }
+
+    // 添加 setupAdminPanel 函數，初始化管理員畫面
+    function setupAdminPanel() {
+        const role = getRole();
+        console.log("Current role in setupAdminPanel:", role);
+        if (role !== "admin") {
+            alert("此功能僅限管理員使用！");
+            return;
+        }
+
+        setupViewParking(); // 初始化查看車位
+        setupIncomeInquiry(); // 初始化收入查詢
     }
 
     // 添加歷史紀錄
