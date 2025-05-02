@@ -112,7 +112,18 @@ document.addEventListener("DOMContentLoaded", async function () {
     // 存儲角色到 localStorage
     function setRole(role) {
         try {
-            localStorage.setItem("role", role.toLowerCase().trim());
+            if (!role) {
+                console.warn("Attempted to set empty role, skipping.");
+                return;
+            }
+            const validRoles = ["shared_owner", "renter", "admin"];
+            const normalizedRole = role.toLowerCase().trim();
+            if (!validRoles.includes(normalizedRole)) {
+                console.warn(`Invalid role "${normalizedRole}" ignored. Expected: ${validRoles.join(", ")}`);
+                return;
+            }
+            localStorage.setItem("role", normalizedRole);
+            console.log("Role set in localStorage:", normalizedRole);
         } catch (error) {
             console.error("Failed to set role in localStorage:", error);
         }
@@ -120,41 +131,64 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     // 顯示主畫面，並根據角色動態調整功能清單和預設畫面
     function showMainPage() {
+        console.log("Entering showMainPage function");
+
         authContainer.style.display = "none";
         parkingContainer.style.display = "block";
-        document.querySelector(".function-list").style.display = "block";
-        document.querySelector(".content-container").style.display = "block";
+        const functionList = document.querySelector(".function-list");
+        const contentContainer = document.querySelector(".content-container");
+        if (!functionList || !contentContainer) {
+            console.error("Required DOM elements for main page are missing: .function-list or .content-container");
+            showError("頁面載入失敗，請檢查網頁結構！");
+            return;
+        }
+        functionList.style.display = "block";
+        contentContainer.style.display = "block";
         logoutButton.style.display = "block";
 
         // 獲取用戶角色
         const role = getRole();
         console.log("Current role in showMainPage:", role);
 
-        // 動態調整功能清單
-        const navList = document.querySelector(".function-list ul");
-        if (["shared_owner", "renter", "admin"].includes(role)) {
-            if (role === "shared_owner") {
-                navList.innerHTML = `
-                    <li><a href="#" class="nav-link" data-target="viewParking">查看車位</a></li>
-                    <li><a href="#" class="nav-link" data-target="incomeInquiry">收入查詢</a></li>
-                `;
-            } else if (role === "renter") {
-                navList.innerHTML = `
-                    <li><a href="#" class="nav-link" data-target="viewParking">查看車位</a></li>
-                    <li><a href="#" class="nav-link" data-target="reserveParking">預約車位</a></li>
-                    <li><a href="#" class="nav-link" data-target="history">歷史紀錄</a></li>
-                `;
-            } else if (role === "admin") {
-                navList.innerHTML = `
-                    <li><a href="#" class="nav-link" data-target="viewParking">查看車位</a></li>
-                    <li><a href="#" class="nav-link" data-target="incomeInquiry">收入查詢</a></li>
-                    <li><a href="#" class="nav-link" data-target="adminPanel">管理員畫面</a></li>
-                `;
-            }
-        } else {
-            console.warn("Unrecognized role, redirecting to login");
+        // 檢查角色是否有效
+        const validRoles = ["shared_owner", "renter", "admin"];
+        if (!role || !validRoles.includes(role)) {
+            console.error(`Unrecognized role: "${role}". Expected one of: ${validRoles.join(", ")}. Redirecting to login.`);
+            console.log("Current localStorage contents:", {
+                token: localStorage.getItem("token"),
+                role: localStorage.getItem("role")
+            });
+            showError("無效的用戶角色，請重新登入！可能是後端未正確返回角色資訊或本地數據異常。");
+            removeToken();
             showLoginPage();
             return;
+        }
+
+        // 動態調整功能清單
+        const navList = document.querySelector(".function-list ul");
+        if (!navList) {
+            console.error("Navigation list (.function-list ul) not found");
+            showError("功能清單載入失敗，請檢查網頁結構！");
+            return;
+        }
+
+        if (role === "shared_owner") {
+            navList.innerHTML = `
+                <li><a href="#" class="nav-link" data-target="viewParking">查看車位</a></li>
+                <li><a href="#" class="nav-link" data-target="incomeInquiry">收入查詢</a></li>
+            `;
+        } else if (role === "renter") {
+            navList.innerHTML = `
+                <li><a href="#" class="nav-link" data-target="viewParking">查看車位</a></li>
+                <li><a href="#" class="nav-link" data-target="reserveParking">預約車位</a></li>
+                <li><a href="#" class="nav-link" data-target="history">歷史紀錄</a></li>
+            `;
+        } else if (role === "admin") {
+            navList.innerHTML = `
+                <li><a href="#" class="nav-link" data-target="viewParking">查看車位</a></li>
+                <li><a href="#" class="nav-link" data-target="incomeInquiry">收入查詢</a></li>
+                <li><a href="#" class="nav-link" data-target="adminPanel">管理員畫面</a></li>
+            `;
         }
 
         // 設置預設畫面
@@ -162,53 +196,47 @@ document.addEventListener("DOMContentLoaded", async function () {
             section.style.display = "none";
         });
 
-        if (role === "shared_owner") {
-            const viewParkingSection = document.getElementById("viewParking");
-            viewParkingSection.style.display = "block";
-            setupViewParking();
-        } else if (role === "renter") {
-            const reserveParkingSection = document.getElementById("reserveParking");
-            reserveParkingSection.style.display = "block";
-            setupReserveParking();
-        } else if (role === "admin") {
-            const adminPanelSection = document.getElementById("adminPanel");
-            adminPanelSection.style.display = "block";
-        } else {
-            const viewParkingSection = document.getElementById("viewParking");
-            viewParkingSection.style.display = "block";
-            setupViewParking();
+        const defaultSectionId = role === "shared_owner" ? "viewParking" :
+            role === "renter" ? "reserveParking" :
+            role === "admin" ? "adminPanel" : "viewParking";
+        const defaultSection = document.getElementById(defaultSectionId);
+
+        if (!defaultSection) {
+            console.error(`Default section "${defaultSectionId}" not found`);
+            showError("無法載入預設畫面，請檢查網頁結構！");
+            return;
         }
+
+        defaultSection.style.display = "block";
+        if (defaultSectionId === "viewParking") setupViewParking();
+        else if (defaultSectionId === "reserveParking") setupReserveParking();
+        else if (defaultSectionId === "adminPanel") setupAdminPanel();
+        else setupViewParking();
 
         // 重新綁定導航事件
         const navLinks = document.querySelectorAll(".nav-link");
         navLinks.forEach(link => {
             link.addEventListener("click", async function (event) {
                 event.preventDefault();
-
                 if (!await checkAuth()) return;
 
                 const targetId = this.getAttribute("data-target");
                 document.querySelectorAll(".content-section").forEach(section => {
                     section.style.display = "none";
                 });
+
                 const targetSection = document.getElementById(targetId);
                 if (!targetSection) {
                     console.error(`Target section "${targetId}" not found`);
                     return;
                 }
-                targetSection.style.display = "block";
 
-                if (targetId === "viewParking") {
-                    setupViewParking();
-                } else if (targetId === "reserveParking") {
-                    setupReserveParking();
-                } else if (targetId === "history") {
-                    loadHistory();
-                } else if (targetId === "incomeInquiry") {
-                    setupIncomeInquiry();
-                } else if (targetId === "adminPanel") {
-                    // 初始化管理員畫面（待實現）
-                }
+                targetSection.style.display = "block";
+                if (targetId === "viewParking") setupViewParking();
+                else if (targetId === "reserveParking") setupReserveParking();
+                else if (targetId === "history") loadHistory();
+                else if (targetId === "incomeInquiry") setupIncomeInquiry();
+                else if (targetId === "adminPanel") setupAdminPanel();
             });
         });
     }
@@ -258,7 +286,15 @@ document.addEventListener("DOMContentLoaded", async function () {
         if (isAuthenticated) {
             const role = getRole();
             console.log("Current role during initialization:", role);
-            if (!role || !["shared_owner", "renter", "admin"].includes(role)) {
+            const validRoles = ["shared_owner", "renter", "admin"];
+            if (!role || !validRoles.includes(role)) {
+                console.error(`Invalid role during initialization: "${role}". Expected: ${validRoles.join(", ")}. Redirecting to login.`);
+                console.log("Current localStorage contents:", {
+                    token: localStorage.getItem("token"),
+                    role: localStorage.getItem("role")
+                });
+                showError("無效的用戶角色，請重新登入！可能是後端未正確返回角色資訊或本地數據異常。");
+                removeToken();
                 showLoginPage();
             } else {
                 showMainPage();
@@ -432,14 +468,39 @@ document.addEventListener("DOMContentLoaded", async function () {
                 const result = await response.json();
                 console.log("Login response data:", result);
                 if (response.ok) {
-                    if (!result.data.token) {
+                    if (!result.data || !result.data.token) {
                         showError("後端未返回 token，請檢查後端服務！");
                         return;
                     }
                     setToken(result.data.token);
-                    const role = result.data.role ? result.data.role.toLowerCase().trim() : "";
+                    let role = "";
+                    // 嘗試從 result.data 中提取 role，支援多種可能結構
+                    if (typeof result.data.role === "string") {
+                        role = result.data.role.toLowerCase().trim();
+                    } else if (result.data.user && typeof result.data.user.role === "string") {
+                        role = result.data.user.role.toLowerCase().trim();
+                    } else if (result.data.roles && Array.isArray(result.data.roles) && result.data.roles.length > 0) {
+                        role = result.data.roles[0].toLowerCase().trim();
+                    } else {
+                        showError("後端未返回有效的角色資訊，請聯繫管理員或檢查後端 API！");
+                        console.error("Role not provided by backend or invalid format:", result.data);
+                        console.error("Full login response:", result);
+                        return;
+                    }
+                    const validRoles = ["shared_owner", "renter", "admin"];
+                    if (!validRoles.includes(role)) {
+                        showError(`後端返回的角色 "${role}" 無效，應為 ${validRoles.join(", ")} 之一，請聯繫管理員！`);
+                        console.error("Invalid role received from backend:", role);
+                        return;
+                    }
                     setRole(role);
-                    console.log("Login successful, role stored:", role);
+                    const storedRole = getRole();
+                    if (!storedRole || !validRoles.includes(storedRole)) {
+                        showError("角色存儲失敗，請聯繫管理員！");
+                        console.error("Role storage verification failed:", { storedRole, expected: validRoles });
+                        return;
+                    }
+                    console.log("Login successful, role stored:", storedRole);
                     alert("登入成功！");
                     showMainPage();
                 } else {
