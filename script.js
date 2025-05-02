@@ -72,7 +72,7 @@ document.addEventListener("DOMContentLoaded", async function () {
     function removeToken() {
         try {
             localStorage.removeItem("token");
-            localStorage.removeItem("userRole"); // 清除用戶角色
+            localStorage.removeItem("role"); // 清除用戶角色
         } catch (error) {
             console.error("Failed to remove token from localStorage:", error);
         }
@@ -98,13 +98,23 @@ document.addEventListener("DOMContentLoaded", async function () {
         }
     }
 
-    // 從 localStorage 獲取用戶角色
-    function getUserRole() {
+    // 從 localStorage 獲取用戶角色，並標準化為小寫
+    function getRole() {
         try {
-            return localStorage.getItem("userRole") || "";
+            const role = localStorage.getItem("role") || "";
+            return role.toLowerCase().trim(); // 標準化為小寫並移除空白
         } catch (error) {
-            console.error("Failed to get user role from localStorage:", error);
+            console.error("Failed to get role from localStorage:", error);
             return "";
+        }
+    }
+
+    // 存儲角色到 localStorage
+    function setRole(role) {
+        try {
+            localStorage.setItem("role", role.toLowerCase().trim());
+        } catch (error) {
+            console.error("Failed to set role in localStorage:", error);
         }
     }
 
@@ -117,33 +127,30 @@ document.addEventListener("DOMContentLoaded", async function () {
         logoutButton.style.display = "block";
 
         // 獲取用戶角色
-        const userRole = getUserRole();
-        console.log("User role:", userRole);
+        const role = getRole();
+        console.log("Current role in showMainPage:", role);
 
         // 動態調整功能清單
         const navList = document.querySelector(".function-list ul");
-        if (userRole === "shared_owner") {
-            // 車位共享者：查看車位、收入查詢
+        if (role === "shared_owner") {
             navList.innerHTML = `
                 <li><a href="#" class="nav-link" data-target="viewParking">查看車位</a></li>
                 <li><a href="#" class="nav-link" data-target="incomeInquiry">收入查詢</a></li>
             `;
-        } else if (userRole === "renter") {
-            // 租用者：查看車位、預約車位、歷史紀錄
+        } else if (role === "renter") {
             navList.innerHTML = `
                 <li><a href="#" class="nav-link" data-target="viewParking">查看車位</a></li>
                 <li><a href="#" class="nav-link" data-target="reserveParking">預約車位</a></li>
                 <li><a href="#" class="nav-link" data-target="history">歷史紀錄</a></li>
             `;
-        } else if (userRole === "admin") {
-            // 管理員：查看車位、收入查詢、管理員畫面
+        } else if (role === "admin") {
             navList.innerHTML = `
                 <li><a href="#" class="nav-link" data-target="viewParking">查看車位</a></li>
                 <li><a href="#" class="nav-link" data-target="incomeInquiry">收入查詢</a></li>
                 <li><a href="#" class="nav-link" data-target="adminPanel">管理員畫面</a></li>
             `;
         } else {
-            // 未識別角色：顯示預設清單
+            console.warn("Unrecognized role, showing default menu");
             navList.innerHTML = `
                 <li><a href="#" class="nav-link" data-target="viewParking">查看車位</a></li>
                 <li><a href="#" class="nav-link" data-target="reserveParking">預約車位</a></li>
@@ -157,24 +164,18 @@ document.addEventListener("DOMContentLoaded", async function () {
             section.style.display = "none";
         });
 
-        if (userRole === "shared_owner") {
-            // 車位共享者：預設顯示「查看車位」
+        if (role === "shared_owner") {
             const viewParkingSection = document.getElementById("viewParking");
             viewParkingSection.style.display = "block";
             setupViewParking();
-        } else if (userRole === "renter") {
-            // 租用者：預設顯示「預約車位」
+        } else if (role === "renter") {
             const reserveParkingSection = document.getElementById("reserveParking");
             reserveParkingSection.style.display = "block";
             setupReserveParking();
-        } else if (userRole === "admin") {
-            // 管理員：預設顯示「管理員畫面」
+        } else if (role === "admin") {
             const adminPanelSection = document.getElementById("adminPanel");
             adminPanelSection.style.display = "block";
-            // 如果需要初始化管理員畫面，可以添加 setupAdminPanel 函數
-            // setupAdminPanel();
         } else {
-            // 未識別角色：預設顯示「查看車位」
             const viewParkingSection = document.getElementById("viewParking");
             viewParkingSection.style.display = "block";
             setupViewParking();
@@ -208,8 +209,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                 } else if (targetId === "incomeInquiry") {
                     setupIncomeInquiry();
                 } else if (targetId === "adminPanel") {
-                    // 如果需要初始化管理員畫面，可以添加 setupAdminPanel 函數
-                    // setupAdminPanel();
+                    // 初始化管理員畫面（待實現）
                 }
             });
         });
@@ -256,11 +256,12 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     // 初始化時檢查是否已登入（靜默模式）
     (async () => {
-        const isAuthenticated = await checkAuth(true); // 靜默檢查
+        const isAuthenticated = await checkAuth(true);
         if (isAuthenticated) {
-            const userRole = getUserRole();
-            if (!userRole) {
-                showLoginPage(); // 如果沒有角色信息，跳轉到登入頁面
+            const role = getRole();
+            console.log("Current role during initialization:", role);
+            if (!role) {
+                showLoginPage();
             } else {
                 showMainPage();
             }
@@ -271,7 +272,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     // 當身份改變時，顯示或隱藏租用者專用欄位
     roleInput.addEventListener("change", function () {
-        if (roleInput.value === "renter" && !isLogin) {
+        if (roleInput.value.toLowerCase() === "renter" && !isLogin) {
             renterFields.style.display = "block";
             licensePlateInput.setAttribute("required", "true");
             vehicleTypeInput.setAttribute("required", "true");
@@ -370,7 +371,7 @@ document.addEventListener("DOMContentLoaded", async function () {
             if (paymentMethodInput.value === "credit_card") {
                 cardNumberContainer.style.display = "block";
             }
-            if (roleInput.value === "renter") {
+            if (roleInput.value.toLowerCase() === "renter") {
                 renterFields.style.display = "block";
             }
             emailInput.setAttribute("required", "true");
@@ -382,7 +383,7 @@ document.addEventListener("DOMContentLoaded", async function () {
             if (paymentMethodInput.value === "credit_card") {
                 cardNumberInput.setAttribute("required", "true");
             }
-            if (roleInput.value === "renter") {
+            if (roleInput.value.toLowerCase() === "renter") {
                 licensePlateInput.setAttribute("required", "true");
                 vehicleTypeInput.setAttribute("required", "true");
             }
@@ -431,15 +432,16 @@ document.addEventListener("DOMContentLoaded", async function () {
                     throw new Error("後端返回非 JSON 響應，請檢查伺服器配置");
                 }
                 const result = await response.json();
+                console.log("Login response data:", result);
                 if (response.ok) {
                     if (!result.data.token) {
                         showError("後端未返回 token，請檢查後端服務！");
                         return;
                     }
-                    // 存儲 token 和 role
                     setToken(result.data.token);
-                    localStorage.setItem("userRole", result.data.role || "");
-                    console.log("Login successful, token and role stored:", result.data.role);
+                    const role = result.data.role ? result.data.role.toLowerCase().trim() : "";
+                    setRole(role);
+                    console.log("Login successful, role stored:", role);
                     alert("登入成功！");
                     showMainPage();
                 } else {
@@ -453,7 +455,7 @@ document.addEventListener("DOMContentLoaded", async function () {
         } else {
             const name = nameInput.value.trim();
             const phone = phoneInput.value.trim();
-            const role = roleInput.value;
+            const role = roleInput.value.toLowerCase().trim();
             const payment_method = paymentMethodInput.value;
             let payment_info = cardNumberInput.value.trim();
             const license_plate = licensePlateInput.value.trim();
@@ -479,8 +481,6 @@ document.addEventListener("DOMContentLoaded", async function () {
             }
 
             const cleanedPassword = password.replace(/[^\x20-\x7E]/g, "");
-            console.log("Password after cleanup:", cleanedPassword);
-
             const hasLetter = /[a-zA-Z]/.test(cleanedPassword);
             const hasNumber = /[0-9]/.test(cleanedPassword);
             const isLongEnough = cleanedPassword.length >= 8;
@@ -534,9 +534,9 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     // 設置查看車位
     function setupViewParking() {
-        // 檢查角色權限
-        const userRole = getUserRole();
-        if (!["shared_owner", "renter", "admin"].includes(userRole)) {
+        const role = getRole();
+        console.log("Current role in setupViewParking:", role);
+        if (!["shared_owner", "renter", "admin"].includes(role)) {
             alert("您沒有權限訪問此功能！");
             return;
         }
@@ -550,10 +550,8 @@ document.addEventListener("DOMContentLoaded", async function () {
             return;
         }
 
-        // 初始化表格
         parkingTableBody.innerHTML = '<tr><td colspan="7">請點擊查詢以查看車位</td></tr>';
 
-        // 查詢特定車位（GET /api/v1/parking/:id）
         async function handleSpecificSpotSearch() {
             const spotId = specificSpotInput.value.trim();
             if (!spotId) {
@@ -603,7 +601,6 @@ document.addEventListener("DOMContentLoaded", async function () {
                     throw new Error("後端返回的車位資料格式錯誤，缺少必要字段！");
                 }
 
-                // 檢查計費方式是否為支援的類型
                 if (spotData.pricing_type === "daily") {
                     throw new Error("此車位的計費方式為「按日」，目前不支援此類型！");
                 }
@@ -612,20 +609,19 @@ document.addEventListener("DOMContentLoaded", async function () {
                 const row = document.createElement("tr");
                 row.setAttribute("data-id", `${spotData.spot_id}`);
 
-                // 根據計費方式顯示費用
                 const priceDisplay = spotData.pricing_type === "hourly"
                     ? `${spotData.price_per_half_hour || 0} 元/半小時`
                     : `${spotData.monthly_price || 0} 元/月`;
 
                 row.innerHTML = `
-                <td>${spotData.spot_id}</td>
-                <td>${spotData.location || '未知'}</td>
-                <td>${spotData.parking_type === "flat" ? "平面" : "機械"}</td>
-                <td>${spotData.floor_level === "ground" ? "地面" : `地下${spotData.floor_level.startsWith("B") ? spotData.floor_level.slice(1) : spotData.floor_level}樓`}</td>
-                <td>${spotData.pricing_type === "hourly" ? "按小時" : spotData.pricing_type === "monthly" ? "按月" : "未知"}</td>
-                <td>${priceDisplay}</td>
-                <td><button class="edit-btn">編輯</button></td>
-            `;
+                    <td>${spotData.spot_id}</td>
+                    <td>${spotData.location || '未知'}</td>
+                    <td>${spotData.parking_type === "flat" ? "平面" : "機械"}</td>
+                    <td>${spotData.floor_level === "ground" ? "地面" : `地下${spotData.floor_level.startsWith("B") ? spotData.floor_level.slice(1) : spotData.floor_level}樓`}</td>
+                    <td>${spotData.pricing_type === "hourly" ? "按小時" : "按月"}</td>
+                    <td>${priceDisplay}</td>
+                    <td><button class="edit-btn">編輯</button></td>
+                `;
 
                 row.querySelector(".edit-btn").addEventListener("click", (e) => {
                     e.stopPropagation();
@@ -649,50 +645,34 @@ document.addEventListener("DOMContentLoaded", async function () {
             }
         }
 
-        // 顯示編輯表單並處理更新（PUT /api/v1/parking/:id）
         function showEditForm(spot) {
             const existingForm = document.getElementById("editSpotForm");
-            if (existingForm) {
-                existingForm.remove();
-            }
+            if (existingForm) existingForm.remove();
 
             const editForm = document.createElement("div");
             editForm.id = "editSpotForm";
             editForm.style.marginTop = "20px";
 
-            // 根據計費方式顯示費用
             const priceLabel = spot.pricing_type === "hourly" ? "半小時費用（元）：" : "每月費用（元）：";
             const priceValue = spot.pricing_type === "hourly"
                 ? `${spot.price_per_half_hour || 0} 元`
                 : `${spot.monthly_price || 0} 元`;
 
             editForm.innerHTML = `
-            <h3>編輯車位 ${spot.spot_id}</h3>
-            <div>
-                <label>地址：</label>
-                <input type="text" id="editLocation" value="${spot.location || ''}" />
-            </div>
-            <div>
-                <label>停車類型：</label>
-                <select id="editParkingType">
+                <h3>編輯車位 ${spot.spot_id}</h3>
+                <div><label>地址：</label><input type="text" id="editLocation" value="${spot.location || ''}" /></div>
+                <div><label>停車類型：</label><select id="editParkingType">
                     <option value="flat" ${spot.parking_type === "flat" ? "selected" : ""}>平面</option>
                     <option value="mechanical" ${spot.parking_type === "mechanical" ? "selected" : ""}>機械</option>
-                </select>
-            </div>
-            <div>
-                <label>計費方式：</label>
-                <select id="editPricingType">
+                </select></div>
+                <div><label>計費方式：</label><select id="editPricingType">
                     <option value="hourly" ${spot.pricing_type === "hourly" ? "selected" : ""}>按小時</option>
                     <option value="monthly" ${spot.pricing_type === "monthly" ? "selected" : ""}>按月</option>
-                </select>
-            </div>
-            <div>
-                <label>${priceLabel}</label>
-                <span>${priceValue}</span>
-            </div>
-            <button id="saveSpotButton">保存</button>
-            <button id="cancelEditButton">取消</button>
-        `;
+                </select></div>
+                <div><label>${priceLabel}</label><span>${priceValue}</span></div>
+                <button id="saveSpotButton">保存</button>
+                <button id="cancelEditButton">取消</button>
+            `;
 
             parkingTableBody.parentElement.appendChild(editForm);
 
@@ -705,31 +685,22 @@ document.addEventListener("DOMContentLoaded", async function () {
 
                 try {
                     const token = getToken();
-                    if (!token) {
-                        throw new Error("認證令牌缺失，請重新登入！");
-                    }
+                    if (!token) throw new Error("認證令牌缺失，請重新登入！");
 
                     const response = await fetch(`${API_URL}/parking/${spot.spot_id}`, {
                         method: 'PUT',
-                        headers: {
-                            "Content-Type": "application/json",
-                            "Authorization": `Bearer ${token}`
-                        },
+                        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
                         body: JSON.stringify(updatedSpot)
                     });
-                    console.log(`Update spot response status: ${response.status}`);
                     if (!response.headers.get('content-type')?.includes('application/json')) {
                         throw new Error("後端返回非 JSON 響應，請檢查伺服器配置");
                     }
                     if (!response.ok) {
-                        if (response.status === 401) {
-                            throw new Error("認證失敗，請重新登入！");
-                        }
+                        if (response.status === 401) throw new Error("認證失敗，請重新登入！");
                         const errorData = await response.json();
                         throw new Error(`HTTP error! Status: ${response.status}, Message: ${errorData.error || '未知錯誤'}`);
                     }
-                    const result = await response.json();
-                    console.log("Spot updated successfully:", result);
+                    await response.json();
                     alert("車位信息已成功更新！");
                     editForm.remove();
                     handleSpecificSpotSearch();
@@ -743,24 +714,20 @@ document.addEventListener("DOMContentLoaded", async function () {
                 }
             });
 
-            document.getElementById("cancelEditButton").addEventListener("click", () => {
-                editForm.remove();
-            });
+            document.getElementById("cancelEditButton").addEventListener("click", () => editForm.remove());
         }
 
         specificSpotButton.addEventListener("click", handleSpecificSpotSearch);
         specificSpotInput.addEventListener("keypress", function (event) {
-            if (event.key === "Enter") {
-                handleSpecificSpotSearch();
-            }
+            if (event.key === "Enter") handleSpecificSpotSearch();
         });
     }
 
     // 設置預約停車
     async function setupReserveParking() {
-        // 檢查角色權限
-        const userRole = getUserRole();
-        if (userRole !== "renter") {
+        const role = getRole();
+        console.log("Current role in setupReserveParking:", role);
+        if (role !== "renter") {
             alert("此功能僅限租用者使用！");
             return;
         }
@@ -789,11 +756,8 @@ document.addEventListener("DOMContentLoaded", async function () {
             return;
         }
 
-        // 設置預設日期為今天
         const today = new Date().toISOString().split('T')[0];
         reserveDateInput.value = today;
-
-        // 設置預設時間（例如 09:00 到 17:00）
         startTimeInput.value = "09:00";
         endTimeInput.value = "17:00";
 
@@ -808,7 +772,6 @@ document.addEventListener("DOMContentLoaded", async function () {
             const filterPricing = reservePricing ? reservePricing.value : 'all';
             const filterStatus = reserveStatus ? reserveStatus.value : 'all';
 
-            // 驗證輸入
             if (!date) {
                 alert("請選擇日期！");
                 return;
@@ -821,239 +784,129 @@ document.addEventListener("DOMContentLoaded", async function () {
                 alert("結束時間必須晚於開始時間！");
                 return;
             }
-
-            const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
-            if (!dateRegex.test(date)) {
+            if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
                 alert("日期格式不正確，請使用 YYYY-MM-DD 格式！");
                 return;
             }
 
             parkingTableBody.innerHTML = '<tr><td colspan="7">載入中...</td></tr>';
 
-            // 動態獲取經緯度
-            let latitude = 25.0330; // 預設值（台北市）
-            let longitude = 121.5654;
+            let latitude = 25.0330, longitude = 121.5654;
             try {
                 const position = await new Promise((resolve, reject) => {
-                    if (!navigator.geolocation) {
-                        reject(new Error("瀏覽器不支援地理位置功能"));
-                    }
-                    navigator.geolocation.getCurrentPosition(resolve, reject, {
-                        timeout: 10000, // 10秒超時
-                        maximumAge: 0 // 不使用緩存
-                    });
+                    if (!navigator.geolocation) reject(new Error("瀏覽器不支援地理位置功能"));
+                    navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 10000, maximumAge: 0 });
                 });
                 latitude = position.coords.latitude;
                 longitude = position.coords.longitude;
                 console.log(`User location: latitude=${latitude}, longitude=${longitude}`);
             } catch (error) {
                 console.warn("Failed to get user location, using default:", error.message);
-                console.log(`Using default location: latitude=${latitude}, longitude=${longitude}`);
-                alert("無法獲取您的位置，將使用預設位置（台北市）。請作用權限。");
+                alert("無法獲取您的位置，將使用預設位置（台北市）。請確保已允許位置權限。");
             }
 
-            // 組合 start_time 和 end_time 為 ISO 8601 格式，包含時區
-            const timeZoneOffset = "+08:00"; // 假設使用台灣時區 (UTC+8)
-            const startDateTime = `${date}T${startTime}:00${timeZoneOffset}`; // 例如 "2025-04-29T09:00:00+08:00"
-            const endDateTime = `${date}T${endTime}:00${timeZoneOffset}`; // 例如 "2025-04-29T17:00:00+08:00"
+            const timeZoneOffset = "+08:00";
+            const startDateTime = `${date}T${startTime}:00${timeZoneOffset}`;
+            const endDateTime = `${date}T${endTime}:00${timeZoneOffset}`;
 
-            // 記錄請求參數
-            console.log("Sending request with parameters:", {
-                date,
-                start_time: startDateTime,
-                end_time: endDateTime,
-                latitude,
-                longitude,
-                filterCity,
-                filterType,
-                filterFloor,
-                filterPricing,
-                filterStatus
-            });
+            console.log("Sending request with parameters:", { date, start_time: startDateTime, end_time: endDateTime, latitude, longitude, filterCity, filterType, filterFloor, filterPricing, filterStatus });
 
-            let retries = 3;
-            let spots = null;
+            let retries = 3, spots = null;
             while (retries > 0) {
                 try {
                     const token = getToken();
-                    if (!token) {
-                        throw new Error("認證令牌缺失，請重新登入！");
-                    }
+                    if (!token) throw new Error("認證令牌缺失，請重新登入！");
 
-                    // 發送請求，包含所有參數
-                    const queryParams = new URLSearchParams({
-                        date: date,
-                        start_time: startDateTime,
-                        end_time: endDateTime,
-                        latitude: latitude,
-                        longitude: longitude
-                    });
-                    const requestUrl = `${API_URL}/parking/available?${queryParams.toString()}`;
-                    console.log(`Fetching available spots from: ${requestUrl}`);
-
-                    const response = await fetch(requestUrl, {
-                        headers: {
-                            "Content-Type": "application/json",
-                            "Authorization": `Bearer ${token}`,
-                        },
+                    const queryParams = new URLSearchParams({ date, start_time: startDateTime, end_time: endDateTime, latitude, longitude });
+                    const response = await fetch(`${API_URL}/parking/available?${queryParams.toString()}`, {
+                        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` }
                     });
                     console.log(`Reserve parking fetch response status: ${response.status}`);
-                    console.log(`Response headers:`, response.headers);
-
-                    if (!response.headers.get("content-type")?.includes("application/json")) {
+                    if (!response.headers.get('content-type')?.includes('application/json')) {
                         throw new Error("後端返回非 JSON 響應，請檢查伺服器配置");
                     }
                     if (!response.ok) {
-                        if (response.status === 401) {
-                            throw new Error("認證失敗，請重新登入！");
-                        }
+                        if (response.status === 401) throw new Error("認證失敗，請重新登入！");
                         const errorData = await response.json();
-                        console.error("Error response from server:", errorData);
-                        throw new Error(
-                            `HTTP error! Status: ${response.status}, Message: ${errorData.error || "未知錯誤"}`
-                        );
+                        throw new Error(`HTTP error! Status: ${response.status}, Message: ${errorData.error || '未知錯誤'}`);
                     }
 
                     const data = await response.json();
-                    console.log(`Raw response data:`, data);
-
-                    spots = data;
-                    if (!Array.isArray(spots)) {
-                        if (data.data && Array.isArray(data.data)) {
-                            spots = data.data;
-                        } else if (data.spots && Array.isArray(data.spots)) {
-                            spots = data.spots;
-                        } else {
-                            console.error("Spots data format is invalid:", data);
-                            throw new Error("後端返回的車位資料格式錯誤，應為陣列");
-                        }
-                    }
-                    console.log("Extracted spots array:", spots);
+                    spots = data.data || data.spots || data;
+                    if (!Array.isArray(spots)) throw new Error("後端返回的車位資料格式錯誤，應為陣列");
                     break;
                 } catch (error) {
-                    console.error(
-                        `Failed to fetch available spots (attempt ${4 - retries}/3):`,
-                        error
-                    );
+                    console.error(`Failed to fetch available spots (attempt ${4 - retries}/3):`, error);
                     retries--;
                     if (retries === 0) {
                         alert(`無法載入車位資料，請檢查後端服務 (錯誤: ${error.message})`);
-                        parkingTableBody.innerHTML =
-                            '<tr><td colspan="7">無法載入車位資料</td></tr>';
+                        parkingTableBody.innerHTML = '<tr><td colspan="7">無法載入車位資料</td></tr>';
                         if (error.message === "認證失敗，請重新登入！") {
                             removeToken();
                             showLoginPage(true);
                         }
                         return;
                     }
-                    await new Promise((resolve) => setTimeout(resolve, 1000));
+                    await new Promise(resolve => setTimeout(resolve, 1000));
                 }
             }
 
             if (!spots || spots.length === 0) {
-                console.warn("No parking spots returned from the server");
-                alert(
-                    "後端未返回任何車位資料，可能原因：\n" +
-                    "1. 所選日期或時間段沒有可用車位，請嘗試其他日期或時間。\n" +
-                    "2. 當前位置範圍內無車位，請確認您的位置或允許位置權限。\n" +
-                    "3. 後端服務異常，請聯繫管理員。"
-                );
+                alert("後端未返回任何車位資料，可能原因：\n1. 所選日期或時間段沒有可用車位。\n2. 當前位置範圍內無車位。\n3. 後端服務異常。");
                 parkingTableBody.innerHTML = '<tr><td colspan="7">無可用車位，請嘗試更改日期、時間或位置</td></tr>';
                 return;
             }
 
-            let filteredSpots = spots;
-            console.log("Before filtering:", filteredSpots);
-
-            // 篩選條件
-            if (searchQuery) {
-                filteredSpots = filteredSpots.filter(spot =>
-                    spot.spot_id.toString().toLowerCase().includes(searchQuery) ||
-                    (spot.location && spot.location.toLowerCase().includes(searchQuery))
-                );
-            }
-            if (filterCity && filterCity !== "all") {
-                filteredSpots = filteredSpots.filter(spot => spot.location === filterCity);
-            }
-            if (filterType && filterType !== "all") {
-                filteredSpots = filteredSpots.filter(spot => spot.parking_type === filterType);
-            }
-            if (filterFloor && filterFloor !== "all") {
-                filteredSpots = filteredSpots.filter(spot => spot.floor_level === filterFloor);
-            }
-            if (filterPricing && filterPricing !== "all") {
-                filteredSpots = filteredSpots.filter(spot => spot.pricing_type === filterPricing);
-            }
-            if (filterStatus && filterStatus !== "all") {
-                filteredSpots = filteredSpots.filter(spot =>
-                    filterStatus === "available" ? spot.status === "可用" :
-                        filterStatus === "occupied" ? (spot.status === "已佔用" || spot.status === "預約") : true
-                );
-            }
-
-            console.log("After filtering:", filteredSpots);
-            console.log("Filtered spots content:", JSON.stringify(filteredSpots, null, 2));
+            let filteredSpots = spots.filter(spot => {
+                let match = true;
+                if (searchQuery) match = match && (spot.spot_id.toString().toLowerCase().includes(searchQuery) || spot.location?.toLowerCase().includes(searchQuery));
+                if (filterCity !== "all") match = match && spot.location === filterCity;
+                if (filterType !== "all") match = match && spot.parking_type === filterType;
+                if (filterFloor !== "all") match = match && spot.floor_level === filterFloor;
+                if (filterPricing !== "all") match = match && spot.pricing_type === filterPricing;
+                if (filterStatus !== "all") match = match && (filterStatus === "available" ? spot.status === "可用" : filterStatus === "occupied" ? ["已佔用", "預約"].includes(spot.status) : true);
+                return match;
+            });
 
             if (filteredSpots.length === 0) {
-                console.warn("No parking spots match the filters");
-                alert(`所選條件目前沒有符合的車位！請調整篩選條件（例如選擇「全部」）。`);
+                alert("所選條件目前沒有符合的車位！請調整篩選條件。");
                 parkingTableBody.innerHTML = '<tr><td colspan="7">無符合條件的車位，請嘗試更改篩選條件</td></tr>';
                 return;
             }
 
             const fragment = document.createDocumentFragment();
-            console.log("Generating parking table with filtered spots:", filteredSpots);
             filteredSpots.forEach(spot => {
-                console.log("Processing spot:", spot);
                 const row = document.createElement("tr");
-                row.setAttribute("data-id", `${spot.spot_id}`);
-                if (spot.status === "available" || spot.status === "可用") {
-                    row.classList.add("available");
-                } else if (spot.status === "預約") {
-                    row.classList.add("reserved");
-                } else {
-                    row.classList.add("occupied");
-                }
-
+                row.setAttribute("data-id", spot.spot_id);
+                row.classList.add(spot.status === "可用" ? "available" : spot.status === "預約" ? "reserved" : "occupied");
                 row.innerHTML = `
                     <td>${spot.spot_id}</td>
                     <td>${spot.location || '未知'}</td>
                     <td>${spot.parking_type === "flat" ? "平面" : "機械"}</td>
                     <td>${spot.floor_level === "ground" ? "地面" : `地下${spot.floor_level.startsWith("B") ? spot.floor_level.slice(1) : spot.floor_level}樓`}</td>
                     <td>${spot.pricing_type === "hourly" ? "按小時" : spot.pricing_type === "daily" ? "按日" : "按月"}</td>
-                    <td>${spot.status === "available" || spot.status === "可用" ? "可用" : spot.status === "occupied" || spot.status === "已佔用" ? "已佔用" : "預約"}</td>
-                    <td><button class="reserve-btn" ${spot.status === "available" || spot.status === "可用" ? '' : 'disabled'}>預約</button></td>
+                    <td>${spot.status === "可用" ? "可用" : spot.status === "已佔用" ? "已佔用" : "預約"}</td>
+                    <td><button class="reserve-btn" ${spot.status === "可用" ? '' : 'disabled'}>預約</button></td>
                 `;
-
-                if (spot.status === "available" || spot.status === "可用") {
+                if (spot.status === "可用") {
                     row.querySelector(".reserve-btn").addEventListener("click", () => {
                         handleReserveParkingClick(spot.spot_id, date, startTime, endTime, row);
                         setParkingSpotId(spot.spot_id);
                     });
                 }
-
                 fragment.appendChild(row);
             });
 
             parkingTableBody.innerHTML = '';
             parkingTableBody.appendChild(fragment);
-            console.log("Table body after update:", parkingTableBody.innerHTML);
-
-            // 強制觸發重繪
             parkingTableBody.style.display = 'none';
-            parkingTableBody.offsetHeight; // 觸發重排
+            parkingTableBody.offsetHeight;
             parkingTableBody.style.display = 'table-row-group';
-
-            setTimeout(() => {
-                console.log("Table body after 1 second:", parkingTableBody.innerHTML);
-            }, 1000);
         }
 
         reserveSearchButton.addEventListener("click", handleReserveSearch);
         reserveSearchInput.addEventListener("keypress", function (event) {
-            if (event.key === "Enter") {
-                handleReserveSearch();
-            }
+            if (event.key === "Enter") handleReserveSearch();
         });
     }
 
@@ -1061,9 +914,9 @@ document.addEventListener("DOMContentLoaded", async function () {
     async function handleReserveParkingClick(spotId, selectedDate, startTime, endTime, row) {
         if (!await checkAuth()) return;
 
-        // 檢查角色權限（因為此函數由 setupReserveParking 調用，已檢查角色，但為安全起見再檢查一次）
-        const userRole = getUserRole();
-        if (userRole !== "renter") {
+        const role = getRole();
+        console.log("Current role in handleReserveParkingClick:", role);
+        if (role !== "renter") {
             alert("此功能僅限租用者使用！");
             return;
         }
@@ -1074,35 +927,24 @@ document.addEventListener("DOMContentLoaded", async function () {
                 return;
             }
 
-            // 組合 start_time 和 end_time 為 ISO 8601 格式
-            const startDateTime = `${selectedDate}T${startTime}:00`; // 例如 "2025-04-29T10:00:00"
-            const endDateTime = `${selectedDate}T${endTime}:00`; // 例如 "2025-04-29T12:00:00"
+            const startDateTime = `${selectedDate}T${startTime}:00`;
+            const endDateTime = `${selectedDate}T${endTime}:00`;
 
             const token = getToken();
             const response = await fetch(`${API_URL}/rent`, {
                 method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": `Bearer ${token}`
-                },
-                body: JSON.stringify({
-                    parking_spot_id: spotId,
-                    start_time: startDateTime,
-                    end_time: endDateTime
-                }),
+                headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
+                body: JSON.stringify({ parking_spot_id: spotId, start_time: startDateTime, end_time: endDateTime })
             });
-            console.log(`Reserve parking response status: ${response.status}`);
             if (!response.headers.get('content-type')?.includes('application/json')) {
                 throw new Error("後端返回非 JSON 響應，請檢查伺服器配置");
             }
             if (!response.ok) {
-                if (response.status === 401) {
-                    throw new Error("認證失敗，請重新登入！");
-                }
+                if (response.status === 401) throw new Error("認證失敗，請重新登入！");
                 const result = await response.json();
                 throw new Error(result.error || `預約失敗！（錯誤碼：${response.status}）`);
             }
-            const result = await response.json();
+            await response.json();
             row.classList.remove("available");
             row.classList.add("reserved");
             row.querySelector("button").disabled = true;
@@ -1121,9 +963,9 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     // 設置收入查詢
     function setupIncomeInquiry() {
-        // 檢查角色權限
-        const userRole = getUserRole();
-        if (!["shared_owner", "admin"].includes(userRole)) {
+        const role = getRole();
+        console.log("Current role in setupIncomeInquiry:", role);
+        if (!["shared_owner", "admin"].includes(role)) {
             alert("此功能僅限車位共享者和管理員使用！");
             return;
         }
@@ -1147,14 +989,11 @@ document.addEventListener("DOMContentLoaded", async function () {
                 alert("請選擇開始和結束日期！");
                 return;
             }
-
             if (startDate > endDate) {
                 alert("開始日期不能晚於結束日期！");
                 return;
             }
-
-            const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
-            if (!dateRegex.test(startDate) || !dateRegex.test(endDate)) {
+            if (!/^\d{4}-\d{2}-\d{2}$/.test(startDate) || !/^\d{4}-\d{2}-\d{2}$/.test(endDate)) {
                 alert("日期格式不正確，請使用 YYYY-MM-DD 格式！");
                 return;
             }
@@ -1164,39 +1003,24 @@ document.addEventListener("DOMContentLoaded", async function () {
 
             try {
                 const token = getToken();
-                if (!token) {
-                    throw new Error("認證令牌缺失，請重新登入！");
-                }
+                if (!token) throw new Error("認證令牌缺失，請重新登入！");
 
                 const parkingSpotId = getParkingSpotId();
-                if (!parkingSpotId) {
-                    throw new Error("請先在「查看車位」或「預約車位」中選擇一個停車位！");
-                }
+                if (!parkingSpotId) throw new Error("請先在「查看車位」或「預約車位」中選擇一個停車位！");
 
-                const requestUrl = `${API_URL}/parking/${parkingSpotId}/income?start_date=${encodeURIComponent(startDate)}&end_date=${encodeURIComponent(endDate)}`;
-                console.log(`Sending request to: ${requestUrl}`);
-                const response = await fetch(requestUrl, {
+                const response = await fetch(`${API_URL}/parking/${parkingSpotId}/income?start_date=${encodeURIComponent(startDate)}&end_date=${encodeURIComponent(endDate)}`, {
                     method: 'GET',
-                    headers: {
-                        "Content-Type": "application/json",
-                        "Authorization": `Bearer ${token}`
-                    }
+                    headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` }
                 });
-
-                console.log(`Income inquiry fetch response status: ${response.status}`);
                 if (!response.headers.get('content-type')?.includes('application/json')) {
                     throw new Error("後端返回非 JSON 響應，請檢查伺服器配置");
                 }
                 if (!response.ok) {
-                    if (response.status === 401) {
-                        throw new Error("認證失敗，請重新登入！");
-                    }
+                    if (response.status === 401) throw new Error("認證失敗，請重新登入！");
                     const errorData = await response.json();
                     throw new Error(`HTTP error! Status: ${response.status}, Message: ${errorData.error || '未知錯誤'}`);
                 }
                 const data = await response.json();
-                console.log(`Income data for ${startDate} to ${endDate}:`, data);
-
                 const totalIncome = data.total_income || 0;
                 totalIncomeSpan.textContent = totalIncome.toLocaleString();
 
@@ -1246,9 +1070,9 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     // 載入歷史紀錄
     async function loadHistory() {
-        // 檢查角色權限
-        const userRole = getUserRole();
-        if (userRole !== "renter") {
+        const role = getRole();
+        console.log("Current role in loadHistory:", role);
+        if (role !== "renter") {
             alert("此功能僅限租用者使用！");
             return;
         }
@@ -1258,29 +1082,19 @@ document.addEventListener("DOMContentLoaded", async function () {
         try {
             const token = getToken();
             const response = await fetch(`${API_URL}/rent`, {
-                headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": `Bearer ${token}`
-                }
+                headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` }
             });
-            console.log(`History fetch response status: ${response.status}`);
             if (!response.headers.get('content-type')?.includes('application/json')) {
                 throw new Error("後端返回非 JSON 響應，請檢查伺服器配置");
             }
             if (!response.ok) {
-                if (response.status === 401) {
-                    throw new Error("認證失敗，請重新登入！");
-                }
+                if (response.status === 401) throw new Error("認證失敗，請重新登入！");
                 throw new Error(`HTTP error! Status: ${response.status}`);
             }
             const responseData = await response.json();
             historyList.innerHTML = "";
 
-            let data = responseData;
-            if (!Array.isArray(responseData) && responseData.data && Array.isArray(responseData.data)) {
-                data = responseData.data;
-            }
-
+            let data = responseData.data || responseData;
             if (!Array.isArray(data)) {
                 console.error("History data is not an array:", responseData);
                 alert("歷史紀錄格式錯誤，請檢查後端服務");
@@ -1295,7 +1109,7 @@ document.addEventListener("DOMContentLoaded", async function () {
             data.forEach(record => {
                 const listItem = document.createElement("li");
                 const startTime = new Date(record.start_time).toLocaleString("zh-TW", { hour12: false });
-                const action = `租用車位 ${record.spot.spot_id} (Rent ID: ${record.rent_id})`;
+                const action = `租用車位 ${record.spot?.spot_id || record.parking_spot_id} (Rent ID: ${record.rent_id})`;
                 const endTime = record.actual_end_time
                     ? new Date(record.actual_end_time).toLocaleString("zh-TW", { hour12: false })
                     : "尚未結束";
