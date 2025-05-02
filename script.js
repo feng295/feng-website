@@ -68,7 +68,7 @@ document.addEventListener("DOMContentLoaded", async function () {
         }
     }
 
-    // 移除 token
+    // 移除 token 和角色
     function removeToken() {
         try {
             localStorage.removeItem("token");
@@ -102,6 +102,7 @@ document.addEventListener("DOMContentLoaded", async function () {
     function getRole() {
         try {
             const role = localStorage.getItem("role") || "";
+            console.log("Retrieved role from localStorage:", role); // 調試信息
             return role.toLowerCase().trim(); // 標準化為小寫並移除空白
         } catch (error) {
             console.error("Failed to get role from localStorage:", error);
@@ -112,15 +113,23 @@ document.addEventListener("DOMContentLoaded", async function () {
     // 存儲角色到 localStorage，包含映射邏輯
     function setRole(role) {
         try {
+            if (!role) {
+                throw new Error("Role is empty or undefined, cannot set role.");
+            }
             const roleMapping = {
                 "administrator": "admin",
                 "sharedowner": "shared_owner",
                 // 可根據後端實際返回值添加更多映射
             };
             const normalizedRole = roleMapping[role.toLowerCase().trim()] || role.toLowerCase().trim();
+            if (!["shared_owner", "renter", "admin"].includes(normalizedRole)) {
+                throw new Error(`Invalid role received: "${normalizedRole}". Expected one of: shared_owner, renter, admin`);
+            }
             localStorage.setItem("role", normalizedRole);
+            console.log("Role set in localStorage:", normalizedRole); // 調試信息
         } catch (error) {
             console.error("Failed to set role in localStorage:", error);
+            throw error; // 拋出錯誤以便上層處理
         }
     }
 
@@ -454,7 +463,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                     throw new Error("後端返回非 JSON 響應，請檢查伺服器配置");
                 }
                 const result = await response.json();
-                console.log("Login response data:", result);
+                console.log("Login response data:", result); // 調試信息
                 if (response.ok) {
                     if (!result.data.token) {
                         showError("後端未返回 token，請檢查後端服務！");
@@ -462,7 +471,18 @@ document.addEventListener("DOMContentLoaded", async function () {
                     }
                     setToken(result.data.token);
                     const role = result.data.role ? result.data.role.toLowerCase().trim() : "";
-                    setRole(role);
+                    if (!role) {
+                        showError("後端未返回角色資訊，請聯繫管理員！");
+                        console.error("Role not provided by backend:", result.data);
+                        return;
+                    }
+                    try {
+                        setRole(role); // 嘗試設置角色
+                    } catch (error) {
+                        showError("無效的角色資訊，請聯繫管理員！");
+                        console.error("Role setting failed:", error.message);
+                        return;
+                    }
                     console.log("Login successful, role stored:", getRole()); // 確認儲存後的角色
                     alert("登入成功！");
                     showMainPage();
