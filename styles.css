@@ -6,7 +6,8 @@ body {
 }
 
 /* 重置瀏覽器預設樣式 */
-form, input {
+form,
+input {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
@@ -84,7 +85,9 @@ button:hover {
 #reserveSearchButton,
 #incomeSearchButton,
 #viewSearchButton,
-#specificSpotButton {
+#specificSpotButton,
+#adminSpecificSpotButton,
+#adminIncomeSearchButton {
     width: auto;
     padding: 8px 16px;
     background: #007bff;
@@ -98,7 +101,9 @@ button:hover {
 #reserveSearchButton:hover,
 #incomeSearchButton:hover,
 #viewSearchButton:hover,
-#specificSpotButton:hover {
+#specificSpotButton:hover,
+#adminSpecificSpotButton:hover,
+#adminIncomeSearchButton:hover {
     background: #0056b3;
     transform: scale(1.05);
 }
@@ -107,7 +112,9 @@ button:hover {
 #reserveSearchButton:active,
 #incomeSearchButton:active,
 #viewSearchButton:active,
-#specificSpotButton:active {
+#specificSpotButton:active,
+#adminSpecificSpotButton:active,
+#adminIncomeSearchButton:active {
     transform: scale(0.95);
 }
 
@@ -274,31 +281,27 @@ a:hover {
 }
 
 .search-container label {
-    margin-right: 5px; /* 修改：縮減 label 與輸入欄位間距，避免過於分散 */
+    margin-right: 5px;
     font-size: 14px;
     color: #333;
 }
 
-/* 修改：統一所有 search-container 內的輸入欄位樣式 */
+/* 統一所有 search-container 內的輸入欄位樣式 */
 .search-container select,
 .search-container input[type="date"],
-.search-container input[type="time"] { /* 新增：為時間輸入欄位添加樣式 */
+.search-container input[type="time"],
+.search-container input[type="text"] {
     padding: 8px;
     border: 1px solid #ccc;
     border-radius: 3px;
     font-size: 14px;
     width: auto;
-    min-width: 120px; /* 修改：縮減最小寬度，適應更多欄位 */
+    min-width: 120px;
     box-sizing: border-box;
 }
 
-.search-container input[type="text"] { /* 修改：專門為文本輸入欄位設置寬度 */
-    padding: 8px;
-    border: 1px solid #ccc;
-    border-radius: 3px;
-    font-size: 14px;
-    width: 180px; /* 修改：稍微縮減寬度，避免過長 */
-    box-sizing: border-box;
+.search-container input[type="text"] {
+    width: 180px;
 }
 
 .search-container button {
@@ -366,20 +369,20 @@ a:hover {
         align-items: flex-start;
     }
 
-    /* 修改：在小螢幕下統一調整所有輸入欄位 */
+    /* 調整所有輸入欄位在小螢幕下的樣式 */
     .search-container input[type="date"],
-    .search-container input[type="time"], /* 新增：時間欄位的響應式樣式 */
+    .search-container input[type="time"],
     .search-container input[type="text"],
     .search-container select,
     .search-container button {
         width: 100%;
         margin-left: 0;
         margin-top: 10px;
-        min-width: unset; /* 移除最小寬度限制，適應小螢幕 */
+        min-width: unset;
     }
 
     .search-container label {
-        margin-right: 0; /* 在小螢幕下移除右邊距 */
+        margin-right: 0;
     }
 }
 
@@ -395,7 +398,7 @@ a:hover {
 
 /* 表格樣式 */
 .parking-spaces-table,
-.income-table {
+.income-result {
     margin-top: 20px;
     max-height: 400px;
     overflow-y: auto;
@@ -403,7 +406,9 @@ a:hover {
 
 #viewParkingTable,
 #reserveParkingTable,
-#incomeTable {
+#incomeTable,
+#adminViewParkingTable,
+#adminIncomeTable {
     width: 100%;
     border-collapse: collapse;
     background-color: #fff;
@@ -414,7 +419,11 @@ a:hover {
 #reserveParkingTable th,
 #reserveParkingTable td,
 #incomeTable th,
-#incomeTable td {
+#incomeTable td,
+#adminViewParkingTable th,
+#adminViewParkingTable td,
+#adminIncomeTable th,
+#adminIncomeTable td {
     padding: 12px;
     border: 1px solid black;
     text-align: left;
@@ -423,7 +432,9 @@ a:hover {
 
 #viewParkingTable th,
 #reserveParkingTable th,
-#incomeTable th {
+#incomeTable th,
+#adminViewParkingTable th,
+#adminIncomeTable th {
     background-color: #f4f4f4;
     position: sticky;
     top: 0;
@@ -443,7 +454,8 @@ a:hover {
 }
 
 #viewParkingTable button,
-#reserveParkingTable button {
+#reserveParkingTable button,
+#adminViewParkingTable button {
     padding: 6px 12px;
     background-color: #28a745;
     color: white;
@@ -455,7 +467,8 @@ a:hover {
 }
 
 #viewParkingTable button:hover:not(:disabled),
-#reserveParkingTable button:hover:not(:disabled) {
+#reserveParkingTable button:hover:not(:disabled),
+#adminViewParkingTable button:hover:not(:disabled) {
     background-color: #218838;
 }
 
@@ -543,19 +556,24 @@ a:hover {
     #reserveParkingTable th,
     #reserveParkingTable td,
     #incomeTable th,
-    #incomeTable td {
+    #incomeTable td,
+    #adminViewParkingTable th,
+    #adminViewParkingTable td,
+    #adminIncomeTable th,
+    #adminIncomeTable td {
         padding: 8px;
         font-size: 12px;
     }
 
     #viewParkingTable button,
-    #reserveParkingTable button {
+    #reserveParkingTable button,
+    #adminViewParkingTable button {
         padding: 5px 10px;
         font-size: 12px;
     }
 
     .parking-spaces-table,
-    .income-table {
+    .income-result {
         overflow-x: auto;
     }
 
@@ -563,4 +581,21 @@ a:hover {
     #editSpotForm select {
         width: 100%;
     }
+}
+
+/* 為 adminPanel 添加特定樣式 */
+.admin-view-parking,
+.admin-income-inquiry {
+    margin-bottom: 30px;
+}
+
+.admin-view-parking h3,
+.admin-income-inquiry h3 {
+    margin: 0 0 15px 0;
+    font-size: 18px;
+}
+
+.income-result h4 {
+    margin: 0 0 10px 0;
+    font-size: 16px;
 }
