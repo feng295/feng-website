@@ -442,15 +442,15 @@ document.addEventListener("DOMContentLoaded", async function () {
         event.preventDefault();
         const email = emailInput.value.trim();
         const password = passwordInput.value.trim();
-
+    
         // 清除即時驗證訊息
         errorMessage.textContent = "";
-
+    
         if (!email || !password) {
             showError("電子郵件和密碼不能為空！");
             return;
         }
-
+    
         if (isLogin) {
             try {
                 const response = await fetch(`${API_URL}/members/login`, {
@@ -470,20 +470,28 @@ document.addEventListener("DOMContentLoaded", async function () {
                         return;
                     }
                     setToken(result.data.token);
-                    const role = result.data.role ? result.data.role.toLowerCase().trim() : "";
+                    let role = "";
+                    // 嘗試從 result.data 中提取 role，支援多種可能結構
+                    if (typeof result.data.role === "string") {
+                        role = result.data.role.toLowerCase().trim();
+                    } else if (result.data.user && typeof result.data.user.role === "string") {
+                        role = result.data.user.role.toLowerCase().trim();
+                    } else if (result.data.roles && Array.isArray(result.data.roles) && result.data.roles.length > 0) {
+                        role = result.data.roles[0].toLowerCase().trim(); // 假設 roles 是陣列，取第一個
+                    }
                     if (!role) {
-                        showError("後端未返回角色資訊，請聯繫管理員！");
-                        console.error("Role not provided by backend:", result.data);
+                        showError("後端未返回有效的角色資訊，請聯繫管理員或檢查後端 API！");
+                        console.error("Role not provided by backend or invalid format:", result.data);
                         return;
                     }
                     try {
-                        setRole(role); // 嘗試設置角色
+                        setRole(role);
                     } catch (error) {
                         showError("無效的角色資訊，請聯繫管理員！");
                         console.error("Role setting failed:", error.message);
                         return;
                     }
-                    console.log("Login successful, role stored:", getRole()); // 確認儲存後的角色
+                    console.log("Login successful, role stored:", getRole());
                     alert("登入成功！");
                     showMainPage();
                 } else {
