@@ -445,15 +445,15 @@ document.addEventListener("DOMContentLoaded", async function () {
         event.preventDefault();
         const email = emailInput.value.trim();
         const password = passwordInput.value.trim();
-    
+
         // 清除即時驗證訊息
         errorMessage.textContent = "";
-    
+
         if (!email || !password) {
             showError("電子郵件和密碼不能為空！");
             return;
         }
-    
+
         if (isLogin) {
             try {
                 const response = await fetch(`${API_URL}/members/login`, {
@@ -1086,10 +1086,21 @@ document.addEventListener("DOMContentLoaded", async function () {
                     throw new Error(`HTTP error! Status: ${response.status}, Message: ${errorData.error || '未知錯誤'}`);
                 }
                 const data = await response.json();
-                const totalIncome = data.total_income || 0;
+                console.log("Full income response:", JSON.stringify(data, null, 2)); // 添加詳細日誌
+
+                // 適應可能的嵌套結構
+                const incomeData = data.data || data;
+                const totalIncome = incomeData.total_income || 0;
+                const records = incomeData.records || [];
+
                 totalIncomeSpan.textContent = totalIncome.toLocaleString();
 
-                const records = data.records || [];
+                if (!Array.isArray(records)) {
+                    console.error("Records is not an array:", records);
+                    incomeTableBody.innerHTML = '<tr><td colspan="5">收入記錄格式錯誤，請檢查後端服務</td></tr>';
+                    return;
+                }
+
                 if (records.length === 0) {
                     incomeTableBody.innerHTML = '<tr><td colspan="5">無收入記錄</td></tr>';
                     return;
@@ -1099,12 +1110,12 @@ document.addEventListener("DOMContentLoaded", async function () {
                 records.forEach(record => {
                     const row = document.createElement("tr");
                     row.innerHTML = `
-                        <td>${record.rent_id}</td>
-                        <td>${record.parking_spot_id}</td>
-                        <td>${new Date(record.start_time).toLocaleString("zh-TW", { hour12: false })}</td>
-                        <td>${record.actual_end_time ? new Date(record.actual_end_time).toLocaleString("zh-TW", { hour12: false }) : '尚未結束'}</td>
-                        <td>${record.total_cost}</td>
-                    `;
+                    <td>${record.rent_id || 'N/A'}</td>
+                    <td>${record.parking_spot_id || 'N/A'}</td>
+                    <td>${record.start_time ? new Date(record.start_time).toLocaleString("zh-TW", { hour12: false }) : 'N/A'}</td>
+                    <td>${record.actual_end_time ? new Date(record.actual_end_time).toLocaleString("zh-TW", { hour12: false }) : '尚未結束'}</td>
+                    <td>${record.total_cost || 0}</td>
+                `;
                     fragment.appendChild(row);
                 });
                 incomeTableBody.innerHTML = '';
