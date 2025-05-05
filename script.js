@@ -1072,11 +1072,14 @@ document.addEventListener("DOMContentLoaded", async function () {
 
                 const parkingSpotId = getParkingSpotId();
                 if (!parkingSpotId) throw new Error("請先在「查看車位」或「預約車位」中選擇一個停車位！");
+                console.log("Fetching income for parkingSpotId:", parkingSpotId, "from", startDate, "to", endDate);
 
                 const response = await fetch(`${API_URL}/parking/${parkingSpotId}/income?start_date=${encodeURIComponent(startDate)}&end_date=${encodeURIComponent(endDate)}`, {
                     method: 'GET',
                     headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` }
                 });
+                console.log(`Income fetch response status: ${response.status}`);
+    
                 if (!response.headers.get('content-type')?.includes('application/json')) {
                     throw new Error("後端返回非 JSON 響應，請檢查伺服器配置");
                 }
@@ -1085,41 +1088,58 @@ document.addEventListener("DOMContentLoaded", async function () {
                     const errorData = await response.json();
                     throw new Error(`HTTP error! Status: ${response.status}, Message: ${errorData.error || '未知錯誤'}`);
                 }
+    
                 const data = await response.json();
-                console.log("Full income response:", JSON.stringify(data, null, 2)); // 添加詳細日誌
-
+                console.log("Full income response:", JSON.stringify(data, null, 2));
+    
                 // 適應可能的嵌套結構
                 const incomeData = data.data || data;
+    
+                // 提取 total_income，預設為 0
                 const totalIncome = incomeData.total_income || 0;
-                const records = incomeData.records || [];
-
                 totalIncomeSpan.textContent = totalIncome.toLocaleString();
-
+                console.log("Total income extracted:", totalIncome);
+    
+                // 嘗試提取收入記錄，適應可能的字段名
+                let records = incomeData.records || 
+                             incomeData.income_records || 
+                             incomeData.rentals || 
+                             incomeData.transactions || 
+                             incomeData.history || 
+                             [];
+                console.log("Records extracted:", records);
+    
+                // 檢查 records 是否為陣列
                 if (!Array.isArray(records)) {
                     console.error("Records is not an array:", records);
                     incomeTableBody.innerHTML = '<tr><td colspan="5">收入記錄格式錯誤，請檢查後端服務</td></tr>';
                     return;
                 }
-
+    
+                // 檢查 records 是否為空
                 if (records.length === 0) {
+                    console.log("Records array is empty. Displaying '無收入記錄'.");
                     incomeTableBody.innerHTML = '<tr><td colspan="5">無收入記錄</td></tr>';
                     return;
                 }
-
+    
+                // 渲染 records 數據
                 const fragment = document.createDocumentFragment();
-                records.forEach(record => {
+                records.forEach((record, index) => {
+                    console.log(`Processing record ${index}:`, record);
                     const row = document.createElement("tr");
                     row.innerHTML = `
-                    <td>${record.rent_id || 'N/A'}</td>
-                    <td>${record.parking_spot_id || 'N/A'}</td>
-                    <td>${record.start_time ? new Date(record.start_time).toLocaleString("zh-TW", { hour12: false }) : 'N/A'}</td>
-                    <td>${record.actual_end_time ? new Date(record.actual_end_time).toLocaleString("zh-TW", { hour12: false }) : '尚未結束'}</td>
-                    <td>${record.total_cost || 0}</td>
-                `;
+                        <td>${record.rent_id || record.id || 'N/A'}</td>
+                        <td>${record.parking_spot_id || record.spot_id || 'N/A'}</td>
+                        <td>${record.start_time ? new Date(record.start_time).toLocaleString("zh-TW", { hour12: false }) : 'N/A'}</td>
+                        <td>${record.actual_end_time || record.end_time ? new Date(record.actual_end_time || record.end_time).toLocaleString("zh-TW", { hour12: false }) : '尚未結束'}</td>
+                        <td>${record.total_cost || record.amount || 0}</td>
+                    `;
                     fragment.appendChild(row);
                 });
                 incomeTableBody.innerHTML = '';
                 incomeTableBody.appendChild(fragment);
+                console.log("Records rendered successfully.");
             } catch (error) {
                 console.error("Failed to fetch income data:", error);
                 alert(`無法載入收入資料，請檢查後端服務 (錯誤: ${error.message})`);
@@ -1131,7 +1151,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                 }
             }
         }
-
+    
         incomeSearchButton.addEventListener("click", handleIncomeSearch);
     }
 
