@@ -1034,22 +1034,22 @@ document.addEventListener("DOMContentLoaded", async function () {
             alert("此功能僅限車位共享者和管理員使用！");
             return;
         }
-
+    
         const startDateInput = document.getElementById("startDate");
         const endDateInput = document.getElementById("endDate");
         const incomeSearchButton = document.getElementById("incomeSearchButton");
         const totalIncomeSpan = document.getElementById("totalIncome");
         const incomeTableBody = document.getElementById("incomeTableBody");
-
+    
         if (!startDateInput || !endDateInput || !incomeSearchButton || !totalIncomeSpan || !incomeTableBody) {
             console.warn("Required elements not found for incomeInquiry");
             return;
         }
-
+    
         async function handleIncomeSearch() {
             const startDate = startDateInput.value;
             const endDate = endDateInput.value;
-
+    
             if (!startDate || !endDate) {
                 alert("請選擇開始和結束日期！");
                 return;
@@ -1062,18 +1062,22 @@ document.addEventListener("DOMContentLoaded", async function () {
                 alert("日期格式不正確，請使用 YYYY-MM-DD 格式！");
                 return;
             }
-
+    
             totalIncomeSpan.textContent = "計算中...";
             incomeTableBody.innerHTML = '<tr><td colspan="5">載入中...</td></tr>';
-
+    
             try {
                 const token = getToken();
                 if (!token) throw new Error("認證令牌缺失，請重新登入！");
-
+    
                 const parkingSpotId = getParkingSpotId();
                 if (!parkingSpotId) throw new Error("請先在「查看車位」或「預約車位」中選擇一個停車位！");
-                console.log("Fetching income for parkingSpotId:", parkingSpotId, "from", startDate, "to", endDate);
-
+    
+                console.log("API_URL:", API_URL);
+                console.log("Token:", token);
+                console.log("ParkingSpotId:", parkingSpotId);
+                console.log("Fetching income from", startDate, "to", endDate);
+    
                 const response = await fetch(`${API_URL}/parking/${parkingSpotId}/income?start_date=${encodeURIComponent(startDate)}&end_date=${encodeURIComponent(endDate)}`, {
                     method: 'GET',
                     headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` }
@@ -1093,21 +1097,22 @@ document.addEventListener("DOMContentLoaded", async function () {
                 console.log("Full income response:", JSON.stringify(data, null, 2));
     
                 // 適應可能的嵌套結構
-                const incomeData = data.data || data;
+                const incomeData = data.data || data.results || data;
     
                 // 提取 total_income，預設為 0
-                const totalIncome = incomeData.total_income || 0;
+                const totalIncome = incomeData.total_income || incomeData.total || incomeData.totalIncome || 0;
                 totalIncomeSpan.textContent = totalIncome.toLocaleString();
                 console.log("Total income extracted:", totalIncome);
     
                 // 嘗試提取收入記錄，適應可能的字段名
                 let records = incomeData.records || 
                              incomeData.income_records || 
-                             incomeData.rentals || 
                              incomeData.transactions || 
+                             incomeData.rentals || 
                              incomeData.history || 
+                             incomeData.income || 
                              [];
-                console.log("Records extracted:", records);
+                console.log("Records extracted:", JSON.stringify(records, null, 2));
     
                 // 檢查 records 是否為陣列
                 if (!Array.isArray(records)) {
@@ -1119,27 +1124,28 @@ document.addEventListener("DOMContentLoaded", async function () {
                 // 檢查 records 是否為空
                 if (records.length === 0) {
                     console.log("Records array is empty. Displaying '無收入記錄'.");
+                    console.log("Please verify: 1) Database has matching records, 2) parkingSpotId is correct, 3) Date range includes records.");
                     incomeTableBody.innerHTML = '<tr><td colspan="5">無收入記錄</td></tr>';
                     return;
                 }
     
                 // 渲染 records 數據
+                incomeTableBody.innerHTML = ''; // 清空表格
                 const fragment = document.createDocumentFragment();
                 records.forEach((record, index) => {
                     console.log(`Processing record ${index}:`, record);
                     const row = document.createElement("tr");
                     row.innerHTML = `
-                        <td>${record.rent_id || record.id || 'N/A'}</td>
-                        <td>${record.parking_spot_id || record.spot_id || 'N/A'}</td>
-                        <td>${record.start_time ? new Date(record.start_time).toLocaleString("zh-TW", { hour12: false }) : 'N/A'}</td>
-                        <td>${record.actual_end_time || record.end_time ? new Date(record.actual_end_time || record.end_time).toLocaleString("zh-TW", { hour12: false }) : '尚未結束'}</td>
-                        <td>${record.total_cost || record.amount || 0}</td>
+                        <td>${record.rent_id || record.id || record.rentalId || 'N/A'}</td>
+                        <td>${record.parking_spot_id || record.spot_id || record.parkingSpotId || 'N/A'}</td>
+                        <td>${record.start_time || record.startTime ? new Date(record.start_time || record.startTime).toLocaleString("zh-TW", { hour12: false }) : 'N/A'}</td>
+                        <td>${record.actual_end_time || record.end_time || record.endTime ? new Date(record.actual_end_time || record.end_time || record.endTime).toLocaleString("zh-TW", { hour12: false }) : '尚未結束'}</td>
+                        <td>${record.total_cost || record.amount || record.cost || record.totalCost || 0}</td>
                     `;
                     fragment.appendChild(row);
                 });
-                incomeTableBody.innerHTML = '';
                 incomeTableBody.appendChild(fragment);
-                console.log("Records rendered successfully.");
+                console.log("Records rendered successfully. Table body children:", incomeTableBody.children.length);
             } catch (error) {
                 console.error("Failed to fetch income data:", error);
                 alert(`無法載入收入資料，請檢查後端服務 (錯誤: ${error.message})`);
