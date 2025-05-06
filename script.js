@@ -1109,41 +1109,46 @@ document.addEventListener("DOMContentLoaded", async function () {
                 const data = await response.json();
                 console.log("Full income response:", JSON.stringify(data, null, 2));
 
-                let incomeData = data.data || data.results || data;
+                let incomeData = data.data || data.results || data; // 嘗試從多層級提取
                 if (typeof incomeData === 'string') {
                     console.warn("Income data is a string, attempting to parse...");
                     incomeData = JSON.parse(incomeData);
                 }
 
+                // 詳細記錄 incomeData 結構
+                console.log("Detailed incomeData structure:", {
+                    isObject: typeof incomeData === 'object' && incomeData !== null,
+                    isArray: Array.isArray(incomeData),
+                    keys: Object.keys(incomeData),
+                    fullData: incomeData
+                });
+
                 const totalIncome = incomeData.total_income || incomeData.total || incomeData.totalIncome || 0;
                 totalIncomeSpan.textContent = totalIncome.toLocaleString();
                 console.log("Total income extracted:", totalIncome);
 
-                let records = [];
-                if (incomeData.records) records = incomeData.records;
-                else if (incomeData.income_records) records = incomeData.income_records;
-                else if (incomeData.transactions) records = incomeData.transactions;
-                else if (incomeData.rentals) records = incomeData.rentals;
-                else if (incomeData.history) records = incomeData.history;
-                else if (incomeData.income) records = incomeData.income;
-                else if (Array.isArray(incomeData)) records = incomeData;
+                let rents = [];
+                if (incomeData.rents) rents = incomeData.rents; // 直接檢查 rents 字段
+                else if (incomeData.data && Array.isArray(incomeData.data)) rents = incomeData.data; // 檢查嵌套 data
+                else if (Array.isArray(incomeData)) rents = incomeData;
                 else {
                     console.warn("No known record fields found in incomeData:", incomeData);
+                    alert("後端返回的數據格式不正確，無法提取收入記錄（缺少 'rents' 字段）。請檢查後端 API 或聯繫管理員。");
+                    incomeTableBody.innerHTML = '<tr><td colspan="5">數據格式錯誤，無法顯示收入記錄</td></tr>';
+                    return;
                 }
-                console.log("Records extracted:", JSON.stringify(records, null, 2));
+                console.log("Rents extracted:", JSON.stringify(rents, null, 2));
 
-                if (!Array.isArray(records)) {
-                    console.error("Records is not an array:", records);
+                if (!Array.isArray(rents)) {
+                    console.error("Rents is not an array:", rents);
                     incomeTableBody.innerHTML = '<tr><td colspan="5">收入記錄格式錯誤，請檢查後端服務</td></tr>';
                     return;
                 }
 
-                if (records.length === 0) {
-                    console.log("Records array is empty. Displaying '無收入記錄'.");
+                if (rents.length === 0) {
+                    console.log("Rents array is empty. Displaying '無收入記錄'.");
                     console.log("Verification steps: 1) Check database for matching records, 2) Verify parkingSpotId:", parkingSpotId, "3) Ensure date range includes records:", { startDate, endDate });
                     incomeTableBody.innerHTML = '<tr><td colspan="5">無收入記錄</td></tr>';
-
-                    // 提示用戶可能的解決方法
                     alert("目前無收入記錄，可能原因：\n1. 所選日期範圍內無記錄。\n2. 車位 ID 無效或無相關記錄。\n3. 後端服務異常。\n請嘗試：\n- 檢查日期範圍\n- 確保已選擇正確車位\n- 確認後端服務正常");
                     return;
                 }
@@ -1151,24 +1156,24 @@ document.addEventListener("DOMContentLoaded", async function () {
                 // 渲染表格數據
                 incomeTableBody.innerHTML = '';
                 const fragment = document.createDocumentFragment();
-                records.forEach((record, index) => {
-                    console.log(`Processing record ${index}:`, record);
+                rents.forEach((rent, index) => {
+                    console.log(`Processing rent ${index}:`, rent);
                     const row = document.createElement("tr");
-                    const startTime = record.start_time || record.startTime ? new Date(record.start_time || record.startTime).toLocaleString("zh-TW", { hour12: false }) : 'N/A';
-                    const endTime = record.actual_end_time || record.end_time || record.endTime ? new Date(record.actual_end_time || record.end_time || record.endTime).toLocaleString("zh-TW", { hour12: false }) : '尚未結束';
-                    const cost = record.total_cost || record.amount || record.cost || record.totalCost || 0;
+                    const startTime = rent.start_time || rent.startTime ? new Date(rent.start_time || rent.startTime).toLocaleString("zh-TW", { hour12: false }) : 'N/A';
+                    const endTime = rent.actual_end_time || rent.end_time || rent.endTime ? new Date(rent.actual_end_time || rent.end_time || rent.endTime).toLocaleString("zh-TW", { hour12: false }) : '尚未結束';
+                    const cost = rent.total_cost || rent.amount || rent.cost || rent.totalCost || 0;
 
                     row.innerHTML = `
-                        <td>${record.rent_id || record.id || record.rentalId || 'N/A'}</td>
-                        <td>${record.parking_spot_id || record.spot_id || record.parkingSpotId || 'N/A'}</td>
-                        <td>${startTime}</td>
-                        <td>${endTime}</td>
-                        <td>${cost}</td>
-                    `;
+                    <td>${rent.rent_id || rent.id || rent.rentalId || 'N/A'}</td>
+                    <td>${rent.parking_spot_id || rent.spot_id || rent.parkingSpotId || 'N/A'}</td>
+                    <td>${startTime}</td>
+                    <td>${endTime}</td>
+                    <td>${cost}</td>
+                `;
                     fragment.appendChild(row);
                 });
                 incomeTableBody.appendChild(fragment);
-                console.log("Records rendered successfully. Table body children:", incomeTableBody.children.length);
+                console.log("Rents rendered successfully. Table body children:", incomeTableBody.children.length);
             } catch (error) {
                 console.error("Failed to fetch income data:", error);
                 alert("無法載入收入資料，請稍後再試或聯繫管理員。");
