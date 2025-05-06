@@ -1071,11 +1071,12 @@ document.addEventListener("DOMContentLoaded", async function () {
                 if (!token) throw new Error("認證令牌缺失，請重新登入！");
     
                 const parkingSpotId = getParkingSpotId();
-                if (!parkingSpotId) throw new Error("請先在「查看車位」或「預約車位」中選擇一個停車位！");
-    
+                if (!parkingSpotId) {
+                    throw new Error("請先在「查看車位」或「預約車位」中選擇一個停車位！請檢查 localStorage.getItem('selectedParkingSpotId')");
+                }
                 console.log("API_URL:", API_URL);
                 console.log("Token:", token);
-                console.log("ParkingSpotId:", parkingSpotId);
+                console.log("ParkingSpotId from localStorage:", parkingSpotId);
                 console.log("Fetching income from", startDate, "to", endDate);
     
                 const response = await fetch(`${API_URL}/parking/${parkingSpotId}/income?start_date=${encodeURIComponent(startDate)}&end_date=${encodeURIComponent(endDate)}`, {
@@ -1084,37 +1085,43 @@ document.addEventListener("DOMContentLoaded", async function () {
                 });
                 console.log(`Income fetch response status: ${response.status}`);
     
-                if (!response.headers.get('content-type')?.includes('application/json')) {
-                    throw new Error("後端返回非 JSON 響應，請檢查伺服器配置");
-                }
                 if (!response.ok) {
                     if (response.status === 401) throw new Error("認證失敗，請重新登入！");
-                    const errorData = await response.json();
-                    throw new Error(`HTTP error! Status: ${response.status}, Message: ${errorData.error || '未知錯誤'}`);
+                    const errorText = await response.text(); // 獲取原始回應文本
+                    console.error("Raw response text:", errorText);
+                    const errorData = await response.json().catch(() => ({}));
+                    throw new Error(`HTTP error! Status: ${response.status}, Message: ${errorData.error || errorText || '未知錯誤'}`);
+                }
+    
+                const contentType = response.headers.get('content-type');
+                if (!contentType || !contentType.includes('application/json')) {
+                    throw new Error("後端返回非 JSON 響應，請檢查伺服器配置");
                 }
     
                 const data = await response.json();
                 console.log("Full income response:", JSON.stringify(data, null, 2));
     
-                // 適應可能的嵌套結構
-                const incomeData = data.data || data.results || data;
+                // 深入解析後端回應，適應多種嵌套結構
+                let incomeData = data.data || data.results || data;
+                if (typeof incomeData === 'string') incomeData = JSON.parse(incomeData); // 嘗試解析可能的字符串數據
     
                 // 提取 total_income，預設為 0
                 const totalIncome = incomeData.total_income || incomeData.total || incomeData.totalIncome || 0;
                 totalIncomeSpan.textContent = totalIncome.toLocaleString();
                 console.log("Total income extracted:", totalIncome);
     
-                // 嘗試提取收入記錄，適應可能的字段名
-                let records = incomeData.records || 
-                             incomeData.income_records || 
-                             incomeData.transactions || 
-                             incomeData.rentals || 
-                             incomeData.history || 
-                             incomeData.income || 
-                             [];
+                // 嘗試提取收入記錄，適應多種可能的字段名
+                let records = [];
+                if (incomeData.records) records = incomeData.records;
+                else if (incomeData.income_records) records = incomeData.income_records;
+                else if (incomeData.transactions) records = incomeData.transactions;
+                else if (incomeData.rentals) records = incomeData.rentals;
+                else if (incomeData.history) records = incomeData.history;
+                else if (incomeData.income) records = incomeData.income;
+                else if (Array.isArray(incomeData)) records = incomeData; // 如果直接是陣列
                 console.log("Records extracted:", JSON.stringify(records, null, 2));
     
-                // 檢查 records 是否為陣列
+                // 驗證 records 格式
                 if (!Array.isArray(records)) {
                     console.error("Records is not an array:", records);
                     incomeTableBody.innerHTML = '<tr><td colspan="5">收入記錄格式錯誤，請檢查後端服務</td></tr>';
@@ -1124,7 +1131,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                 // 檢查 records 是否為空
                 if (records.length === 0) {
                     console.log("Records array is empty. Displaying '無收入記錄'.");
-                    console.log("Please verify: 1) Database has matching records, 2) parkingSpotId is correct, 3) Date range includes records.");
+                    console.log("Verification steps: 1) Check database for matching records, 2) Verify parkingSpotId:", parkingSpotId, "3) Ensure date range includes records:", { startDate, endDate });
                     incomeTableBody.innerHTML = '<tr><td colspan="5">無收入記錄</td></tr>';
                     return;
                 }
