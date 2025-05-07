@@ -33,7 +33,17 @@ document.addEventListener("DOMContentLoaded", async function () {
     }
 
     let isLogin = true;
-    const API_URL = '/api/v1'; // 後端 URL
+    const baseURL = 'http://192.168.50.222:2236/feng-website'; // 基地址
+    const getAPIURL = () => {
+        const role = getRole();
+        const validRoles = ["shared_owner", "renter", "admin"];
+        if (!role || !validRoles.includes(role)) {
+            console.error(`Invalid role: "${role}". Expected one of: ${validRoles.join(", ")}. Using default API path.`);
+            return `${baseURL}/api/v1`; // 預設路徑
+        }
+        return `${baseURL}/${role}`; // 動態路徑
+    };
+    let API_URL = getAPIURL(); // 初始化 API_URL
 
     // 顯示錯誤訊息
     function showError(message) {
@@ -98,11 +108,11 @@ document.addEventListener("DOMContentLoaded", async function () {
         }
     }
 
-    // 從 localStorage 獲取用戶角色，並標準化為小寫
+    // 從 localStorage 獲取用戶角色
     function getRole() {
         try {
             const role = localStorage.getItem("role") || "";
-            return role.toLowerCase().trim(); // 標準化為小寫並移除空白
+            return role.toLowerCase().trim();
         } catch (error) {
             console.error("Failed to get role from localStorage:", error);
             return "";
@@ -124,6 +134,9 @@ document.addEventListener("DOMContentLoaded", async function () {
             }
             localStorage.setItem("role", normalizedRole);
             console.log("Role set in localStorage:", normalizedRole);
+            // 更新 API_URL 當角色改變時
+            API_URL = getAPIURL();
+            console.log("API_URL updated to:", API_URL);
         } catch (error) {
             console.error("Failed to set role in localStorage:", error);
         }
@@ -146,7 +159,7 @@ document.addEventListener("DOMContentLoaded", async function () {
         contentContainer.style.display = "block";
         logoutButton.style.display = "block";
 
-        // 獲取用戶角色
+        // 獲取用戶角色並更新 API_URL
         const role = getRole();
         console.log("Current role in showMainPage:", role);
 
@@ -485,7 +498,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                         role = result.data.user_role.toLowerCase().trim();
                     } else if (typeof result.role === "string") {
                         role = result.role.toLowerCase().trim();
-                    } else if (result.data.member && typeof result.data.member.role === "string") { // 新增對 member.role 的檢查
+                    } else if (result.data.member && typeof result.data.member.role === "string") {
                         role = result.data.member.role.toLowerCase().trim();
                     } else {
                         showError("後端未返回有效的角色資訊，請聯繫管理員或檢查後端 API！");
@@ -1109,13 +1122,12 @@ document.addEventListener("DOMContentLoaded", async function () {
                 const data = await response.json();
                 console.log("Full income response:", JSON.stringify(data, null, 2));
 
-                let incomeData = data.data || data.results || data; // 嘗試從多層級提取
+                let incomeData = data.data || data.results || data;
                 if (typeof incomeData === 'string') {
                     console.warn("Income data is a string, attempting to parse...");
                     incomeData = JSON.parse(incomeData);
                 }
 
-                // 詳細記錄 incomeData 結構
                 console.log("Detailed incomeData structure:", {
                     isObject: typeof incomeData === 'object' && incomeData !== null,
                     isArray: Array.isArray(incomeData),
@@ -1128,8 +1140,8 @@ document.addEventListener("DOMContentLoaded", async function () {
                 console.log("Total income extracted:", totalIncome);
 
                 let rents = [];
-                if (incomeData.rents) rents = incomeData.rents; // 直接檢查 rents 字段
-                else if (incomeData.data && Array.isArray(incomeData.data)) rents = incomeData.data; // 檢查嵌套 data
+                if (incomeData.rents) rents = incomeData.rents;
+                else if (incomeData.data && Array.isArray(incomeData.data)) rents = incomeData.data;
                 else if (Array.isArray(incomeData)) rents = incomeData;
                 else {
                     console.warn("No known record fields found in incomeData:", incomeData);
@@ -1153,12 +1165,10 @@ document.addEventListener("DOMContentLoaded", async function () {
                     return;
                 }
 
-                // 渲染表格數據
                 incomeTableBody.innerHTML = '';
                 const fragment = document.createDocumentFragment();
                 rents.forEach((rent, index) => {
                     console.log(`Processing rent ${index}:`, rent);
-                    const row = document.createElement("tr");
                     const startTime = rent.start_time || rent.startTime ? new Date(rent.start_time || rent.startTime).toLocaleString("zh-TW", { hour12: false }) : 'N/A';
                     const endTime = rent.actual_end_time || rent.end_time || rent.endTime ? new Date(rent.actual_end_time || rent.end_time || rent.endTime).toLocaleString("zh-TW", { hour12: false }) : '尚未結束';
                     const cost = rent.total_cost || rent.amount || rent.cost || rent.totalCost || 0;
