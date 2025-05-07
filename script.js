@@ -33,7 +33,7 @@ document.addEventListener("DOMContentLoaded", async function () {
     }
 
     let isLogin = true;
-    const baseURL = 'http://192.168.50.222:2236/feng-website'; // 基地址
+    const baseURL = 'http://210.70.254.110:2236/feng-website'; // 基地址
     const getAPIURL = () => {
         const role = getRole();
         const validRoles = ["shared_owner", "renter", "admin"];
