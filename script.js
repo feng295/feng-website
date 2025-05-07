@@ -33,17 +33,7 @@ document.addEventListener("DOMContentLoaded", async function () {
     }
 
     let isLogin = true;
-    const baseURL = 'http://210.70.254.110:2236/feng-website'; // 基地址
-    const getAPIURL = () => {
-        const role = getRole();
-        const validRoles = ["shared_owner", "renter", "admin"];
-        if (!role || !validRoles.includes(role)) {
-            console.error(`Invalid role: "${role}". Expected one of: ${validRoles.join(", ")}. Using default API path.`);
-            return `${baseURL}/api/v1`; // 預設路徑
-        }
-        return `${baseURL}/${role}`; // 動態路徑
-    };
-    let API_URL = getAPIURL(); // 初始化 API_URL
+    const API_URL = '/api/v1'; // 後端 URL
 
     // 顯示錯誤訊息
     function showError(message) {
@@ -83,6 +73,8 @@ document.addEventListener("DOMContentLoaded", async function () {
         try {
             localStorage.removeItem("token");
             localStorage.removeItem("role"); // 清除用戶角色
+            // 重置 URL 路徑
+            history.pushState({}, '', '/');
         } catch (error) {
             console.error("Failed to remove token from localStorage:", error);
         }
@@ -108,11 +100,11 @@ document.addEventListener("DOMContentLoaded", async function () {
         }
     }
 
-    // 從 localStorage 獲取用戶角色
+    // 從 localStorage 獲取用戶角色，並標準化為小寫
     function getRole() {
         try {
             const role = localStorage.getItem("role") || "";
-            return role.toLowerCase().trim();
+            return role.toLowerCase().trim(); // 標準化為小寫並移除空白
         } catch (error) {
             console.error("Failed to get role from localStorage:", error);
             return "";
@@ -134,9 +126,6 @@ document.addEventListener("DOMContentLoaded", async function () {
             }
             localStorage.setItem("role", normalizedRole);
             console.log("Role set in localStorage:", normalizedRole);
-            // 更新 API_URL 當角色改變時
-            API_URL = getAPIURL();
-            console.log("API_URL updated to:", API_URL);
         } catch (error) {
             console.error("Failed to set role in localStorage:", error);
         }
@@ -150,8 +139,10 @@ document.addEventListener("DOMContentLoaded", async function () {
         parkingContainer.style.display = "block";
         const functionList = document.querySelector(".function-list");
         const contentContainer = document.querySelector(".content-container");
-        if (!functionList || !contentContainer) {
-            console.error("Required DOM elements for main page are missing: .function-list or .content-container");
+        const pageTitle = document.getElementById("pageTitle"); // 用於顯示標題
+
+        if (!functionList || !contentContainer || !pageTitle) {
+            console.error("Required DOM elements for main page are missing: .function-list, .content-container, or pageTitle");
             showError("頁面載入失敗，請檢查網頁結構！");
             return;
         }
@@ -159,7 +150,7 @@ document.addEventListener("DOMContentLoaded", async function () {
         contentContainer.style.display = "block";
         logoutButton.style.display = "block";
 
-        // 獲取用戶角色並更新 API_URL
+        // 獲取用戶角色
         const role = getRole();
         console.log("Current role in showMainPage:", role);
 
@@ -175,6 +166,20 @@ document.addEventListener("DOMContentLoaded", async function () {
             removeToken();
             showLoginPage();
             return;
+        }
+
+        // 根據角色修改 URL 路徑
+        const newPath = `/${role}`;
+        history.pushState({ role }, '', newPath);
+        console.log(`URL updated to: ${window.location.pathname}`);
+
+        // 設置標題
+        if (role === "shared_owner") {
+            pageTitle.textContent = "Shared Owner";
+        } else if (role === "renter") {
+            pageTitle.textContent = "Renter";
+        } else if (role === "admin") {
+            pageTitle.textContent = "Admin";
         }
 
         // 動態調整功能清單
@@ -267,6 +272,8 @@ document.addEventListener("DOMContentLoaded", async function () {
                 document.querySelector(".function-list").style.display = "none";
                 document.querySelector(".content-container").style.display = "none";
                 logoutButton.style.display = "none";
+                // 重置 URL 路徑
+                history.pushState({}, '', '/');
             }, 1500);
         } else {
             authContainer.style.display = "block";
@@ -277,6 +284,8 @@ document.addEventListener("DOMContentLoaded", async function () {
             document.querySelector(".function-list").style.display = "none";
             document.querySelector(".content-container").style.display = "none";
             logoutButton.style.display = "none";
+            // 重置 URL 路徑
+            history.pushState({}, '', '/');
         }
     }
 
@@ -316,6 +325,29 @@ document.addEventListener("DOMContentLoaded", async function () {
             showLoginPage();
         }
     })();
+
+    // 處理頁面加載時的 URL 路徑
+    window.addEventListener("popstate", function (event) {
+        const role = getRole();
+        const pathRole = window.location.pathname.replace('/', ''); // 從路徑中提取角色
+        const validRoles = ["shared_owner", "renter", "admin"];
+        const pageTitle = document.getElementById("pageTitle");
+
+        if (pathRole && validRoles.includes(pathRole) && pathRole === role) {
+            if (pageTitle) {
+                if (pathRole === "shared_owner") {
+                    pageTitle.textContent = "Shared Owner";
+                } else if (pathRole === "renter") {
+                    pageTitle.textContent = "Renter";
+                } else if (pathRole === "admin") {
+                    pageTitle.textContent = "Admin";
+                }
+            }
+            showMainPage();
+        } else {
+            showLoginPage();
+        }
+    });
 
     // 當身份改變時，顯示或隱藏租用者專用欄位
     roleInput.addEventListener("change", function () {
@@ -1122,12 +1154,13 @@ document.addEventListener("DOMContentLoaded", async function () {
                 const data = await response.json();
                 console.log("Full income response:", JSON.stringify(data, null, 2));
 
-                let incomeData = data.data || data.results || data;
+                let incomeData = data.data || data.results || data; // 嘗試從多層級提取
                 if (typeof incomeData === 'string') {
                     console.warn("Income data is a string, attempting to parse...");
                     incomeData = JSON.parse(incomeData);
                 }
 
+                // 詳細記錄 incomeData 結構
                 console.log("Detailed incomeData structure:", {
                     isObject: typeof incomeData === 'object' && incomeData !== null,
                     isArray: Array.isArray(incomeData),
@@ -1140,8 +1173,8 @@ document.addEventListener("DOMContentLoaded", async function () {
                 console.log("Total income extracted:", totalIncome);
 
                 let rents = [];
-                if (incomeData.rents) rents = incomeData.rents;
-                else if (incomeData.data && Array.isArray(incomeData.data)) rents = incomeData.data;
+                if (incomeData.rents) rents = incomeData.rents; // 直接檢查 rents 字段
+                else if (incomeData.data && Array.isArray(incomeData.data)) rents = incomeData.data; // 檢查嵌套 data
                 else if (Array.isArray(incomeData)) rents = incomeData;
                 else {
                     console.warn("No known record fields found in incomeData:", incomeData);
@@ -1165,10 +1198,12 @@ document.addEventListener("DOMContentLoaded", async function () {
                     return;
                 }
 
+                // 渲染表格數據
                 incomeTableBody.innerHTML = '';
                 const fragment = document.createDocumentFragment();
                 rents.forEach((rent, index) => {
                     console.log(`Processing rent ${index}:`, rent);
+                    const row = document.createElement("tr");
                     const startTime = rent.start_time || rent.startTime ? new Date(rent.start_time || rent.startTime).toLocaleString("zh-TW", { hour12: false }) : 'N/A';
                     const endTime = rent.actual_end_time || rent.end_time || rent.endTime ? new Date(rent.actual_end_time || rent.end_time || rent.endTime).toLocaleString("zh-TW", { hour12: false }) : '尚未結束';
                     const cost = rent.total_cost || rent.amount || rent.cost || rent.totalCost || 0;
@@ -1264,5 +1299,16 @@ document.addEventListener("DOMContentLoaded", async function () {
                 showLoginPage(true);
             }
         }
+    }
+
+    // 設置管理員畫面（如果存在）
+    function setupAdminPanel() {
+        const role = getRole();
+        if (role !== "admin") {
+            alert("此功能僅限管理員使用！");
+            return;
+        }
+        // 根據您的需求實現管理員畫面邏輯
+        console.log("Setting up admin panel");
     }
 });
