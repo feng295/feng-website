@@ -104,7 +104,7 @@ document.addEventListener("DOMContentLoaded", async function () {
     function getRole() {
         try {
             const role = localStorage.getItem("role") || "";
-            return role.toLowerCase().trim(); 
+            return role.toLowerCase().trim();
         } catch (error) {
             console.error("Failed to get role from localStorage:", error);
             return "";
@@ -143,7 +143,6 @@ document.addEventListener("DOMContentLoaded", async function () {
 
         if (!functionList || !contentContainer || !pageTitle) {
             console.error("Required DOM elements for main page are missing: .function-list, .content-container, or pageTitle");
-            showError("頁面載入失敗，請檢查網頁結構！");
             return;
         }
         functionList.style.display = "block";
@@ -162,7 +161,6 @@ document.addEventListener("DOMContentLoaded", async function () {
                 token: localStorage.getItem("token"),
                 role: localStorage.getItem("role")
             });
-            showError("無效的用戶角色，請重新登入！可能是後端未正確返回角色資訊或本地數據異常。");
             removeToken();
             showLoginPage();
             return;
@@ -186,25 +184,26 @@ document.addEventListener("DOMContentLoaded", async function () {
         const navList = document.querySelector(".function-list ul");
         if (!navList) {
             console.error("Navigation list (.function-list ul) not found");
-            showError("功能清單載入失敗，請檢查網頁結構！");
             return;
         }
 
         if (role === "shared_owner") {
             navList.innerHTML = `
-                <li><a href="#" class="nav-link" data-target="viewParking">查看車位</a></li>
-                <li><a href="#" class="nav-link" data-target="incomeInquiry">收入查詢</a></li>
-            `;
+            <li><a href="#" class="nav-link" data-target="viewParking">查看車位</a></li>
+            <li><a href="#" class="nav-link" data-target="incomeInquiry">收入查詢</a></li>
+        `;
         } else if (role === "renter") {
             navList.innerHTML = `
-                <li><a href="#" class="nav-link" data-target="viewParking">查看車位</a></li>
-                <li><a href="#" class="nav-link" data-target="reserveParking">預約車位</a></li>
-                <li><a href="#" class="nav-link" data-target="history">歷史紀錄</a></li>
-            `;
+            <li><a href="#" class="nav-link" data-target="viewParking">查看車位</a></li>
+            <li><a href="#" class="nav-link" data-target="reserveParking">預約車位</a></li>
+            <li><a href="#" class="nav-link" data-target="history">歷史紀錄</a></li>
+        `;
         } else if (role === "admin") {
             navList.innerHTML = `
-                <li><a href="#" class="nav-link" data-target="viewAllUsers">查看所有用戶資料</a></li>
-            `;
+            <li><a href="#" class="nav-link" data-target="viewParking">查看車位</a></li>
+            <li><a href="#" class="nav-link" data-target="incomeInquiry">收入查詢</a></li>
+            <li><a href="#" class="nav-link" data-target="viewAllUsers">查看所有用戶資料</a></li>
+        `;
         }
 
         // 設置預設畫面
@@ -219,7 +218,6 @@ document.addEventListener("DOMContentLoaded", async function () {
 
         if (!defaultSection) {
             console.error(`Default section "${defaultSectionId}" not found`);
-            showError("無法載入預設畫面，請檢查網頁結構！");
             return;
         }
 
@@ -227,6 +225,7 @@ document.addEventListener("DOMContentLoaded", async function () {
         if (defaultSectionId === "viewParking") setupViewParking();
         else if (defaultSectionId === "reserveParking") setupReserveParking();
         else if (defaultSectionId === "viewAllUsers") setupViewAllUsers();
+        else if (defaultSectionId === "incomeInquiry") setupIncomeInquiry();
         else setupViewParking();
 
         // 重新綁定導航事件
