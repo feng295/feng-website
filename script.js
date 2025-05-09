@@ -1347,10 +1347,19 @@ document.addEventListener("DOMContentLoaded", async function () {
                 }
                 if (!Array.isArray(members) || members.length === 0) throw new Error("後端返回的用戶資料格式錯誤或無數據");
 
-                // 根據 role 過濾並分類用戶
-                const owners = members.filter(member => member.role === "shared_owner");
-                const renters = members.filter(member => member.role === "renter");
-                const admins = members.filter(member => member.role === "admin");
+                // 移除重複資料並過濾管理員
+                const uniqueMembers = [];
+                const seen = new Set();
+                members.forEach(member => {
+                    const key = `${member.member_id}-${member.email}`;
+                    if (!seen.has(key) && member.role !== "admin") {
+                        seen.add(key);
+                        uniqueMembers.push(member);
+                    }
+                });
+
+                // 根據 role 過濾並分類用戶，只顯示共享者
+                const owners = uniqueMembers.filter(member => member.role === "shared_owner");
 
                 // 渲染共享者資料
                 if (owners.length === 0) {
@@ -1373,61 +1382,10 @@ document.addEventListener("DOMContentLoaded", async function () {
                     ownerTableBody.appendChild(ownerFragment);
                 }
 
-                // 渲染租用者資料
-                if (renters.length === 0) {
-                    renterTableBody.innerHTML = '<tr><td colspan="6">無租用者資料</td></tr>';
-                } else {
-                    renterTableBody.innerHTML = '';
-                    const renterFragment = document.createDocumentFragment();
-                    renters.forEach(member => {
-                        const row = document.createElement("tr");
-                        row.innerHTML = `
-                            <td>${member.member_id || 'N/A'}</td>
-                            <td>${member.name || 'N/A'}</td>
-                            <td>${member.email || 'N/A'}</td>
-                            <td>${member.phone || 'N/A'}</td>
-                            <td>${member.payment_method || 'N/A'}</td>
-                            <td>${member.payment_info || 'N/A'}</td>
-                        `;
-                        renterFragment.appendChild(row);
-                    });
-                    renterTableBody.appendChild(renterFragment);
-                }
+                // 處理租用者無資料的情況，隱藏租用者表格或顯示提示
+                renterTableBody.innerHTML = '<tr><td colspan="6">無租用者資料</td></tr>';
+                renterTableBody.style.display = "none"; // 隱藏租用者表格
 
-                // 渲染管理員資料 (根據後端數據)
-                if (admins.length === 0) {
-                    ownerTableBody.innerHTML = '<tr><td colspan="6">無管理員資料</td></tr>';
-                    renterTableBody.innerHTML = '<tr><td colspan="6">無管理員資料</td></tr>';
-                } else {
-                    ownerTableBody.innerHTML = '';
-                    renterTableBody.innerHTML = '';
-                    const adminFragment = document.createDocumentFragment();
-                    admins.forEach(member => {
-                        const rowOwner = document.createElement("tr");
-                        rowOwner.innerHTML = `
-                            <td>${member.member_id || 'N/A'}</td>
-                            <td>${member.name || 'N/A'}</td>
-                            <td>${member.email || 'N/A'}</td>
-                            <td>${member.phone || 'N/A'}</td>
-                            <td>${member.payment_method || 'N/A'}</td>
-                            <td>${member.payment_info || 'N/A'}</td>
-                        `;
-                        adminFragment.appendChild(rowOwner);
-
-                        const rowRenter = document.createElement("tr");
-                        rowRenter.innerHTML = `
-                            <td>${member.member_id || 'N/A'}</td>
-                            <td>${member.name || 'N/A'}</td>
-                            <td>${member.email || 'N/A'}</td>
-                            <td>${member.phone || 'N/A'}</td>
-                            <td>${member.payment_method || 'N/A'}</td>
-                            <td>${member.payment_info || 'N/A'}</td>
-                        `;
-                        adminFragment.appendChild(rowRenter);
-                    });
-                    ownerTableBody.appendChild(adminFragment);
-                    renterTableBody.appendChild(adminFragment.cloneNode(true));
-                }
             } catch (error) {
                 console.error("Failed to load user data:", error);
                 alert(`無法載入用戶資料，請檢查後端服務 (錯誤: ${error.message})`);
