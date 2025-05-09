@@ -200,8 +200,6 @@ document.addEventListener("DOMContentLoaded", async function () {
         `;
         } else if (role === "admin") {
             navList.innerHTML = `
-            <li><a href="#" class="nav-link" data-target="viewParking">查看車位</a></li>
-            <li><a href="#" class="nav-link" data-target="incomeInquiry">收入查詢</a></li>
             <li><a href="#" class="nav-link" data-target="viewAllUsers">查看所有用戶資料</a></li>
         `;
         }
