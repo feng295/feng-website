@@ -84,10 +84,8 @@ button:hover {
 .search-btn,
 #reserveSearchButton,
 #incomeSearchButton,
-#viewSearchButton,
-#specificSpotButton,
-#adminSpecificSpotButton,
-#adminIncomeSearchButton {
+#userSearchButton,
+#specificSpotButton {
     width: auto;
     padding: 8px 16px;
     background: #007bff;
@@ -100,10 +98,8 @@ button:hover {
 .search-btn:hover,
 #reserveSearchButton:hover,
 #incomeSearchButton:hover,
-#viewSearchButton:hover,
-#specificSpotButton:hover,
-#adminSpecificSpotButton:hover,
-#adminIncomeSearchButton:hover {
+#userSearchButton:hover,
+#specificSpotButton:hover {
     background: #0056b3;
     transform: scale(1.05);
 }
@@ -111,10 +107,8 @@ button:hover {
 .search-btn:active,
 #reserveSearchButton:active,
 #incomeSearchButton:active,
-#viewSearchButton:active,
-#specificSpotButton:active,
-#adminSpecificSpotButton:active,
-#adminIncomeSearchButton:active {
+#userSearchButton:active,
+#specificSpotButton:active {
     transform: scale(0.95);
 }
 
@@ -407,8 +401,8 @@ a:hover {
 #viewParkingTable,
 #reserveParkingTable,
 #incomeTable,
-#adminViewParkingTable,
-#adminIncomeTable {
+#ownerTable,
+#renterTable {
     width: 100%;
     border-collapse: collapse;
     background-color: #fff;
@@ -420,10 +414,10 @@ a:hover {
 #reserveParkingTable td,
 #incomeTable th,
 #incomeTable td,
-#adminViewParkingTable th,
-#adminViewParkingTable td,
-#adminIncomeTable th,
-#adminIncomeTable td {
+#ownerTable th,
+#ownerTable td,
+#renterTable th,
+#renterTable td {
     padding: 12px;
     border: 1px solid black;
     text-align: left;
@@ -433,8 +427,8 @@ a:hover {
 #viewParkingTable th,
 #reserveParkingTable th,
 #incomeTable th,
-#adminViewParkingTable th,
-#adminIncomeTable th {
+#ownerTable th,
+#renterTable th {
     background-color: #f4f4f4;
     position: sticky;
     top: 0;
@@ -454,8 +448,7 @@ a:hover {
 }
 
 #viewParkingTable button,
-#reserveParkingTable button,
-#adminViewParkingTable button {
+#reserveParkingTable button {
     padding: 6px 12px;
     background-color: #28a745;
     color: white;
@@ -467,8 +460,7 @@ a:hover {
 }
 
 #viewParkingTable button:hover:not(:disabled),
-#reserveParkingTable button:hover:not(:disabled),
-#adminViewParkingTable button:hover:not(:disabled) {
+#reserveParkingTable button:hover:not(:disabled) {
     background-color: #218838;
 }
 
@@ -557,17 +549,16 @@ a:hover {
     #reserveParkingTable td,
     #incomeTable th,
     #incomeTable td,
-    #adminViewParkingTable th,
-    #adminViewParkingTable td,
-    #adminIncomeTable th,
-    #adminIncomeTable td {
+    #ownerTable th,
+    #ownerTable td,
+    #renterTable th,
+    #renterTable td {
         padding: 8px;
         font-size: 12px;
     }
 
     #viewParkingTable button,
-    #reserveParkingTable button,
-    #adminViewParkingTable button {
+    #reserveParkingTable button {
         padding: 5px 10px;
         font-size: 12px;
     }

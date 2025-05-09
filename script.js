@@ -203,9 +203,7 @@ document.addEventListener("DOMContentLoaded", async function () {
             `;
         } else if (role === "admin") {
             navList.innerHTML = `
-                <li><a href="#" class="nav-link" data-target="viewParking">查看車位</a></li>
-                <li><a href="#" class="nav-link" data-target="incomeInquiry">收入查詢</a></li>
-                <li><a href="#" class="nav-link" data-target="adminPanel">管理員畫面</a></li>
+                <li><a href="#" class="nav-link" data-target="viewAllUsers">查看所有用戶資料</a></li>
             `;
         }
 
@@ -1301,14 +1299,135 @@ document.addEventListener("DOMContentLoaded", async function () {
         }
     }
 
-    // 設置管理員畫面（如果存在）
-    function setupAdminPanel() {
+    // 設置查看所有用戶資料
+    async function setupViewAllUsers() {
         const role = getRole();
         if (role !== "admin") {
             alert("此功能僅限管理員使用！");
             return;
         }
-        // 根據您的需求實現管理員畫面邏輯
-        console.log("Setting up admin panel");
+
+        const ownerTableBody = document.getElementById("ownerTableBody");
+        const renterTableBody = document.getElementById("renterTableBody");
+        const searchInput = document.getElementById("userSearchInput");
+        const searchButton = document.getElementById("userSearchButton");
+
+        if (!ownerTableBody || !renterTableBody || !searchInput || !searchButton) {
+            console.error("Required DOM elements missing for view all users:", { ownerTableBody, renterTableBody, searchInput, searchButton });
+            alert("頁面元素載入失敗，請檢查 DOM 結構！");
+            return;
+        }
+
+        async function loadUserData(query = "") {
+            ownerTableBody.innerHTML = '<tr><td colspan="7">載入中...</td></tr>';
+            renterTableBody.innerHTML = '<tr><td colspan="6">載入中...</td></tr>';
+
+            try {
+                const token = getToken();
+                if (!token) throw new Error("認證令牌缺失，請重新登入！");
+
+                // 獲取所有共享者的共享資料
+                const ownerResponse = await fetch(`${API_URL}/parking/all?role=shared_owner&search=${encodeURIComponent(query)}`, {
+                    method: 'GET',
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Authorization": `Bearer ${token}`
+                    }
+                });
+
+                if (!ownerResponse.ok) {
+                    if (ownerResponse.status === 401) throw new Error("認證失敗，請重新登入！");
+                    const errorData = await ownerResponse.json();
+                    throw new Error(`HTTP error! Status: ${ownerResponse.status}, Message: ${errorData.error || '未知錯誤'}`);
+                }
+
+                const ownerData = await ownerResponse.json();
+                let owners = ownerData.data || ownerData.spots || ownerData;
+                if (!Array.isArray(owners)) throw new Error("後端返回的共享者資料格式錯誤，應為陣列");
+
+                // 獲取所有租用者的租用資料
+                const renterResponse = await fetch(`${API_URL}/rent/all?role=renter&search=${encodeURIComponent(query)}`, {
+                    method: 'GET',
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Authorization": `Bearer ${token}`
+                    }
+                });
+
+                if (!renterResponse.ok) {
+                    if (renterResponse.status === 401) throw new Error("認證失敗，請重新登入！");
+                    const renterErrorData = await renterResponse.json();
+                    throw new Error(`HTTP error! Status: ${renterResponse.status}, Message: ${renterErrorData.error || '未知錯誤'}`);
+                }
+
+                const renterData = await renterResponse.json();
+                let renters = renterData.data || renterData.rents || renterData;
+                if (!Array.isArray(renters)) throw new Error("後端返回的租用者資料格式錯誤，應為陣列");
+
+                // 渲染共享者資料
+                if (owners.length === 0) {
+                    ownerTableBody.innerHTML = '<tr><td colspan="7">無共享者資料</td></tr>';
+                } else {
+                    ownerTableBody.innerHTML = '';
+                    const ownerFragment = document.createDocumentFragment();
+                    owners.forEach(spot => {
+                        const row = document.createElement("tr");
+                        const priceDisplay = spot.pricing_type === "hourly"
+                            ? `${spot.price_per_half_hour || 0} 元/半小時`
+                            : `${spot.monthly_price || 0} 元/月`;
+                        row.innerHTML = `
+                            <td>${spot.owner_email || 'N/A'}</td>
+                            <td>${spot.owner_name || 'N/A'}</td>
+                            <td>${spot.spot_id || 'N/A'}</td>
+                            <td>${spot.location || 'N/A'}</td>
+                            <td>${spot.parking_type === "flat" ? "平面" : "機械"}</td>
+                            <td>${spot.pricing_type === "hourly" ? "按小時" : "按月"}</td>
+                            <td>${priceDisplay}</td>
+                        `;
+                        ownerFragment.appendChild(row);
+                    });
+                    ownerTableBody.appendChild(ownerFragment);
+                }
+
+                // 渲染租用者資料
+                if (renters.length === 0) {
+                    renterTableBody.innerHTML = '<tr><td colspan="6">無租用者資料</td></tr>';
+                } else {
+                    renterTableBody.innerHTML = '';
+                    const renterFragment = document.createDocumentFragment();
+                    renters.forEach(rent => {
+                        const row = document.createElement("tr");
+                        const startTime = rent.start_time ? new Date(rent.start_time).toLocaleString("zh-TW", { hour12: false }) : 'N/A';
+                        const endTime = rent.end_time ? new Date(rent.end_time).toLocaleString("zh-TW", { hour12: false }) : '尚未結束';
+                        row.innerHTML = `
+                            <td>${rent.renter_email || 'N/A'}</td>
+                            <td>${rent.renter_name || 'N/A'}</td>
+                            <td>${rent.parking_spot_id || 'N/A'}</td>
+                            <td>${startTime}</td>
+                            <td>${endTime}</td>
+                            <td>${rent.total_cost || 'N/A'} 元</td>
+                        `;
+                        renterFragment.appendChild(row);
+                    });
+                    renterTableBody.appendChild(renterFragment);
+                }
+            } catch (error) {
+                console.error("Failed to load user data:", error);
+                alert(`無法載入用戶資料，請檢查後端服務 (錯誤: ${error.message})`);
+                ownerTableBody.innerHTML = '<tr><td colspan="7">無法載入共享者資料</td></tr>';
+                renterTableBody.innerHTML = '<tr><td colspan="6">無法載入租用者資料</td></tr>';
+                if (error.message === "認證失敗，請重新登入！") {
+                    removeToken();
+                    showLoginPage(true);
+                }
+            }
+        }
+
+        searchButton.addEventListener("click", () => loadUserData(searchInput.value.trim()));
+        searchInput.addEventListener("keypress", function (event) {
+            if (event.key === "Enter") loadUserData(searchInput.value.trim());
+        });
+
+        await loadUserData();
     }
 });
