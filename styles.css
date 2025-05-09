@@ -419,7 +419,7 @@ a:hover {
 #renterTable th,
 #renterTable td {
     padding: 12px;
-    border: 1px solid black;
+    border: 1px solid #ddd;
     text-align: left;
     font-size: 14px;
 }
@@ -572,21 +572,4 @@ a:hover {
     #editSpotForm select {
         width: 100%;
     }
-}
-
-/* 為 adminPanel 添加特定樣式 */
-.admin-view-parking,
-.admin-income-inquiry {
-    margin-bottom: 30px;
-}
-
-.admin-view-parking h3,
-.admin-income-inquiry h3 {
-    margin: 0 0 15px 0;
-    font-size: 18px;
-}
-
-.income-result h4 {
-    margin: 0 0 10px 0;
-    font-size: 16px;
 }

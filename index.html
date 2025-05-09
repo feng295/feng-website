@@ -221,8 +221,8 @@
                     <h2>查看所有用戶資料</h2>
                     <p>在這裡你可以查看所有共享者和租用者的資料。</p>
                     <div class="search-container">
-                        <label for="userSearchInput">搜尋用戶（電子郵件或車位ID）：</label>
-                        <input type="text" id="userSearchInput" placeholder="輸入電子郵件或車位ID">
+                        <label for="userSearchInput">搜尋用戶（電子郵件或用戶ID）：</label>
+                        <input type="text" id="userSearchInput" placeholder="輸入電子郵件或用戶ID">
                         <button id="userSearchButton">搜尋</button>
                     </div>
                     <h3>共享者資料</h3>
@@ -230,13 +230,13 @@
                         <table id="ownerTable">
                             <thead>
                                 <tr>
-                                    <th>共享者電子郵件</th>
-                                    <th>共享者姓名</th>
-                                    <th>車位編號</th>
-                                    <th>地址</th>
-                                    <th>類型</th>
-                                    <th>計費方式</th>
-                                    <th>費用</th>
+                                    <th>用戶ID</th>
+                                    <th>姓名</th>
+                                    <th>電子郵件</th>
+                                    <th>電話號碼</th>
+                                    <th>付款方式</th>
+                                    <th>付款資訊</th>
+                                    <th>自動月付</th>
                                 </tr>
                             </thead>
                             <tbody id="ownerTableBody">
@@ -251,12 +251,12 @@
                         <table id="renterTable">
                             <thead>
                                 <tr>
-                                    <th>租用者電子郵件</th>
-                                    <th>租用者姓名</th>
-                                    <th>車位編號</th>
-                                    <th>開始時間</th>
-                                    <th>結束時間</th>
-                                    <th>費用</th>
+                                    <th>用戶ID</th>
+                                    <th>姓名</th>
+                                    <th>電子郵件</th>
+                                    <th>電話號碼</th>
+                                    <th>付款方式</th>
+                                    <th>付款資訊</th>
                                 </tr>
                             </thead>
                             <tbody id="renterTableBody">

@@ -1323,8 +1323,11 @@ document.addEventListener("DOMContentLoaded", async function () {
                 const token = getToken();
                 if (!token) throw new Error("認證令牌缺失，請重新登入！");
 
-                // 獲取所有共享者的共享資料
-                const ownerResponse = await fetch(`${API_URL}/parking/all?role=shared_owner&search=${encodeURIComponent(query)}`, {
+                // 假設後端提供 /members/all 端點返回所有用戶資料
+                const url = query.trim()
+                    ? `${API_URL}/members/all?search=${encodeURIComponent(query.trim())}`
+                    : `${API_URL}/members/all`;
+                const response = await fetch(url, {
                     method: 'GET',
                     headers: {
                         "Content-Type": "application/json",
@@ -1332,81 +1335,98 @@ document.addEventListener("DOMContentLoaded", async function () {
                     }
                 });
 
-                if (!ownerResponse.ok) {
-                    if (ownerResponse.status === 401) throw new Error("認證失敗，請重新登入！");
-                    const errorData = await ownerResponse.json();
-                    throw new Error(`HTTP error! Status: ${ownerResponse.status}, Message: ${errorData.error || '未知錯誤'}`);
+                if (!response.ok) {
+                    if (response.status === 401) throw new Error("認證失敗，請重新登入！");
+                    const errorData = await response.json();
+                    throw new Error(`HTTP error! Status: ${response.status}, Message: ${errorData.error || '未知錯誤'}`);
                 }
 
-                const ownerData = await ownerResponse.json();
-                let owners = ownerData.data || ownerData.spots || ownerData;
-                if (!Array.isArray(owners)) throw new Error("後端返回的共享者資料格式錯誤，應為陣列");
+                const data = await response.json();
+                let members = data.data || data;
+                if (!Array.isArray(members)) throw new Error("後端返回的用戶資料格式錯誤，應為陣列");
 
-                // 獲取所有租用者的租用資料
-                const renterResponse = await fetch(`${API_URL}/rent/all?role=renter&search=${encodeURIComponent(query)}`, {
-                    method: 'GET',
-                    headers: {
-                        "Content-Type": "application/json",
-                        "Authorization": `Bearer ${token}`
-                    }
-                });
+                // 根據 role 過濾並分類用戶
+                const owners = members.filter(member => member.role === "shared_owner");
+                const renters = members.filter(member => member.role === "renter");
+                const admins = members.filter(member => member.role === "admin");
 
-                if (!renterResponse.ok) {
-                    if (renterResponse.status === 401) throw new Error("認證失敗，請重新登入！");
-                    const renterErrorData = await renterResponse.json();
-                    throw new Error(`HTTP error! Status: ${renterResponse.status}, Message: ${renterErrorData.error || '未知錯誤'}`);
-                }
-
-                const renterData = await renterResponse.json();
-                let renters = renterData.data || renterData.rents || renterData;
-                if (!Array.isArray(renters)) throw new Error("後端返回的租用者資料格式錯誤，應為陣列");
-
-                // 渲染共享者資料
+                // 渲染共享者資料 (目前無 shared_owner，僅為示例)
                 if (owners.length === 0) {
                     ownerTableBody.innerHTML = '<tr><td colspan="7">無共享者資料</td></tr>';
                 } else {
                     ownerTableBody.innerHTML = '';
                     const ownerFragment = document.createDocumentFragment();
-                    owners.forEach(spot => {
+                    owners.forEach(member => {
                         const row = document.createElement("tr");
-                        const priceDisplay = spot.pricing_type === "hourly"
-                            ? `${spot.price_per_half_hour || 0} 元/半小時`
-                            : `${spot.monthly_price || 0} 元/月`;
                         row.innerHTML = `
-                            <td>${spot.owner_email || 'N/A'}</td>
-                            <td>${spot.owner_name || 'N/A'}</td>
-                            <td>${spot.spot_id || 'N/A'}</td>
-                            <td>${spot.location || 'N/A'}</td>
-                            <td>${spot.parking_type === "flat" ? "平面" : "機械"}</td>
-                            <td>${spot.pricing_type === "hourly" ? "按小時" : "按月"}</td>
-                            <td>${priceDisplay}</td>
+                            <td>${member.member_id || 'N/A'}</td>
+                            <td>${member.name || 'N/A'}</td>
+                            <td>${member.email || 'N/A'}</td>
+                            <td>${member.phone || 'N/A'}</td>
+                            <td>${member.payment_method || 'N/A'}</td>
+                            <td>${member.payment_info || 'N/A'}</td>
+                            <td>${member.auto_monthly_payment ? '是' : '否'}</td>
                         `;
                         ownerFragment.appendChild(row);
                     });
                     ownerTableBody.appendChild(ownerFragment);
                 }
 
-                // 渲染租用者資料
+                // 渲染租用者資料 (目前無 renter，僅為示例)
                 if (renters.length === 0) {
                     renterTableBody.innerHTML = '<tr><td colspan="6">無租用者資料</td></tr>';
                 } else {
                     renterTableBody.innerHTML = '';
                     const renterFragment = document.createDocumentFragment();
-                    renters.forEach(rent => {
+                    renters.forEach(member => {
                         const row = document.createElement("tr");
-                        const startTime = rent.start_time ? new Date(rent.start_time).toLocaleString("zh-TW", { hour12: false }) : 'N/A';
-                        const endTime = rent.end_time ? new Date(rent.end_time).toLocaleString("zh-TW", { hour12: false }) : '尚未結束';
                         row.innerHTML = `
-                            <td>${rent.renter_email || 'N/A'}</td>
-                            <td>${rent.renter_name || 'N/A'}</td>
-                            <td>${rent.parking_spot_id || 'N/A'}</td>
-                            <td>${startTime}</td>
-                            <td>${endTime}</td>
-                            <td>${rent.total_cost || 'N/A'} 元</td>
+                            <td>${member.member_id || 'N/A'}</td>
+                            <td>${member.name || 'N/A'}</td>
+                            <td>${member.email || 'N/A'}</td>
+                            <td>${member.phone || 'N/A'}</td>
+                            <td>${member.payment_method || 'N/A'}</td>
+                            <td>${member.total_cost || 'N/A'} 元</td>
                         `;
                         renterFragment.appendChild(row);
                     });
                     renterTableBody.appendChild(renterFragment);
+                }
+
+                // 渲染管理員資料 (根據後端數據)
+                if (admins.length === 0) {
+                    ownerTableBody.innerHTML = '<tr><td colspan="7">無管理員資料</td></tr>';
+                    renterTableBody.innerHTML = '<tr><td colspan="6">無管理員資料</td></tr>';
+                } else {
+                    ownerTableBody.innerHTML = '';
+                    renterTableBody.innerHTML = '';
+                    const adminFragment = document.createDocumentFragment();
+                    admins.forEach(member => {
+                        const rowOwner = document.createElement("tr");
+                        rowOwner.innerHTML = `
+                            <td>${member.member_id || 'N/A'}</td>
+                            <td>${member.name || 'N/A'}</td>
+                            <td>${member.email || 'N/A'}</td>
+                            <td>${member.phone || 'N/A'}</td>
+                            <td>${member.payment_method || 'N/A'}</td>
+                            <td>${member.payment_info || 'N/A'}</td>
+                            <td>${member.auto_monthly_payment ? '是' : '否'}</td>
+                        `;
+                        adminFragment.appendChild(rowOwner);
+
+                        const rowRenter = document.createElement("tr");
+                        rowRenter.innerHTML = `
+                            <td>${member.member_id || 'N/A'}</td>
+                            <td>${member.name || 'N/A'}</td>
+                            <td>${member.email || 'N/A'}</td>
+                            <td>${member.phone || 'N/A'}</td>
+                            <td>${member.payment_method || 'N/A'}</td>
+                            <td>${member.payment_info || 'N/A'}</td>
+                        `;
+                        adminFragment.appendChild(rowRenter);
+                    });
+                    ownerTableBody.appendChild(adminFragment);
+                    renterTableBody.appendChild(adminFragment.cloneNode(true));
                 }
             } catch (error) {
                 console.error("Failed to load user data:", error);
