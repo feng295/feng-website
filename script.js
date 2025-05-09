@@ -100,11 +100,11 @@ document.addEventListener("DOMContentLoaded", async function () {
         }
     }
 
-    // 從 localStorage 獲取用戶角色，並標準化為小寫
+    // 從 localStorage 獲取用戶角色
     function getRole() {
         try {
             const role = localStorage.getItem("role") || "";
-            return role.toLowerCase().trim(); // 標準化為小寫並移除空白
+            return role.toLowerCase().trim(); 
         } catch (error) {
             console.error("Failed to get role from localStorage:", error);
             return "";
@@ -214,7 +214,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 
         const defaultSectionId = role === "shared_owner" ? "viewParking" :
             role === "renter" ? "reserveParking" :
-                role === "admin" ? "adminPanel" : "viewParking";
+                role === "admin" ? "viewAllUsers" : "viewParking";
         const defaultSection = document.getElementById(defaultSectionId);
 
         if (!defaultSection) {
@@ -226,7 +226,7 @@ document.addEventListener("DOMContentLoaded", async function () {
         defaultSection.style.display = "block";
         if (defaultSectionId === "viewParking") setupViewParking();
         else if (defaultSectionId === "reserveParking") setupReserveParking();
-        else if (defaultSectionId === "adminPanel") setupAdminPanel();
+        else if (defaultSectionId === "viewAllUsers") setupViewAllUsers();
         else setupViewParking();
 
         // 重新綁定導航事件
@@ -252,7 +252,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                 else if (targetId === "reserveParking") setupReserveParking();
                 else if (targetId === "history") loadHistory();
                 else if (targetId === "incomeInquiry") setupIncomeInquiry();
-                else if (targetId === "adminPanel") setupAdminPanel();
+                else if (targetId === "viewAllUsers") setupViewAllUsers();
             });
         });
     }
