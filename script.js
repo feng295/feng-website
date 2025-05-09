@@ -1198,7 +1198,6 @@ document.addEventListener("DOMContentLoaded", async function () {
                 const fragment = document.createDocumentFragment();
                 rents.forEach((rent, index) => {
                     console.log(`Processing rent ${index}:`, rent);
-                    const row = document.createElement("tr");
                     const startTime = rent.start_time || rent.startTime ? new Date(rent.start_time || rent.startTime).toLocaleString("zh-TW", { hour12: false }) : 'N/A';
                     const endTime = rent.actual_end_time || rent.end_time || rent.endTime ? new Date(rent.actual_end_time || rent.end_time || rent.endTime).toLocaleString("zh-TW", { hour12: false }) : '尚未結束';
                     const cost = rent.total_cost || rent.amount || rent.cost || rent.totalCost || 0;
@@ -1306,16 +1305,14 @@ document.addEventListener("DOMContentLoaded", async function () {
 
         const ownerTableBody = document.getElementById("ownerTableBody");
         const renterTableBody = document.getElementById("renterTableBody");
-        const searchInput = document.getElementById("userSearchInput");
-        const searchButton = document.getElementById("userSearchButton");
 
-        if (!ownerTableBody || !renterTableBody || !searchInput || !searchButton) {
-            console.error("Required DOM elements missing for view all users:", { ownerTableBody, renterTableBody, searchInput, searchButton });
+        if (!ownerTableBody || !renterTableBody) {
+            console.error("Required DOM elements missing for view all users:", { ownerTableBody, renterTableBody });
             alert("頁面元素載入失敗，請檢查 DOM 結構！");
             return;
         }
 
-        async function loadUserData(query = "") {
+        async function loadUserData() {
             ownerTableBody.innerHTML = '<tr><td colspan="6">載入中...</td></tr>';
             renterTableBody.innerHTML = '<tr><td colspan="6">載入中...</td></tr>';
 
@@ -1323,10 +1320,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                 const token = getToken();
                 if (!token) throw new Error("認證令牌缺失，請重新登入！");
 
-                const url = query.trim()
-                    ? `${API_URL}/members/all?search=${encodeURIComponent(query.trim())}`
-                    : `${API_URL}/members/all`;
-                const response = await fetch(url, {
+                const response = await fetch(`${API_URL}/members/all`, {
                     method: 'GET',
                     headers: {
                         "Content-Type": "application/json",
@@ -1358,8 +1352,9 @@ document.addEventListener("DOMContentLoaded", async function () {
                     }
                 });
 
-                // 根據 role 過濾並分類用戶，只顯示共享者
+                // 根據 role 過濾並分類用戶
                 const owners = uniqueMembers.filter(member => member.role === "shared_owner");
+                const renters = uniqueMembers.filter(member => member.role === "renter");
 
                 // 渲染共享者資料
                 if (owners.length === 0) {
@@ -1382,9 +1377,26 @@ document.addEventListener("DOMContentLoaded", async function () {
                     ownerTableBody.appendChild(ownerFragment);
                 }
 
-                // 處理租用者無資料的情況，隱藏租用者表格或顯示提示
-                renterTableBody.innerHTML = '<tr><td colspan="6">無租用者資料</td></tr>';
-                renterTableBody.style.display = "none"; // 隱藏租用者表格
+                // 渲染租用者資料
+                if (renters.length === 0) {
+                    renterTableBody.innerHTML = '<tr><td colspan="6">無租用者資料</td></tr>';
+                } else {
+                    renterTableBody.innerHTML = '';
+                    const renterFragment = document.createDocumentFragment();
+                    renters.forEach(member => {
+                        const row = document.createElement("tr");
+                        row.innerHTML = `
+                            <td>${member.member_id || 'N/A'}</td>
+                            <td>${member.name || 'N/A'}</td>
+                            <td>${member.email || 'N/A'}</td>
+                            <td>${member.phone || 'N/A'}</td>
+                            <td>${member.payment_method || 'N/A'}</td>
+                            <td>${member.payment_info || 'N/A'}</td>
+                        `;
+                        renterFragment.appendChild(row);
+                    });
+                    renterTableBody.appendChild(renterFragment);
+                }
 
             } catch (error) {
                 console.error("Failed to load user data:", error);
@@ -1397,11 +1409,6 @@ document.addEventListener("DOMContentLoaded", async function () {
                 }
             }
         }
-
-        searchButton.addEventListener("click", () => loadUserData(searchInput.value.trim()));
-        searchInput.addEventListener("keypress", function (event) {
-            if (event.key === "Enter") loadUserData(searchInput.value.trim());
-        });
 
         await loadUserData();
     }
