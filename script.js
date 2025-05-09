@@ -1303,26 +1303,26 @@ document.addEventListener("DOMContentLoaded", async function () {
             alert("此功能僅限管理員使用！");
             return;
         }
-    
+
         const ownerTableBody = document.getElementById("ownerTableBody");
         const renterTableBody = document.getElementById("renterTableBody");
         const searchInput = document.getElementById("userSearchInput");
         const searchButton = document.getElementById("userSearchButton");
-    
+
         if (!ownerTableBody || !renterTableBody || !searchInput || !searchButton) {
             console.error("Required DOM elements missing for view all users:", { ownerTableBody, renterTableBody, searchInput, searchButton });
             alert("頁面元素載入失敗，請檢查 DOM 結構！");
             return;
         }
-    
+
         async function loadUserData(query = "") {
-            ownerTableBody.innerHTML = '<tr><td colspan="8">載入中...</td></tr>';
-            renterTableBody.innerHTML = '<tr><td colspan="7">載入中...</td></tr>';
-    
+            ownerTableBody.innerHTML = '<tr><td colspan="6">載入中...</td></tr>';
+            renterTableBody.innerHTML = '<tr><td colspan="6">載入中...</td></tr>';
+
             try {
                 const token = getToken();
                 if (!token) throw new Error("認證令牌缺失，請重新登入！");
-    
+
                 const url = query.trim()
                     ? `${API_URL}/members/all?search=${encodeURIComponent(query.trim())}`
                     : `${API_URL}/members/all`;
@@ -1333,28 +1333,28 @@ document.addEventListener("DOMContentLoaded", async function () {
                         "Authorization": `Bearer ${token}`
                     }
                 });
-    
+
                 if (!response.ok) {
                     if (response.status === 401) throw new Error("認證失敗，請重新登入！");
                     const errorData = await response.json();
                     throw new Error(`HTTP error! Status: ${response.status}, Message: ${errorData.error || '未知錯誤'}`);
                 }
-    
+
                 const data = await response.json();
                 let members = data.data || data;
                 if (!Array.isArray(members)) {
                     members = [members]; // 單一用戶數據轉為陣列處理
                 }
                 if (!Array.isArray(members) || members.length === 0) throw new Error("後端返回的用戶資料格式錯誤或無數據");
-    
+
                 // 根據 role 過濾並分類用戶
                 const owners = members.filter(member => member.role === "shared_owner");
                 const renters = members.filter(member => member.role === "renter");
                 const admins = members.filter(member => member.role === "admin");
-    
+
                 // 渲染共享者資料
                 if (owners.length === 0) {
-                    ownerTableBody.innerHTML = '<tr><td colspan="8">無共享者資料</td></tr>';
+                    ownerTableBody.innerHTML = '<tr><td colspan="6">無共享者資料</td></tr>';
                 } else {
                     ownerTableBody.innerHTML = '';
                     const ownerFragment = document.createDocumentFragment();
@@ -1367,17 +1367,15 @@ document.addEventListener("DOMContentLoaded", async function () {
                             <td>${member.phone || 'N/A'}</td>
                             <td>${member.payment_method || 'N/A'}</td>
                             <td>${member.payment_info || 'N/A'}</td>
-                            <td>${member.auto_monthly_payment ? '是' : '否'}</td>
-                            <td>${member.license_plate || 'N/A'}</td>
                         `;
                         ownerFragment.appendChild(row);
                     });
                     ownerTableBody.appendChild(ownerFragment);
                 }
-    
+
                 // 渲染租用者資料
                 if (renters.length === 0) {
-                    renterTableBody.innerHTML = '<tr><td colspan="7">無租用者資料</td></tr>';
+                    renterTableBody.innerHTML = '<tr><td colspan="6">無租用者資料</td></tr>';
                 } else {
                     renterTableBody.innerHTML = '';
                     const renterFragment = document.createDocumentFragment();
@@ -1390,17 +1388,16 @@ document.addEventListener("DOMContentLoaded", async function () {
                             <td>${member.phone || 'N/A'}</td>
                             <td>${member.payment_method || 'N/A'}</td>
                             <td>${member.payment_info || 'N/A'}</td>
-                            <td>${member.car_model || 'N/A'}</td>
                         `;
                         renterFragment.appendChild(row);
                     });
                     renterTableBody.appendChild(renterFragment);
                 }
-    
+
                 // 渲染管理員資料 (根據後端數據)
                 if (admins.length === 0) {
-                    ownerTableBody.innerHTML = '<tr><td colspan="8">無管理員資料</td></tr>';
-                    renterTableBody.innerHTML = '<tr><td colspan="7">無管理員資料</td></tr>';
+                    ownerTableBody.innerHTML = '<tr><td colspan="6">無管理員資料</td></tr>';
+                    renterTableBody.innerHTML = '<tr><td colspan="6">無管理員資料</td></tr>';
                 } else {
                     ownerTableBody.innerHTML = '';
                     renterTableBody.innerHTML = '';
@@ -1414,11 +1411,9 @@ document.addEventListener("DOMContentLoaded", async function () {
                             <td>${member.phone || 'N/A'}</td>
                             <td>${member.payment_method || 'N/A'}</td>
                             <td>${member.payment_info || 'N/A'}</td>
-                            <td>${member.auto_monthly_payment ? '是' : '否'}</td>
-                            <td>${member.license_plate || 'N/A'}</td>
                         `;
                         adminFragment.appendChild(rowOwner);
-    
+
                         const rowRenter = document.createElement("tr");
                         rowRenter.innerHTML = `
                             <td>${member.member_id || 'N/A'}</td>
@@ -1427,7 +1422,6 @@ document.addEventListener("DOMContentLoaded", async function () {
                             <td>${member.phone || 'N/A'}</td>
                             <td>${member.payment_method || 'N/A'}</td>
                             <td>${member.payment_info || 'N/A'}</td>
-                            <td>${member.car_model || 'N/A'}</td>
                         `;
                         adminFragment.appendChild(rowRenter);
                     });
@@ -1437,20 +1431,20 @@ document.addEventListener("DOMContentLoaded", async function () {
             } catch (error) {
                 console.error("Failed to load user data:", error);
                 alert(`無法載入用戶資料，請檢查後端服務 (錯誤: ${error.message})`);
-                ownerTableBody.innerHTML = '<tr><td colspan="8">無法載入共享者資料</td></tr>';
-                renterTableBody.innerHTML = '<tr><td colspan="7">無法載入租用者資料</td></tr>';
+                ownerTableBody.innerHTML = '<tr><td colspan="6">無法載入共享者資料</td></tr>';
+                renterTableBody.innerHTML = '<tr><td colspan="6">無法載入租用者資料</td></tr>';
                 if (error.message === "認證失敗，請重新登入！") {
                     removeToken();
                     showLoginPage(true);
                 }
             }
         }
-    
+
         searchButton.addEventListener("click", () => loadUserData(searchInput.value.trim()));
         searchInput.addEventListener("keypress", function (event) {
             if (event.key === "Enter") loadUserData(searchInput.value.trim());
         });
-    
+
         await loadUserData();
     }
 });
