@@ -275,54 +275,86 @@ document.addEventListener("DOMContentLoaded", async function () {
         }
 
         addParkingSection.style.display = "block";
-        addParkingSection.innerHTML = `
-            <h2>新增車位</h2>
-            <div class="search-container">
-                <div><label>地址：</label><input type="text" id="newLocation" required placeholder="請輸入地址"></div>
-                <div><label>停車類型：</label>
-                    <select id="newParkingType">
-                        <option value="flat">平面</option>
-                        <option value="mechanical">機械</option>
-                    </select>
-                </div>
-                <div><label>樓層：</label>
-                    <select id="newFloorLevel">
-                        <option value="ground">地面</option>
-                        <option value="b1">地下1樓</option>
-                        <option value="b2">地下2樓</option>
-                        <option value="b3">地下3樓</option>
-                    </select>
-                </div>
-                <div><label>計費方式：</label>
-                    <select id="newPricingType">
-                        <option value="hourly">按小時</option>
-                        <option value="monthly">按月</option>
-                    </select>
-                </div>
-                <div><label id="newPriceLabel">半小時費用（元）：</label>
-                    <input type="number" id="newPrice" required min="0" placeholder="請輸入費用">
-                </div>
-                <button id="saveNewSpotButton">保存</button>
-                <button id="cancelAddButton">取消</button>
-            </div>
-        `;
 
+        // 自動填充會員 ID
+        const memberIdInput = document.getElementById("memberIdInput");
+        const memberId = getMemberId();
+        if (!memberId) {
+            alert("無法獲取會員 ID，請重新登入！");
+            showLoginPage();
+            return;
+        }
+        memberIdInput.value = memberId;
+
+        // 動態調整費用標籤
         const pricingTypeSelect = document.getElementById("newPricingType");
         const priceLabel = document.getElementById("newPriceLabel");
         pricingTypeSelect.addEventListener("change", () => {
             priceLabel.textContent = pricingTypeSelect.value === "hourly" ? "半小時費用（元）：" : "每月費用（元）：";
         });
 
+        // 動態添加可用日期
+        const availableDaysContainer = document.getElementById("availableDaysContainer");
+        const addDateButton = document.getElementById("addDateButton");
+
+        function addDateEntry(date = "", isAvailable = true) {
+            const dateEntry = document.createElement("div");
+            dateEntry.className = "date-entry";
+            dateEntry.innerHTML = `
+            <label>日期 (YYYY-MM-DD)：</label>
+            <input type="date" class="available-date" value="${date}">
+            <label>是否可用：</label>
+            <input type="checkbox" class="available-status" ${isAvailable ? "checked" : ""}>
+            <button type="button" class="remove-date">移除</button>
+        `;
+            availableDaysContainer.appendChild(dateEntry);
+
+            dateEntry.querySelector(".remove-date").addEventListener("click", () => {
+                dateEntry.remove();
+            });
+        }
+
+        addDateButton.addEventListener("click", () => addDateEntry());
+
         document.getElementById("saveNewSpotButton").addEventListener("click", async () => {
             // 獲取表單數據
             const newSpot = {
+                member_id: parseInt(memberIdInput.value), // 會員 ID
                 location: document.getElementById("newLocation").value.trim(),
                 parking_type: document.getElementById("newParkingType").value,
-                floor_level: document.getElementById("newFloorLevel").value,
+                floor_level: document.getElementById("newFloorLevel").value.trim(),
                 pricing_type: document.getElementById("newPricingType").value,
             };
 
-            const price = parseFloat(document.getElementById("newPrice").value);
+            // 驗證必填字段
+            if (!newSpot.member_id) {
+                alert("會員 ID 為必填項！");
+                return;
+            }
+            if (!newSpot.location) {
+                alert("地址為必填項！");
+                return;
+            }
+            if (newSpot.location.length > 50) {
+                alert("地址最多 50 個字符！");
+                return;
+            }
+            if (!["flat", "mechanical"].includes(newSpot.parking_type)) {
+                alert("停車類型必須為 'flat' 或 'mechanical'！");
+                return;
+            }
+            if (newSpot.floor_level && newSpot.floor_level.length > 20) {
+                alert("樓層最多 20 個字符！");
+                return;
+            }
+            if (!["hourly", "monthly"].includes(newSpot.pricing_type)) {
+                alert("計費方式必須為 'hourly' 或 'monthly'！");
+                return;
+            }
+
+            // 處理費用字段
+            const priceInput = document.getElementById("newPrice").value;
+            const price = priceInput ? parseFloat(priceInput) : 20.00; // 預設值 20.00
             if (isNaN(price) || price < 0) {
                 alert("費用必須為正數！");
                 return;
@@ -333,49 +365,49 @@ document.addEventListener("DOMContentLoaded", async function () {
                 newSpot.monthly_price = price;
             }
 
-            if (!newSpot.location) {
-                alert("地址不能為空！");
+            const maxDailyPriceInput = document.getElementById("newMaxDailyPrice").value;
+            const maxDailyPrice = maxDailyPriceInput ? parseFloat(maxDailyPriceInput) : 300.00; // 預設值 300.00
+            if (isNaN(maxDailyPrice) || maxDailyPrice < 0) {
+                alert("每日最高價格必須為正數！");
                 return;
             }
+            newSpot.daily_max_price = maxDailyPrice;
 
-            // 獲取當前會員的 MemberID
-            const memberId = getMemberId();
-            if (!memberId) {
-                alert("無法獲取會員 ID，請重新登入！");
-                showLoginPage();
-                return;
-            }
-            newSpot.MemberID = memberId; // 使用後端期望的欄位名稱 MemberID
-
-            // 獲取經緯度
-            let latitude = 0.0, longitude = 0.0; // 預設值
-            try {
-                const position = await new Promise((resolve, reject) => {
-                    if (!navigator.geolocation) reject(new Error("瀏覽器不支援地理位置功能"));
-                    navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 10000, maximumAge: 0 });
-                });
-                latitude = position.coords.latitude;
-                longitude = position.coords.longitude;
-
-                if (latitude < -90 || latitude > 90) {
-                    console.warn(`Latitude ${latitude} out of range (-90 to 90), resetting to default 0.0`);
-                    latitude = 0.0;
-                }
-                if (longitude < -180 || longitude > 180) {
-                    console.warn(`Longitude ${longitude} out of range (-180 to 180), resetting to default 0.0`);
-                    longitude = 0.0;
-                }
-                console.log(`User location: Latitude=${latitude}, Longitude=${longitude}`);
-            } catch (error) {
-                console.warn("Failed to get user location, using default:", error.message);
-                alert("無法獲取您的位置，將使用預設位置（經緯度 0.0）。請確保已允許位置權限。");
+            // 處理經緯度
+            let latitude = parseFloat(document.getElementById("latitudeInput").value) || 0.0;
+            let longitude = parseFloat(document.getElementById("longitudeInput").value) || 0.0;
+            if (isNaN(latitude) || latitude < -90 || latitude > 90) {
+                console.warn(`Latitude ${latitude} out of range (-90 to 90), resetting to default 0.0`);
                 latitude = 0.0;
+            }
+            if (isNaN(longitude) || longitude < -180 || longitude > 180) {
+                console.warn(`Longitude ${longitude} out of range (-180 to 180), resetting to default 0.0`);
                 longitude = 0.0;
             }
+            newSpot.latitude = latitude;
+            newSpot.longitude = longitude;
 
-            // 添加經緯度到請求中，使用後端期望的欄位名稱
-            newSpot.Latitude = latitude;
-            newSpot.Longitude = longitude;
+            // 處理可用日期
+            const dateEntries = availableDaysContainer.querySelectorAll(".date-entry");
+            const availableDays = [];
+            for (const entry of dateEntries) {
+                const date = entry.querySelector(".available-date").value;
+                const isAvailable = entry.querySelector(".available-status").checked;
+
+                if (!date) {
+                    alert("請為每個可用日期選擇日期！");
+                    return;
+                }
+                if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+                    alert("日期格式不正確，請使用 YYYY-MM-DD 格式！");
+                    return;
+                }
+
+                availableDays.push({ date, is_available: isAvailable });
+            }
+            if (availableDays.length > 0) {
+                newSpot.available_days = availableDays;
+            }
 
             try {
                 const token = getToken();
