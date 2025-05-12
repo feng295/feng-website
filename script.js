@@ -131,6 +131,28 @@ document.addEventListener("DOMContentLoaded", async function () {
         }
     }
 
+    // 從 localStorage 獲取 member_id
+    function getMemberId() {
+        try {
+            const memberId = localStorage.getItem("member_id");
+            return memberId ? Number(memberId) : null;
+        } catch (error) {
+            console.error("Failed to get member_id from localStorage:", error);
+            return null;
+        }
+    }
+
+    function removeToken() {
+        try {
+            localStorage.removeItem("token");
+            localStorage.removeItem("role");
+            localStorage.removeItem("member_id"); // 清除 member_id
+            history.pushState({}, '', '/');
+        } catch (error) {
+            console.error("Failed to remove token from localStorage:", error);
+        }
+    }
+
     // 顯示主畫面，並根據角色動態調整功能清單和預設畫面
     function showMainPage() {
         console.log("Entering showMainPage function");
@@ -267,60 +289,61 @@ document.addEventListener("DOMContentLoaded", async function () {
             alert("此功能僅限車位共享者和管理員使用！");
             return;
         }
-
+    
         const addParkingSection = document.getElementById("addParking");
         if (!addParkingSection) {
             console.error("addParking section not found");
             return;
         }
-
+    
         addParkingSection.style.display = "block";
         addParkingSection.innerHTML = `
-        <h2>新增車位</h2>
-        <div class="search-container">
-            <div><label>地址：</label><input type="text" id="newLocation" required placeholder="請輸入地址"></div>
-            <div><label>停車類型：</label>
-                <select id="newParkingType">
-                    <option value="flat">平面</option>
-                    <option value="mechanical">機械</option>
-                </select>
+            <h2>新增車位</h2>
+            <div class="search-container">
+                <div><label>地址：</label><input type="text" id="newLocation" required placeholder="請輸入地址"></div>
+                <div><label>停車類型：</label>
+                    <select id="newParkingType">
+                        <option value="flat">平面</option>
+                        <option value="mechanical">機械</option>
+                    </select>
+                </div>
+                <div><label>樓層：</label>
+                    <select id="newFloorLevel">
+                        <option value="ground">地面</option>
+                        <option value="b1">地下1樓</option>
+                        <option value="b2">地下2樓</option>
+                        <option value="b3">地下3樓</option>
+                    </select>
+                </div>
+                <div><label>計費方式：</label>
+                    <select id="newPricingType">
+                        <option value="hourly">按小時</option>
+                        <option value="monthly">按月</option>
+                    </select>
+                </div>
+                <div><label id="newPriceLabel">半小時費用（元）：</label>
+                    <input type="number" id="newPrice" required min="0" placeholder="請輸入費用">
+                </div>
+                <button id="saveNewSpotButton">保存</button>
+                <button id="cancelAddButton">取消</button>
             </div>
-            <div><label>樓層：</label>
-                <select id="newFloorLevel">
-                    <option value="ground">地面</option>
-                    <option value="b1">地下1樓</option>
-                    <option value="b2">地下2樓</option>
-                    <option value="b3">地下3樓</option>
-                </select>
-            </div>
-            <div><label>計費方式：</label>
-                <select id="newPricingType">
-                    <option value="hourly">按小時</option>
-                    <option value="monthly">按月</option>
-                </select>
-            </div>
-            <div><label id="newPriceLabel">半小時費用（元）：</label>
-                <input type="number" id="newPrice" required min="0" placeholder="請輸入費用">
-            </div>
-            <button id="saveNewSpotButton">保存</button>
-            <button id="cancelAddButton">取消</button>
-        </div>
-    `;
-
+        `;
+    
         const pricingTypeSelect = document.getElementById("newPricingType");
         const priceLabel = document.getElementById("newPriceLabel");
         pricingTypeSelect.addEventListener("change", () => {
             priceLabel.textContent = pricingTypeSelect.value === "hourly" ? "半小時費用（元）：" : "每月費用（元）：";
         });
-
+    
         document.getElementById("saveNewSpotButton").addEventListener("click", async () => {
+            // 獲取表單數據
             const newSpot = {
                 location: document.getElementById("newLocation").value.trim(),
                 parking_type: document.getElementById("newParkingType").value,
                 floor_level: document.getElementById("newFloorLevel").value,
                 pricing_type: document.getElementById("newPricingType").value,
             };
-
+    
             const price = parseFloat(document.getElementById("newPrice").value);
             if (isNaN(price) || price < 0) {
                 alert("費用必須為正數！");
@@ -331,16 +354,58 @@ document.addEventListener("DOMContentLoaded", async function () {
             } else {
                 newSpot.monthly_price = price;
             }
-
+    
             if (!newSpot.location) {
                 alert("地址不能為空！");
                 return;
             }
-
+    
+            // 獲取當前會員的 member_id
+            const memberId = getMemberId();
+            if (!memberId) {
+                alert("無法獲取會員 ID，請重新登入！");
+                showLoginPage();
+                return;
+            }
+            newSpot.member_id = memberId; // 添加 member_id 到請求中
+    
+            // 獲取經緯度
+            let latitude = 0.0, longitude = 0.0; // 預設值
+            try {
+                const position = await new Promise((resolve, reject) => {
+                    if (!navigator.geolocation) reject(new Error("瀏覽器不支援地理位置功能"));
+                    navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 10000, maximumAge: 0 });
+                });
+                latitude = position.coords.latitude;
+                longitude = position.coords.longitude;
+    
+                // 驗證經緯度範圍
+                if (latitude < -90 || latitude > 90) {
+                    console.warn(`Latitude ${latitude} out of range (-90 to 90), resetting to default 0.0`);
+                    latitude = 0.0;
+                }
+                if (longitude < -180 || longitude > 180) {
+                    console.warn(`Longitude ${longitude} out of range (-180 to 180), resetting to default 0.0`);
+                    longitude = 0.0;
+                }
+                console.log(`User location: latitude=${latitude}, longitude=${longitude}`);
+            } catch (error) {
+                console.warn("Failed to get user location, using default:", error.message);
+                alert("無法獲取您的位置，將使用預設位置（經緯度 0.0）。請確保已允許位置權限。");
+                latitude = 0.0;
+                longitude = 0.0;
+            }
+    
+            // 添加經緯度到請求中
+            newSpot.latitude = latitude;
+            newSpot.longitude = longitude;
+    
             try {
                 const token = getToken();
                 if (!token) throw new Error("認證令牌缺失，請重新登入！");
-
+    
+                console.log("Sending new spot data:", JSON.stringify(newSpot, null, 2));
+    
                 const response = await fetch(`${API_URL}/parking/share`, {
                     method: 'POST',
                     headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
@@ -363,7 +428,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                 }
             }
         });
-
+    
         document.getElementById("cancelAddButton").addEventListener("click", () => {
             addParkingSection.style.display = "none";
             const viewParkingSection = document.getElementById("viewParking");
