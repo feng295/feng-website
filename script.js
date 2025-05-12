@@ -260,7 +260,7 @@ document.addEventListener("DOMContentLoaded", async function () {
     }
 
     // 新增車位功能
-    function setupAddParking() {
+    async function setupAddParking() {
         const role = getRole();
         console.log("Current role in setupAddParking:", role);
         if (!["shared_owner", "admin"].includes(role)) {
@@ -274,23 +274,57 @@ document.addEventListener("DOMContentLoaded", async function () {
             return;
         }
 
+        // 獲取當前用戶資訊
+        let memberId;
+        try {
+            const user = await getCurrentUser();
+            memberId = user.member_id || user.id; // 根據後端 API 返回的字段調整
+            if (!memberId) throw new Error("無法獲取會員 ID，請聯繫管理員！");
+        } catch (error) {
+            alert(error.message);
+            if (error.message === "認證失敗，請重新登入！") {
+                removeToken();
+                showLoginPage(true);
+            }
+            return;
+        }
+
+        // 獲取用戶當前位置（經緯度）
+        let latitude = 25.0330, longitude = 121.5654; // 預設值（台北市）
+        try {
+            const position = await new Promise((resolve, reject) => {
+                if (!navigator.geolocation) reject(new Error("瀏覽器不支援地理位置功能"));
+                navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 10000, maximumAge: 0 });
+            });
+            latitude = position.coords.latitude;
+            longitude = position.coords.longitude;
+            console.log(`User location: latitude=${latitude}, longitude=${longitude}`);
+        } catch (error) {
+            console.warn("Failed to get user location, using default:", error.message);
+            alert("無法獲取您的位置，將使用預設位置（台北市）。請確保已允許位置權限。");
+        }
+
         addParkingSection.style.display = "block";
         addParkingSection.innerHTML = `
         <h2>新增車位</h2>
         <div class="search-container">
-            <div><label>地址：</label><input type="text" id="newLocation" required placeholder="請輸入地址"></div>
+            <div><label>會員 ID：</label><input type="text" id="newMemberId" value="${memberId}" readonly></div>
+            <div><label>地址（最多50字）：</label><input type="text" id="newLocation" required maxlength="50" placeholder="請輸入地址"></div>
+            <div><label>經度（-180 到 180）：</label><input type="number" step="any" id="newLongitude" value="${longitude}" required placeholder="請輸入經度"></div>
+            <div><label>緯度（-90 到 90）：</label><input type="number" step="any" id="newLatitude" value="${latitude}" required placeholder="請輸入緯度"></div>
             <div><label>停車類型：</label>
                 <select id="newParkingType">
                     <option value="flat">平面</option>
                     <option value="mechanical">機械</option>
                 </select>
             </div>
-            <div><label>樓層：</label>
+            <div><label>樓層（最多20字）：</label>
                 <select id="newFloorLevel">
+                    <option value="1F">1樓</option>
                     <option value="ground">地面</option>
-                    <option value="b1">地下1樓</option>
-                    <option value="b2">地下2樓</option>
-                    <option value="b3">地下3樓</option>
+                    <option value="B1">地下1樓</option>
+                    <option value="B2">地下2樓</option>
+                    <option value="B3">地下3樓</option>
                 </select>
             </div>
             <div><label>計費方式：</label>
@@ -299,8 +333,18 @@ document.addEventListener("DOMContentLoaded", async function () {
                     <option value="monthly">按月</option>
                 </select>
             </div>
-            <div><label id="newPriceLabel">半小時費用（元）：</label>
-                <input type="number" id="newPrice" required min="0" placeholder="請輸入費用">
+            <div id="pricePerHalfHourContainer">
+                <label id="newPriceLabel">每半小時費用（元）：</label>
+                <input type="number" id="newPricePerHalfHour" value="20.00" min="0" step="0.01" placeholder="請輸入費用">
+            </div>
+            <div id="dailyMaxPriceContainer" style="display: none;">
+                <label>每日最高費用（元）：</label>
+                <input type="number" id="newDailyMaxPrice" value="300.00" min="0" step="0.01" placeholder="請輸入每日最高費用">
+            </div>
+            <div>
+                <label>可用日期（可選）：</label>
+                <div id="availableDaysContainer"></div>
+                <button id="addAvailableDayButton">添加日期</button>
             </div>
             <button id="saveNewSpotButton">保存</button>
             <button id="cancelAddButton">取消</button>
@@ -308,40 +352,121 @@ document.addEventListener("DOMContentLoaded", async function () {
     `;
 
         const pricingTypeSelect = document.getElementById("newPricingType");
+        const pricePerHalfHourContainer = document.getElementById("pricePerHalfHourContainer");
+        const dailyMaxPriceContainer = document.getElementById("dailyMaxPriceContainer");
         const priceLabel = document.getElementById("newPriceLabel");
         pricingTypeSelect.addEventListener("change", () => {
-            priceLabel.textContent = pricingTypeSelect.value === "hourly" ? "半小時費用（元）：" : "每月費用（元）：";
+            if (pricingTypeSelect.value === "hourly") {
+                priceLabel.textContent = "每半小時費用（元）：";
+                pricePerHalfHourContainer.style.display = "block";
+                dailyMaxPriceContainer.style.display = "block";
+            } else {
+                priceLabel.textContent = "每月費用（元）：";
+                pricePerHalfHourContainer.style.display = "block";
+                dailyMaxPriceContainer.style.display = "none";
+            }
+        });
+
+        // 動態添加可用日期
+        const availableDaysContainer = document.getElementById("availableDaysContainer");
+        document.getElementById("addAvailableDayButton").addEventListener("click", () => {
+            const dayEntry = document.createElement("div");
+            dayEntry.className = "available-day-entry";
+            dayEntry.innerHTML = `
+            <label>日期（YYYY-MM-DD）：</label>
+            <input type="date" class="available-date" required>
+            <label>是否可用：</label>
+            <select class="available-status">
+                <option value="true">是</option>
+                <option value="false">否</option>
+            </select>
+            <button class="remove-day-btn">移除</button>
+        `;
+            availableDaysContainer.appendChild(dayEntry);
+
+            dayEntry.querySelector(".remove-day-btn").addEventListener("click", () => {
+                availableDaysContainer.removeChild(dayEntry);
+            });
         });
 
         document.getElementById("saveNewSpotButton").addEventListener("click", async () => {
             const newSpot = {
+                member_id: parseInt(document.getElementById("newMemberId").value.trim()),
                 location: document.getElementById("newLocation").value.trim(),
+                longitude: parseFloat(document.getElementById("newLongitude").value) || 0.0,
+                latitude: parseFloat(document.getElementById("newLatitude").value) || 0.0,
                 parking_type: document.getElementById("newParkingType").value,
                 floor_level: document.getElementById("newFloorLevel").value,
                 pricing_type: document.getElementById("newPricingType").value,
             };
 
-            const price = parseFloat(document.getElementById("newPrice").value);
-            if (isNaN(price) || price < 0) {
-                alert("費用必須為正數！");
+            // 驗證必填字段和範圍
+            if (!newSpot.member_id) {
+                alert("會員 ID 不能為空！");
                 return;
             }
-            if (newSpot.pricing_type === "hourly") {
-                newSpot.price_per_half_hour = price;
-            } else {
-                newSpot.monthly_price = price;
-            }
-
             if (!newSpot.location) {
                 alert("地址不能為空！");
                 return;
+            }
+            if (newSpot.location.length > 50) {
+                alert("地址長度不能超過 50 字！");
+                return;
+            }
+            if (newSpot.floor_level.length > 20) {
+                alert("樓層長度不能超過 20 字！");
+                return;
+            }
+            if (newSpot.longitude < -180 || newSpot.longitude > 180) {
+                alert("經度必須在 -180 到 180 之間！");
+                return;
+            }
+            if (newSpot.latitude < -90 || newSpot.latitude > 90) {
+                alert("緯度必須在 -90 到 90 之間！");
+                return;
+            }
+
+            // 處理價格字段
+            const pricePerHalfHour = parseFloat(document.getElementById("newPricePerHalfHour").value) || 20.00;
+            if (newSpot.pricing_type === "hourly") {
+                newSpot.price_per_half_hour = pricePerHalfHour;
+                newSpot.daily_max_price = parseFloat(document.getElementById("newDailyMaxPrice").value) || 300.00;
+            } else {
+                newSpot.price_per_half_hour = pricePerHalfHour; // 對於 monthly 也需要提供，後端預設 20.00
+                newSpot.daily_max_price = 0.0; // monthly 不需要 daily_max_price
+            }
+            if (newSpot.price_per_half_hour < 0) {
+                alert("每半小時費用必須大於等於 0！");
+                return;
+            }
+            if (newSpot.daily_max_price < 0) {
+                alert("每日最高費用必須大於等於 0！");
+                return;
+            }
+
+            // 處理可用日期
+            const availableDays = [];
+            const dayEntries = availableDaysContainer.querySelectorAll(".available-day-entry");
+            for (const entry of dayEntries) {
+                const date = entry.querySelector(".available-date").value;
+                const isAvailable = entry.querySelector(".available-status").value === "true";
+                if (date) {
+                    if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+                        alert("日期格式必須為 YYYY-MM-DD！");
+                        return;
+                    }
+                    availableDays.push({ date, is_available: isAvailable });
+                }
+            }
+            if (availableDays.length > 0) {
+                newSpot.available_days = availableDays;
             }
 
             try {
                 const token = getToken();
                 if (!token) throw new Error("認證令牌缺失，請重新登入！");
 
-                const response = await fetch(`${API_URL}/parking/share`, {
+                const response = await fetch(`${API_URL}/parking`, {
                     method: 'POST',
                     headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
                     body: JSON.stringify(newSpot)
@@ -353,7 +478,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                 }
                 const result = await response.json();
                 alert("車位已成功新增！");
-                addParkingSection.innerHTML = "<p>車位已成功新增！</p>"; // 清空表單並顯示成功訊息
+                addParkingSection.innerHTML = "<p>車位已成功新增！</p>";
             } catch (error) {
                 console.error("Failed to add spot:", error);
                 alert(`無法新增車位，請檢查後端服務 (錯誤: ${error.message})`);
@@ -369,7 +494,7 @@ document.addEventListener("DOMContentLoaded", async function () {
             const viewParkingSection = document.getElementById("viewParking");
             if (viewParkingSection) {
                 viewParkingSection.style.display = "block";
-                setupViewParking(); // 返回查看車位頁面
+                setupViewParking();
             }
         });
     }
@@ -839,14 +964,14 @@ document.addEventListener("DOMContentLoaded", async function () {
                     : `${spotData.monthly_price || 0} 元/月`;
 
                 row.innerHTML = `
-                    <td>${spotData.spot_id}</td>
-                    <td>${spotData.location || '未知'}</td>
-                    <td>${spotData.parking_type === "flat" ? "平面" : "機械"}</td>
-                    <td>${spotData.floor_level === "ground" ? "地面" : `地下${spotData.floor_level.startsWith("B") ? spotData.floor_level.slice(1) : spotData.floor_level}樓`}</td>
-                    <td>${spotData.pricing_type === "hourly" ? "按小時" : "按月"}</td>
-                    <td>${priceDisplay}</td>
-                    <td><button class="edit-btn">編輯</button></td>
-                `;
+                <td>${spotData.spot_id}</td>
+                <td>${spotData.location || '未知'}</td>
+                <td>${spotData.parking_type === "flat" ? "平面" : "機械"}</td>
+                <td>${spotData.floor_level === "ground" ? "地面" : `地下${spotData.floor_level.startsWith("B") ? spotData.floor_level.slice(1) : spotData.floor_level}樓`}</td>
+                <td>${spotData.pricing_type === "hourly" ? "按小時" : "按月"}</td>
+                <td>${priceDisplay}</td>
+                <td><button class="edit-btn">編輯</button></td>
+            `;
 
                 row.querySelector(".edit-btn").addEventListener("click", (e) => {
                     e.stopPropagation();
@@ -870,68 +995,221 @@ document.addEventListener("DOMContentLoaded", async function () {
             }
         }
 
-        function showEditForm(spot) {
-            const existingForm = document.getElementById("editSpotForm");
+        async function showAddForm() { // 將函數標記為 async
+            const existingForm = document.getElementById("addSpotForm");
             if (existingForm) existingForm.remove();
 
-            const editForm = document.createElement("div");
-            editForm.id = "editSpotForm";
-            editForm.style.marginTop = "20px";
+            // 獲取當前用戶資訊
+            let memberId;
+            try {
+                const user = await getCurrentUser();
+                memberId = user.member_id || user.id;
+                if (!memberId) throw new Error("無法獲取會員 ID，請聯繫管理員！");
+            } catch (error) {
+                alert(error.message);
+                if (error.message === "認證失敗，請重新登入！") {
+                    removeToken();
+                    showLoginPage(true);
+                }
+                return;
+            }
 
-            const priceLabel = spot.pricing_type === "hourly" ? "半小時費用（元）：" : "每月費用（元）：";
-            const priceValue = spot.pricing_type === "hourly"
-                ? `${spot.price_per_half_hour || 0} 元`
-                : `${spot.monthly_price || 0} 元`;
+            // 獲取用戶當前位置（經緯度）
+            let latitude = 25.0330, longitude = 121.5654;
+            try {
+                const position = await new Promise((resolve, reject) => {
+                    if (!navigator.geolocation) reject(new Error("瀏覽器不支援地理位置功能"));
+                    navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 10000, maximumAge: 0 });
+                });
+                latitude = position.coords.latitude;
+                longitude = position.coords.longitude;
+                console.log(`User location: latitude=${latitude}, longitude=${longitude}`);
+            } catch (error) {
+                console.warn("Failed to get user location, using default:", error.message);
+                alert("無法獲取您的位置，將使用預設位置（台北市）。請確保已允許位置權限。");
+            }
 
-            editForm.innerHTML = `
-                <h3>編輯車位 ${spot.spot_id}</h3>
-                <div><label>地址：</label><input type="text" id="editLocation" value="${spot.location || ''}" /></div>
-                <div><label>停車類型：</label><select id="editParkingType">
-                    <option value="flat" ${spot.parking_type === "flat" ? "selected" : ""}>平面</option>
-                    <option value="mechanical" ${spot.parking_type === "mechanical" ? "selected" : ""}>機械</option>
-                </select></div>
-                <div><label>計費方式：</label><select id="editPricingType">
-                    <option value="hourly" ${spot.pricing_type === "hourly" ? "selected" : ""}>按小時</option>
-                    <option value="monthly" ${spot.pricing_type === "monthly" ? "selected" : ""}>按月</option>
-                </select></div>
-                <div><label>${priceLabel}</label><span>${priceValue}</span></div>
-                <button id="saveSpotButton">保存</button>
-                <button id="cancelEditButton">取消</button>
+            const addForm = document.createElement("div");
+            addForm.id = "addSpotForm";
+            addForm.style.marginTop = "20px";
+            addForm.innerHTML = `
+            <h3>新增車位</h3>
+            <div><label>會員 ID：</label><input type="text" id="newMemberId" value="${memberId}" readonly></div>
+            <div><label>地址（最多50字）：</label><input type="text" id="newLocation" required maxlength="50" /></div>
+            <div><label>經度（-180 到 180）：</label><input type="number" step="any" id="newLongitude" value="${longitude}" required /></div>
+            <div><label>緯度（-90 到 90）：</label><input type="number" step="any" id="newLatitude" value="${latitude}" required /></div>
+            <div><label>停車類型：</label>
+                <select id="newParkingType">
+                    <option value="flat">平面</option>
+                    <option value="mechanical">機械</option>
+                </select>
+            </div>
+            <div><label>樓層（最多20字）：</label>
+                <select id="newFloorLevel">
+                    <option value="1F">1樓</option>
+                    <option value="ground">地面</option>
+                    <option value="B1">地下1樓</option>
+                    <option value="B2">地下2樓</option>
+                    <option value="B3">地下3樓</option>
+                </select>
+            </div>
+            <div><label>計費方式：</label>
+                <select id="newPricingType">
+                    <option value="hourly">按小時</option>
+                    <option value="monthly">按月</option>
+                </select>
+            </div>
+            <div id="pricePerHalfHourContainer">
+                <label id="newPriceLabel">每半小時費用（元）：</label>
+                <input type="number" id="newPricePerHalfHour" value="20.00" min="0" step="0.01">
+            </div>
+            <div id="dailyMaxPriceContainer" style="display: none;">
+                <label>每日最高費用（元）：</label>
+                <input type="number" id="newDailyMaxPrice" value="300.00" min="0" step="0.01">
+            </div>
+            <div>
+                <label>可用日期（可選）：</label>
+                <div id="availableDaysContainer"></div>
+                <button id="addAvailableDayButton">添加日期</button>
+            </div>
+            <button id="saveNewSpotButton">保存</button>
+            <button id="cancelAddButton">取消</button>
+        `;
+
+            viewParkingSection.appendChild(addForm);
+
+            const pricingTypeSelect = document.getElementById("newPricingType");
+            const pricePerHalfHourContainer = document.getElementById("pricePerHalfHourContainer");
+            const dailyMaxPriceContainer = document.getElementById("dailyMaxPriceContainer");
+            const priceLabel = document.getElementById("newPriceLabel");
+            pricingTypeSelect.addEventListener("change", () => {
+                if (pricingTypeSelect.value === "hourly") {
+                    priceLabel.textContent = "每半小時費用（元）：";
+                    pricePerHalfHourContainer.style.display = "block";
+                    dailyMaxPriceContainer.style.display = "block";
+                } else {
+                    priceLabel.textContent = "每月費用（元）：";
+                    pricePerHalfHourContainer.style.display = "block";
+                    dailyMaxPriceContainer.style.display = "none";
+                }
+            });
+
+            // 動態添加可用日期
+            const availableDaysContainer = document.getElementById("availableDaysContainer");
+            document.getElementById("addAvailableDayButton").addEventListener("click", () => {
+                const dayEntry = document.createElement("div");
+                dayEntry.className = "available-day-entry";
+                dayEntry.innerHTML = `
+                <label>日期（YYYY-MM-DD）：</label>
+                <input type="date" class="available-date" required>
+                <label>是否可用：</label>
+                <select class="available-status">
+                    <option value="true">是</option>
+                    <option value="false">否</option>
+                </select>
+                <button class="remove-day-btn">移除</button>
             `;
+                availableDaysContainer.appendChild(dayEntry);
 
-            parkingTableBody.parentElement.appendChild(editForm);
+                dayEntry.querySelector(".remove-day-btn").addEventListener("click", () => {
+                    availableDaysContainer.removeChild(dayEntry);
+                });
+            });
 
-            document.getElementById("saveSpotButton").addEventListener("click", async () => {
-                const updatedSpot = {
-                    location: document.getElementById("editLocation").value.trim(),
-                    parking_type: document.getElementById("editParkingType").value,
-                    pricing_type: document.getElementById("editPricingType").value
+            document.getElementById("saveNewSpotButton").addEventListener("click", async () => {
+                const newSpot = {
+                    member_id: parseInt(document.getElementById("newMemberId").value.trim()),
+                    location: document.getElementById("newLocation").value.trim(),
+                    longitude: parseFloat(document.getElementById("newLongitude").value) || 0.0,
+                    latitude: parseFloat(document.getElementById("newLatitude").value) || 0.0,
+                    parking_type: document.getElementById("newParkingType").value,
+                    floor_level: document.getElementById("newFloorLevel").value,
+                    pricing_type: document.getElementById("newPricingType").value,
                 };
+
+                // 驗證必填字段和範圍
+                if (!newSpot.member_id) {
+                    alert("會員 ID 不能為空！");
+                    return;
+                }
+                if (!newSpot.location) {
+                    alert("地址不能為空！");
+                    return;
+                }
+                if (newSpot.location.length > 50) {
+                    alert("地址長度不能超過 50 字！");
+                    return;
+                }
+                if (newSpot.floor_level.length > 20) {
+                    alert("樓層長度不能超過 20 字！");
+                    return;
+                }
+                if (newSpot.longitude < -180 || newSpot.longitude > 180) {
+                    alert("經度必須在 -180 到 180 之間！");
+                    return;
+                }
+                if (newSpot.latitude < -90 || newSpot.latitude > 90) {
+                    alert("緯度必須在 -90 到 90 之間！");
+                    return;
+                }
+
+                // 處理價格字段
+                const pricePerHalfHour = parseFloat(document.getElementById("newPricePerHalfHour").value) || 20.00;
+                if (newSpot.pricing_type === "hourly") {
+                    newSpot.price_per_half_hour = pricePerHalfHour;
+                    newSpot.daily_max_price = parseFloat(document.getElementById("newDailyMaxPrice").value) || 300.00;
+                } else {
+                    newSpot.price_per_half_hour = pricePerHalfHour;
+                    newSpot.daily_max_price = 0.0;
+                }
+                if (newSpot.price_per_half_hour < 0) {
+                    alert("每半小時費用必須大於等於 0！");
+                    return;
+                }
+                if (newSpot.daily_max_price < 0) {
+                    alert("每日最高費用必須大於等於 0！");
+                    return;
+                }
+
+                // 處理可用日期
+                const availableDays = [];
+                const dayEntries = availableDaysContainer.querySelectorAll(".available-day-entry");
+                for (const entry of dayEntries) {
+                    const date = entry.querySelector(".available-date").value;
+                    const isAvailable = entry.querySelector(".available-status").value === "true";
+                    if (date) {
+                        if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+                            alert("日期格式必須為 YYYY-MM-DD！");
+                            return;
+                        }
+                        availableDays.push({ date, is_available: isAvailable });
+                    }
+                }
+                if (availableDays.length > 0) {
+                    newSpot.available_days = availableDays;
+                }
 
                 try {
                     const token = getToken();
                     if (!token) throw new Error("認證令牌缺失，請重新登入！");
 
-                    const response = await fetch(`${API_URL}/parking/${spot.spot_id}`, {
-                        method: 'PUT',
+                    const response = await fetch(`${API_URL}/parking`, {
+                        method: 'POST',
                         headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
-                        body: JSON.stringify(updatedSpot)
+                        body: JSON.stringify(newSpot)
                     });
-                    if (!response.headers.get('content-type')?.includes('application/json')) {
-                        throw new Error("後端返回非 JSON 響應，請檢查伺服器配置");
-                    }
                     if (!response.ok) {
                         if (response.status === 401) throw new Error("認證失敗，請重新登入！");
                         const errorData = await response.json();
                         throw new Error(`HTTP error! Status: ${response.status}, Message: ${errorData.error || '未知錯誤'}`);
                     }
-                    await response.json();
-                    alert("車位信息已成功更新！");
-                    editForm.remove();
+                    const result = await response.json();
+                    alert("車位已成功新增！");
+                    addForm.remove();
                     handleSpecificSpotSearch();
                 } catch (error) {
-                    console.error("Failed to update spot:", error);
-                    alert(`無法更新車位資料，請檢查後端服務 (錯誤: ${error.message})`);
+                    console.error("Failed to add spot:", error);
+                    alert(`無法新增車位，請檢查後端服務 (錯誤: ${error.message})`);
                     if (error.message === "認證失敗，請重新登入！") {
                         removeToken();
                         showLoginPage(true);
@@ -939,13 +1217,22 @@ document.addEventListener("DOMContentLoaded", async function () {
                 }
             });
 
-            document.getElementById("cancelEditButton").addEventListener("click", () => editForm.remove());
+            document.getElementById("cancelAddButton").addEventListener("click", () => {
+                addForm.remove();
+            });
         }
 
         specificSpotButton.addEventListener("click", handleSpecificSpotSearch);
         specificSpotInput.addEventListener("keypress", function (event) {
             if (event.key === "Enter") handleSpecificSpotSearch();
         });
+
+        // 提供新增車位按鈕（假設存在於 HTML 中）
+        const addSpotButton = document.getElementById("addSpotButton");
+        if (addSpotButton && ["shared_owner", "admin"].includes(role)) {
+            addSpotButton.style.display = "block";
+            addSpotButton.addEventListener("click", showAddForm);
+        }
     }
 
     // 設置預約停車
