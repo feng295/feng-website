@@ -158,11 +158,20 @@ a:hover {
     padding: 20px;
     border-radius: 5px;
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    min-height: 400px; /* 確保功能清單有最小高度 */
+}
+
+
+.function-list h1 {
+    font-size: 20px;
+    margin: 0 0 15px 0;
+    color: #333;
 }
 
 .function-list ul {
     list-style: none;
     padding: 0;
+    margin: 0;
 }
 
 .function-list ul li {
@@ -173,6 +182,8 @@ a:hover {
     text-decoration: none;
     color: #007bff;
     cursor: pointer;
+    font-size: 16px;
+    transition: color 0.3s ease;
 }
 
 .function-list ul li a:hover {
@@ -185,6 +196,17 @@ a:hover {
     padding: 20px;
     border-radius: 5px;
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    min-height: 400px; /* 確保內容區域有最小高度 */
+}
+
+/* 為 pageTitle 添加樣式 */
+#pageTitle {
+    font-size: 24px;
+    margin: 0 0 20px 0;
+    color: #333;
+    text-align: center;
+    border-bottom: 1px solid #ddd;
+    padding-bottom: 10px;
 }
 
 .parking-status {
@@ -334,6 +356,17 @@ a:hover {
     font-size: 16px;
 }
 
+/* 地圖容器樣式 */
+#viewParkingMap,
+#reserveParkingMap {
+    height: 400px;
+    width: 100%;
+    margin-bottom: 20px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+}
+
 /* 響應式設計 */
 @media (max-width: 768px) {
     .system-container {
@@ -377,6 +410,10 @@ a:hover {
 
     .search-container label {
         margin-right: 0;
+    }
+    #viewParkingMap,
+    #reserveParkingMap {
+        height: 300px; /* 在小螢幕上減小地圖高度 */
     }
 }
 
