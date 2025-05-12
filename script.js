@@ -189,6 +189,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 
         if (role === "shared_owner") {
             navList.innerHTML = `
+            <li><a href="#" class="nav-link" data-target="addParking">新增車位</a></li>
             <li><a href="#" class="nav-link" data-target="viewParking">查看車位</a></li>
             <li><a href="#" class="nav-link" data-target="incomeInquiry">收入查詢</a></li>
         `;
@@ -200,6 +201,8 @@ document.addEventListener("DOMContentLoaded", async function () {
         `;
         } else if (role === "admin") {
             navList.innerHTML = `
+            <li><a href="#" class="nav-link" data-target="addParking">新增車位</a></li>
+            <li><a href="#" class="nav-link" data-target="viewParking">查看車位</a></li>
             <li><a href="#" class="nav-link" data-target="viewAllUsers">查看所有用戶資料</a></li>
         `;
         }
@@ -224,6 +227,7 @@ document.addEventListener("DOMContentLoaded", async function () {
         else if (defaultSectionId === "reserveParking") setupReserveParking();
         else if (defaultSectionId === "viewAllUsers") setupViewAllUsers();
         else if (defaultSectionId === "incomeInquiry") setupIncomeInquiry();
+        else if (defaultSectionId === "addParking") setupAddParking(); // 新增車位功能的預設處理
         else setupViewParking();
 
         // 重新綁定導航事件
@@ -250,7 +254,123 @@ document.addEventListener("DOMContentLoaded", async function () {
                 else if (targetId === "history") loadHistory();
                 else if (targetId === "incomeInquiry") setupIncomeInquiry();
                 else if (targetId === "viewAllUsers") setupViewAllUsers();
+                else if (targetId === "addParking") setupAddParking(); // 新增車位功能的處理
             });
+        });
+    }
+
+    // 新增車位功能
+    function setupAddParking() {
+        const role = getRole();
+        console.log("Current role in setupAddParking:", role);
+        if (!["shared_owner", "admin"].includes(role)) {
+            alert("此功能僅限車位共享者和管理員使用！");
+            return;
+        }
+
+        const addParkingSection = document.getElementById("addParking");
+        if (!addParkingSection) {
+            console.error("addParking section not found");
+            return;
+        }
+
+        addParkingSection.style.display = "block";
+        addParkingSection.innerHTML = `
+        <h2>新增車位</h2>
+        <div class="search-container">
+            <div><label>地址：</label><input type="text" id="newLocation" required placeholder="請輸入地址"></div>
+            <div><label>停車類型：</label>
+                <select id="newParkingType">
+                    <option value="flat">平面</option>
+                    <option value="mechanical">機械</option>
+                </select>
+            </div>
+            <div><label>樓層：</label>
+                <select id="newFloorLevel">
+                    <option value="ground">地面</option>
+                    <option value="b1">地下1樓</option>
+                    <option value="b2">地下2樓</option>
+                    <option value="b3">地下3樓</option>
+                </select>
+            </div>
+            <div><label>計費方式：</label>
+                <select id="newPricingType">
+                    <option value="hourly">按小時</option>
+                    <option value="monthly">按月</option>
+                </select>
+            </div>
+            <div><label id="newPriceLabel">半小時費用（元）：</label>
+                <input type="number" id="newPrice" required min="0" placeholder="請輸入費用">
+            </div>
+            <button id="saveNewSpotButton">保存</button>
+            <button id="cancelAddButton">取消</button>
+        </div>
+    `;
+
+        const pricingTypeSelect = document.getElementById("newPricingType");
+        const priceLabel = document.getElementById("newPriceLabel");
+        pricingTypeSelect.addEventListener("change", () => {
+            priceLabel.textContent = pricingTypeSelect.value === "hourly" ? "半小時費用（元）：" : "每月費用（元）：";
+        });
+
+        document.getElementById("saveNewSpotButton").addEventListener("click", async () => {
+            const newSpot = {
+                location: document.getElementById("newLocation").value.trim(),
+                parking_type: document.getElementById("newParkingType").value,
+                floor_level: document.getElementById("newFloorLevel").value,
+                pricing_type: document.getElementById("newPricingType").value,
+            };
+
+            const price = parseFloat(document.getElementById("newPrice").value);
+            if (isNaN(price) || price < 0) {
+                alert("費用必須為正數！");
+                return;
+            }
+            if (newSpot.pricing_type === "hourly") {
+                newSpot.price_per_half_hour = price;
+            } else {
+                newSpot.monthly_price = price;
+            }
+
+            if (!newSpot.location) {
+                alert("地址不能為空！");
+                return;
+            }
+
+            try {
+                const token = getToken();
+                if (!token) throw new Error("認證令牌缺失，請重新登入！");
+
+                const response = await fetch(`${API_URL}/parking`, {
+                    method: 'POST',
+                    headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
+                    body: JSON.stringify(newSpot)
+                });
+                if (!response.ok) {
+                    if (response.status === 401) throw new Error("認證失敗，請重新登入！");
+                    const errorData = await response.json();
+                    throw new Error(`HTTP error! Status: ${response.status}, Message: ${errorData.error || '未知錯誤'}`);
+                }
+                const result = await response.json();
+                alert("車位已成功新增！");
+                addParkingSection.innerHTML = "<p>車位已成功新增！</p>"; // 清空表單並顯示成功訊息
+            } catch (error) {
+                console.error("Failed to add spot:", error);
+                alert(`無法新增車位，請檢查後端服務 (錯誤: ${error.message})`);
+                if (error.message === "認證失敗，請重新登入！") {
+                    removeToken();
+                    showLoginPage(true);
+                }
+            }
+        });
+
+        document.getElementById("cancelAddButton").addEventListener("click", () => {
+            addParkingSection.style.display = "none";
+            const viewParkingSection = document.getElementById("viewParking");
+            if (viewParkingSection) {
+                viewParkingSection.style.display = "block";
+                setupViewParking(); // 返回查看車位頁面
+            }
         });
     }
 
@@ -649,16 +769,268 @@ document.addEventListener("DOMContentLoaded", async function () {
         const parkingTableBody = document.getElementById("viewParkingTableBody");
         const specificSpotInput = document.getElementById("specificSpotInput");
         const specificSpotButton = document.getElementById("specificSpotButton");
+        const viewParkingSection = document.getElementById("viewParking");
 
-        if (!parkingTableBody || !specificSpotInput || !specificSpotButton) {
+        if (!parkingTableBody || !specificSpotInput || !specificSpotButton || !viewParkingSection) {
             console.warn("Required elements not found for viewParking");
             return;
         }
 
+        // 根據角色顯示或隱藏“新增車位”按鈕
+        let addButtonHTML = '';
+        if (["shared_owner", "admin"].includes(role)) {
+            addButtonHTML = '<button id="addParkingSpotButton" style="margin-bottom: 10px;">新增車位</button>';
+        }
+
+        // 添加“新增車位”按鈕到頁面
+        viewParkingSection.innerHTML = `
+            ${addButtonHTML}
+            <div>
+                <label>車位 ID：</label>
+                <input type="text" id="specificSpotInput" placeholder="輸入車位 ID 查詢" />
+                <button id="specificSpotButton">查詢</button>
+            </div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>車位 ID</th>
+                        <th>地址</th>
+                        <th>停車類型</th>
+                        <th>樓層</th>
+                        <th>計費方式</th>
+                        <th>費用</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody id="viewParkingTableBody"></tbody>
+            </table>
+        `;
+
         parkingTableBody.innerHTML = '<tr><td colspan="7">請點擊查詢以查看車位</td></tr>';
 
+        // 重新獲取 DOM 元素（因為 innerHTML 重置了 DOM）
+        const newSpecificSpotInput = document.getElementById("specificSpotInput");
+        const newSpecificSpotButton = document.getElementById("specificSpotButton");
+        const addParkingSpotButton = document.getElementById("addParkingSpotButton");
+
+        // 處理“新增車位”按鈕點擊事件
+        if (addParkingSpotButton) {
+            addParkingSpotButton.addEventListener("click", () => {
+                showAddForm();
+            });
+        }
+
+        // 顯示新增車位表單
+        function showAddForm() {
+            const existingForm = document.getElementById("addSpotForm");
+            if (existingForm) existingForm.remove();
+
+            const addForm = document.createElement("div");
+            addForm.id = "addSpotForm";
+            addForm.style.marginTop = "20px";
+            addForm.innerHTML = `
+                <h3>新增車位</h3>
+                <div><label>地址：</label><input type="text" id="newLocation" required /></div>
+                <div><label>停車類型：</label>
+                    <select id="newParkingType">
+                        <option value="flat">平面</option>
+                        <option value="mechanical">機械</option>
+                    </select>
+                </div>
+                <div><label>樓層：</label>
+                    <select id="newFloorLevel">
+                        <option value="ground">地面</option>
+                        <option value="b1">地下1樓</option>
+                        <option value="b2">地下2樓</option>
+                        <option value="b3">地下3樓</option>
+                    </select>
+                </div>
+                <div><label>計費方式：</label>
+                    <select id="newPricingType">
+                        <option value="hourly">按小時</option>
+                        <option value="monthly">按月</option>
+                    </select>
+                </div>
+                <div><label id="newPriceLabel">半小時費用（元）：</label>
+                    <input type="number" id="newPrice" required min="0" />
+                </div>
+                <button id="saveNewSpotButton">保存</button>
+                <button id="cancelAddButton">取消</button>
+            `;
+
+            viewParkingSection.appendChild(addForm);
+
+            const pricingTypeSelect = document.getElementById("newPricingType");
+            const priceLabel = document.getElementById("newPriceLabel");
+            pricingTypeSelect.addEventListener("change", () => {
+                priceLabel.textContent = pricingTypeSelect.value === "hourly" ? "半小時費用（元）：" : "每月費用（元）：";
+            });
+
+            document.getElementById("saveNewSpotButton").addEventListener("click", async () => {
+                const newSpot = {
+                    location: document.getElementById("newLocation").value.trim(),
+                    parking_type: document.getElementById("newParkingType").value,
+                    floor_level: document.getElementById("newFloorLevel").value,
+                    pricing_type: document.getElementById("newPricingType").value,
+                };
+
+                const price = parseFloat(document.getElementById("newPrice").value);
+                if (isNaN(price) || price < 0) {
+                    alert("費用必須為正數！");
+                    return;
+                }
+                if (newSpot.pricing_type === "hourly") {
+                    newSpot.price_per_half_hour = price;
+                } else {
+                    newSpot.monthly_price = price;
+                }
+
+                if (!newSpot.location) {
+                    alert("地址不能為空！");
+                    return;
+                }
+
+                try {
+                    const token = getToken();
+                    if (!token) throw new Error("認證令牌缺失，請重新登入！");
+
+                    const response = await fetch(`${API_URL}/parking`, {
+                        method: 'POST',
+                        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
+                        body: JSON.stringify(newSpot)
+                    });
+                    if (!response.ok) {
+                        if (response.status === 401) throw new Error("認證失敗，請重新登入！");
+                        const errorData = await response.json();
+                        throw new Error(`HTTP error! Status: ${response.status}, Message: ${errorData.error || '未知錯誤'}`);
+                    }
+                    const result = await response.json();
+                    alert("車位已成功新增！");
+                    addForm.remove();
+                    handleSpecificSpotSearch(); // 刷新車位列表
+                } catch (error) {
+                    console.error("Failed to add spot:", error);
+                    alert(`無法新增車位，請檢查後端服務 (錯誤: ${error.message})`);
+                    if (error.message === "認證失敗，請重新登入！") {
+                        removeToken();
+                        showLoginPage(true);
+                    }
+                }
+            });
+
+            document.getElementById("cancelAddButton").addEventListener("click", () => {
+                addForm.remove();
+            });
+        }
+
+        // 顯示編輯車位表單
+        function showEditForm(spot) {
+            const existingForm = document.getElementById("editSpotForm");
+            if (existingForm) existingForm.remove();
+
+            const editForm = document.createElement("div");
+            editForm.id = "editSpotForm";
+            editForm.style.marginTop = "20px";
+
+            const priceLabel = spot.pricing_type === "hourly" ? "半小時費用（元）：" : "每月費用（元）：";
+            const priceValue = spot.pricing_type === "hourly" ? (spot.price_per_half_hour || 0) : (spot.monthly_price || 0);
+
+            editForm.innerHTML = `
+                <h3>編輯車位 ${spot.spot_id}</h3>
+                <div><label>地址：</label><input type="text" id="editLocation" value="${spot.location || ''}" required /></div>
+                <div><label>停車類型：</label>
+                    <select id="editParkingType">
+                        <option value="flat" ${spot.parking_type === "flat" ? "selected" : ""}>平面</option>
+                        <option value="mechanical" ${spot.parking_type === "mechanical" ? "selected" : ""}>機械</option>
+                    </select>
+                </div>
+                <div><label>樓層：</label>
+                    <select id="editFloorLevel">
+                        <option value="ground" ${spot.floor_level === "ground" ? "selected" : ""}>地面</option>
+                        <option value="b1" ${spot.floor_level === "b1" ? "selected" : ""}>地下1樓</option>
+                        <option value="b2" ${spot.floor_level === "b2" ? "selected" : ""}>地下2樓</option>
+                        <option value="b3" ${spot.floor_level === "b3" ? "selected" : ""}>地下3樓</option>
+                    </select>
+                </div>
+                <div><label>計費方式：</label>
+                    <select id="editPricingType">
+                        <option value="hourly" ${spot.pricing_type === "hourly" ? "selected" : ""}>按小時</option>
+                        <option value="monthly" ${spot.pricing_type === "monthly" ? "selected" : ""}>按月</option>
+                    </select>
+                </div>
+                <div><label>${priceLabel}</label>
+                    <input type="number" id="editPrice" value="${priceValue}" required min="0" />
+                </div>
+                <button id="saveSpotButton">保存</button>
+                <button id="cancelEditButton">取消</button>
+            `;
+
+            viewParkingSection.appendChild(editForm);
+
+            const pricingTypeSelect = document.getElementById("editPricingType");
+            const priceLabelElement = editForm.querySelector("label[for='editPrice']");
+            pricingTypeSelect.addEventListener("change", () => {
+                priceLabelElement.textContent = pricingTypeSelect.value === "hourly" ? "半小時費用（元）：" : "每月費用（元）：";
+            });
+
+            document.getElementById("saveSpotButton").addEventListener("click", async () => {
+                const updatedSpot = {
+                    location: document.getElementById("editLocation").value.trim(),
+                    parking_type: document.getElementById("editParkingType").value,
+                    floor_level: document.getElementById("editFloorLevel").value,
+                    pricing_type: document.getElementById("editPricingType").value,
+                };
+
+                const price = parseFloat(document.getElementById("editPrice").value);
+                if (isNaN(price) || price < 0) {
+                    alert("費用必須為正數！");
+                    return;
+                }
+                if (updatedSpot.pricing_type === "hourly") {
+                    updatedSpot.price_per_half_hour = price;
+                } else {
+                    updatedSpot.monthly_price = price;
+                }
+
+                if (!updatedSpot.location) {
+                    alert("地址不能為空！");
+                    return;
+                }
+
+                try {
+                    const token = getToken();
+                    if (!token) throw new Error("認證令牌缺失，請重新登入！");
+
+                    const response = await fetch(`${API_URL}/parking/${spot.spot_id}`, {
+                        method: 'PUT',
+                        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
+                        body: JSON.stringify(updatedSpot)
+                    });
+                    if (!response.ok) {
+                        if (response.status === 401) throw new Error("認證失敗，請重新登入！");
+                        const errorData = await response.json();
+                        throw new Error(`HTTP error! Status: ${response.status}, Message: ${errorData.error || '未知錯誤'}`);
+                    }
+                    await response.json();
+                    alert("車位信息已成功更新！");
+                    editForm.remove();
+                    handleSpecificSpotSearch();
+                } catch (error) {
+                    console.error("Failed to update spot:", error);
+                    alert(`無法更新車位資料，請檢查後端服務 (錯誤: ${error.message})`);
+                    if (error.message === "認證失敗，請重新登入！") {
+                        removeToken();
+                        showLoginPage(true);
+                    }
+                }
+            });
+
+            document.getElementById("cancelEditButton").addEventListener("click", () => editForm.remove());
+        }
+
+        // 處理查詢特定車位
         async function handleSpecificSpotSearch() {
-            const spotId = specificSpotInput.value.trim();
+            const spotId = newSpecificSpotInput.value.trim();
             if (!spotId) {
                 alert("請輸入車位 ID！");
                 return;
@@ -718,6 +1090,17 @@ document.addEventListener("DOMContentLoaded", async function () {
                     ? `${spotData.price_per_half_hour || 0} 元/半小時`
                     : `${spotData.monthly_price || 0} 元/月`;
 
+                // 根據角色顯示操作按鈕
+                let actionButtons = '';
+                if (["shared_owner", "admin"].includes(role)) {
+                    actionButtons = `
+                        <button class="edit-btn">編輯</button>
+                        <button class="delete-btn">刪除</button>
+                    `;
+                } else {
+                    actionButtons = '<span>無操作權限</span>';
+                }
+
                 row.innerHTML = `
                     <td>${spotData.spot_id}</td>
                     <td>${spotData.location || '未知'}</td>
@@ -725,13 +1108,52 @@ document.addEventListener("DOMContentLoaded", async function () {
                     <td>${spotData.floor_level === "ground" ? "地面" : `地下${spotData.floor_level.startsWith("B") ? spotData.floor_level.slice(1) : spotData.floor_level}樓`}</td>
                     <td>${spotData.pricing_type === "hourly" ? "按小時" : "按月"}</td>
                     <td>${priceDisplay}</td>
-                    <td><button class="edit-btn">編輯</button></td>
+                    <td>${actionButtons}</td>
                 `;
 
-                row.querySelector(".edit-btn").addEventListener("click", (e) => {
-                    e.stopPropagation();
-                    showEditForm(spotData);
-                });
+                // 編輯按鈕事件
+                if (["shared_owner", "admin"].includes(role)) {
+                    row.querySelector(".edit-btn").addEventListener("click", (e) => {
+                        e.stopPropagation();
+                        showEditForm(spotData);
+                    });
+
+                    // 刪除按鈕事件
+                    row.querySelector(".delete-btn").addEventListener("click", async (e) => {
+                        e.stopPropagation();
+                        if (!confirm(`確定要刪除車位 ${spotData.spot_id} 嗎？`)) return;
+
+                        try {
+                            const token = getToken();
+                            if (!token) throw new Error("認證令牌缺失，請重新登入！");
+
+                            const response = await fetch(`${API_URL}/parking/${spotData.spot_id}`, {
+                                method: 'DELETE',
+                                headers: {
+                                    "Content-Type": "application/json",
+                                    "Authorization": `Bearer ${token}`
+                                }
+                            });
+                            if (!response.ok) {
+                                if (response.status === 401) throw new Error("認證失敗，請重新登入！");
+                                const errorData = await response.json();
+                                throw new Error(`HTTP error! Status: ${response.status}, Message: ${errorData.error || '未知錯誤'}`);
+                            }
+                            alert("車位已成功刪除！");
+                            parkingTableBody.removeChild(row);
+                            if (parkingTableBody.children.length === 0) {
+                                parkingTableBody.innerHTML = '<tr><td colspan="7">請點擊查詢以查看車位</td></tr>';
+                            }
+                        } catch (error) {
+                            console.error("Failed to delete spot:", error);
+                            alert(`無法刪除車位，請檢查後端服務 (錯誤: ${error.message})`);
+                            if (error.message === "認證失敗，請重新登入！") {
+                                removeToken();
+                                showLoginPage(true);
+                            }
+                        }
+                    });
+                }
 
                 row.addEventListener("click", () => {
                     setParkingSpotId(spotData.spot_id);
@@ -750,80 +1172,8 @@ document.addEventListener("DOMContentLoaded", async function () {
             }
         }
 
-        function showEditForm(spot) {
-            const existingForm = document.getElementById("editSpotForm");
-            if (existingForm) existingForm.remove();
-
-            const editForm = document.createElement("div");
-            editForm.id = "editSpotForm";
-            editForm.style.marginTop = "20px";
-
-            const priceLabel = spot.pricing_type === "hourly" ? "半小時費用（元）：" : "每月費用（元）：";
-            const priceValue = spot.pricing_type === "hourly"
-                ? `${spot.price_per_half_hour || 0} 元`
-                : `${spot.monthly_price || 0} 元`;
-
-            editForm.innerHTML = `
-                <h3>編輯車位 ${spot.spot_id}</h3>
-                <div><label>地址：</label><input type="text" id="editLocation" value="${spot.location || ''}" /></div>
-                <div><label>停車類型：</label><select id="editParkingType">
-                    <option value="flat" ${spot.parking_type === "flat" ? "selected" : ""}>平面</option>
-                    <option value="mechanical" ${spot.parking_type === "mechanical" ? "selected" : ""}>機械</option>
-                </select></div>
-                <div><label>計費方式：</label><select id="editPricingType">
-                    <option value="hourly" ${spot.pricing_type === "hourly" ? "selected" : ""}>按小時</option>
-                    <option value="monthly" ${spot.pricing_type === "monthly" ? "selected" : ""}>按月</option>
-                </select></div>
-                <div><label>${priceLabel}</label><span>${priceValue}</span></div>
-                <button id="saveSpotButton">保存</button>
-                <button id="cancelEditButton">取消</button>
-            `;
-
-            parkingTableBody.parentElement.appendChild(editForm);
-
-            document.getElementById("saveSpotButton").addEventListener("click", async () => {
-                const updatedSpot = {
-                    location: document.getElementById("editLocation").value.trim(),
-                    parking_type: document.getElementById("editParkingType").value,
-                    pricing_type: document.getElementById("editPricingType").value
-                };
-
-                try {
-                    const token = getToken();
-                    if (!token) throw new Error("認證令牌缺失，請重新登入！");
-
-                    const response = await fetch(`${API_URL}/parking/${spot.spot_id}`, {
-                        method: 'PUT',
-                        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
-                        body: JSON.stringify(updatedSpot)
-                    });
-                    if (!response.headers.get('content-type')?.includes('application/json')) {
-                        throw new Error("後端返回非 JSON 響應，請檢查伺服器配置");
-                    }
-                    if (!response.ok) {
-                        if (response.status === 401) throw new Error("認證失敗，請重新登入！");
-                        const errorData = await response.json();
-                        throw new Error(`HTTP error! Status: ${response.status}, Message: ${errorData.error || '未知錯誤'}`);
-                    }
-                    await response.json();
-                    alert("車位信息已成功更新！");
-                    editForm.remove();
-                    handleSpecificSpotSearch();
-                } catch (error) {
-                    console.error("Failed to update spot:", error);
-                    alert(`無法更新車位資料，請檢查後端服務 (錯誤: ${error.message})`);
-                    if (error.message === "認證失敗，請重新登入！") {
-                        removeToken();
-                        showLoginPage(true);
-                    }
-                }
-            });
-
-            document.getElementById("cancelEditButton").addEventListener("click", () => editForm.remove());
-        }
-
-        specificSpotButton.addEventListener("click", handleSpecificSpotSearch);
-        specificSpotInput.addEventListener("keypress", function (event) {
+        newSpecificSpotButton.addEventListener("click", handleSpecificSpotSearch);
+        newSpecificSpotInput.addEventListener("keypress", function (event) {
             if (event.key === "Enter") handleSpecificSpotSearch();
         });
     }
