@@ -655,25 +655,38 @@ document.addEventListener("DOMContentLoaded", async function () {
 
                     // 提取並存儲 member_id
                     let memberId = null;
-                    if (result.data.member_id) memberId = result.data.member_id;
-                    else if (result.data.id) memberId = result.data.id;
-                    else if (result.data.user_id) memberId = result.data.user_id;
-                    else if (result.data.member && result.data.member.id) memberId = result.data.member.id;
-                    else {
+                    if (result.data.member && result.data.member.member_id) {
+                        memberId = result.data.member.member_id; // 從 result.data.member.member_id 提取
+                    } else if (result.data.member_id) {
+                        memberId = result.data.member_id;
+                    } else if (result.data.id) {
+                        memberId = result.data.id;
+                    } else if (result.data.user_id) {
+                        memberId = result.data.user_id;
+                    } else if (result.data.member && result.data.member.id) {
+                        memberId = result.data.member.id;
+                    } else {
                         showError("後端未返回會員 ID，請聯繫管理員或檢查後端 API！");
                         console.error("Member ID not provided by backend:", JSON.stringify(result.data, null, 2));
                         return;
                     }
                     localStorage.setItem("member_id", memberId.toString());
+                    console.log("Member ID stored in localStorage:", memberId);
 
                     let role = "";
-                    if (typeof result.data.role === "string") role = result.data.role.toLowerCase().trim();
-                    else if (result.data.user && typeof result.data.user.role === "string") role = result.data.user.role.toLowerCase().trim();
-                    else if (result.data.roles && Array.isArray(result.data.roles) && result.data.roles.length > 0) role = result.data.roles[0].toLowerCase().trim();
-                    else if (typeof result.data.user_role === "string") role = result.data.user_role.toLowerCase().trim();
-                    else if (typeof result.role === "string") role = result.role.toLowerCase().trim();
-                    else if (result.data.member && typeof result.data.member.role === "string") role = result.data.member.role.toLowerCase().trim();
-                    else {
+                    if (result.data.member && typeof result.data.member.role === "string") {
+                        role = result.data.member.role.toLowerCase().trim();
+                    } else if (typeof result.data.role === "string") {
+                        role = result.data.role.toLowerCase().trim();
+                    } else if (result.data.user && typeof result.data.user.role === "string") {
+                        role = result.data.user.role.toLowerCase().trim();
+                    } else if (result.data.roles && Array.isArray(result.data.roles) && result.data.roles.length > 0) {
+                        role = result.data.roles[0].toLowerCase().trim();
+                    } else if (typeof result.data.user_role === "string") {
+                        role = result.data.user_role.toLowerCase().trim();
+                    } else if (typeof result.role === "string") {
+                        role = result.role.toLowerCase().trim();
+                    } else {
                         showError("後端未返回有效的角色資訊，請聯繫管理員或檢查後端 API！");
                         console.error("Role not provided by backend or invalid format:", JSON.stringify(result.data, null, 2));
                         console.error("Full login response:", JSON.stringify(result, null, 2));
@@ -704,6 +717,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                 showError(error.message || "無法連接到伺服器，請檢查網路或後端服務！");
             }
         } else {
+            // 註冊邏輯保持不變
             const name = nameInput.value.trim();
             const phone = phoneInput.value.trim();
             const role = roleInput.value.toLowerCase().trim();
@@ -721,19 +735,27 @@ document.addEventListener("DOMContentLoaded", async function () {
                 if (!license_plate) errors.push("請填寫車牌號碼");
                 if (!vehicle_type) errors.push("請填寫車型");
                 const licensePlateRegex = /^[A-Z]{2,3}-[0-9]{3,4}$/;
-                if (!licensePlateRegex.test(license_plate)) errors.push("請提供有效的車牌號碼（格式如 AAA-1111）");
+                if (!licensePlateRegex.test(license_plate)) {
+                    errors.push("請提供有效的車牌號碼（格式如 AAA-1111）");
+                }
             }
 
             const phoneRegex = /^[0-9]{10}$/;
-            if (!phoneRegex.test(phone)) errors.push("請提供有效的電話號碼（10位數字）");
+            if (!phoneRegex.test(phone)) {
+                errors.push("請提供有效的電話號碼（10位數字）");
+            }
 
             const cleanedPassword = password.replace(/[^\x20-\x7E]/g, "");
             const hasLetter = /[a-zA-Z]/.test(cleanedPassword);
             const hasNumber = /[0-9]/.test(cleanedPassword);
             const isLongEnough = cleanedPassword.length >= 8;
-            if (!hasLetter || !hasNumber || !isLongEnough) errors.push("密碼必須至少8個字符，包含字母和數字");
+            if (!hasLetter || !hasNumber || !isLongEnough) {
+                errors.push("密碼必須至少8個字符，包含字母和數字");
+            }
 
-            if (payment_method === "credit_card" && !payment_info) errors.push("請輸入信用卡號");
+            if (payment_method === "credit_card" && !payment_info) {
+                errors.push("請輸入信用卡號");
+            }
 
             if (errors.length > 0) {
                 showError(errors.join("；"));
