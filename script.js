@@ -2,6 +2,7 @@ console.log("script.js loaded");
 
 // 全局變量，用於標記 Google Maps API 是否已載入
 window.isGoogleMapsLoaded = false;
+let mapLoadPromise = null; // 用於確保 Google Maps API 只載入一次
 
 // 共用工具函數
 const utils = {
@@ -34,7 +35,8 @@ const utils = {
 
         const contentType = response.headers.get("content-type");
         if (!contentType?.includes("application/json")) {
-            throw new Error("後端返回非 JSON 格式的回應！");
+            const text = await response.text();
+            throw new Error(`後端返回非 JSON 格式的回應：${text}`);
         }
         return response.json();
     },
@@ -237,39 +239,55 @@ document.addEventListener("DOMContentLoaded", async function () {
         const mapContainer = document.getElementById(containerId);
         const errorElement = mapContainer?.nextElementSibling || errorMessage;
 
-        return new Promise((resolve, reject) => {
-            if (window.isGoogleMapsLoaded && window.google && google.maps) {
-                const map = new google.maps.Map(mapContainer, {
-                    center: { lat: defaultLat, lng: defaultLng },
-                    zoom: 15,
-                });
-                resolve(map);
-                return;
-            }
+        if (!mapContainer) {
+            console.error(`Map container with ID "${containerId}" not found`);
+            return null;
+        }
 
-            const script = document.createElement("script");
-            script.src = `https://maps.googleapis.com/maps/api/js?key=AIzaSyDx1m0ViIY5aCpF4Khxtuay2VZc6k3Ne0g&callback=initMap`;
-            script.async = true;
-            script.onerror = () => {
-                utils.showError("Google Maps API 載入失敗，請檢查 API 金鑰或網路連線。", errorElement);
-                console.error("Google Maps API failed to load.");
-                mapContainer.style.display = "none";
-                reject(new Error("Google Maps API 載入失敗"));
-            };
-            document.head.appendChild(script);
+        // 如果已經有載入中的 Promise，直接返回
+        if (!mapLoadPromise) {
+            mapLoadPromise = new Promise((resolve, reject) => {
+                if (window.isGoogleMapsLoaded && window.google && google.maps) {
+                    const map = new google.maps.Map(mapContainer, {
+                        center: { lat: defaultLat, lng: defaultLng },
+                        zoom: 15,
+                    });
+                    resolve(map);
+                    return;
+                }
 
-            window.initMap = () => {
-                window.isGoogleMapsLoaded = true;
-                const map = new google.maps.Map(mapContainer, {
-                    center: { lat: defaultLat, lng: defaultLng },
-                    zoom: 15,
-                });
-                resolve(map);
-            };
-        });
+                const script = document.createElement("script");
+                script.src = `https://maps.googleapis.com/maps/api/js?key=AIzaSyDx1m0ViIY5aCpF4Khxtuay2VZc6k3Ne0g&callback=initMapCallback`;
+                script.async = true;
+                script.onerror = () => {
+                    utils.showError("Google Maps API 載入失敗，請檢查 API 金鑰或網路連線。", errorElement);
+                    console.error("Google Maps API failed to load.");
+                    mapContainer.style.display = "none";
+                    reject(new Error("Google Maps API 載入失敗"));
+                };
+                document.head.appendChild(script);
+
+                window.initMapCallback = () => {
+                    window.isGoogleMapsLoaded = true;
+                    const map = new google.maps.Map(mapContainer, {
+                        center: { lat: defaultLat, lng: defaultLng },
+                        zoom: 15,
+                    });
+                    resolve(map);
+                };
+            });
+        }
+
+        try {
+            return await mapLoadPromise;
+        } catch (error) {
+            console.error("Failed to initialize map:", error);
+            return null;
+        }
     }
 
     function addMapMarkers(map, spots, bounds) {
+        if (!map) return; // 確保地圖存在
         if (map.markers) map.markers.forEach(marker => marker.setMap(null));
         map.markers = [];
 
