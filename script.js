@@ -1,5 +1,14 @@
 console.log("script.js loaded");
 
+// 全局變量，用於標記 Google Maps API 是否已載入
+window.isGoogleMapsLoaded = false;
+
+// Google Maps API 載入完成後的回調函數
+window.initMap = function () {
+    console.log("Google Maps API loaded successfully");
+    window.isGoogleMapsLoaded = true;
+};
+
 document.addEventListener("DOMContentLoaded", async function () {
     console.log("DOM fully loaded");
 
@@ -73,7 +82,8 @@ document.addEventListener("DOMContentLoaded", async function () {
         try {
             localStorage.removeItem("token");
             localStorage.removeItem("role");
-            localStorage.removeItem("member_id"); // 清除 member_id
+            localStorage.removeItem("member_id");
+            localStorage.removeItem("selectedParkingSpotId");
             history.pushState({}, '', '/');
         } catch (error) {
             console.error("Failed to remove token from localStorage:", error);
@@ -166,10 +176,6 @@ document.addEventListener("DOMContentLoaded", async function () {
         const validRoles = ["shared_owner", "renter", "admin"];
         if (!role || !validRoles.includes(role)) {
             console.error(`Unrecognized role: "${role}". Expected one of: ${validRoles.join(", ")}. Redirecting to login.`);
-            console.log("Current localStorage contents:", {
-                token: localStorage.getItem("token"),
-                role: localStorage.getItem("role")
-            });
             removeToken();
             showLoginPage();
             return;
@@ -215,7 +221,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 
         const defaultSectionId = role === "shared_owner" ? "viewParking" :
             role === "renter" ? "reserveParking" :
-                role === "admin" ? "viewAllUsers" : "viewParking";
+            role === "admin" ? "viewAllUsers" : "viewParking";
         const defaultSection = document.getElementById(defaultSectionId);
 
         if (!defaultSection) {
@@ -286,12 +292,11 @@ document.addEventListener("DOMContentLoaded", async function () {
         }
         memberIdInput.value = memberId;
 
-        // 動態調整費用標籤
+        // 動態調整費用標籤（僅保留按小時）
         const pricingTypeSelect = document.getElementById("newPricingType");
         const priceLabel = document.getElementById("newPriceLabel");
-        pricingTypeSelect.addEventListener("change", () => {
-            priceLabel.textContent = pricingTypeSelect.value === "hourly" ? "半小時費用（元）：" : "每月費用（元）：";
-        });
+        pricingTypeSelect.innerHTML = `<option value="hourly">按小時</option>`;
+        priceLabel.textContent = "半小時費用（元）：";
 
         // 動態添加可用日期
         const availableDaysContainer = document.getElementById("availableDaysContainer");
@@ -301,12 +306,12 @@ document.addEventListener("DOMContentLoaded", async function () {
             const dateEntry = document.createElement("div");
             dateEntry.className = "date-entry";
             dateEntry.innerHTML = `
-            <label>日期 (YYYY-MM-DD)：</label>
-            <input type="date" class="available-date" value="${date}">
-            <label>是否可用：</label>
-            <input type="checkbox" class="available-status" ${isAvailable ? "checked" : ""}>
-            <button type="button" class="remove-date">移除</button>
-        `;
+                <label>日期 (YYYY-MM-DD)：</label>
+                <input type="date" class="available-date" value="${date}">
+                <label>是否可用：</label>
+                <input type="checkbox" class="available-status" ${isAvailable ? "checked" : ""}>
+                <button type="button" class="remove-date">移除</button>
+            `;
             availableDaysContainer.appendChild(dateEntry);
 
             dateEntry.querySelector(".remove-date").addEventListener("click", () => {
@@ -316,10 +321,106 @@ document.addEventListener("DOMContentLoaded", async function () {
 
         addDateButton.addEventListener("click", () => addDateEntry());
 
+        // 檢查 Google Maps API 是否已載入
+        const addParkingMap = document.getElementById("addParkingMap");
+        const latitudeInput = document.getElementById("latitudeInput");
+        const longitudeInput = document.getElementById("longitudeInput");
+
+        if (!addParkingMap || !latitudeInput || !longitudeInput) {
+            console.error("Required elements for map in addParking not found: addParkingMap, latitudeInput, or longitudeInput");
+            alert("地圖容器或經緯度輸入框未找到，地圖功能將不可用。");
+            return;
+        }
+
+        let map, marker;
+        if (!window.isGoogleMapsLoaded || !window.google || !google.maps) {
+            console.error("Google Maps API 未載入或載入失敗");
+            alert("無法載入 Google Maps API，請檢查網路連線或 API 金鑰是否有效。地圖功能將不可用，但您仍可手動輸入經緯度。");
+            addParkingMap.style.display = "none";
+            latitudeInput.disabled = false;
+            longitudeInput.disabled = false;
+            latitudeInput.placeholder = "請手動輸入緯度";
+            longitudeInput.placeholder = "請手動輸入經度";
+            return;
+        }
+
+        // 初始化地圖
+        addParkingMap.style.display = "block";
+        map = new google.maps.Map(addParkingMap, {
+            center: { lat: 25.0330, lng: 121.5654 }, // 預設為台北市中心
+            zoom: 15,
+        });
+
+        // 嘗試獲取用戶當前位置
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    const userLocation = {
+                        lat: position.coords.latitude,
+                        lng: position.coords.longitude,
+                    };
+                    map.setCenter(userLocation);
+                    latitudeInput.value = userLocation.lat;
+                    longitudeInput.value = userLocation.lng;
+                    marker = new google.maps.Marker({
+                        position: userLocation,
+                        map: map,
+                        title: "選定位置",
+                    });
+                },
+                (error) => {
+                    console.warn("Failed to get user location:", error.message);
+                    alert("無法獲取您的位置，將使用預設位置（台北市）。請確保已允許位置權限。");
+                    latitudeInput.value = 25.0330;
+                    longitudeInput.value = 121.5654;
+                    marker = new google.maps.Marker({
+                        position: { lat: 25.0330, lng: 121.5654 },
+                        map: map,
+                        title: "預設位置",
+                    });
+                },
+                { timeout: 10000, maximumAge: 0 }
+            );
+        } else {
+            console.warn("Browser does not support geolocation");
+            alert("您的瀏覽器不支援地理位置功能，將使用預設位置（台北市）。");
+            latitudeInput.value = 25.0330;
+            longitudeInput.value = 121.5654;
+            marker = new google.maps.Marker({
+                position: { lat: 25.0330, lng: 121.5654 },
+                map: map,
+                title: "預設位置",
+            });
+        }
+
+        // 地圖點擊事件：更新經緯度和標記，並顯示資訊視窗
+        map.addListener("click", (event) => {
+            const lat = event.latLng.lat();
+            const lng = event.latLng.lng();
+            latitudeInput.value = lat.toFixed(6);
+            longitudeInput.value = lng.toFixed(6);
+
+            if (marker) {
+                marker.setPosition(event.latLng);
+            } else {
+                marker = new google.maps.Marker({
+                    position: event.latLng,
+                    map: map,
+                    title: "選定位置",
+                });
+            }
+
+            // 添加資訊視窗
+            const infoWindow = new google.maps.InfoWindow({
+                content: `選定位置：<br>緯度：${lat.toFixed(6)}<br>經度：${lng.toFixed(6)}`,
+            });
+            infoWindow.open(map, marker);
+        });
+
+        // 保存車位按鈕事件
         document.getElementById("saveNewSpotButton").addEventListener("click", async () => {
-            // 獲取表單數據
             const newSpot = {
-                member_id: parseInt(memberIdInput.value), // 會員 ID
+                member_id: parseInt(memberIdInput.value),
                 location: document.getElementById("newLocation").value.trim(),
                 parking_type: document.getElementById("newParkingType").value,
                 floor_level: document.getElementById("newFloorLevel").value.trim(),
@@ -347,26 +448,22 @@ document.addEventListener("DOMContentLoaded", async function () {
                 alert("樓層最多 20 個字符！");
                 return;
             }
-            if (!["hourly", "monthly"].includes(newSpot.pricing_type)) {
-                alert("計費方式必須為 'hourly' 或 'monthly'！");
+            if (newSpot.pricing_type !== "hourly") {
+                alert("計費方式必須為 'hourly'！");
                 return;
             }
 
             // 處理費用字段
             const priceInput = document.getElementById("newPrice").value;
-            const price = priceInput ? parseFloat(priceInput) : 20.00; // 預設值 20.00
+            const price = priceInput ? parseFloat(priceInput) : 20.00;
             if (isNaN(price) || price < 0) {
                 alert("費用必須為正數！");
                 return;
             }
-            if (newSpot.pricing_type === "hourly") {
-                newSpot.price_per_half_hour = price;
-            } else {
-                newSpot.monthly_price = price;
-            }
+            newSpot.price_per_half_hour = price;
 
             const maxDailyPriceInput = document.getElementById("newMaxDailyPrice").value;
-            const maxDailyPrice = maxDailyPriceInput ? parseFloat(maxDailyPriceInput) : 300.00; // 預設值 300.00
+            const maxDailyPrice = maxDailyPriceInput ? parseFloat(maxDailyPriceInput) : 300.00;
             if (isNaN(maxDailyPrice) || maxDailyPrice < 0) {
                 alert("每日最高價格必須為正數！");
                 return;
@@ -374,8 +471,8 @@ document.addEventListener("DOMContentLoaded", async function () {
             newSpot.daily_max_price = maxDailyPrice;
 
             // 處理經緯度
-            let latitude = parseFloat(document.getElementById("latitudeInput").value) || 0.0;
-            let longitude = parseFloat(document.getElementById("longitudeInput").value) || 0.0;
+            let latitude = parseFloat(latitudeInput.value) || 0.0;
+            let longitude = parseFloat(longitudeInput.value) || 0.0;
             if (isNaN(latitude) || latitude < -90 || latitude > 90) {
                 console.warn(`Latitude ${latitude} out of range (-90 to 90), resetting to default 0.0`);
                 latitude = 0.0;
@@ -498,11 +595,7 @@ document.addEventListener("DOMContentLoaded", async function () {
             const validRoles = ["shared_owner", "renter", "admin"];
             if (!role || !validRoles.includes(role)) {
                 console.error(`Invalid role during initialization: "${role}". Expected: ${validRoles.join(", ")}. Redirecting to login.`);
-                console.log("Current localStorage contents:", {
-                    token: localStorage.getItem("token"),
-                    role: localStorage.getItem("role")
-                });
-                showError("無效的用戶角色，請重新登入！可能是後端未正確返回角色資訊或本地數據異常。");
+                showError("無效的用戶角色，請重新登入！");
                 removeToken();
                 showLoginPage();
             } else {
@@ -657,11 +750,31 @@ document.addEventListener("DOMContentLoaded", async function () {
         const email = emailInput.value.trim();
         const password = passwordInput.value.trim();
 
-        // 清除即時驗證訊息
-        errorMessage.textContent = "";
+        const errors = [];
+        if (!email) errors.push("電子郵件不能為空");
+        if (!password) errors.push("密碼不能為空");
 
-        if (!email || !password) {
-            showError("電子郵件和密碼不能為空！");
+        const passwordRegex = /^(?=.*[a-zA-Z])(?=.*[0-9]).{8,}$/;
+        if (!passwordRegex.test(password)) {
+            errors.push("密碼必須至少 8 個字符，包含字母和數字");
+        }
+
+        if (!isLogin) {
+            const name = nameInput.value.trim();
+            const phone = phoneInput.value.trim();
+            const role = roleInput.value.toLowerCase().trim();
+            const payment_method = paymentMethodInput.value;
+            const license_plate = licensePlateInput.value.trim();
+
+            if (!name) errors.push("姓名不能為空");
+            if (!phone || !/^[0-9]{10}$/.test(phone)) errors.push("請提供有效的電話號碼（10 位數字）");
+            if (!role) errors.push("請選擇身份");
+            if (!payment_method) errors.push("請選擇付款方式");
+            if (role === "renter" && !license_plate) errors.push("車牌號碼不能為空");
+        }
+
+        if (errors.length > 0) {
+            showError(errors.join("；"));
             return;
         }
 
@@ -685,10 +798,9 @@ document.addEventListener("DOMContentLoaded", async function () {
                     }
                     setToken(result.data.token);
 
-                    // 提取並存儲 member_id
                     let memberId = null;
                     if (result.data.member && result.data.member.member_id) {
-                        memberId = result.data.member.member_id; // 從 result.data.member.member_id 提取
+                        memberId = result.data.member.member_id;
                     } else if (result.data.member_id) {
                         memberId = result.data.member_id;
                     } else if (result.data.id) {
@@ -698,12 +810,10 @@ document.addEventListener("DOMContentLoaded", async function () {
                     } else if (result.data.member && result.data.member.id) {
                         memberId = result.data.member.id;
                     } else {
-                        showError("後端未返回會員 ID，請聯繫管理員或檢查後端 API！");
-                        console.error("Member ID not provided by backend:", JSON.stringify(result.data, null, 2));
+                        showError("後端未返回會員 ID，請聯繫管理員！");
                         return;
                     }
                     localStorage.setItem("member_id", memberId.toString());
-                    console.log("Member ID stored in localStorage:", memberId);
 
                     let role = "";
                     if (result.data.member && typeof result.data.member.role === "string") {
@@ -719,25 +829,15 @@ document.addEventListener("DOMContentLoaded", async function () {
                     } else if (typeof result.role === "string") {
                         role = result.role.toLowerCase().trim();
                     } else {
-                        showError("後端未返回有效的角色資訊，請聯繫管理員或檢查後端 API！");
-                        console.error("Role not provided by backend or invalid format:", JSON.stringify(result.data, null, 2));
-                        console.error("Full login response:", JSON.stringify(result, null, 2));
+                        showError("後端未返回有效的角色資訊，請聯繫管理員！");
                         return;
                     }
                     const validRoles = ["shared_owner", "renter", "admin"];
                     if (!validRoles.includes(role)) {
-                        showError(`後端返回的角色 "${role}" 無效，應為 ${validRoles.join(", ")} 之一，請聯繫管理員！`);
-                        console.error("Invalid role received from backend:", role);
+                        showError(`後端返回的角色 "${role}" 無效，應為 ${validRoles.join(", ")} 之一！`);
                         return;
                     }
                     setRole(role);
-                    const storedRole = getRole();
-                    if (!storedRole || !validRoles.includes(storedRole)) {
-                        showError("角色存儲失敗，請聯繫管理員！");
-                        console.error("Role storage verification failed:", { storedRole, expected: validRoles });
-                        return;
-                    }
-                    console.log("Login successful, role stored:", storedRole);
                     alert("登入成功！");
                     showMainPage();
                 } else {
@@ -749,7 +849,6 @@ document.addEventListener("DOMContentLoaded", async function () {
                 showError(error.message || "無法連接到伺服器，請檢查網路或後端服務！");
             }
         } else {
-            // 註冊邏輯保持不變
             const name = nameInput.value.trim();
             const phone = phoneInput.value.trim();
             const role = roleInput.value.toLowerCase().trim();
@@ -758,47 +857,11 @@ document.addEventListener("DOMContentLoaded", async function () {
             const license_plate = licensePlateInput.value.trim();
             const vehicle_type = vehicleTypeInput.value.trim();
 
-            const errors = [];
-            if (!name) errors.push("請填寫姓名");
-            if (!phone) errors.push("請填寫電話號碼");
-            if (!role) errors.push("請選擇身份");
-            if (!payment_method) errors.push("請選擇付款方式");
-            if (role === "renter") {
-                if (!license_plate) errors.push("請填寫車牌號碼");
-                if (!vehicle_type) errors.push("請填寫車型");
-                const licensePlateRegex = /^[A-Z]{2,3}-[0-9]{3,4}$/;
-                if (!licensePlateRegex.test(license_plate)) {
-                    errors.push("請提供有效的車牌號碼（格式如 AAA-1111）");
-                }
-            }
-
-            const phoneRegex = /^[0-9]{10}$/;
-            if (!phoneRegex.test(phone)) {
-                errors.push("請提供有效的電話號碼（10位數字）");
-            }
-
-            const cleanedPassword = password.replace(/[^\x20-\x7E]/g, "");
-            const hasLetter = /[a-zA-Z]/.test(cleanedPassword);
-            const hasNumber = /[0-9]/.test(cleanedPassword);
-            const isLongEnough = cleanedPassword.length >= 8;
-            if (!hasLetter || !hasNumber || !isLongEnough) {
-                errors.push("密碼必須至少8個字符，包含字母和數字");
-            }
-
-            if (payment_method === "credit_card" && !payment_info) {
-                errors.push("請輸入信用卡號");
-            }
-
-            if (errors.length > 0) {
-                showError(errors.join("；"));
-                return;
-            }
-
             try {
                 const response = await fetch(`${API_URL}/members/register`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ name, email, password: cleanedPassword, phone, role, payment_method, payment_info, license_plate, vehicle_type })
+                    body: JSON.stringify({ name, email, password, phone, role, payment_method, payment_info, license_plate, vehicle_type })
                 });
                 console.log(`Register response status: ${response.status}`);
                 if (!response.headers.get('content-type')?.includes('application/json')) {
@@ -1021,7 +1084,8 @@ document.addEventListener("DOMContentLoaded", async function () {
         const reserveSection = document.getElementById("reserveParking");
         reserveSection.style.display = "block";
 
-        const reserveDateInput = document.getElementById("reserveDate");
+        const reserveStartDateInput = document.getElementById("reserveStartDate");
+        const reserveEndDateInput = document.getElementById("reserveEndDate");
         const startTimeInput = document.getElementById("startTime");
         const endTimeInput = document.getElementById("endTime");
         const reserveSearchButton = document.getElementById("reserveSearchButton");
@@ -1034,21 +1098,26 @@ document.addEventListener("DOMContentLoaded", async function () {
         const parkingTableBody = document.getElementById("reserveParkingTableBody");
         const reserveParkingMap = document.getElementById("reserveParkingMap");
 
-        if (!reserveDateInput || !startTimeInput || !endTimeInput || !reserveSearchButton || !parkingTableBody || !reserveParkingMap) {
+        if (!reserveStartDateInput || !reserveEndDateInput || !startTimeInput || !endTimeInput || !reserveSearchButton || !parkingTableBody || !reserveParkingMap) {
             console.warn("Required elements not found for reserveParking");
             return;
         }
 
         const today = new Date().toISOString().split('T')[0];
-        reserveDateInput.value = today;
+        reserveStartDateInput.value = today;
+        reserveEndDateInput.value = today;
         startTimeInput.value = "09:00";
         endTimeInput.value = "17:00";
 
-        let map;
-        if (!window.google || !google.maps) {
-            console.error("Google Maps API 未載入");
+        // 檢查 Google Maps API 是否已載入
+        if (!window.isGoogleMapsLoaded || !window.google || !google.maps) {
+            console.error("Google Maps API 未載入或載入失敗");
+            alert("無法載入 Google Maps API，請檢查網路連線或 API 金鑰是否有效。地圖功能將不可用。");
+            reserveParkingMap.style.display = "none";
             return;
         }
+
+        let map;
         if (!map) {
             map = new google.maps.Map(reserveParkingMap, {
                 center: { lat: 25.0330, lng: 121.5654 },
@@ -1058,7 +1127,8 @@ document.addEventListener("DOMContentLoaded", async function () {
         }
 
         async function handleReserveSearch() {
-            const date = reserveDateInput.value;
+            const startDate = reserveStartDateInput.value;
+            const endDate = reserveEndDateInput.value;
             const startTime = startTimeInput.value;
             const endTime = endTimeInput.value;
             const searchQuery = reserveSearchInput ? reserveSearchInput.value.trim().toLowerCase() : '';
@@ -1068,20 +1138,28 @@ document.addEventListener("DOMContentLoaded", async function () {
             const filterPricing = reservePricing ? reservePricing.value : 'all';
             const filterStatus = reserveStatus ? reserveStatus.value : 'all';
 
-            if (!date) {
-                alert("請選擇日期！");
+            const selectedStartDate = new Date(startDate);
+            const selectedEndDate = new Date(endDate);
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            if (selectedStartDate < today) {
+                alert("無法選擇過去的開始日期！");
                 return;
             }
-            if (!startTime || !endTime) {
-                alert("請選擇開始和結束時間！");
+            if (startDate > endDate) {
+                alert("結束日期不能早於開始日期！");
                 return;
             }
-            if (startTime >= endTime) {
+
+            const [startHour, startMinute] = startTime.split(":").map(Number);
+            const [endHour, endMinute] = endTime.split(":").map(Number);
+            const startDateTime = new Date(startDate);
+            startDateTime.setHours(startHour, startMinute);
+            const endDateTime = new Date(endDate);
+            endDateTime.setHours(endHour, endMinute);
+
+            if (startDateTime >= endDateTime) {
                 alert("結束時間必須晚於開始時間！");
-                return;
-            }
-            if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
-                alert("日期格式不正確，請使用 YYYY-MM-DD 格式！");
                 return;
             }
 
@@ -1101,8 +1179,8 @@ document.addEventListener("DOMContentLoaded", async function () {
             }
 
             const timeZoneOffset = "+08:00";
-            const startDateTime = `${date}T${startTime}:00${timeZoneOffset}`;
-            const endDateTime = `${date}T${endTime}:00${timeZoneOffset}`;
+            const startDateTimeStr = `${startDate}T${startTime}:00${timeZoneOffset}`;
+            const endDateTimeStr = `${endDate}T${endTime}:00${timeZoneOffset}`;
 
             let retries = 3, spots = null;
             while (retries > 0) {
@@ -1110,7 +1188,14 @@ document.addEventListener("DOMContentLoaded", async function () {
                     const token = getToken();
                     if (!token) throw new Error("認證令牌缺失，請重新登入！");
 
-                    const queryParams = new URLSearchParams({ date, start_time: startDateTime, end_time: endDateTime, latitude, longitude });
+                    const queryParams = new URLSearchParams({
+                        start_date: startDate,
+                        end_date: endDate,
+                        start_time: startDateTimeStr,
+                        end_time: endDateTimeStr,
+                        latitude,
+                        longitude
+                    });
                     const response = await fetch(`${API_URL}/parking/available?${queryParams.toString()}`, {
                         headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` }
                     });
@@ -1229,7 +1314,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                 `;
                 if (spot.status === "可用") {
                     row.querySelector(".reserve-btn").addEventListener("click", () => {
-                        handleReserveParkingClick(spot.spot_id, date, startTime, endTime, row);
+                        handleReserveParkingClick(spot.spot_id, startDate, endDate, startTime, endTime, row);
                         setParkingSpotId(spot.spot_id);
                     });
                 }
@@ -1243,6 +1328,16 @@ document.addEventListener("DOMContentLoaded", async function () {
             parkingTableBody.style.display = 'table-row-group';
         }
 
+        // 定時更新車位狀態
+        const refreshInterval = setInterval(async () => {
+            if (reserveSection.style.display === "none") {
+                clearInterval(refreshInterval);
+                return;
+            }
+            await handleReserveSearch();
+            console.log("車位狀態已更新");
+        }, 30000);
+
         reserveSearchButton.addEventListener("click", handleReserveSearch);
         reserveSearchInput.addEventListener("keypress", function (event) {
             if (event.key === "Enter") handleReserveSearch();
@@ -1250,7 +1345,7 @@ document.addEventListener("DOMContentLoaded", async function () {
     }
 
     // 預約停車點擊處理
-    async function handleReserveParkingClick(spotId, selectedDate, startTime, endTime, row) {
+    async function handleReserveParkingClick(spotId, startDate, endDate, startTime, endTime, row) {
         if (!await checkAuth()) return;
 
         const role = getRole();
@@ -1265,8 +1360,8 @@ document.addEventListener("DOMContentLoaded", async function () {
                 return;
             }
 
-            const startDateTime = `${selectedDate}T${startTime}:00`;
-            const endDateTime = `${selectedDate}T${endTime}:00`;
+            const startDateTime = `${startDate}T${startTime}:00`;
+            const endDateTime = `${endDate}T${endTime}:00`;
 
             const token = getToken();
             const response = await fetch(`${API_URL}/rent`, {
@@ -1315,9 +1410,7 @@ document.addEventListener("DOMContentLoaded", async function () {
         const incomeTableBody = document.getElementById("incomeTableBody");
 
         if (!startDateInput || !endDateInput || !incomeSearchButton || !totalIncomeSpan || !incomeTableBody) {
-            console.error("Required DOM elements missing for income inquiry:", {
-                startDateInput, endDateInput, incomeSearchButton, totalIncomeSpan, incomeTableBody
-            });
+            console.error("Required DOM elements missing for income inquiry");
             alert("頁面元素載入失敗，請檢查 DOM 結構！");
             return;
         }
@@ -1357,10 +1450,9 @@ document.addEventListener("DOMContentLoaded", async function () {
                     }
                 });
                 if (!response.ok) {
-                    const errorText = await response.text();
                     if (response.status === 401) throw new Error("認證失敗，請重新登入！");
-                    const errorData = await response.json().catch(() => ({}));
-                    throw new Error(`HTTP error! Status: ${response.status}, Message: ${errorData.error || errorText || '未知錯誤'}`);
+                    const errorData = await response.json();
+                    throw new Error(`HTTP error! Status: ${response.status}, Message: ${errorData.error || '未知錯誤'}`);
                 }
 
                 const contentType = response.headers.get('content-type');
@@ -1381,20 +1473,21 @@ document.addEventListener("DOMContentLoaded", async function () {
                 else if (Array.isArray(incomeData)) rents = incomeData;
                 else {
                     console.warn("No known record fields found in incomeData:", incomeData);
-                    alert("後端返回的數據格式不正確，無法提取收入記錄（缺少 'rents' 字段）。請檢查後端 API 或聯繫管理員。");
+                    alert("後端返回的數據格式不正確，無法提取收入記錄（缺少 'rents' 字段）。請檢查後端 API！");
                     incomeTableBody.innerHTML = '<tr><td colspan="5">數據格式錯誤，無法顯示收入記錄</td></tr>';
                     return;
                 }
 
                 if (!Array.isArray(rents)) {
                     console.error("Rents is not an array:", rents);
+                    alert("後端返回的收入記錄格式錯誤（應為陣列），請聯繫管理員檢查 API 響應。");
                     incomeTableBody.innerHTML = '<tr><td colspan="5">收入記錄格式錯誤，請檢查後端服務</td></tr>';
                     return;
                 }
 
                 if (rents.length === 0) {
                     incomeTableBody.innerHTML = '<tr><td colspan="5">無收入記錄</td></tr>';
-                    alert("目前無收入記錄，可能原因：\n1. 所選日期範圍內無記錄。\n2. 車位 ID 無效或無相關記錄。\n3. 後端服務異常。\n請嘗試：\n- 檢查日期範圍\n- 確保已選擇正確車位\n- 確認後端服務正常");
+                    alert("目前無收入記錄，可能原因：\n1. 所選日期範圍內無記錄。\n2. 車位 ID 無效。\n3. 後端服務異常。");
                     return;
                 }
 
@@ -1510,7 +1603,7 @@ document.addEventListener("DOMContentLoaded", async function () {
         const renterTableBody = document.getElementById("renterTableBody");
 
         if (!ownerTableBody || !renterTableBody) {
-            console.error("Required DOM elements missing for view all users:", { ownerTableBody, renterTableBody });
+            console.error("Required DOM elements missing for view all users");
             alert("頁面元素載入失敗，請檢查 DOM 結構！");
             return;
         }
@@ -1530,7 +1623,6 @@ document.addEventListener("DOMContentLoaded", async function () {
                         "Authorization": `Bearer ${token}`
                     }
                 });
-
                 if (!response.ok) {
                     if (response.status === 401) throw new Error("認證失敗，請重新登入！");
                     const errorData = await response.json();
@@ -1538,74 +1630,61 @@ document.addEventListener("DOMContentLoaded", async function () {
                 }
 
                 const data = await response.json();
-                let members = data.data || data;
-                if (!Array.isArray(members)) {
-                    members = [members]; // 單一用戶數據轉為陣列處理
+                let users = data.data || data;
+                if (!Array.isArray(users)) {
+                    console.error("Users data is not an array:", data);
+                    alert("後端返回的用戶資料格式錯誤，請檢查後端服務");
+                    return;
                 }
-                if (!Array.isArray(members) || members.length === 0) throw new Error("後端返回的用戶資料格式錯誤或無數據");
 
-                // 移除重複資料並過濾管理員
-                const uniqueMembers = [];
-                const seen = new Set();
-                members.forEach(member => {
-                    const key = `${member.member_id}-${member.email}`;
-                    if (!seen.has(key) && member.role !== "admin") {
-                        seen.add(key);
-                        uniqueMembers.push(member);
-                    }
-                });
+                const owners = users.filter(user => user.role.toLowerCase() === "shared_owner");
+                const renters = users.filter(user => user.role.toLowerCase() === "renter");
 
-                // 根據 role 過濾並分類用戶
-                const owners = uniqueMembers.filter(member => member.role === "shared_owner");
-                const renters = uniqueMembers.filter(member => member.role === "renter");
+                ownerTableBody.innerHTML = '';
+                renterTableBody.innerHTML = '';
 
-                // 渲染共享者資料
                 if (owners.length === 0) {
-                    ownerTableBody.innerHTML = '<tr><td colspan="6">無共享者資料</td></tr>';
+                    ownerTableBody.innerHTML = '<tr><td colspan="6">無車位共享者資料</td></tr>';
                 } else {
-                    ownerTableBody.innerHTML = '';
                     const ownerFragment = document.createDocumentFragment();
-                    owners.forEach(member => {
+                    owners.forEach(user => {
                         const row = document.createElement("tr");
                         row.innerHTML = `
-                            <td>${member.member_id || 'N/A'}</td>
-                            <td>${member.name || 'N/A'}</td>
-                            <td>${member.email || 'N/A'}</td>
-                            <td>${member.phone || 'N/A'}</td>
-                            <td>${member.payment_method || 'N/A'}</td>
-                            <td>${member.payment_info || 'N/A'}</td>
+                            <td>${user.member_id || user.id || 'N/A'}</td>
+                            <td>${user.name || '未知'}</td>
+                            <td>${user.email || '未知'}</td>
+                            <td>${user.phone || '未知'}</td>
+                            <td>${user.payment_method || '未知'}</td>
+                            <td>${user.payment_info || '無'}</td>
                         `;
                         ownerFragment.appendChild(row);
                     });
                     ownerTableBody.appendChild(ownerFragment);
                 }
 
-                // 渲染租用者資料
                 if (renters.length === 0) {
                     renterTableBody.innerHTML = '<tr><td colspan="6">無租用者資料</td></tr>';
                 } else {
-                    renterTableBody.innerHTML = '';
                     const renterFragment = document.createDocumentFragment();
-                    renters.forEach(member => {
+                    renters.forEach(user => {
                         const row = document.createElement("tr");
                         row.innerHTML = `
-                            <td>${member.member_id || 'N/A'}</td>
-                            <td>${member.name || 'N/A'}</td>
-                            <td>${member.email || 'N/A'}</td>
-                            <td>${member.phone || 'N/A'}</td>
-                            <td>${member.payment_method || 'N/A'}</td>
-                            <td>${member.payment_info || 'N/A'}</td>
+                            <td>${user.member_id || user.id || 'N/A'}</td>
+                            <td>${user.name || '未知'}</td>
+                            <td>${user.email || '未知'}</td>
+                            <td>${user.phone || '未知'}</td>
+                            <td>${user.license_plate || '無'}</td>
+                            <td>${user.vehicle_type || '無'}</td>
                         `;
                         renterFragment.appendChild(row);
                     });
                     renterTableBody.appendChild(renterFragment);
                 }
-
             } catch (error) {
                 console.error("Failed to load user data:", error);
                 alert(`無法載入用戶資料，請檢查後端服務 (錯誤: ${error.message})`);
-                ownerTableBody.innerHTML = '<tr><td colspan="6">無法載入共享者資料</td></tr>';
-                renterTableBody.innerHTML = '<tr><td colspan="6">無法載入租用者資料</td></tr>';
+                ownerTableBody.innerHTML = '<tr><td colspan="6">無法載入資料</td></tr>';
+                renterTableBody.innerHTML = '<tr><td colspan="6">無法載入資料</td></tr>';
                 if (error.message === "認證失敗，請重新登入！") {
                     removeToken();
                     showLoginPage(true);
@@ -1613,6 +1692,6 @@ document.addEventListener("DOMContentLoaded", async function () {
             }
         }
 
-        await loadUserData();
+        loadUserData();
     }
 });

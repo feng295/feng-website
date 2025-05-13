@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>智慧停車管理系統</title>
     <link rel="stylesheet" href="./styles.css">
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDx1m0ViIY5aCpF4Khxtuay2VZc6k3Ne0g&callback=initMap" async defer></script>
 </head>
 <body>
     <div class="container" id="authContainer">
@@ -69,20 +70,19 @@
                     <h2>新增車位</h2>
                     <div class="search-container">
                         <div><label for="memberIdInput">會員 ID：</label><input type="number" id="memberIdInput" readonly></div>
-                        <div><label for="newLocation">地址（最多50字）：</label><input type="text" id="newLocation" required maxlength="50" placeholder="請輸入地址"></div>
+                        <div><label for="newLocation">地址：</label><input type="text" id="newLocation" required maxlength="50" placeholder="請輸入地址"></div>
                         <div><label for="newParkingType">停車類型：</label>
                             <select id="newParkingType" required>
                                 <option value="flat">平面</option>
                                 <option value="mechanical">機械</option>
                             </select>
                         </div>
-                        <div><label for="newFloorLevel">樓層（最多20字）：</label>
+                        <div><label for="newFloorLevel">樓層：</label>
                             <input type="text" id="newFloorLevel" maxlength="20" placeholder="例如：1F（可留空）">
                         </div>
                         <div><label for="newPricingType">計費方式：</label>
                             <select id="newPricingType" required>
                                 <option value="hourly">按小時</option>
-                                <option value="monthly">按月</option>
                             </select>
                         </div>
                         <div><label id="newPriceLabel">半小時費用（元）：</label>
