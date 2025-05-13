@@ -66,44 +66,57 @@
                 <ul></ul>
             </div>
             <div class="content-container">
-                <div id="addParking" class="content-section" style="display: none;">
+                <section id="addParking" class="content-section" style="display: none;">
                     <h2>新增車位</h2>
-                    <div class="search-container">
-                        <div><label for="memberIdInput">會員 ID：</label><input type="number" id="memberIdInput" readonly></div>
-                        <div><label for="newLocation">地址：</label><input type="text" id="newLocation" required maxlength="50" placeholder="請輸入地址"></div>
-                        <div><label for="newParkingType">停車類型：</label>
-                            <select id="newParkingType" required>
-                                <option value="flat">平面</option>
-                                <option value="mechanical">機械</option>
-                            </select>
-                        </div>
-                        <div><label for="newFloorLevel">樓層：</label>
-                            <input type="text" id="newFloorLevel" maxlength="20" placeholder="例如：1F（可留空）">
-                        </div>
-                        <div><label for="newPricingType">計費方式：</label>
-                            <select id="newPricingType" required>
-                                <option value="hourly">按小時</option>
-                            </select>
-                        </div>
-                        <div><label id="newPriceLabel">半小時費用（元）：</label>
-                            <input type="number" id="newPrice" min="0" step="0.01" placeholder="預設 20.00">
-                        </div>
-                        <div><label for="newMaxDailyPrice">每日最高價格（元）：</label>
-                            <input type="number" id="newMaxDailyPrice" min="0" step="0.01" placeholder="預設 300.00">
-                        </div>
-                        <div><label for="latitudeInput">緯度：</label>
-                            <input type="number" id="latitudeInput" step="0.000001" placeholder="預設 0.0">
-                        </div>
-                        <div><label for="longitudeInput">經度：</label>
-                            <input type="number" id="longitudeInput" step="0.000001" placeholder="預設 0.0">
-                        </div>
-                        <div>
-                            <label>可用日期：</label>
-                            <div id="availableDaysContainer"></div>
-                            <button type="button" id="addDateButton">添加日期</button>
-                        </div>
-                        <button id="saveNewSpotButton">新增</button>
+                    <div>
+                        <label for="memberIdInput">會員 ID：</label>
+                        <input type="text" id="memberIdInput" readonly>
                     </div>
+                    <div>
+                        <label for="newLocation">地址：</label>
+                        <input type="text" id="newLocation" required maxlength="50">
+                    </div>
+                    <div>
+                        <label for="newParkingType">停車類型：</label>
+                        <select id="newParkingType">
+                            <option value="flat">平面</option>
+                            <option value="mechanical">機械</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="newFloorLevel">樓層：</label>
+                        <input type="text" id="newFloorLevel" maxlength="20" placeholder="例如：ground 或 B1">
+                    </div>
+                    <div>
+                        <label for="newPricingType">計費方式：</label>
+                        <select id="newPricingType">
+                            <option value="hourly">按小時</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label id="newPriceLabel">半小時費用（元）：</label>
+                        <input type="number" id="newPrice" step="0.01" value="20.00">
+                    </div>
+                    <div>
+                        <label>每日最高價格（元）：</label>
+                        <input type="number" id="newMaxDailyPrice" step="0.01" value="300.00">
+                    </div>
+                    <div>
+                        <label for="latitudeInput">緯度：</label>
+                        <input type="number" id="latitudeInput" step="any" readonly>
+                    </div>
+                    <div>
+                        <label for="longitudeInput">經度：</label>
+                        <input type="number" id="longitudeInput" step="any" readonly>
+                    </div>
+                    <div id="addParkingMap" style="height: 400px; width: 100%;"></div>
+                    <div>
+                        <label>可用日期：</label>
+                        <div id="availableDaysContainer"></div>
+                        <button type="button" id="addDateButton">新增日期</button>
+                    </div>
+                    <button id="saveNewSpotButton">新增</button>
+                </section>
                 </div>
                 <div id="viewParking" class="content-section">
                     <h2>查看車位</h2>
