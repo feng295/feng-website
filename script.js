@@ -245,19 +245,19 @@ document.addEventListener("DOMContentLoaded", async function () {
         const mapContainer = document.getElementById(containerId);
         const maxAttempts = 20;
         let attempts = 0;
-
+    
         while (!window.isGoogleMapsLoaded && attempts < maxAttempts) {
-            await new Promise(resolve => setTimeout(resolve, 500)); // 每 500ms 檢查一次
+            await new Promise(resolve => setTimeout(resolve, 500));
             attempts++;
         }
-
+    
         if (!window.isGoogleMapsLoaded || !window.google || !google.maps) {
             utils.showError("Google Maps API 載入失敗，請檢查 API 金鑰或網路連線，並手動輸入經緯度。", mapContainer.nextElementSibling);
             console.error("Google Maps API failed to load. Check your API key or network.");
             mapContainer.style.display = "none";
             return null;
         }
-
+    
         return new google.maps.Map(mapContainer, {
             center: { lat: defaultLat, lng: defaultLng },
             zoom: 15,
