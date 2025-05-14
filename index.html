@@ -5,8 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>智慧停車管理系統</title>
     <link rel="stylesheet" href="./styles.css">
-    <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDx1m0ViIY5aCpF4Khxtuay2VZc6k3Ne0g&callback=initMap&loading=async&libraries=marker"></script>    <div class="container" id="authContainer">
-
+    <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDx1m0ViIY5aCpF4Khxtuay2VZc6k3Ne0g&callback=initMap&loading=async&libraries=marker"></script>
+</head>
+<body>
+    <div class="container" id="authContainer">
         <h2 id="formTitle">登入</h2>
         <form id="authForm">
             <div class="input-group">
@@ -120,6 +122,7 @@
                 </div>
                 <div id="My parking space" class="content-section" style="display: none;">
                     <h2>我的車位</h2>
+                    <div class="parking-spaces-table">
                         <table id="My parking spaceTable">
                             <thead>
                                 <tr>
@@ -134,7 +137,7 @@
                             </thead>
                             <tbody id="My parking spaceTableBody">
                                 <tr>
-                                    
+                                    <td colspan="7">請選擇車位以查看詳情</td>
                                 </tr>
                             </tbody>
                         </table>
@@ -142,7 +145,6 @@
                 </div>
                 <div id="reserveParking" class="content-section" style="display: none;">
                     <h2>預約車位</h2>
-                    <p>在這裡你可以預約車位。</p>
                     <div class="search-container">
                         <label for="reserveSearchInput">車位編號：</label>
                         <input type="text" id="reserveSearchInput" placeholder="輸入車位編號">
@@ -231,12 +233,10 @@
                 </div>
                 <div id="history" class="content-section" style="display: none;">
                     <h2>歷史紀錄</h2>
-                    <p>在這裡你可以查看停車歷史紀錄。</p>
                     <ul id="historyList"></ul>
                 </div>
                 <div id="incomeInquiry" class="content-section" style="display: none;">
                     <h2>收入查詢</h2>
-                    <p>在這裡你可以查詢收入紀錄。</p>
                     <div class="search-container">
                         <label for="startDate">開始日期：</label>
                         <input type="date" id="startDate" name="startDate">
@@ -244,9 +244,7 @@
                         <input type="date" id="endDate" name="endDate">
                         <button id="incomeSearchButton">查詢</button>
                     </div>
-                    <div class="income-result">
-                        <h3>查詢結果</h3>
-                        <p>總收入：<span id="totalIncome">0</span> 元</p>
+                    <div class="parking-spaces-table">
                         <table id="incomeTable">
                             <thead>
                                 <tr>
@@ -267,7 +265,6 @@
                 </div>
                 <div id="viewAllUsers" class="content-section" style="display: none;">
                     <h2>查看所有用戶資料</h2>
-                    <p>在這裡你可以查看所有共享者和租用者的資料。</p>
                     <h3>共享者資料</h3>
                     <div class="parking-spaces-table">
                         <table id="ownerTable">
