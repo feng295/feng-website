@@ -6,7 +6,7 @@
     <title>智慧停車管理系統</title>
     <link rel="stylesheet" href="./styles.css">
     <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDx1m0ViIY5aCpF4Khxtuay2VZc6k3Ne0g&callback=initMap&loading=async&libraries=marker"></script>    <div class="container" id="authContainer">
-        
+
         <h2 id="formTitle">登入</h2>
         <form id="authForm">
             <div class="input-group">
@@ -118,16 +118,10 @@
                         <button id="cancelAddButton">取消</button>
                     </div>
                 </div>
-                <div id="viewParking" class="content-section">
-                    <h2>查看車位</h2>
-                    <div class="search-container">
-                        <label for="specificSpotInput">查詢特定車位（輸入ID）：</label>
-                        <input type="text" id="specificSpotInput" placeholder="輸入車位ID">
-                        <button id="specificSpotButton" class="search-btn">查詢特定車位</button>
-                    </div>
-                    <div id="viewParkingMap" style="height: 400px; width: 100%; margin-bottom: 20px; display: none;"></div>
+                <div id="My parking space" class="content-section">
+                    <h2>我的車位</h2>
                     <div class="parking-spaces-table">
-                        <table id="viewParkingTable">
+                        <table id="My parking spaceTable">
                             <thead>
                                 <tr>
                                     <th>車位編號</th>
@@ -139,7 +133,7 @@
                                     <th>操作</th>
                                 </tr>
                             </thead>
-                            <tbody id="viewParkingTableBody">
+                            <tbody id="My parking spaceTableBody">
                                 <tr>
                                     <td colspan="7">請點擊查詢以查看車位</td>
                                 </tr>
