@@ -1469,8 +1469,8 @@ document.addEventListener("DOMContentLoaded", async function () {
         }
     }
 
-    // 設置收入查詢
-    function setupIncomeInquiry() {
+     // 設置收入查詢
+     function setupIncomeInquiry() {
         const role = getRole();
         console.log("Current role in setupIncomeInquiry:", role);
         if (!["shared_owner", "admin"].includes(role)) {
@@ -1515,7 +1515,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                 if (!token) throw new Error("認證令牌缺失，請重新登入！");
 
                 const parkingSpotId = getParkingSpotId();
-                if (!parkingSpotId) throw new Error("請先在「我的車位」或「預約車位」中選擇一個停車位！");
+                if (!parkingSpotId) throw new Error("請先在「查看車位」或「預約車位」中選擇一個停車位！");
 
                 const response = await fetch(`${API_URL}/parking/${parkingSpotId}/income?start_date=${encodeURIComponent(startDate)}&end_date=${encodeURIComponent(endDate)}`, {
                     method: 'GET',
