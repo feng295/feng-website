@@ -15,158 +15,7 @@ button {
     box-sizing: border-box;
 }
 
-.container {
-    width: 100%;
-    max-width: 400px;
-    margin: 100px auto;
-    padding: 15px 10px;
-    background: white;
-    border-radius: 5px;
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-}
-
-#authForm {
-    margin: 0;
-    padding: 0;
-}
-
-.input-group {
-    margin-bottom: 15px;
-    padding: 0;
-}
-
-.input-group label {
-    display: block;
-    margin-bottom: 5px;
-    margin-left: 0;
-    margin-right: 0;
-    font-size: 14px;
-    color: #333;
-}
-
-.input-group input,
-.input-group select {
-    width: 100%;
-    padding: 8px;
-    border: 1px solid #ccc;
-    border-radius: 3px;
-    box-sizing: border-box;
-    font-size: 14px;
-    margin: 0;
-}
-
-.input-group select {
-    appearance: none;
-    -webkit-appearance: none;
-    -moz-appearance: none;
-    background-image: url('data:image/svg+xml;utf8,<svg fill="black" height="24" viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg"><path d="M7 10l5 5 5-5z"/></svg>');
-    background-repeat: no-repeat;
-    background-position: right 8px center;
-    background-size: 16px;
-    cursor: pointer;
-}
-
-/* 統一按鈕樣式 */
-button,
-#specificSpotButton,
-#reserveSearchButton,
-#incomeSearchButton,
-#saveNewSpotButton,
-#cancelAddButton,
-#addDateButton {
-    width: 100%;
-    max-width: 100%;
-    padding: 10px;
-    background: #28a745;
-    color: white;
-    border: none;
-    border-radius: 3px;
-    cursor: pointer;
-    box-sizing: border-box;
-    margin: 0;
-    transition: background 0.3s ease, transform 0.1s ease;
-    font-size: 14px;
-}
-
-button:hover,
-#specificSpotButton:hover,
-#reserveSearchButton:hover,
-#incomeSearchButton:hover,
-#saveNewSpotButton:hover,
-#cancelAddButton:hover,
-#addDateButton:hover {
-    background: #218838;
-    transform: scale(1.05);
-}
-
-button:active,
-#specificSpotButton:active,
-#reserveSearchButton:active,
-#incomeSearchButton:active,
-#saveNewSpotButton:active,
-#cancelAddButton:active,
-#addDateButton:active {
-    transform: scale(0.95);
-}
-
-/* 特定按鈕樣式調整 */
-#specificSpotButton,
-#reserveSearchButton,
-#incomeSearchButton,
-#addDateButton {
-    width: auto;
-    padding: 8px 16px;
-    background: #007bff;
-    margin-left: 10px;
-}
-
-#specificSpotButton:hover,
-#reserveSearchButton:hover,
-#incomeSearchButton:hover,
-#addDateButton:hover {
-    background: #0056b3;
-}
-
-#cancelAddButton {
-    background: #dc3545;
-}
-
-#cancelAddButton:hover {
-    background: #c82333;
-}
-
-#formTitle {
-    margin: 0 0 20px 0;
-    text-align: center;
-}
-
-#toggleMessage {
-    margin: 10px 10px 0;
-    text-align: center;
-}
-
-a {
-    color: #007bff;
-    text-decoration: none;
-}
-
-a:hover {
-    text-decoration: underline;
-}
-
-#errorMessage {
-    margin: 10px 0 0 0;
-    text-align: center;
-    font-size: 14px;
-    color: red;
-    padding: 5px;
-    border-radius: 3px;
-}
-
-#errorMessage.success {
-    color: green;
-}
-
+/* 主容器樣式 */
 .system-container {
     display: flex;
     width: 90%;
@@ -212,6 +61,7 @@ a:hover {
     color: #0056b3;
 }
 
+/* 內容區域樣式 */
 .content-container {
     width: 75%;
     background: white;
@@ -230,20 +80,206 @@ a:hover {
     padding-bottom: 10px;
 }
 
-#logoutButton {
-    margin: 20px auto;
+/* 篩選區域樣式 */
+.filter-section {
+    margin-bottom: 20px;
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.filter-section label {
+    font-size: 14px;
+    color: #333;
+    margin-right: 5px;
+}
+
+.filter-section input[type="date"],
+.filter-section input[type="time"] {
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 3px;
+    font-size: 14px;
+    width: 150px;
+}
+
+.filter-section button {
+    padding: 8px 16px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 3px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background 0.3s ease;
+}
+
+.filter-section button:hover {
+    background-color: #0056b3;
+}
+
+/* 表格樣式 */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+    background-color: #fff;
+}
+
+table th,
+table td {
+    padding: 12px;
+    border: 1px solid #ddd;
+    text-align: left;
+    font-size: 14px;
+}
+
+table th {
+    background-color: #f2f2f2;
+    position: sticky;
+    top: 0;
+    font-weight: bold;
+}
+
+table tr.available {
+    background-color: #e0ffe0;
+}
+
+table tr.occupied,
+table tr.reserved {
+    background-color: #ffe0e0;
+}
+
+table button {
+    padding: 6px 12px;
+    background-color: #28a745;
+    color: white;
+    border: none;
+    border-radius: 3px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background 0.3s ease;
+}
+
+table button:hover:not(:disabled) {
+    background-color: #218838;
+}
+
+table button:disabled {
+    background-color: #ccc;
+    cursor: not-allowed;
+}
+
+/* 底部輸入框樣式 */
+.bottom-input {
+    width: 100%;
+    padding: 8px;
+    margin-top: 20px;
+    border: 1px solid #ddd;
+    border-radius: 3px;
+    font-size: 14px;
+    box-sizing: border-box;
+}
+
+/* 統一按鈕樣式 */
+button,
+#saveNewSpotButton,
+#cancelAddButton,
+#addDateButton {
+    width: 100%;
+    padding: 10px;
+    background: #28a745;
+    color: white;
+    border: none;
+    border-radius: 3px;
+    cursor: pointer;
+    box-sizing: border-box;
+    margin: 0;
+    transition: background 0.3s ease, transform 0.1s ease;
+    font-size: 14px;
+}
+
+button:hover,
+#saveNewSpotButton:hover,
+#cancelAddButton:hover,
+#addDateButton:hover {
+    background: #218838;
+    transform: scale(1.05);
+}
+
+button:active,
+#saveNewSpotButton:active,
+#cancelAddButton:active,
+#addDateButton:active {
+    transform: scale(0.95);
+}
+
+/* 特定按鈕樣式調整 */
+#cancelAddButton {
+    background: #dc3545;
+}
+
+#cancelAddButton:hover {
+    background: #c82333;
+}
+
+/* 容器樣式 */
+.container {
+    width: 100%;
+    max-width: 400px;
+    margin: 100px auto;
+    padding: 15px 10px;
+    background: white;
+    border-radius: 5px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    display: none; /* 隱藏預設容器，僅在登入頁面使用 */
+}
+
+.input-group {
+    margin-bottom: 15px;
+}
+
+.input-group label {
     display: block;
-    width: 200px;
+    margin-bottom: 5px;
+    font-size: 14px;
+    color: #333;
 }
 
-#historyList {
-    list-style: none;
-    padding: 0;
+.input-group input,
+.input-group select {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 3px;
+    box-sizing: border-box;
+    font-size: 14px;
 }
 
-#historyList li {
-    padding: 5px 0;
-    border-bottom: 1px solid #eee;
+.input-group select {
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    background-image: url('data:image/svg+xml;utf8,<svg fill="black" height="24" viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg"><path d="M7 10l5 5 5-5z"/></svg>');
+    background-repeat: no-repeat;
+    background-position: right 8px center;
+    background-size: 16px;
+    cursor: pointer;
+}
+
+/* 錯誤訊息樣式 */
+#errorMessage {
+    margin: 10px 0 0 0;
+    text-align: center;
+    font-size: 14px;
+    color: red;
+    padding: 5px;
+    border-radius: 3px;
+}
+
+#errorMessage.success {
+    color: green;
 }
 
 /* 地圖容器樣式 */
@@ -256,213 +292,6 @@ a:hover {
     border: 1px solid #ddd;
     border-radius: 5px;
     box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
-}
-
-/* 動態生成的日期輸入框樣式 */
-.date-entry {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin-bottom: 10px;
-}
-
-.date-entry label {
-    margin-bottom: 0;
-    margin-right: 5px;
-}
-
-.date-entry input[type="date"],
-.date-entry input[type="checkbox"] {
-    padding: 8px;
-    border: 1px solid #ccc;
-    border-radius: 3px;
-    font-size: 14px;
-}
-
-.date-entry input[type="checkbox"] {
-    width: auto;
-}
-
-.date-entry .remove-date {
-    padding: 6px 12px;
-    background: #dc3545;
-    color: white;
-    border: none;
-    border-radius: 3px;
-    cursor: pointer;
-    font-size: 14px;
-}
-
-.date-entry .remove-date:hover {
-    background: #c82333;
-}
-
-/* 表格樣式 */
-.parking-spaces-table,
-.income-result {
-    margin-top: 20px;
-    max-height: 400px;
-    overflow-y: auto;
-}
-
-#viewParkingTable,
-#reserveParkingTable,
-#incomeTable,
-#ownerTable,
-#renterTable {
-    width: 100%;
-    border-collapse: collapse;
-    background-color: #fff;
-}
-
-#viewParkingTable th,
-#viewParkingTable td,
-#reserveParkingTable th,
-#reserveParkingTable td,
-#incomeTable th,
-#incomeTable td,
-#ownerTable th,
-#ownerTable td,
-#renterTable th,
-#renterTable td {
-    padding: 12px;
-    border: 1px solid #ddd;
-    text-align: left;
-    font-size: 14px;
-}
-
-#viewParkingTable th,
-#reserveParkingTable th,
-#incomeTable th,
-#ownerTable th,
-#renterTable th {
-    background-color: #f4f4f4;
-    position: sticky;
-    top: 0;
-    font-weight: bold;
-}
-
-#viewParkingTable tr.available,
-#reserveParkingTable tr.available {
-    background-color: #e0ffe0;
-}
-
-#viewParkingTable tr.occupied,
-#viewParkingTable tr.reserved,
-#reserveParkingTable tr.occupied,
-#reserveParkingTable tr.reserved {
-    background-color: #ffe0e0;
-}
-
-#viewParkingTable button,
-#reserveParkingTable button {
-    padding: 6px 12px;
-    background-color: #28a745;
-    color: white;
-    border: none;
-    border-radius: 3px;
-    cursor: pointer;
-    font-size: 14px;
-    transition: background 0.3s ease;
-}
-
-#viewParkingTable button:hover:not(:disabled),
-#reserveParkingTable button:hover:not(:disabled) {
-    background-color: #218838;
-}
-
-#viewParkingTable button:disabled,
-#reserveParkingTable button:disabled {
-    background-color: #ccc;
-    cursor: not-allowed;
-}
-
-/* 編輯按鈕樣式 */
-.edit-btn {
-    padding: 6px 12px;
-    background-color: #007bff;
-    color: white;
-    border: none;
-    border-radius: 3px;
-    cursor: pointer;
-    font-size: 14px;
-    transition: background 0.3s ease;
-}
-
-.edit-btn:hover {
-    background-color: #0056b3;
-}
-
-/* 編輯表單樣式 */
-#editSpotForm {
-    margin-top: 20px;
-    padding: 15px;
-    border: 1px solid #ccc;
-    border-radius: 5px;
-    background-color: #f9f9f9;
-}
-
-#editSpotForm h3 {
-    margin: 0 0 15px 0;
-    font-size: 18px;
-}
-
-#editSpotForm div {
-    margin-bottom: 10px;
-}
-
-#editSpotForm label {
-    display: inline-block;
-    width: 100px;
-    font-size: 14px;
-}
-
-#editSpotForm input,
-#editSpotForm select {
-    padding: 8px;
-    border: 1px solid #ccc;
-    border-radius: 3px;
-    font-size: 14px;
-    width: 200px;
-}
-
-#editSpotForm button {
-    width: auto;
-    padding: 8px 16px;
-    margin-right: 10px;
-}
-
-#editSpotForm #saveSpotButton {
-    background-color: #28a745;
-}
-
-#editSpotForm #saveSpotButton:hover {
-    background-color: #218838;
-}
-
-#editSpotForm #cancelEditButton {
-    background-color: #dc3545;
-}
-
-#editSpotForm #cancelEditButton:hover {
-    background-color: #c82333;
-}
-
-/* 刪除按鈕樣式 */
-.delete-btn {
-    padding: 6px 12px;
-    background-color: #dc3545;
-    color: white;
-    border: none;
-    border-radius: 3px;
-    cursor: pointer;
-    font-size: 14px;
-    transition: background 0.3s ease;
-    margin-left: 5px;
-}
-
-.delete-btn:hover {
-    background-color: #c82333;
 }
 
 /* 響應式設計 */
@@ -480,68 +309,33 @@ a:hover {
         width: 100%;
     }
 
-    .input-group {
-        margin-bottom: 10px;
-    }
-
-    .input-group input,
-    .input-group select,
-    #editSpotForm input,
-    #editSpotForm select {
-        width: 100%;
-    }
-
-    #specificSpotButton,
-    #reserveSearchButton,
-    #incomeSearchButton,
-    #addDateButton,
-    #saveNewSpotButton,
-    #cancelAddButton {
-        width: 100%;
-        margin-left: 0;
-        margin-top: 10px;
-    }
-
-    #addParkingMap,
-    #viewParkingMap,
-    #reserveParkingMap {
-        height: 300px;
-    }
-
-    #viewParkingTable th,
-    #viewParkingTable td,
-    #reserveParkingTable th,
-    #reserveParkingTable td,
-    #incomeTable th,
-    #incomeTable td,
-    #ownerTable th,
-    #ownerTable td,
-    #renterTable th,
-    #renterTable td {
-        padding: 8px;
-        font-size: 12px;
-    }
-
-    #viewParkingTable button,
-    #reserveParkingTable button {
-        padding: 5px 10px;
-        font-size: 12px;
-    }
-
-    .parking-spaces-table,
-    .income-result {
-        overflow-x: auto;
-    }
-
-    .date-entry {
+    .filter-section {
         flex-direction: column;
         align-items: flex-start;
     }
 
-    .date-entry input[type="date"],
-    .date-entry input[type="checkbox"],
-    .date-entry .remove-date {
+    .filter-section input[type="date"],
+    .filter-section input[type="time"] {
         width: 100%;
-        margin-top: 5px;
+        margin-bottom: 10px;
+    }
+
+    .filter-section button {
+        width: 100%;
+    }
+
+    table th,
+    table td {
+        padding: 8px;
+        font-size: 12px;
+    }
+
+    table button {
+        padding: 5px 10px;
+        font-size: 12px;
+    }
+
+    .bottom-input {
+        width: 100%;
     }
 }
