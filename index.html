@@ -5,8 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>智慧停車管理系統</title>
     <link rel="stylesheet" href="./styles.css">
-    <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDx1m0ViIY5aCpF4Khxtuay2VZc6k3Ne0g&callback=initMap&loading=async"></script><body>
-    <div class="container" id="authContainer">
+    <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDx1m0ViIY5aCpF4Khxtuay2VZc6k3Ne0g&callback=initMap&loading=async&libraries=marker"></script>    <div class="container" id="authContainer">
+        
         <h2 id="formTitle">登入</h2>
         <form id="authForm">
             <div class="input-group">
@@ -83,7 +83,7 @@
                     </div>
                     <div class="input-group">
                         <label for="newFloorLevel">樓層：</label>
-                        <input type="text" id="newFloorLevel" placeholder="例如 ground 或 B1">
+                        <input type="text" id="newFloorLevel" placeholder="例如 1F">
                     </div>
                     <div class="input-group">
                         <label for="newPricingType">計費方式：</label>
