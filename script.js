@@ -917,9 +917,10 @@ document.addEventListener("DOMContentLoaded", async function () {
             return;
         }
 
-        const parkingTableBody = document.getElementById("myParkingSpaceTableBody");
+        const parkingTableBody = document.getElementById("My parking spaceTableBody");
         if (!parkingTableBody) {
-            console.warn("Required element not found for My parking space: parkingTableBody");
+            console.error("Required element not found for My parking space: parkingTableBody");
+            alert("無法載入「我的車位」頁面，頁面元素缺失，請聯繫管理員！");
             return;
         }
 
