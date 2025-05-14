@@ -953,13 +953,24 @@ document.addEventListener("DOMContentLoaded", async function () {
                         "Authorization": `Bearer ${token}`
                     }
                 });
-                if (!response.headers.get('content-type')?.includes('application/json')) {
-                    throw new Error("後端返回非 JSON 響應，請檢查伺服器配置");
-                }
+
+                // 檢查回應狀態
                 if (!response.ok) {
-                    if (response.status === 401) throw new Error("認證失敗，請重新登入！");
-                    const errorData = await response.json();
-                    throw new Error(`HTTP error! Status: ${response.status}, Message: ${errorData.error || '未知錯誤'}`);
+                    if (response.status === 404) {
+                        throw new Error("後端資源未找到 (404)，請檢查 API 端點是否正確配置！");
+                    } else if (response.status === 401) {
+                        throw new Error("認證失敗，請重新登入！");
+                    }
+                    const errorData = await response.text(); // 使用 text() 獲取原始回應
+                    throw new Error(`HTTP 錯誤！狀態: ${response.status}, 回應: ${errorData}`);
+                }
+
+                // 檢查 Content-Type
+                const contentType = response.headers.get('content-type');
+                if (!contentType || !contentType.includes('application/json')) {
+                    const textResponse = await response.text();
+                    console.error("非 JSON 回應:", textResponse);
+                    throw new Error("後端返回非 JSON 響應，請檢查伺服器配置 (回應內容: " + textResponse.substring(0, 100) + "...)");
                 }
 
                 const data = await response.json();
@@ -1025,9 +1036,6 @@ document.addEventListener("DOMContentLoaded", async function () {
                                     "Authorization": `Bearer ${token}`
                                 }
                             });
-                            if (!response.headers.get('content-type')?.includes('application/json')) {
-                                throw new Error("後端返回非 JSON 響應，請檢查伺服器配置");
-                            }
                             if (!response.ok) {
                                 if (response.status === 401) throw new Error("認證失敗，請重新登入！");
                                 const errorData = await response.json();
@@ -1067,7 +1075,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                 console.error("Failed to fetch spots:", error);
                 alert(`無法載入車位資料，請檢查後端服務 (錯誤: ${error.message})`);
                 parkingTableBody.innerHTML = '<tr><td colspan="7">無法載入車位資料</td></tr>';
-                if (error.message === "認證失敗，請重新登入！") {
+                if (error.message.includes("認證失敗")) {
                     removeToken();
                     showLoginPage(true);
                 }
@@ -1077,50 +1085,47 @@ document.addEventListener("DOMContentLoaded", async function () {
         function showEditForm(spot) {
             const existingForm = document.getElementById("editSpotForm");
             if (existingForm) existingForm.remove();
-        
+
             const editForm = document.createElement("div");
             editForm.id = "editSpotForm";
             editForm.style.marginTop = "20px";
-        
+
             const priceLabel = "半小時費用（元）："; // 仅保留按小时
             const priceValue = `${spot.price_per_half_hour || 0} 元`; // 仅使用半小时费用
-        
+
             editForm.innerHTML = `
-                <h3>編輯車位 ${spot.spot_id}</h3>
-                <div><label>地址：</label><input type="text" id="editLocation" value="${spot.location || ''}" /></div>
-                <div><label>停車類型：</label><select id="editParkingType">
-                    <option value="flat" ${spot.parking_type === "flat" ? "selected" : ""}>平面</option>
-                    <option value="mechanical" ${spot.parking_type === "mechanical" ? "selected" : ""}>機械</option>
-                </select></div>
-                <div><label>計費方式：</label><select id="editPricingType">
-                    <option value="hourly" selected>按小時</option> 
-                </select></div>
-                <div><label>${priceLabel}</label><span>${priceValue}</span></div>
-                <button id="saveSpotButton">保存</button>
-                <button id="cancelEditButton">取消</button>
-            `;
-        
+            <h3>編輯車位 ${spot.spot_id}</h3>
+            <div><label>地址：</label><input type="text" id="editLocation" value="${spot.location || ''}" /></div>
+            <div><label>停車類型：</label><select id="editParkingType">
+                <option value="flat" ${spot.parking_type === "flat" ? "selected" : ""}>平面</option>
+                <option value="mechanical" ${spot.parking_type === "mechanical" ? "selected" : ""}>機械</option>
+            </select></div>
+            <div><label>計費方式：</label><select id="editPricingType">
+                <option value="hourly" selected>按小時</option> 
+            </select></div>
+            <div><label>${priceLabel}</label><span>${priceValue}</span></div>
+            <button id="saveSpotButton">保存</button>
+            <button id="cancelEditButton">取消</button>
+        `;
+
             parkingTableBody.parentElement.appendChild(editForm);
-        
+
             document.getElementById("saveSpotButton").addEventListener("click", async () => {
                 const updatedSpot = {
                     location: document.getElementById("editLocation").value.trim(),
                     parking_type: document.getElementById("editParkingType").value,
                     pricing_type: "hourly" // 强制设置为 "hourly"
                 };
-        
+
                 try {
                     const token = getToken();
                     if (!token) throw new Error("認證令牌缺失，請重新登入！");
-        
+
                     const response = await fetch(`${API_URL}/parking/${spot.spot_id}`, {
                         method: 'PUT',
                         headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
                         body: JSON.stringify(updatedSpot)
                     });
-                    if (!response.headers.get('content-type')?.includes('application/json')) {
-                        throw new Error("後端返回非 JSON 響應，請檢查伺服器配置");
-                    }
                     if (!response.ok) {
                         if (response.status === 401) throw new Error("認證失敗，請重新登入！");
                         const errorData = await response.json();
@@ -1139,7 +1144,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                     }
                 }
             });
-        
+
             document.getElementById("cancelEditButton").addEventListener("click", () => editForm.remove());
         }
 
@@ -1198,14 +1203,14 @@ document.addEventListener("DOMContentLoaded", async function () {
             map = new google.maps.Map(reserveParkingMap, {
                 center: { lat: 23.5654, lng: 119.5762 },
                 zoom: 15,
-                mapId: "4a9410e1706e086d447136ee" // 使用您提供的 mapId
+                mapId: "4a9410e1706e086d447136ee"
             });
             map.markers = [];
             reserveParkingMap.style.display = "none"; // 初始隱藏地圖
         }
 
         async function handleReserveSearch() {
-            const selectedDate = reserveDateInput.value; // 使用單一日期
+            const selectedDate = reserveDateInput.value;
             const startTime = startTimeInput.value;
             const endTime = endTimeInput.value;
             const searchQuery = reserveSearchInput ? reserveSearchInput.value.trim().toLowerCase() : '';
@@ -1271,9 +1276,6 @@ document.addEventListener("DOMContentLoaded", async function () {
                     const response = await fetch(`${API_URL}/parking/available?${queryParams.toString()}`, {
                         headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` }
                     });
-                    if (!response.headers.get('content-type')?.includes('application/json')) {
-                        throw new Error("後端返回非 JSON 響應，請檢查伺服器配置");
-                    }
                     if (!response.ok) {
                         if (response.status === 401) throw new Error("認證失敗，請重新登入！");
                         const errorData = await response.json();
@@ -1301,7 +1303,6 @@ document.addEventListener("DOMContentLoaded", async function () {
             }
 
             if (!spots || spots.length === 0) {
-                alert("後端未返回任何車位資料，可能原因：\n1. 所選日期或時間段沒有可用車位。\n2. 當前位置範圍內無車位。\n3. 後端服務異常。");
                 parkingTableBody.innerHTML = '<tr><td colspan="7">無可用車位，請嘗試更改日期、時間或位置</td></tr>';
                 return;
             }
@@ -1318,7 +1319,6 @@ document.addEventListener("DOMContentLoaded", async function () {
             });
 
             if (filteredSpots.length === 0) {
-                alert("所選條件目前沒有符合的車位！請調整篩選條件。");
                 parkingTableBody.innerHTML = '<tr><td colspan="7">無符合條件的車位，請嘗試更改篩選條件</td></tr>';
                 return;
             }
@@ -1329,60 +1329,65 @@ document.addEventListener("DOMContentLoaded", async function () {
             map.markers = [];
 
             const bounds = new google.maps.LatLngBounds();
-            for (let spot of filteredSpots) {
+            filteredSpots.forEach(spot => {
                 let latitude = spot.latitude;
                 let longitude = spot.longitude;
                 const address = spot.location || '未知';
 
                 if (!latitude || !longitude) {
                     const geocoder = new google.maps.Geocoder();
-                    const geocodeResult = await new Promise((resolve, reject) => {
-                        geocoder.geocode({ address: address }, (results, status) => {
-                            if (status === google.maps.GeocoderStatus.OK && results[0]) {
-                                resolve({
-                                    lat: results[0].geometry.location.lat(),
-                                    lng: results[0].geometry.location.lng()
-                                });
-                            } else reject(new Error(`無法解析地址 "${address}"：${status}`));
-                        });
+                    geocoder.geocode({ address: address }, (results, status) => {
+                        if (status === google.maps.GeocoderStatus.OK && results[0]) {
+                            latitude = results[0].geometry.location.lat();
+                            longitude = results[0].geometry.location.lng();
+                            updateMarker(latitude, longitude, spot);
+                        }
                     });
-                    latitude = geocodeResult.lat;
-                    longitude = geocodeResult.lng;
+                } else {
+                    updateMarker(latitude, longitude, spot);
                 }
 
-                const position = { lat: parseFloat(latitude), lng: parseFloat(longitude) };
-                let markerIcon;
+                function updateMarker(lat, lng, spot) {
+                    const position = { lat: parseFloat(lat), lng: parseFloat(lng) };
+                    let markerIcon = { url: "http://maps.google.com/mapfiles/ms/icons/green-dot.png" };
+                    if (spot.status === "已佔用") markerIcon = { url: "http://maps.google.com/mapfiles/ms/icons/red-dot.png" };
+                    else if (spot.status === "預約") markerIcon = { url: "http://maps.google.com/mapfiles/ms/icons/blue-dot.png" };
 
-                if (spot.status === "可用") markerIcon = { url: "http://maps.google.com/mapfiles/ms/icons/green-dot.png" };
-                else if (spot.status === "已佔用") markerIcon = { url: "http://maps.google.com/mapfiles/ms/icons/red-dot.png" };
-                else if (spot.status === "預約") markerIcon = { url: "http://maps.google.com/mapfiles/ms/icons/blue-dot.png" };
-
-                const marker = new google.maps.marker.AdvancedMarkerElement({
-                    position: position,
-                    map: map,
-                    title: `車位 ${spot.spot_id} - ${address}`,
-                    icon: markerIcon
-                });
-                map.markers.push(marker);
-                bounds.extend(position);
-            }
+                    const marker = new google.maps.marker.AdvancedMarkerElement({
+                        position: position,
+                        map: map,
+                        title: `車位 ${spot.spot_id} - ${address}`,
+                        icon: markerIcon
+                    });
+                    map.markers.push(marker);
+                    bounds.extend(position);
+                }
+            });
 
             map.fitBounds(bounds);
             if (filteredSpots.length === 1) map.setZoom(15);
 
+            parkingTableBody.innerHTML = '';
             const fragment = document.createDocumentFragment();
             filteredSpots.forEach(spot => {
                 const row = document.createElement("tr");
                 row.setAttribute("data-id", spot.spot_id);
                 row.classList.add(spot.status === "可用" ? "available" : spot.status === "預約" ? "reserved" : "occupied");
+
+                const priceDisplay = spot.pricing_type === "hourly"
+                    ? `${spot.price_per_half_hour || 0} 元/半小時`
+                    : `${spot.monthly_price || 0} 元/月`;
+
                 row.innerHTML = `
                 <td>${spot.spot_id}</td>
                 <td>${spot.location || '未知'}</td>
                 <td>${spot.parking_type === "flat" ? "平面" : "機械"}</td>
                 <td>${spot.floor_level === "ground" ? "地面" : `地下${spot.floor_level.startsWith("B") ? spot.floor_level.slice(1) : spot.floor_level}樓`}</td>
-                <td>${spot.pricing_type === "hourly" ? "按小時" : spot.pricing_type === "daily" ? "按日" : "按月"}</td>
-                <td>${spot.status === "可用" ? "可用" : spot.status === "已佔用" ? "已佔用" : "預約"}</td>
-                <td><button class="reserve-btn" ${spot.status === "可用" ? '' : 'disabled'}>預約</button></td>
+                <td>${spot.pricing_type === "hourly" ? "按小時" : "按月"}</td>
+                <td>${priceDisplay}</td>
+                <td>
+                    <button class="reserve-btn" ${spot.status === "可用" ? '' : 'disabled'}>預約</button>
+                </td>
             `;
                 if (spot.status === "可用") {
                     row.querySelector(".reserve-btn").addEventListener("click", () => {
@@ -1393,7 +1398,6 @@ document.addEventListener("DOMContentLoaded", async function () {
                 fragment.appendChild(row);
             });
 
-            parkingTableBody.innerHTML = '';
             parkingTableBody.appendChild(fragment);
             parkingTableBody.style.display = 'none';
             parkingTableBody.offsetHeight;
