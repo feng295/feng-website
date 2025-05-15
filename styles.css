@@ -322,7 +322,7 @@ a:hover {
 #incomeTable,
 #ownerTable,
 #renterTable,
-#My parking spaceTable {
+#My\ parking\ spaceTable {
     width: 100%;
     border-collapse: collapse;
     background-color: #fff;
@@ -338,8 +338,8 @@ a:hover {
 #ownerTable td,
 #renterTable th,
 #renterTable td,
-#My parking spaceTable th,
-#My parking spaceTable td {
+#My\ parking\ spaceTable th,
+#My\ parking\ spaceTable td {
     padding: 12px;
     border: 1px solid #ddd;
     text-align: left;
@@ -351,7 +351,7 @@ a:hover {
 #incomeTable th,
 #ownerTable th,
 #renterTable th,
-#My parking spaceTable th {
+#My\ parking\ spaceTable th {
     background-color: #f4f4f4;
     position: sticky;
     top: 0;
@@ -360,7 +360,7 @@ a:hover {
 
 #viewParkingTable tr.available,
 #reserveParkingTable tr.available,
-#My parking spaceTable tr.available {
+#My\ parking\ spaceTable tr.available {
     background-color: #e0ffe0;
 }
 
@@ -368,14 +368,14 @@ a:hover {
 #viewParkingTable tr.reserved,
 #reserveParkingTable tr.occupied,
 #reserveParkingTable tr.reserved,
-#My parking spaceTable tr.occupied,
-#My parking spaceTable tr.reserved {
+#My\ parking\ spaceTable tr.occupied,
+#My\ parking\ spaceTable tr.reserved {
     background-color: #ffe0e0;
 }
 
 #viewParkingTable button,
 #reserveParkingTable button,
-#My parking spaceTable button {
+#My\ parking\ spaceTable button {
     padding: 6px 12px;
     background-color: #28a745;
     color: white;
@@ -388,21 +388,23 @@ a:hover {
 
 #viewParkingTable button:hover:not(:disabled),
 #reserveParkingTable button:hover:not(:disabled),
-#My parking spaceTable button:hover:not(:disabled) {
+#My\ parking\ spaceTable button:hover:not(:disabled) {
     background-color: #218838;
 }
 
 #viewParkingTable button:disabled,
 #reserveParkingTable button:disabled,
-#My parking spaceTable button:disabled {
+#My\ parking\ spaceTable button:disabled {
     background-color: #ccc;
     cursor: not-allowed;
 }
 
 /* 編輯按鈕樣式 */
-.edit-btn {
+#My\ parking\ spaceTable .edit-btn,
+#viewParkingTable .edit-btn,
+#reserveParkingTable .edit-btn {
     padding: 6px 12px;
-    background-color: #008080; /* Changed to teal */
+    background-color: #007bff;
     color: white;
     border: none;
     border-radius: 3px;
@@ -412,14 +414,18 @@ a:hover {
     margin-right: 5px;
 }
 
-.edit-btn:hover {
-    background-color: #006666; /* Darker teal on hover */
+#My\ parking\ spaceTable .edit-btn:hover,
+#viewParkingTable .edit-btn:hover,
+#reserveParkingTable .edit-btn:hover {
+    background-color: #0056b3;
 }
 
 /* 刪除按鈕樣式 */
-.delete-btn {
+#My\ parking\ spaceTable .delete-btn,
+#viewParkingTable .delete-btn,
+#reserveParkingTable .delete-btn {
     padding: 6px 12px;
-    background-color: #ff4040; /* Changed to a softer red */
+    background-color: #dc3545;
     color: white;
     border: none;
     border-radius: 3px;
@@ -428,8 +434,10 @@ a:hover {
     transition: background 0.3s ease;
 }
 
-.delete-btn:hover {
-    background-color: #cc3333; /* Darker red on hover */
+#My\ parking\ spaceTable .delete-btn:hover,
+#viewParkingTable .delete-btn:hover,
+#reserveParkingTable .delete-btn:hover {
+    background-color: #c82333;
 }
 
 /* 編輯表單樣式 */
@@ -527,15 +535,15 @@ a:hover {
     #ownerTable td,
     #renterTable th,
     #renterTable td,
-    #My parking spaceTable th,
-    #My parking spaceTable td {
+    #My\ parking\ spaceTable th,
+    #My\ parking\ spaceTable td {
         padding: 8px;
         font-size: 12px;
     }
 
     #viewParkingTable button,
     #reserveParkingTable button,
-    #My parking spaceTable button {
+    #My\ parking\ spaceTable button {
         padding: 5px 10px;
         font-size: 12px;
     }
