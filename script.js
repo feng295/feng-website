@@ -200,18 +200,21 @@ document.addEventListener("DOMContentLoaded", async function () {
                 <li><a href="#" class="nav-link" data-target="addParking">新增車位</a></li>
                 <li><a href="#" class="nav-link" data-target="My parking space">我的車位</a></li>
                 <li><a href="#" class="nav-link" data-target="incomeInquiry">收入查詢</a></li>
+                <li><a href="#" class="nav-link" data-target="profile">個人資料</a></li>
             `;
         } else if (role === "renter") {
             navList.innerHTML = `
                 <li><a href="#" class="nav-link" data-target="My parking space">我的車位</a></li>
                 <li><a href="#" class="nav-link" data-target="reserveParking">預約車位</a></li>
                 <li><a href="#" class="nav-link" data-target="history">歷史紀錄</a></li>
+                <li><a href="#" class="nav-link" data-target="profile">個人資料</a></li>
             `;
         } else if (role === "admin") {
             navList.innerHTML = `
                 <li><a href="#" class="nav-link" data-target="addParking">新增車位</a></li>
                 <li><a href="#" class="nav-link" data-target="My parking space">我的車位</a></li>
                 <li><a href="#" class="nav-link" data-target="viewAllUsers">查看所有用戶資料</a></li>
+                <li><a href="#" class="nav-link" data-target="profile">個人資料</a></li>
             `;
         }
 
@@ -261,6 +264,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                 else if (targetId === "incomeInquiry") setupIncomeInquiry();
                 else if (targetId === "viewAllUsers") setupViewAllUsers();
                 else if (targetId === "addParking") setupAddParking();
+                else if (targetId === "profile") setupProfile();
             });
         });
     }
@@ -371,14 +375,14 @@ document.addEventListener("DOMContentLoaded", async function () {
 
         // 檢查 Google Maps API 是否已載入
         const addParkingMap = document.getElementById("addParkingMap");
-        const latitudeInput = document.getElementById("latitudeInput");
-        const longitudeInput = document.getElementById("longitudeInput");
+const latitudeInput = document.getElementById("latitudeInput");
+const longitudeInput = document.getElementById("longitudeInput");
 
-        if (!addParkingMap || !latitudeInput || !longitudeInput) {
-            console.error("Required elements for map in addParking not found: addParkingMap, latitudeInput, or longitudeInput");
-            alert("地圖容器或經緯度輸入框未找到，地圖功能將不可用。");
-            return;
-        }
+if (!addParkingMap || !latitudeInput || !longitudeInput) {
+    console.error("Required elements for map in addParking not found: addParkingMap, latitudeInput, or longitudeInput");
+    alert("地圖容器或經緯度輸入框未找到，地圖功能將不可用。");
+    return;
+}
 
         let map, marker;
         if (!window.isGoogleMapsLoaded || !window.google || !google.maps) {
@@ -1196,56 +1200,47 @@ document.addEventListener("DOMContentLoaded", async function () {
             document.getElementById("cancelEditButton").addEventListener("click", () => editForm.remove());
         }
 
-        // 載入個人資料
+        // 進入頁面時自動加載所有車位
+        loadAllSpots();
+    }
+
+    // 設置個人資料
+    function setupProfile() {
+        const role = getRole();
+        console.log("Current role in setupProfile:", role);
+        if (!["shared_owner", "renter", "admin"].includes(role)) {
+            alert("您沒有權限訪問此功能！");
+            return;
+        }
+
+        const profileSection = document.getElementById("profile");
+        if (!profileSection) {
+            console.error("profile section not found");
+            alert("無法載入「個人資料」頁面，頁面元素缺失，請聯繫管理員！");
+            return;
+        }
+        profileSection.style.display = "block";
+
+        const profileData = document.getElementById("profileData");
+        const editProfileForm = document.getElementById("editProfileForm");
+        const editName = document.getElementById("editName");
+        const editPhone = document.getElementById("editPhone");
+        const editEmail = document.getElementById("editEmail");
+        const editLicensePlate = document.getElementById("editLicensePlate");
+        const editCarModel = document.getElementById("editCarModel");
+        const editPaymentMethod = document.getElementById("editPaymentMethod");
+        const editCardNumber = document.getElementById("editCardNumber");
+        const saveProfileButton = document.getElementById("saveProfileButton");
+        const editProfileButton = document.getElementById("editProfileButton");
+        const cancelEditProfileButton = document.getElementById("cancelEditProfileButton");
+
+        if (!profileData || !editProfileForm || !editName || !editPhone || !editEmail || !editLicensePlate || !editCarModel || !editPaymentMethod || !editCardNumber || !saveProfileButton || !editProfileButton || !cancelEditProfileButton) {
+            console.error("Required elements for profile section are missing");
+            alert("個人資料頁面元素缺失，請聯繫管理員！");
+            return;
+        }
+
         async function loadProfile() {
-            const profileContainer = document.createElement("div");
-            profileContainer.id = "profileContainer";
-            profileContainer.style.marginTop = "20px";
-            profileContainer.innerHTML = '<h3>個人資料</h3><div id="profileData"></div><div id="editProfileForm" style="display: none;"></div>';
-
-            parkingTableBody.parentElement.appendChild(profileContainer);
-
-            const profileData = document.getElementById("profileData");
-            const editProfileForm = document.getElementById("editProfileForm");
-            const editName = document.createElement("input");
-            const editPhone = document.createElement("input");
-            const editEmail = document.createElement("input");
-            const editLicensePlate = document.createElement("input");
-            const editCarModel = document.createElement("input");
-            const editPaymentMethod = document.createElement("select");
-            const editCardNumber = document.createElement("input");
-            const saveProfileButton = document.createElement("button");
-            const editProfileButton = document.createElement("button");
-            const cancelEditProfileButton = document.createElement("button");
-
-            editName.id = "editName"; editName.type = "text";
-            editPhone.id = "editPhone"; editPhone.type = "text";
-            editEmail.id = "editEmail"; editEmail.type = "email";
-            editLicensePlate.id = "editLicensePlate"; editLicensePlate.type = "text";
-            editCarModel.id = "editCarModel"; editCarModel.type = "text";
-            editCardNumber.id = "editCardNumber"; editCardNumber.type = "text";
-            saveProfileButton.id = "saveProfileButton"; saveProfileButton.textContent = "保存";
-            editProfileButton.id = "editProfileButton"; editProfileButton.textContent = "編輯";
-            cancelEditProfileButton.id = "cancelEditProfileButton"; cancelEditProfileButton.textContent = "取消";
-
-            editPaymentMethod.id = "editPaymentMethod";
-            editPaymentMethod.innerHTML = `
-            <option value="credit_card">信用卡</option>
-            <option value="cash">現金</option>
-        `;
-
-            editProfileForm.appendChild(document.createElement("div")).append("姓名：", editName);
-            editProfileForm.appendChild(document.createElement("div")).append("電話：", editPhone);
-            editProfileForm.appendChild(document.createElement("div")).append("電子郵件：", editEmail);
-            editProfileForm.appendChild(document.createElement("div")).append("車牌號碼：", editLicensePlate);
-            editProfileForm.appendChild(document.createElement("div")).append("車型：", editCarModel);
-            editProfileForm.appendChild(document.createElement("div")).append("付款方式：", editPaymentMethod);
-            editProfileForm.appendChild(document.createElement("div")).append("信用卡號：", editCardNumber);
-            editProfileForm.appendChild(saveProfileButton);
-            editProfileForm.appendChild(cancelEditProfileButton);
-
-            profileData.appendChild(editProfileButton);
-
             try {
                 const token = getToken();
                 if (!token) throw new Error("認證令牌缺失，請重新登入！");
@@ -1269,20 +1264,15 @@ document.addEventListener("DOMContentLoaded", async function () {
 
                 const data = await response.json();
                 const profile = data.data || data.profile || data;
-                if (!profile || !profile.name || !profile.phone || !profile.email) {
-                    throw new Error("後端返回的個人資料格式錯誤");
-                }
-
                 profileData.innerHTML = `
-                <p><strong>姓名：</strong> ${profile.name || '未提供'}</p>
-                <p><strong>電話：</strong> ${profile.phone || '未提供'}</p>
-                <p><strong>電子郵件：</strong> ${profile.email || '未提供'}</p>
-                <p><strong>車牌號碼：</strong> ${profile.license_plate || '未提供'}</p>
-                <p><strong>車型：</strong> ${profile.car_model || '未提供'}</p>
-                <p><strong>付款方式：</strong> ${profile.payment_method || '未提供'}</p>
-                <p><strong>信用卡號：</strong> ${profile.payment_info || '未提供'}</p>
-            `;
-
+                    <p><strong>姓名：</strong> ${profile.name || '未提供'}</p>
+                    <p><strong>電話：</strong> ${profile.phone || '未提供'}</p>
+                    <p><strong>電子郵件：</strong> ${profile.email || '未提供'}</p>
+                    <p><strong>車牌號碼：</strong> ${profile.license_plate || '未提供'}</p>
+                    <p><strong>車型：</strong> ${profile.car_model || '未提供'}</p>
+                    <p><strong>付款方式：</strong> ${profile.payment_method || '未提供'}</p>
+                    <p><strong>信用卡號：</strong> ${profile.payment_info || '未提供'}</p>
+                `;
                 editName.value = profile.name || '';
                 editPhone.value = profile.phone || '';
                 editEmail.value = profile.email || '';
@@ -1290,7 +1280,6 @@ document.addEventListener("DOMContentLoaded", async function () {
                 editCarModel.value = profile.car_model || '';
                 editPaymentMethod.value = profile.payment_method || 'credit_card';
                 editCardNumber.value = profile.payment_info || '';
-
             } catch (error) {
                 console.error("Failed to load profile:", error);
                 profileData.innerHTML = `<p>載入個人資料失敗（錯誤: ${error.message}）</p>`;
@@ -1299,79 +1288,77 @@ document.addEventListener("DOMContentLoaded", async function () {
                     showLoginPage(true);
                 }
             }
+        }
 
-            editProfileButton.addEventListener("click", () => {
-                editProfileForm.style.display = "block";
-                profileData.style.display = "none";
-            });
+        editProfileButton.addEventListener("click", () => {
+            editProfileForm.style.display = "block";
+            profileData.style.display = "none";
+        });
 
-            saveProfileButton.addEventListener("click", async () => {
-                const updatedProfile = {
-                    name: editName.value.trim(),
-                    phone: editPhone.value.trim(),
-                    email: editEmail.value.trim(),
-                    license_plate: editLicensePlate.value.trim(),
-                    car_model: editCarModel.value.trim(),
-                    payment_method: editPaymentMethod.value,
-                    payment_info: editCardNumber.value.trim()
-                };
+        saveProfileButton.addEventListener("click", async () => {
+            const updatedProfile = {
+                name: editName.value.trim(),
+                phone: editPhone.value.trim(),
+                email: editEmail.value.trim(),
+                license_plate: editLicensePlate.value.trim(),
+                car_model: editCarModel.value.trim(),
+                payment_method: editPaymentMethod.value,
+                payment_info: editCardNumber.value.trim()
+            };
 
-                if (!updatedProfile.name) {
-                    alert("姓名為必填項！");
-                    return;
+            if (!updatedProfile.name) {
+                alert("姓名為必填項！");
+                return;
+            }
+            if (!updatedProfile.phone || !/^[0-9]{10}$/.test(updatedProfile.phone)) {
+                alert("請提供有效的電話號碼（10 位數字）！");
+                return;
+            }
+            if (!updatedProfile.email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(updatedProfile.email)) {
+                alert("請提供有效的電子郵件地址！");
+                return;
+            }
+
+            try {
+                const token = getToken();
+                if (!token) throw new Error("認證令牌缺失，請重新登入！");
+
+                const response = await fetch(`${API_URL}/members/profile`, {
+                    method: 'PUT',
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Authorization": `Bearer ${token}`
+                    },
+                    body: JSON.stringify(updatedProfile)
+                });
+
+                if (!response.ok) {
+                    if (response.status === 401) throw new Error("認證失敗，請重新登入！");
+                    const errorData = await response.json();
+                    throw new Error(`HTTP 錯誤！狀態: ${response.status}, 訊息: ${errorData.error || '未知錯誤'}`);
                 }
-                if (!updatedProfile.phone || !/^[0-9]{10}$/.test(updatedProfile.phone)) {
-                    alert("請提供有效的電話號碼（10 位數字）！");
-                    return;
-                }
-                if (!updatedProfile.email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(updatedProfile.email)) {
-                    alert("請提供有效的電子郵件地址！");
-                    return;
-                }
 
-                try {
-                    const token = getToken();
-                    if (!token) throw new Error("認證令牌缺失，請重新登入！");
-
-                    const response = await fetch(`${API_URL}/members/profile`, {
-                        method: 'PUT',
-                        headers: {
-                            "Content-Type": "application/json",
-                            "Authorization": `Bearer ${token}`
-                        },
-                        body: JSON.stringify(updatedProfile)
-                    });
-
-                    if (!response.ok) {
-                        if (response.status === 401) throw new Error("認證失敗，請重新登入！");
-                        const errorData = await response.json();
-                        throw new Error(`HTTP 錯誤！狀態: ${response.status}, 訊息: ${errorData.error || '未知錯誤'}`);
-                    }
-
-                    const result = await response.json();
-                    alert("個人資料更新成功！");
-                    editProfileForm.style.display = "none";
-                    profileData.style.display = "block";
-                    loadProfile();
-                } catch (error) {
-                    console.error("Failed to update profile:", error);
-                    alert(`更新個人資料失敗（錯誤: ${error.message}）`);
-                    if (error.message.includes("認證失敗")) {
-                        removeToken();
-                        showLoginPage(true);
-                    }
-                }
-            });
-
-            cancelEditProfileButton.addEventListener("click", () => {
+                const result = await response.json();
+                alert("個人資料更新成功！");
                 editProfileForm.style.display = "none";
                 profileData.style.display = "block";
                 loadProfile();
-            });
-        }
+            } catch (error) {
+                console.error("Failed to update profile:", error);
+                alert(`更新個人資料失敗（錯誤: ${error.message}）`);
+                if (error.message.includes("認證失敗")) {
+                    removeToken();
+                    showLoginPage(true);
+                }
+            }
+        });
 
-        // 進入頁面時自動加載所有車位和個人資料
-        loadAllSpots();
+        cancelEditProfileButton.addEventListener("click", () => {
+            editProfileForm.style.display = "none";
+            profileData.style.display = "block";
+            loadProfile();
+        });
+
         loadProfile();
     }
 
