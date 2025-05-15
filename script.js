@@ -968,46 +968,36 @@ document.addEventListener("DOMContentLoaded", async function () {
             alert("您沒有權限訪問此功能！");
             return;
         }
-    
+
         const parkingTableBody = document.getElementById("My parking spaceTableBody");
         if (!parkingTableBody) {
             console.error("Required element not found for My parking space: parkingTableBody");
             alert("無法載入「我的車位」頁面，頁面元素缺失，請聯繫管理員！");
             return;
         }
-    
+
         // 進入頁面時直接顯示「載入中...」
         parkingTableBody.innerHTML = '<tr><td colspan="7">載入中...</td></tr>';
-    
-        // 檢查必要的全局函數是否存在
-        const requiredFunctions = { getToken, getMemberId, setParkingSpotId, removeToken, showLoginPage };
-        for (const [funcName, func] of Object.entries(requiredFunctions)) {
-            if (typeof func !== "function") {
-                console.error(`Required function ${funcName} is not defined`);
-                alert(`系統錯誤：缺少必要的函數 ${funcName}，請聯繫管理員！`);
-                return;
-            }
-        }
-    
+
         // 獲取並顯示所有車位
         async function loadAllSpots() {
             try {
                 const token = getToken();
                 if (!token) throw new Error("認證令牌缺失，請重新登入！");
-    
+
                 const memberId = getMemberId();
-                if (!memberId || isNaN(memberId)) throw new Error("無法獲取有效的會員 ID，請重新登入！");
-    
+                if (!memberId) throw new Error("無法獲取會員 ID，請重新登入！");
+
                 // 根據角色決定 API 端點
                 let url;
                 if (role === "shared_owner") {
                     url = `${API_URL}/parking/my-spots`;
                 } else if (role === "renter") {
-                    url = `${API_URL}/parking/my-spots`;
+                    url = `${API_URL}/parking/my-spots`; // 假設後端有此端點，否則需調整
                 } else if (role === "admin") {
                     url = `${API_URL}/parking/my-spots`;
                 }
-    
+
                 const response = await fetch(url, {
                     method: 'GET',
                     headers: {
@@ -1015,40 +1005,37 @@ document.addEventListener("DOMContentLoaded", async function () {
                         "Authorization": `Bearer ${token}`
                     }
                 });
-    
+
                 // 檢查回應狀態
                 if (!response.ok) {
-                    let errorMessage = "載入車位資料失敗！";
                     if (response.status === 404) {
-                        errorMessage = "後端資源未找到 (404)，請檢查 API 端點是否正確配置！";
+                        throw new Error("後端資源未找到 (404)，請檢查 API 端點是否正確配置！");
                     } else if (response.status === 401) {
                         throw new Error("認證失敗，請重新登入！");
-                    } else if (response.status === 500) {
-                        errorMessage = "伺服器內部錯誤 (500)，請聯繫管理員！";
                     }
-                    const errorData = await response.text();
-                    throw new Error(`${errorMessage} (狀態: ${response.status}, 回應: ${errorData})`);
+                    const errorData = await response.text(); // 使用 text() 獲取原始回應
+                    throw new Error(`HTTP 錯誤！狀態: ${response.status}, 回應: ${errorData}`);
                 }
-    
+
                 // 檢查 Content-Type
                 const contentType = response.headers.get('content-type');
                 if (!contentType || !contentType.includes('application/json')) {
                     const textResponse = await response.text();
                     console.error("非 JSON 回應:", textResponse);
-                    throw new Error(`後端返回非 JSON 響應，請檢查伺服器配置 (回應內容: ${textResponse.substring(0, 100)}...)`);
+                    throw new Error("後端返回非 JSON 響應，請檢查伺服器配置 (回應內容: " + textResponse.substring(0, 100) + "...)");
                 }
-    
+
                 const data = await response.json();
                 const spots = data.data || data.spots || data;
                 if (!Array.isArray(spots)) {
                     throw new Error("後端返回的車位資料格式錯誤，應為陣列");
                 }
-    
+
                 if (spots.length === 0) {
                     parkingTableBody.innerHTML = '<tr><td colspan="7">無車位資料</td></tr>';
                     return;
                 }
-    
+
                 parkingTableBody.innerHTML = '';
                 const fragment = document.createDocumentFragment();
                 spots.forEach(spot => {
@@ -1056,45 +1043,44 @@ document.addEventListener("DOMContentLoaded", async function () {
                         console.warn(`Spot ID ${spot.spot_id} has unsupported pricing type 'daily', skipping.`);
                         return;
                     }
-    
+
                     const row = document.createElement("tr");
                     row.setAttribute("data-id", `${spot.spot_id}`);
-    
+
                     const priceDisplay = spot.pricing_type === "hourly"
                         ? `${spot.price_per_half_hour || 0} 元/半小時`
                         : `${spot.monthly_price || 0} 元/月`;
-    
+
                     row.innerHTML = `
-                        <td>${spot.spot_id || 'N/A'}</td>
-                        <td>${spot.location || '未知'}</td>
-                        <td>${spot.parking_type === "flat" ? "平面" : spot.parking_type === "mechanical" ? "機械" : "未知"}</td>
-                        <td>${spot.floor_level === "ground" ? "地面" : spot.floor_level ? `地下${spot.floor_level.startsWith("B") ? spot.floor_level.slice(1) : spot.floor_level}樓` : "未知"}</td>
-                        <td>${spot.pricing_type === "hourly" ? "按小時" : spot.pricing_type === "monthly" ? "按月" : "未知"}</td>
-                        <td>${priceDisplay}</td>
-                        <td>
-                            <button class="edit-btn">編輯</button>
-                            <button class="delete-btn">刪除</button>
-                            <button class="view-reservations-btn">查看預約</button>
-                        </td>
-                    `;
-    
+                <td>${spot.spot_id}</td>
+                <td>${spot.location || '未知'}</td>
+                <td>${spot.parking_type === "flat" ? "平面" : "機械"}</td>
+                <td>${spot.floor_level === "ground" ? "地面" : `地下${spot.floor_level.startsWith("B") ? spot.floor_level.slice(1) : spot.floor_level}樓`}</td>
+                <td>${spot.pricing_type === "hourly" ? "按小時" : "按月"}</td>
+                <td>${priceDisplay}</td>
+                <td>
+                    <button class="edit-btn">編輯</button>
+                    <button class="delete-btn">刪除</button>
+                </td>
+            `;
+
                     // 編輯按鈕事件
                     row.querySelector(".edit-btn").addEventListener("click", (e) => {
                         e.stopPropagation();
                         showEditForm(spot);
                     });
-    
+
                     // 刪除按鈕事件
                     row.querySelector(".delete-btn").addEventListener("click", async (e) => {
                         e.stopPropagation();
-                        if (!confirm(`確定要刪除車位 ${spot.spot_id || '未知'} 嗎？此操作無法恢復！`)) {
+                        if (!confirm(`確定要刪除車位 ${spot.spot_id} 嗎？此操作無法恢復！`)) {
                             return;
                         }
-    
+
                         try {
                             const token = getToken();
                             if (!token) throw new Error("認證令牌缺失，請重新登入！");
-    
+
                             const response = await fetch(`${API_URL}/parking/${spot.spot_id}`, {
                                 method: 'DELETE',
                                 headers: {
@@ -1107,9 +1093,9 @@ document.addEventListener("DOMContentLoaded", async function () {
                                 const errorData = await response.json();
                                 throw new Error(`HTTP error! Status: ${response.status}, Message: ${errorData.error || '未知錯誤'}`);
                             }
-    
+
                             alert(`車位 ${spot.spot_id} 已成功刪除！`);
-                            row.remove();
+                            row.remove(); // 從表格中移除該行
                             if (parkingTableBody.children.length === 0) {
                                 parkingTableBody.innerHTML = '<tr><td colspan="7">無車位資料</td></tr>';
                             }
@@ -1122,27 +1108,16 @@ document.addEventListener("DOMContentLoaded", async function () {
                             }
                         }
                     });
-    
-                    // 查看預約按鈕事件
-                    row.querySelector(".view-reservations-btn").addEventListener("click", (e) => {
-                        e.stopPropagation();
-                        showReservations(spot.spot_id);
-                    });
-    
+
                     // 點擊行選擇車位
-                    row.addEventListener("click", (e) => {
-                        if (e.target.tagName === "BUTTON") return; // 避免按鈕觸發選擇
-                        if (!spot.spot_id) {
-                            alert("此車位缺少 ID，無法選擇！");
-                            return;
-                        }
+                    row.addEventListener("click", () => {
                         setParkingSpotId(spot.spot_id);
                         alert(`已選擇車位 ${spot.spot_id}，您現在可以查詢此車位的收入！`);
                     });
-    
+
                     fragment.appendChild(row);
                 });
-    
+
                 if (fragment.children.length === 0) {
                     parkingTableBody.innerHTML = '<tr><td colspan="7">無車位資料</td></tr>';
                 } else {
@@ -1150,199 +1125,54 @@ document.addEventListener("DOMContentLoaded", async function () {
                 }
             } catch (error) {
                 console.error("Failed to fetch spots:", error);
-                parkingTableBody.innerHTML = `<tr><td colspan="7">無法載入車位資料（錯誤: ${error.message}）</td></tr>`;
+                alert(`無法載入車位資料，請檢查後端服務 (錯誤: ${error.message})`);
+                parkingTableBody.innerHTML = '<tr><td colspan="7">無法載入車位資料</td></tr>';
                 if (error.message.includes("認證失敗")) {
                     removeToken();
                     showLoginPage(true);
                 }
             }
         }
-    
-        // 顯示預約記錄表格
-        async function showReservations(spotId) {
-            if (!spotId) {
-                alert("無效的車位 ID，無法查看預約記錄！");
-                return;
-            }
-    
-            // 移除已存在的預約表格（如果有）
-            const existingTable = document.getElementById("reservationTable");
-            if (existingTable) existingTable.remove();
-    
-            // 創建預約表格
-            const reservationSection = document.createElement("div");
-            reservationSection.id = "reservationTable";
-            reservationSection.style.marginTop = "20px";
-    
-            reservationSection.innerHTML = `
-                <h3>車位 ${spotId} 的預約記錄</h3>
-                <table border="1">
-                    <thead>
-                        <tr>
-                            <th>預約 ID</th>
-                            <th>租用者 ID</th>
-                            <th>開始時間</th>
-                            <th>結束時間</th>
-                            <th>總費用</th>
-                            <th>狀態</th>
-                        </tr>
-                    </thead>
-                    <tbody id="reservationTableBody">
-                        <tr><td colspan="6">載入中...</td></tr>
-                    </tbody>
-                </table>
-                <button id="closeReservationTableButton">關閉</button>
-            `;
-    
-            parkingTableBody.parentElement.appendChild(reservationSection);
-    
-            const reservationTableBody = document.getElementById("reservationTableBody");
-            if (!reservationTableBody) {
-                console.error("Failed to create reservationTableBody");
-                alert("無法創建預約表格，頁面元素缺失！");
-                reservationSection.remove();
-                return;
-            }
-    
-            // 從後端獲取預約記錄
-            try {
-                const token = getToken();
-                if (!token) throw new Error("認證令牌缺失，請重新登入！");
-    
-                const response = await fetch(`${API_URL}/parking/${spotId}/reservations`, {
-                    method: 'GET',
-                    headers: {
-                        "Content-Type": "application/json",
-                        "Authorization": `Bearer ${token}`
-                    }
-                });
-    
-                if (!response.ok) {
-                    let errorMessage = "載入預約記錄失敗！";
-                    if (response.status === 401) {
-                        throw new Error("認證失敗，請重新登入！");
-                    } else if (response.status === 404) {
-                        errorMessage = "未找到預約記錄 (404)，請確認車位 ID 是否正確！";
-                    } else if (response.status === 500) {
-                        errorMessage = "伺服器內部錯誤 (500)，請聯繫管理員！";
-                    }
-                    const errorData = await response.json();
-                    throw new Error(`${errorMessage} (狀態: ${response.status}, 訊息: ${errorData.error || '未知錯誤'})`);
-                }
-    
-                const contentType = response.headers.get('content-type');
-                if (!contentType || !contentType.includes('application/json')) {
-                    const textResponse = await response.text();
-                    throw new Error(`後端返回非 JSON 響應，請檢查伺服器配置 (回應內容: ${textResponse.substring(0, 100)}...)`);
-                }
-    
-                const data = await response.json();
-                const reservations = data.data || data.reservations || data;
-                if (!Array.isArray(reservations)) {
-                    throw new Error("後端返回的預約資料格式錯誤，應為陣列");
-                }
-    
-                if (reservations.length === 0) {
-                    reservationTableBody.innerHTML = '<tr><td colspan="6">無預約記錄</td></tr>';
-                    return;
-                }
-    
-                reservationTableBody.innerHTML = '';
-                const fragment = document.createDocumentFragment();
-                reservations.forEach(reservation => {
-                    const startTime = reservation.start_time ? new Date(reservation.start_time) : null;
-                    const endTime = reservation.end_time ? new Date(reservation.end_time) : null;
-                    const startTimeStr = startTime && !isNaN(startTime) ? startTime.toLocaleString("zh-TW", { hour12: false }) : 'N/A';
-                    const endTimeStr = endTime && !isNaN(endTime) ? endTime.toLocaleString("zh-TW", { hour12: false }) : '尚未結束';
-                    const status = reservation.status || '未知';
-                    const totalCost = typeof reservation.total_cost === 'number' ? reservation.total_cost : 0;
-    
-                    const row = document.createElement("tr");
-                    row.innerHTML = `
-                        <td>${reservation.rent_id || reservation.id || 'N/A'}</td>
-                        <td>${reservation.renter_id || reservation.member_id || 'N/A'}</td>
-                        <td>${startTimeStr}</td>
-                        <td>${endTimeStr}</td>
-                        <td>${totalCost.toFixed(2)} 元</td>
-                        <td>${status}</td>
-                    `;
-                    fragment.appendChild(row);
-                });
-                reservationTableBody.appendChild(fragment);
-            } catch (error) {
-                console.error("Failed to fetch reservations:", error);
-                reservationTableBody.innerHTML = `<tr><td colspan="6">無法載入預約記錄（錯誤: ${error.message}）</td></tr>`;
-                if (error.message === "認證失敗，請重新登入！") {
-                    removeToken();
-                    showLoginPage(true);
-                }
-            }
-    
-            // 關閉按鈕事件
-            const closeButton = document.getElementById("closeReservationTableButton");
-            if (closeButton) {
-                closeButton.addEventListener("click", () => {
-                    reservationSection.remove();
-                });
-            } else {
-                console.error("closeReservationTableButton not found");
-            }
-        }
-    
+
         function showEditForm(spot) {
             const existingForm = document.getElementById("editSpotForm");
             if (existingForm) existingForm.remove();
-    
+
             const editForm = document.createElement("div");
             editForm.id = "editSpotForm";
             editForm.style.marginTop = "20px";
-    
-            const priceLabel = "半小時費用（元）：";
-            const priceValue = `${spot.price_per_half_hour || 0} 元`;
-    
+
+            const priceLabel = "半小時費用（元）："; // 仅保留按小时
+            const priceValue = `${spot.price_per_half_hour || 0} 元`; // 仅使用半小时费用
+
             editForm.innerHTML = `
-                <h3>編輯車位 ${spot.spot_id || '未知'}</h3>
-                <div><label>地址：</label><input type="text" id="editLocation" value="${spot.location || ''}" /></div>
-                <div><label>停車類型：</label><select id="editParkingType">
-                    <option value="flat" ${spot.parking_type === "flat" ? "selected" : ""}>平面</option>
-                    <option value="mechanical" ${spot.parking_type === "mechanical" ? "selected" : ""}>機械</option>
-                </select></div>
-                <div><label>計費方式：</label><select id="editPricingType">
-                    <option value="hourly" selected>按小時</option>
-                </select></div>
-                <div><label>${priceLabel}</label><span>${priceValue}</span></div>
-                <button id="saveSpotButton">保存</button>
-                <button id="cancelEditButton">取消</button>
-            `;
-    
+        <h3>編輯車位 ${spot.spot_id}</h3>
+        <div><label>地址：</label><input type="text" id="editLocation" value="${spot.location || ''}" /></div>
+        <div><label>停車類型：</label><select id="editParkingType">
+            <option value="flat" ${spot.parking_type === "flat" ? "selected" : ""}>平面</option>
+            <option value="mechanical" ${spot.parking_type === "mechanical" ? "selected" : ""}>機械</option>
+        </select></div>
+        <div><label>計費方式：</label><select id="editPricingType">
+            <option value="hourly" selected>按小時</option> 
+        </select></div>
+        <div><label>${priceLabel}</label><span>${priceValue}</span></div>
+        <button id="saveSpotButton">保存</button>
+        <button id="cancelEditButton">取消</button>
+    `;
+
             parkingTableBody.parentElement.appendChild(editForm);
-    
-            const saveButton = document.getElementById("saveSpotButton");
-            const cancelButton = document.getElementById("cancelEditButton");
-    
-            if (!saveButton || !cancelButton) {
-                console.error("Edit form buttons not found");
-                alert("編輯表單按鈕載入失敗，請檢查頁面結構！");
-                editForm.remove();
-                return;
-            }
-    
-            saveButton.addEventListener("click", async () => {
+
+            document.getElementById("saveSpotButton").addEventListener("click", async () => {
                 const updatedSpot = {
                     location: document.getElementById("editLocation").value.trim(),
                     parking_type: document.getElementById("editParkingType").value,
-                    pricing_type: "hourly"
+                    pricing_type: "hourly" // 强制设置为 "hourly"
                 };
-    
-                if (!updatedSpot.location) {
-                    alert("地址為必填項！");
-                    return;
-                }
-    
+
                 try {
                     const token = getToken();
                     if (!token) throw new Error("認證令牌缺失，請重新登入！");
-    
+
                     const response = await fetch(`${API_URL}/parking/${spot.spot_id}`, {
                         method: 'PUT',
                         headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
@@ -1356,7 +1186,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                     await response.json();
                     alert("車位信息已成功更新！");
                     editForm.remove();
-                    loadAllSpots();
+                    loadAllSpots(); // 重新加載所有車位
                 } catch (error) {
                     console.error("Failed to update spot:", error);
                     alert(`無法更新車位資料，請檢查後端服務 (錯誤: ${error.message})`);
@@ -1366,10 +1196,11 @@ document.addEventListener("DOMContentLoaded", async function () {
                     }
                 }
             });
-    
-            cancelButton.addEventListener("click", () => editForm.remove());
+
+            document.getElementById("cancelEditButton").addEventListener("click", () => editForm.remove());
         }
-    
+
+        // 進入頁面時自動加載所有車位
         loadAllSpots();
     }
 
