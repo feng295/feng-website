@@ -1006,7 +1006,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                 </select>
             </div>
             <div>
-                <label>樓層（ "1F"）：</label>
+                <label>樓層（"1F", "B1" ）：</label>
                 <input type="text" id="editFloorLevel" value="${spot.floor_level || ''}" maxlength="20">
             </div>
             <div>
@@ -1024,11 +1024,11 @@ document.addEventListener("DOMContentLoaded", async function () {
                 <input type="number" id="editDailyMaxPrice" value="${spot.daily_max_price || 0}" step="0.01" min="0">
             </div>
             <div>
-                <label>經度（-180 到 180）：</label>
+                <label>經度：</label>
                 <input type="number" id="editLongitude" value="${spot.longitude || 0}" step="0.000001" min="-180" max="180">
             </div>
             <div>
-                <label>緯度（-90 到 90）：</label>
+                <label>緯度：</label>
                 <input type="number" id="editLatitude" value="${spot.latitude || 0}" step="0.000001" min="-90" max="90">
             </div>
             <div id="editAvailableDaysContainer">
@@ -1096,8 +1096,8 @@ document.addEventListener("DOMContentLoaded", async function () {
                     alert("停車類型必須為 'flat' 或 'mechanical'！");
                     return;
                 }
-                // 驗證 floor_level，假設後端接受 "ground", "1F", "B1" 等格式
-                const floorLevelPattern = /^(ground|([1-9][0-9]*[F])|(B[1-9][0-9]*))$/;
+                // 驗證 floor_level 格式
+                const floorLevelPattern = /^(ground|([1-9][0-9]*[F])|(B[1-9][0-9]*))$/i;
                 if (updatedSpot.floor_level && !floorLevelPattern.test(updatedSpot.floor_level)) {
                     alert("樓層格式無效！請使用 'ground', '1F', 'B1' 等格式（最多20字）。");
                     return;
@@ -1106,8 +1106,8 @@ document.addEventListener("DOMContentLoaded", async function () {
                     alert("樓層最多 20 個字符！");
                     return;
                 }
-                if (!["hourly", "monthly"].includes(updatedSpot.pricing_type)) {
-                    alert("計價方式必須為 'hourly' 或 'monthly'！");
+                if (!["hourly"].includes(updatedSpot.pricing_type)) {
+                    alert("計價方式必須為 'hourly'！");
                     return;
                 }
                 if (updatedSpot.price_per_half_hour < 0) {
@@ -1892,7 +1892,6 @@ document.addEventListener("DOMContentLoaded", async function () {
                 const parkingSpotId = getParkingSpotId();
                 if (!parkingSpotId) throw new Error("請先在「我的車位」或「預約車位」中選擇一個停車位！");
 
-                // 修改後的 URL 結構，將 spot_id 嵌入路徑中
                 const response = await fetch(`${API_URL}/parking/${parkingSpotId}/income?start_date=${encodeURIComponent(startDate)}&end_date=${encodeURIComponent(endDate)}`, {
                     method: 'GET',
                     headers: {
@@ -1903,61 +1902,27 @@ document.addEventListener("DOMContentLoaded", async function () {
 
                 if (!response.ok) {
                     if (response.status === 401) throw new Error("認證失敗，請重新登入！");
-                    const errorData = await response.json();
+                    const errorData = await response.json().catch(() => ({ error: '未知錯誤' }));
                     throw new Error(`HTTP error! Status: ${response.status}, Message: ${errorData.error || '未知錯誤'}`);
                 }
 
-                const contentType = response.headers.get('content-type');
-                if (!contentType || !contentType.includes('application/json')) {
-                    throw new Error("後端返回非 JSON 響應，請檢查伺服器配置");
-                }
-
                 const data = await response.json();
-                let incomeData = data.data || data.results || data;
-                if (typeof incomeData === 'string') incomeData = JSON.parse(incomeData);
+                const incomeData = data.data || {};
 
-                let rents = [];
-                if (incomeData.rents) rents = incomeData.rents;
-                else if (incomeData.data && Array.isArray(incomeData.data)) rents = incomeData.data;
-                else if (Array.isArray(incomeData)) rents = incomeData;
-                else {
-                    console.warn("No known record fields found in incomeData:", incomeData);
-                    alert("後端返回的數據格式不正確，無法提取收入記錄（缺少 'rents' 字段）。請檢查後端 API！");
-                    incomeTableBody.innerHTML = '<tr><td colspan="5">數據格式錯誤，無法顯示收入記錄</td></tr>';
-                    return;
-                }
-
-                if (!Array.isArray(rents)) {
-                    console.error("Rents is not an array:", rents);
-                    alert("後端返回的收入記錄格式錯誤（應為陣列），請聯繫管理員檢查 API 響應。");
-                    incomeTableBody.innerHTML = '<tr><td colspan="5">收入記錄格式錯誤，請檢查後端服務</td></tr>';
-                    return;
-                }
-
-                if (rents.length === 0) {
-                    incomeTableBody.innerHTML = '<tr><td colspan="5">無收入記錄</td></tr>';
-                    alert("目前無收入記錄，可能原因：\n1. 所選日期範圍內無記錄。\n2. 車位 ID 無效。\n3. 後端服務異常。");
-                    return;
+                if (!incomeData || typeof incomeData !== 'object') {
+                    throw new Error("後端返回的收入資料格式錯誤");
                 }
 
                 incomeTableBody.innerHTML = '';
-                const fragment = document.createDocumentFragment();
-                rents.forEach((rent, index) => {
-                    const startTime = rent.start_time || rent.startTime ? new Date(rent.start_time || rent.startTime).toLocaleString("zh-TW", { hour12: false }) : 'N/A';
-                    const endTime = rent.actual_end_time || rent.end_time || rent.endTime ? new Date(rent.actual_end_time || rent.end_time || rent.endTime).toLocaleString("zh-TW", { hour12: false }) : '尚未結束';
-                    const cost = rent.total_cost || rent.amount || rent.cost || rent.totalCost || 0;
-
-                    const row = document.createElement("tr");
-                    row.innerHTML = `
-                        <td>${rent.rent_id || rent.id || rent.rentalId || 'N/A'}</td>
-                        <td>${rent.parking_spot_id || rent.spot_id || rent.parkingSpotId || 'N/A'}</td>
-                        <td>${startTime}</td>
-                        <td>${endTime}</td>
-                        <td>${cost}</td>
-                    `;
-                    fragment.appendChild(row);
-                });
-                incomeTableBody.appendChild(fragment);
+                const row = document.createElement("tr");
+                row.innerHTML = `
+                    <td>${incomeData.spot_id || 'N/A'}</td>
+                    <td>${incomeData.location || '未知'}</td>
+                    <td>${incomeData.start_date || 'N/A'}</td>
+                    <td>${incomeData.end_date || 'N/A'}</td>
+                    <td>${incomeData.total_income || 0} 元</td>
+                `;
+                incomeTableBody.appendChild(row);
             } catch (error) {
                 console.error("Failed to fetch income data:", error);
                 alert("無法載入收入資料，請稍後再試或聯繫管理員。");
