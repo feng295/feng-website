@@ -993,43 +993,43 @@ document.addEventListener("DOMContentLoaded", async function () {
             editFormContainer.innerHTML = `
         <h3>編輯車位</h3>
         <form id="editParkingForm">
-            <input type="hidden" id="editSpotId" value="${spot.spot_id}">
+            <input type="hidden" id="editSpotId" value="${spot.spot_id || ''}">
             <div>
                 <label>位置：</label>
-                <input type="text" id="editLocation" value="${spot.location || ''}" maxlength="50">
+                <input type="text" id="editLocation" value="${spot.location || ''}" maxlength="50" required>
             </div>
             <div>
                 <label>停車類型：</label>
-                <select id="editParkingType">
+                <select id="editParkingType" required>
                     <option value="flat" ${spot.parking_type === 'flat' ? 'selected' : ''}>平面</option>
                     <option value="mechanical" ${spot.parking_type === 'mechanical' ? 'selected' : ''}>機械</option>
                 </select>
             </div>
             <div>
-                <label>樓層（"1F", "B1" ）：</label>
-                <input type="text" id="editFloorLevel" value="${spot.floor_level || ''}" maxlength="20">
+                <label>樓層（"ground", "1F", "B1" 等，留空將使用預設值 "ground"）：</label>
+                <input type="text" id="editFloorLevel" value="${spot.floor_level || ''}" maxlength="20" placeholder="例如: ground, 1F, B1">
             </div>
             <div>
                 <label>計價方式：</label>
-                <select id="editPricingType">
+                <select id="editPricingType" required>
                     <option value="hourly" ${spot.pricing_type === 'hourly' ? 'selected' : ''}>按小時</option>
                 </select>
             </div>
             <div>
                 <label>每半小時價格（元）：</label>
-                <input type="number" id="editPricePerHalfHour" value="${spot.price_per_half_hour || 0}" step="0.01" min="0">
+                <input type="number" id="editPricePerHalfHour" value="${spot.price_per_half_hour || 0}" step="0.01" min="0" required>
             </div>
             <div>
                 <label>每日最高價格（元）：</label>
-                <input type="number" id="editDailyMaxPrice" value="${spot.daily_max_price || 0}" step="0.01" min="0">
+                <input type="number" id="editDailyMaxPrice" value="${spot.daily_max_price || 0}" step="0.01" min="0" required>
             </div>
             <div>
-                <label>經度：</label>
-                <input type="number" id="editLongitude" value="${spot.longitude || 0}" step="0.000001" min="-180" max="180">
+                <label>經度（-180 到 180）：</label>
+                <input type="number" id="editLongitude" value="${spot.longitude || 0}" step="0.000001" min="-180" max="180" required>
             </div>
             <div>
-                <label>緯度：</label>
-                <input type="number" id="editLatitude" value="${spot.latitude || 0}" step="0.000001" min="-90" max="90">
+                <label>緯度（-90 到 90）：</label>
+                <input type="number" id="editLatitude" value="${spot.latitude || 0}" step="0.000001" min="-90" max="90" required>
             </div>
             <div id="editAvailableDaysContainer">
                 <label>可用日期：</label>
@@ -1050,7 +1050,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                 dateEntry.className = "date-range-entry";
                 dateEntry.innerHTML = `
             <label>日期 (YYYY-MM-DD)：</label>
-            <input type="date" class="edit-available-date">
+            <input type="date" class="edit-available-date" required>
             <label>是否可用：</label>
             <input type="checkbox" class="edit-available-status" checked>
             <button type="button" class="remove-range">移除</button>
@@ -1079,7 +1079,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                 const updatedSpot = {
                     location: document.getElementById("editLocation").value.trim(),
                     parking_type: document.getElementById("editParkingType").value,
-                    floor_level: document.getElementById("editFloorLevel").value.trim(),
+                    floor_level: document.getElementById("editFloorLevel").value.trim() || "ground", // 預設值 "ground"
                     pricing_type: document.getElementById("editPricingType").value,
                     price_per_half_hour: parseFloat(document.getElementById("editPricePerHalfHour").value) || 0,
                     daily_max_price: parseFloat(document.getElementById("editDailyMaxPrice").value) || 0,
@@ -1088,6 +1088,10 @@ document.addEventListener("DOMContentLoaded", async function () {
                 };
 
                 // 增強驗證
+                if (!updatedSpot.location) {
+                    alert("位置為必填項！");
+                    return;
+                }
                 if (updatedSpot.location.length > 50) {
                     alert("位置最多 50 個字符！");
                     return;
