@@ -144,47 +144,9 @@
                                 </tr>
                             </tbody>
                         </table>
-                        <div id="profileData">
-                            <h3>個人資料</h3>
-                            <p>載入中...</p>
-                        </div>
-                        <div id="editProfileForm" style="display: none;">
-                            <h3>編輯個人資料</h3>
-                            <div>
-                                <label for="editName">姓名：</label>
-                                <input type="text" id="editName">
-                            </div>
-                            <div>
-                                <label for="editPhone">電話：</label>
-                                <input type="text" id="editPhone">
-                            </div>
-                            <div>
-                                <label for="editEmail">電子郵件：</label>
-                                <input type="email" id="editEmail">
-                            </div>
-                            <div>
-                                <label for="editLicensePlate">車牌號碼：</label>
-                                <input type="text" id="editLicensePlate">
-                            </div>
-                            <div>
-                                <label for="editCarModel">車型：</label>
-                                <input type="text" id="editCarModel">
-                            </div>
-                            <div>
-                                <label for="editPaymentMethod">付款方式：</label>
-                                <select id="editPaymentMethod">
-                                    <option value="credit_card">信用卡</option>
-                                </select>
-                            </div>
-                            <div>
-                                <label for="editCardNumber">信用卡號：</label>
-                                <input type="text" id="editCardNumber">
-                            </div>
-                            <button id="saveProfileButton">保存</button>
-                            <button id="editProfileButton">編輯</button>
-                            <button id="cancelEditProfileButton">取消</button>
-                        </div>
+                        <div id="profileContainer"></div>
                     </div>
+                </div>
 
                     <div id="reserveParking" class="content-section" style="display: none;">
                         <h2>預約車位</h2>
@@ -233,10 +195,7 @@
                             </select>
                             <label for="reservePricing">計價方式：</label>
                             <select id="reservePricing">
-                                <option value="all">全部</option>
                                 <option value="hourly">按小時計費</option>
-                                <option value="daily">按日計費</option>
-                                <option value="monthly">按月計費</option>
                             </select>
                             <label for="reserveStatus">車位狀態：</label>
                             <select id="reserveStatus">
