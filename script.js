@@ -1759,9 +1759,6 @@ document.addEventListener("DOMContentLoaded", async function () {
             if (spotId && !isNaN(spotId) && Number.isInteger(Number(spotId))) {
                 parkingSpotMessage.textContent = `已選擇車位 ID：${spotId}（注意：每次只能查詢一個車位的收入）`;
                 parkingSpotMessage.style.color = "green";
-            } else {
-                parkingSpotMessage.textContent = "請先在「我的車位」中選擇一個有效的停車位！（每次只能查詢一個車位）";
-                parkingSpotMessage.style.color = "red";
             }
         }
     
@@ -1802,12 +1799,12 @@ document.addEventListener("DOMContentLoaded", async function () {
                 const token = getToken();
                 if (!token) throw new Error("認證令牌缺失，請重新登入！");
     
+                // 修改 URL 結構，將 spot_id 嵌入路徑中
                 const queryParams = new URLSearchParams({
-                    spot_id: spotId.toString(),
                     start_date: startDate,
                     end_date: endDate
                 });
-                const response = await fetch(`${API_URL}/parking/income?${queryParams.toString()}`, {
+                const response = await fetch(`${API_URL}/parking/${spotId}/income?${queryParams.toString()}`, {
                     method: 'GET',
                     headers: {
                         "Content-Type": "application/json",
