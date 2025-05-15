@@ -961,7 +961,6 @@ document.addEventListener("DOMContentLoaded", async function () {
     });
 
     // 設置我的車位
-    // 設置我的車位
     function setupMyParkingSpace() {
         const role = getRole();
         console.log("Current role in setupMyParkingSpace:", role);
@@ -992,55 +991,54 @@ document.addEventListener("DOMContentLoaded", async function () {
         // 顯示編輯表單
         function showEditForm(spot) {
             editFormContainer.innerHTML = `
-            <h3>編輯車位</h3>
-            <form id="editParkingForm">
-                <input type="hidden" id="editSpotId" value="${spot.spot_id}">
-                <div>
-                    <label>位置（最多50字）：</label>
-                    <input type="text" id="editLocation" value="${spot.location || ''}" maxlength="50">
-                </div>
-                <div>
-                    <label>停車類型：</label>
-                    <select id="editParkingType">
-                        <option value="flat" ${spot.parking_type === 'flat' ? 'selected' : ''}>平面</option>
-                        <option value="mechanical" ${spot.parking_type === 'mechanical' ? 'selected' : ''}>機械</option>
-                    </select>
-                </div>
-                <div>
-                    <label>樓層（最多20字）：</label>
-                    <input type="text" id="editFloorLevel" value="${spot.floor_level || ''}" maxlength="20">
-                </div>
-                <div>
-                    <label>計價方式：</label>
-                    <select id="editPricingType">
-                        <option value="hourly" ${spot.pricing_type === 'hourly' ? 'selected' : ''}>按小時</option>
-                        <option value="monthly" ${spot.pricing_type === 'monthly' ? 'selected' : ''}>按月</option>
-                    </select>
-                </div>
-                <div>
-                    <label>每半小時價格（元）：</label>
-                    <input type="number" id="editPricePerHalfHour" value="${spot.price_per_half_hour || 0}" step="0.01" min="0">
-                </div>
-                <div>
-                    <label>每日最高價格（元）：</label>
-                    <input type="number" id="editDailyMaxPrice" value="${spot.daily_max_price || 0}" step="0.01" min="0">
-                </div>
-                <div>
-                    <label>經度（-180 到 180）：</label>
-                    <input type="number" id="editLongitude" value="${spot.longitude || 0}" step="0.000001" min="-180" max="180">
-                </div>
-                <div>
-                    <label>緯度（-90 到 90）：</label>
-                    <input type="number" id="editLatitude" value="${spot.latitude || 0}" step="0.000001" min="-90" max="90">
-                </div>
-                <div id="editAvailableDaysContainer">
-                    <label>可用日期：</label>
-                    <button type="button" id="addEditDateButton">添加日期</button>
-                </div>
-                <button type="button" id="saveEditSpotButton">保存</button>
-                <button type="button" id="cancelEditSpotButton">取消</button>
-            </form>
-        `;
+        <h3>編輯車位</h3>
+        <form id="editParkingForm">
+            <input type="hidden" id="editSpotId" value="${spot.spot_id}">
+            <div>
+                <label>位置：</label>
+                <input type="text" id="editLocation" value="${spot.location || ''}" maxlength="50">
+            </div>
+            <div>
+                <label>停車類型：</label>
+                <select id="editParkingType">
+                    <option value="flat" ${spot.parking_type === 'flat' ? 'selected' : ''}>平面</option>
+                    <option value="mechanical" ${spot.parking_type === 'mechanical' ? 'selected' : ''}>機械</option>
+                </select>
+            </div>
+            <div>
+                <label>樓層（ "1F"）：</label>
+                <input type="text" id="editFloorLevel" value="${spot.floor_level || ''}" maxlength="20">
+            </div>
+            <div>
+                <label>計價方式：</label>
+                <select id="editPricingType">
+                    <option value="hourly" ${spot.pricing_type === 'hourly' ? 'selected' : ''}>按小時</option>
+                </select>
+            </div>
+            <div>
+                <label>每半小時價格（元）：</label>
+                <input type="number" id="editPricePerHalfHour" value="${spot.price_per_half_hour || 0}" step="0.01" min="0">
+            </div>
+            <div>
+                <label>每日最高價格（元）：</label>
+                <input type="number" id="editDailyMaxPrice" value="${spot.daily_max_price || 0}" step="0.01" min="0">
+            </div>
+            <div>
+                <label>經度（-180 到 180）：</label>
+                <input type="number" id="editLongitude" value="${spot.longitude || 0}" step="0.000001" min="-180" max="180">
+            </div>
+            <div>
+                <label>緯度（-90 到 90）：</label>
+                <input type="number" id="editLatitude" value="${spot.latitude || 0}" step="0.000001" min="-90" max="90">
+            </div>
+            <div id="editAvailableDaysContainer">
+                <label>可用日期：</label>
+                <button type="button" id="addEditDateButton">添加日期</button>
+            </div>
+            <button type="button" id="saveEditSpotButton">保存</button>
+            <button type="button" id="cancelEditSpotButton">取消</button>
+        </form>
+    `;
             editFormContainer.style.display = "block";
 
             const availableDaysContainer = document.getElementById("editAvailableDaysContainer");
@@ -1051,15 +1049,15 @@ document.addEventListener("DOMContentLoaded", async function () {
                 const dateEntry = document.createElement("div");
                 dateEntry.className = "date-range-entry";
                 dateEntry.innerHTML = `
-                <label>日期 (YYYY-MM-DD)：</label>
-                <input type="date" class="edit-available-date">
-                <label>是否可用：</label>
-                <input type="checkbox" class="edit-available-status" checked>
-                <button type="button" class="remove-date">移除</button>
-            `;
+            <label>日期 (YYYY-MM-DD)：</label>
+            <input type="date" class="edit-available-date">
+            <label>是否可用：</label>
+            <input type="checkbox" class="edit-available-status" checked>
+            <button type="button" class="remove-range">移除</button>
+        `;
                 availableDaysContainer.appendChild(dateEntry);
 
-                dateEntry.querySelector(".remove-date").addEventListener("click", () => {
+                dateEntry.querySelector(".remove-range").addEventListener("click", () => {
                     dateEntry.remove();
                 });
             }
@@ -1089,7 +1087,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                     latitude: parseFloat(document.getElementById("editLatitude").value) || 0,
                 };
 
-                // 驗證輸入
+                // 增強驗證
                 if (updatedSpot.location.length > 50) {
                     alert("位置最多 50 個字符！");
                     return;
@@ -1098,7 +1096,13 @@ document.addEventListener("DOMContentLoaded", async function () {
                     alert("停車類型必須為 'flat' 或 'mechanical'！");
                     return;
                 }
-                if (updatedSpot.floor_level.length > 20) {
+                // 驗證 floor_level，假設後端接受 "ground", "1F", "B1" 等格式
+                const floorLevelPattern = /^(ground|([1-9][0-9]*[F])|(B[1-9][0-9]*))$/;
+                if (updatedSpot.floor_level && !floorLevelPattern.test(updatedSpot.floor_level)) {
+                    alert("樓層格式無效！請使用 'ground', '1F', 'B1' 等格式（最多20字）。");
+                    return;
+                }
+                if (updatedSpot.floor_level && updatedSpot.floor_level.length > 20) {
                     alert("樓層最多 20 個字符！");
                     return;
                 }
@@ -1160,8 +1164,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                     });
 
                     if (!response.ok) {
-                        if (response.status === 401) throw new Error("認證失敗，請重新登入！");
-                        const errorData = await response.json();
+                        const errorData = await response.json().catch(() => ({ error: '未知錯誤' }));
                         throw new Error(`HTTP error! Status: ${response.status}, Message: ${errorData.error || '未知錯誤'}`);
                     }
 
@@ -1170,8 +1173,8 @@ document.addEventListener("DOMContentLoaded", async function () {
                     loadAllSpots();
                 } catch (error) {
                     console.error("Failed to update spot:", error);
-                    alert(`無法更新車位，請檢查後端服務 (錯誤: ${error.message})`);
-                    if (error.message === "認證失敗，請重新登入！") {
+                    alert(`無法更新車位，請檢查輸入或聯繫管理員 (錯誤: ${error.message})`);
+                    if (error.message.includes("認證失敗")) {
                         removeToken();
                         showLoginPage(true);
                     }

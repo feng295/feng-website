@@ -402,7 +402,7 @@ a:hover {
 /* 編輯按鈕樣式 */
 .edit-btn {
     padding: 6px 12px;
-    background-color: #007bff;
+    background-color: #008080; /* Changed to teal */
     color: white;
     border: none;
     border-radius: 3px;
@@ -413,7 +413,23 @@ a:hover {
 }
 
 .edit-btn:hover {
-    background-color: #0056b3;
+    background-color: #006666; /* Darker teal on hover */
+}
+
+/* 刪除按鈕樣式 */
+.delete-btn {
+    padding: 6px 12px;
+    background-color: #ff4040; /* Changed to a softer red */
+    color: white;
+    border: none;
+    border-radius: 3px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background 0.3s ease;
+}
+
+.delete-btn:hover {
+    background-color: #cc3333; /* Darker red on hover */
 }
 
 /* 編輯表單樣式 */
@@ -454,22 +470,6 @@ a:hover {
     width: auto;
     padding: 8px 16px;
     margin-right: 10px;
-}
-
-/* 刪除按鈕樣式 */
-.delete-btn {
-    padding: 6px 12px;
-    background-color: #dc3545;
-    color: white;
-    border: none;
-    border-radius: 3px;
-    cursor: pointer;
-    font-size: 14px;
-    transition: background 0.3s ease;
-}
-
-.delete-btn:hover {
-    background-color: #c82333;
 }
 
 /* 響應式設計 */
