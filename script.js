@@ -298,28 +298,76 @@ document.addEventListener("DOMContentLoaded", async function () {
         pricingTypeSelect.innerHTML = `<option value="hourly">按小時</option>`;
         priceLabel.textContent = "半小時費用（元）：";
 
-        // 動態添加可用日期
+        // 修改可用日期：使用日期範圍選擇
         const availableDaysContainer = document.getElementById("availableDaysContainer");
         const addDateButton = document.getElementById("addDateButton");
 
-        function addDateEntry(date = "", isAvailable = true) {
-            const dateEntry = document.createElement("div");
-            dateEntry.className = "date-entry";
-            dateEntry.innerHTML = `
-                <label>日期 (YYYY-MM-DD)：</label>
-                <input type="date" class="available-date" value="${date}">
-                <label>是否可用：</label>
-                <input type="checkbox" class="available-status" ${isAvailable ? "checked" : ""}>
-                <button type="button" class="remove-date">移除</button>
-            `;
-            availableDaysContainer.appendChild(dateEntry);
+        // 動態生成日期範圍內的所有日期
+        function generateDateRange(startDate, endDate) {
+            const dates = [];
+            let currentDate = new Date(startDate);
+            const end = new Date(endDate);
+            while (currentDate <= end) {
+                dates.push(new Date(currentDate).toISOString().split('T')[0]);
+                currentDate.setDate(currentDate.getDate() + 1);
+            }
+            return dates;
+        }
 
-            dateEntry.querySelector(".remove-date").addEventListener("click", () => {
-                dateEntry.remove();
+        // 顯示日期範圍選擇器和生成的日期
+        function addDateRangeEntry() {
+            const dateRangeEntry = document.createElement("div");
+            dateRangeEntry.className = "date-range-entry";
+            dateRangeEntry.innerHTML = `
+                <label>開始日期 (YYYY-MM-DD)：</label>
+                <input type="date" class="start-date">
+                <label>結束日期 (YYYY-MM-DD)：</label>
+                <input type="date" class="end-date">
+                <button type="button" class="generate-dates">生成日期</button>
+                <button type="button" class="remove-range">移除</button>
+                <div class="date-list"></div>
+            `;
+            availableDaysContainer.appendChild(dateRangeEntry);
+
+            const startDateInput = dateRangeEntry.querySelector(".start-date");
+            const endDateInput = dateRangeEntry.querySelector(".end-date");
+            const generateButton = dateRangeEntry.querySelector(".generate-dates");
+            const dateList = dateRangeEntry.querySelector(".date-list");
+
+            generateButton.addEventListener("click", () => {
+                const startDate = startDateInput.value;
+                const endDate = endDateInput.value;
+
+                if (!startDate || !endDate) {
+                    alert("請選擇開始和結束日期！");
+                    return;
+                }
+                if (startDate > endDate) {
+                    alert("開始日期不能晚於結束日期！");
+                    return;
+                }
+
+                const dates = generateDateRange(startDate, endDate);
+                dateList.innerHTML = '';
+                dates.forEach(date => {
+                    const dateEntry = document.createElement("div");
+                    dateEntry.className = "date-entry";
+                    dateEntry.innerHTML = `
+                        <label>日期：${date}</label>
+                        <input type="hidden" class="available-date" value="${date}">
+                        <label>是否可用：</label>
+                        <input type="checkbox" class="available-status" checked>
+                    `;
+                    dateList.appendChild(dateEntry);
+                });
+            });
+
+            dateRangeEntry.querySelector(".remove-range").addEventListener("click", () => {
+                dateRangeEntry.remove();
             });
         }
 
-        addDateButton.addEventListener("click", () => addDateEntry());
+        addDateButton.addEventListener("click", addDateRangeEntry);
 
         // 檢查 Google Maps API 是否已載入
         const addParkingMap = document.getElementById("addParkingMap");
