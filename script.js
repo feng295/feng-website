@@ -1723,7 +1723,7 @@ document.addEventListener("DOMContentLoaded", async function () {
             alert("此功能僅限車位共享者和管理員使用！");
             return;
         }
-
+    
         const incomeSection = document.getElementById("incomeInquiry");
         if (!incomeSection) {
             console.error("incomeInquiry section not found");
@@ -1731,60 +1731,61 @@ document.addEventListener("DOMContentLoaded", async function () {
             return;
         }
         incomeSection.style.display = "block";
-
+    
         const startDateInput = document.getElementById("startDate");
         const endDateInput = document.getElementById("endDate");
         const incomeSearchButton = document.getElementById("incomeSearchButton");
         const incomeTableBody = document.getElementById("incomeTableBody");
-
+    
         if (!startDateInput || !endDateInput || !incomeSearchButton || !incomeTableBody) {
             console.error("Required DOM elements missing for income inquiry");
             alert("頁面元素載入失敗，請檢查 DOM 結構！");
             return;
         }
-
+    
         // 設置預設日期
         const today = new Date().toISOString().split('T')[0];
         startDateInput.value = today;
         endDateInput.value = today;
-
+    
         // 檢查是否有選擇的停車位，並顯示提示
         const parkingSpotMessage = document.createElement("p");
         parkingSpotMessage.id = "parkingSpotMessage";
         parkingSpotMessage.style.color = "blue";
         incomeSection.insertBefore(parkingSpotMessage, incomeSection.firstChild);
-
+    
         function updateParkingSpotMessage() {
             const spotId = getParkingSpotId();
-            if (spotId) {
-                parkingSpotMessage.textContent = `已選擇車位 ID：${spotId}`;
+            if (spotId && !isNaN(spotId) && Number.isInteger(Number(spotId))) {
+                parkingSpotMessage.textContent = `已選擇車位 ID：${spotId}（注意：每次只能查詢一個車位的收入）`;
                 parkingSpotMessage.style.color = "green";
             } else {
-                parkingSpotMessage.textContent = "請先在「我的車位」中選擇一個停車位！";
+                parkingSpotMessage.textContent = "請先在「我的車位」中選擇一個有效的停車位！（每次只能查詢一個車位）";
                 parkingSpotMessage.style.color = "red";
             }
         }
-
+    
         // 頁面載入時檢查停車位狀態
         updateParkingSpotMessage();
-
-        // 監聽 localStorage 變化（模擬停車位選擇更新）
+    
+        // 監聽 localStorage 變化
         window.addEventListener("storage", (event) => {
             if (event.key === "selectedParkingSpotId") {
                 updateParkingSpotMessage();
             }
         });
-
+    
         async function handleIncomeSearch() {
             const spotId = getParkingSpotId();
-            if (!spotId) {
-                alert("請先在「我的車位」中選擇一個停車位！");
+            // 嚴格驗證 spotId
+            if (!spotId || isNaN(spotId) || !Number.isInteger(Number(spotId))) {
+                alert("請先在「我的車位」中選擇一個有效的停車位 ID（必須為整數）！");
                 return;
             }
-
+    
             const startDate = startDateInput.value;
             const endDate = endDateInput.value;
-
+    
             // 驗證日期
             if (!startDate || !endDate) {
                 alert("請選擇開始和結束日期！");
@@ -1794,15 +1795,15 @@ document.addEventListener("DOMContentLoaded", async function () {
                 alert("結束日期不能早於開始日期！");
                 return;
             }
-
-            incomeTableBody.innerHTML = '<tr><td colspan="4">載入中...</td></tr>';
-
+    
+            incomeTableBody.innerHTML = '<tr><td colspan="5">載入中...</td></tr>';
+    
             try {
                 const token = getToken();
                 if (!token) throw new Error("認證令牌缺失，請重新登入！");
-
+    
                 const queryParams = new URLSearchParams({
-                    spot_id: spotId,
+                    spot_id: spotId.toString(),
                     start_date: startDate,
                     end_date: endDate
                 });
@@ -1813,59 +1814,67 @@ document.addEventListener("DOMContentLoaded", async function () {
                         "Authorization": `Bearer ${token}`
                     }
                 });
-
+    
                 if (!response.ok) {
-                    if (response.status === 401) throw new Error("認證失敗，請重新登入！");
+                    const errorText = await response.text();
+                    if (response.status === 400) {
+                        console.error("Bad Request Details:", errorText);
+                        throw new Error(`請求無效！後端返回: ${errorText.substring(0, 100)}...`);
+                    } else if (response.status === 401) {
+                        throw new Error("認證失敗，請重新登入！");
+                    }
                     const errorData = await response.json();
                     throw new Error(`HTTP error! Status: ${response.status}, Message: ${errorData.error || '未知錯誤'}`);
                 }
-
+    
                 const data = await response.json();
-                const incomeRecords = data.data || data.records || data;
-                if (!Array.isArray(incomeRecords)) {
-                    throw new Error("後端返回的收入資料格式錯誤，應為陣列");
+                // 檢查 status 字段
+                if (!data.status) {
+                    throw new Error(data.message || "查詢失敗，後端未提供具體原因");
                 }
-
-                if (incomeRecords.length === 0) {
-                    incomeTableBody.innerHTML = '<tr><td colspan="4">無收入記錄</td></tr>';
-                    return;
+    
+                const incomeData = data.data;
+                if (!incomeData || typeof incomeData !== 'object') {
+                    throw new Error("後端返回的收入資料格式錯誤，應為對象");
                 }
-
+    
+                // 驗證必要的字段
+                const requiredFields = ['spot_id', 'location', 'start_date', 'end_date', 'total_income'];
+                for (const field of requiredFields) {
+                    if (!(field in incomeData)) {
+                        throw new Error(`後端缺少必要的字段: ${field}`);
+                    }
+                }
+    
+                // 驗證 total_income 為數字
+                const totalIncome = Number(incomeData.total_income);
+                if (isNaN(totalIncome) || totalIncome < 0) {
+                    throw new Error("後端返回的 total_income 無效，應為非負數字");
+                }
+    
+                // 清空表格並顯示單一行數據
                 incomeTableBody.innerHTML = '';
-                let totalIncome = 0;
                 const fragment = document.createDocumentFragment();
-                incomeRecords.forEach(record => {
-                    const row = document.createElement("tr");
-                    const amount = Number(record.amount) || 0;
-                    totalIncome += amount;
-                    row.innerHTML = `
-                    <td>${record.parking_spot_id}</td>
-                    <td>${new Date(record.start_time).toLocaleString()}</td>
-                    <td>${new Date(record.end_time).toLocaleString()}</td>
-                    <td>${amount.toFixed(2)} 元</td>
+                const row = document.createElement("tr");
+                row.innerHTML = `
+                    <td>${incomeData.spot_id}</td>
+                    <td>${incomeData.location}</td>
+                    <td>${incomeData.start_date}</td>
+                    <td>${incomeData.end_date}</td>
+                    <td>${totalIncome.toFixed(2)} 元</td>
                 `;
-                    fragment.appendChild(row);
-                });
-
-                // 添加總收入行
-                const totalRow = document.createElement("tr");
-                totalRow.innerHTML = `
-                <td colspan="3"><strong>總收入</strong></td>
-                <td><strong>${totalIncome.toFixed(2)} 元</strong></td>
-            `;
-                fragment.appendChild(totalRow);
-
+                fragment.appendChild(row);
                 incomeTableBody.appendChild(fragment);
             } catch (error) {
                 console.error("Failed to fetch income data:", error);
-                incomeTableBody.innerHTML = `<tr><td colspan="4">無法載入收入資料（錯誤: ${error.message}）</td></tr>`;
+                incomeTableBody.innerHTML = `<tr><td colspan="5">無法載入收入資料（錯誤: ${error.message}）</td></tr>`;
                 if (error.message.includes("認證失敗")) {
                     removeToken();
                     showLoginPage(true);
                 }
             }
         }
-
+    
         incomeSearchButton.addEventListener("click", handleIncomeSearch);
     }
 
