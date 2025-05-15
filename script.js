@@ -844,16 +844,13 @@ document.addEventListener("DOMContentLoaded", async function () {
             const phone = phoneInput.value.trim();
             const role = roleInput.value.toLowerCase().trim();
             const payment_method = paymentMethodInput.value;
-            const payment_info = cardNumberInput.value.trim();
             const license_plate = licensePlateInput.value.trim();
-            const vehicle_type = vehicleTypeInput.value.trim();
 
             if (!name) errors.push("姓名不能為空");
             if (!phone || !/^[0-9]{10}$/.test(phone)) errors.push("請提供有效的電話號碼（10 位數字）");
             if (!role) errors.push("請選擇身份");
             if (!payment_method) errors.push("請選擇付款方式");
             if (role === "renter" && !license_plate) errors.push("車牌號碼不能為空");
-            if (role === "renter" && !vehicle_type) errors.push("車型不能為空");
         }
 
         if (errors.length > 0) {
