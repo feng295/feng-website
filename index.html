@@ -125,27 +125,36 @@
                 </div>
                 <div id="My parking space" class="content-section" style="display: none;">
                     <h2>我的車位</h2>
-                    <div class="parking-spaces-table">
-                        <table id="My parking spaceTable">
-                            <thead>
-                                <tr>
-                                    <th>車位ID</th>
-                                    <th>地址</th>
-                                    <th>類型</th>
-                                    <th>樓層</th>
-                                    <th>計費方式</th>
-                                    <th>費用</th>
-                                    <th>操作</th>
-                                </tr>
-                            </thead>
-                            <tbody id="My parking spaceTableBody">
-                                <tr>
-                                    <td colspan="7">請選擇車位以查看詳情</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                        <div id="profileContainer"></div>
-                    </div>
+                    <table border="1" id="viewParkingTable">
+                        <thead>
+                            <tr>
+                                <th>車位ID</th>
+                                <th>地址</th>
+                                <th>類型</th>
+                                <th>樓層</th>
+                                <th>計費方式</th>
+                                <th>費用</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="My parking spaceTableBody">
+                            <tr><td colspan="7">請選擇車位以查看詳情</td></tr>
+                        </tbody>
+                    </table>
+                    <!-- 新增可用日期表格 -->
+                    <h3>車位可用日期</h3>
+                    <table border="1" id="availableDaysTable">
+                        <thead>
+                            <tr>
+                                <th>車位ID</th>
+                                <th>日期</th>
+                                <th>是否可用</th>
+                            </tr>
+                        </thead>
+                        <tbody id="availableDaysTableBody">
+                            <tr><td colspan="3">請選擇車位以查看可用日期</td></tr>
+                        </tbody>
+                    </table>
                 </div>
 
                 <div id="reserveParking" class="content-section" style="display: none;">
