@@ -73,7 +73,9 @@ button,
 #incomeSearchButton,
 #saveNewSpotButton,
 #cancelAddButton,
-#addDateButton {
+#addDateButton,
+#saveEditSpotButton,
+#cancelEditSpotButton {
     width: 100%;
     max-width: 100%;
     padding: 10px;
@@ -94,7 +96,9 @@ button:hover,
 #incomeSearchButton:hover,
 #saveNewSpotButton:hover,
 #cancelAddButton:hover,
-#addDateButton:hover {
+#addDateButton:hover,
+#saveEditSpotButton:hover,
+#cancelEditSpotButton:hover {
     background: #218838;
     transform: scale(1.05);
 }
@@ -105,7 +109,9 @@ button:active,
 #incomeSearchButton:active,
 #saveNewSpotButton:active,
 #cancelAddButton:active,
-#addDateButton:active {
+#addDateButton:active,
+#saveEditSpotButton:active,
+#cancelEditSpotButton:active {
     transform: scale(0.95);
 }
 
@@ -113,7 +119,9 @@ button:active,
 #specificSpotButton,
 #reserveSearchButton,
 #incomeSearchButton,
-#addDateButton {
+#addDateButton,
+#saveEditSpotButton,
+#cancelEditSpotButton {
     width: auto;
     padding: 8px 16px;
     background: #007bff;
@@ -123,15 +131,19 @@ button:active,
 #specificSpotButton:hover,
 #reserveSearchButton:hover,
 #incomeSearchButton:hover,
-#addDateButton:hover {
+#addDateButton:hover,
+#saveEditSpotButton:hover,
+#cancelEditSpotButton:hover {
     background: #0056b3;
 }
 
-#cancelAddButton {
+#cancelAddButton,
+#cancelEditSpotButton {
     background: #dc3545;
 }
 
-#cancelAddButton:hover {
+#cancelAddButton:hover,
+#cancelEditSpotButton:hover {
     background: #c82333;
 }
 
@@ -259,31 +271,31 @@ a:hover {
 }
 
 /* 動態生成的日期輸入框樣式 */
-.date-entry {
+.date-range-entry {
     display: flex;
     align-items: center;
     gap: 10px;
     margin-bottom: 10px;
 }
 
-.date-entry label {
+.date-range-entry label {
     margin-bottom: 0;
     margin-right: 5px;
 }
 
-.date-entry input[type="date"],
-.date-entry input[type="checkbox"] {
+.date-range-entry input[type="date"],
+.date-range-entry input[type="checkbox"] {
     padding: 8px;
     border: 1px solid #ccc;
     border-radius: 3px;
     font-size: 14px;
 }
 
-.date-entry input[type="checkbox"] {
+.date-range-entry input[type="checkbox"] {
     width: auto;
 }
 
-.date-entry .remove-date {
+.date-range-entry .remove-range {
     padding: 6px 12px;
     background: #dc3545;
     color: white;
@@ -293,7 +305,7 @@ a:hover {
     font-size: 14px;
 }
 
-.date-entry .remove-date:hover {
+.date-range-entry .remove-range:hover {
     background: #c82333;
 }
 
@@ -309,7 +321,8 @@ a:hover {
 #reserveParkingTable,
 #incomeTable,
 #ownerTable,
-#renterTable {
+#renterTable,
+#My parking spaceTable {
     width: 100%;
     border-collapse: collapse;
     background-color: #fff;
@@ -324,7 +337,9 @@ a:hover {
 #ownerTable th,
 #ownerTable td,
 #renterTable th,
-#renterTable td {
+#renterTable td,
+#My parking spaceTable th,
+#My parking spaceTable td {
     padding: 12px;
     border: 1px solid #ddd;
     text-align: left;
@@ -335,7 +350,8 @@ a:hover {
 #reserveParkingTable th,
 #incomeTable th,
 #ownerTable th,
-#renterTable th {
+#renterTable th,
+#My parking spaceTable th {
     background-color: #f4f4f4;
     position: sticky;
     top: 0;
@@ -343,19 +359,23 @@ a:hover {
 }
 
 #viewParkingTable tr.available,
-#reserveParkingTable tr.available {
+#reserveParkingTable tr.available,
+#My parking spaceTable tr.available {
     background-color: #e0ffe0;
 }
 
 #viewParkingTable tr.occupied,
 #viewParkingTable tr.reserved,
 #reserveParkingTable tr.occupied,
-#reserveParkingTable tr.reserved {
+#reserveParkingTable tr.reserved,
+#My parking spaceTable tr.occupied,
+#My parking spaceTable tr.reserved {
     background-color: #ffe0e0;
 }
 
 #viewParkingTable button,
-#reserveParkingTable button {
+#reserveParkingTable button,
+#My parking spaceTable button {
     padding: 6px 12px;
     background-color: #28a745;
     color: white;
@@ -367,12 +387,14 @@ a:hover {
 }
 
 #viewParkingTable button:hover:not(:disabled),
-#reserveParkingTable button:hover:not(:disabled) {
+#reserveParkingTable button:hover:not(:disabled),
+#My parking spaceTable button:hover:not(:disabled) {
     background-color: #218838;
 }
 
 #viewParkingTable button:disabled,
-#reserveParkingTable button:disabled {
+#reserveParkingTable button:disabled,
+#My parking spaceTable button:disabled {
     background-color: #ccc;
     cursor: not-allowed;
 }
@@ -387,6 +409,7 @@ a:hover {
     cursor: pointer;
     font-size: 14px;
     transition: background 0.3s ease;
+    margin-right: 5px;
 }
 
 .edit-btn:hover {
@@ -394,31 +417,32 @@ a:hover {
 }
 
 /* 編輯表單樣式 */
-#editSpotForm {
+#editParkingFormContainer {
     margin-top: 20px;
     padding: 15px;
     border: 1px solid #ccc;
     border-radius: 5px;
     background-color: #f9f9f9;
+    display: none;
 }
 
-#editSpotForm h3 {
+#editParkingFormContainer h3 {
     margin: 0 0 15px 0;
     font-size: 18px;
 }
 
-#editSpotForm div {
+#editParkingFormContainer div {
     margin-bottom: 10px;
 }
 
-#editSpotForm label {
+#editParkingFormContainer label {
     display: inline-block;
-    width: 100px;
+    width: 150px;
     font-size: 14px;
 }
 
-#editSpotForm input,
-#editSpotForm select {
+#editParkingFormContainer input,
+#editParkingFormContainer select {
     padding: 8px;
     border: 1px solid #ccc;
     border-radius: 3px;
@@ -426,26 +450,10 @@ a:hover {
     width: 200px;
 }
 
-#editSpotForm button {
+#editParkingFormContainer button {
     width: auto;
     padding: 8px 16px;
     margin-right: 10px;
-}
-
-#editSpotForm #saveSpotButton {
-    background-color: #28a745;
-}
-
-#editSpotForm #saveSpotButton:hover {
-    background-color: #218838;
-}
-
-#editSpotForm #cancelEditButton {
-    background-color: #dc3545;
-}
-
-#editSpotForm #cancelEditButton:hover {
-    background-color: #c82333;
 }
 
 /* 刪除按鈕樣式 */
@@ -458,7 +466,6 @@ a:hover {
     cursor: pointer;
     font-size: 14px;
     transition: background 0.3s ease;
-    margin-left: 5px;
 }
 
 .delete-btn:hover {
@@ -486,8 +493,8 @@ a:hover {
 
     .input-group input,
     .input-group select,
-    #editSpotForm input,
-    #editSpotForm select {
+    #editParkingFormContainer input,
+    #editParkingFormContainer select {
         width: 100%;
     }
 
@@ -496,7 +503,9 @@ a:hover {
     #incomeSearchButton,
     #addDateButton,
     #saveNewSpotButton,
-    #cancelAddButton {
+    #cancelAddButton,
+    #saveEditSpotButton,
+    #cancelEditSpotButton {
         width: 100%;
         margin-left: 0;
         margin-top: 10px;
@@ -517,13 +526,16 @@ a:hover {
     #ownerTable th,
     #ownerTable td,
     #renterTable th,
-    #renterTable td {
+    #renterTable td,
+    #My parking spaceTable th,
+    #My parking spaceTable td {
         padding: 8px;
         font-size: 12px;
     }
 
     #viewParkingTable button,
-    #reserveParkingTable button {
+    #reserveParkingTable button,
+    #My parking spaceTable button {
         padding: 5px 10px;
         font-size: 12px;
     }
@@ -533,15 +545,24 @@ a:hover {
         overflow-x: auto;
     }
 
-    .date-entry {
+    .date-range-entry {
         flex-direction: column;
         align-items: flex-start;
     }
 
-    .date-entry input[type="date"],
-    .date-entry input[type="checkbox"],
-    .date-entry .remove-date {
+    .date-range-entry input[type="date"],
+    .date-range-entry input[type="checkbox"],
+    .date-range-entry .remove-range {
         width: 100%;
         margin-top: 5px;
+    }
+
+    #editParkingFormContainer div {
+        margin-bottom: 5px;
+    }
+
+    #editParkingFormContainer label {
+        width: 100%;
+        margin-bottom: 5px;
     }
 }

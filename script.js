@@ -152,7 +152,7 @@ document.addEventListener("DOMContentLoaded", async function () {
         }
     }
 
-    // 顯示主畫面，並根據角色動態調整功能清單和預設畫面
+    // 顯示主畫面，並根據角色動態調整功能清单和預設畫面
     function showMainPage() {
         console.log("Entering showMainPage function");
 
@@ -961,6 +961,7 @@ document.addEventListener("DOMContentLoaded", async function () {
     });
 
     // 設置我的車位
+    // 設置我的車位
     function setupMyParkingSpace() {
         const role = getRole();
         console.log("Current role in setupMyParkingSpace:", role);
@@ -970,18 +971,220 @@ document.addEventListener("DOMContentLoaded", async function () {
         }
 
         const parkingTableBody = document.getElementById("My parking spaceTableBody");
-        const availableDaysTableBody = document.getElementById("availableDaysTableBody");
-        if (!parkingTableBody || !availableDaysTableBody) {
-            console.error("Required element not found for My parking space: parkingTableBody or availableDaysTableBody");
+        if (!parkingTableBody) {
+            console.error("Required element not found for My parking space: parkingTableBody");
             alert("無法載入「我的車位」頁面，頁面元素缺失，請聯繫管理員！");
             return;
         }
 
         // 進入頁面時顯示「載入中...」
         parkingTableBody.innerHTML = '<tr><td colspan="7">載入中...</td></tr>';
-        availableDaysTableBody.innerHTML = '<tr><td colspan="3">載入中...</td></tr>';
 
-        // 獲取並顯示所有車位及可用日期
+        // 編輯表單容器
+        let editFormContainer = document.getElementById("editParkingFormContainer");
+        if (!editFormContainer) {
+            editFormContainer = document.createElement("div");
+            editFormContainer.id = "editParkingFormContainer";
+            editFormContainer.style.display = "none";
+            document.getElementById("My parking space").appendChild(editFormContainer);
+        }
+
+        // 顯示編輯表單
+        function showEditForm(spot) {
+            editFormContainer.innerHTML = `
+            <h3>編輯車位</h3>
+            <form id="editParkingForm">
+                <input type="hidden" id="editSpotId" value="${spot.spot_id}">
+                <div>
+                    <label>位置（最多50字）：</label>
+                    <input type="text" id="editLocation" value="${spot.location || ''}" maxlength="50">
+                </div>
+                <div>
+                    <label>停車類型：</label>
+                    <select id="editParkingType">
+                        <option value="flat" ${spot.parking_type === 'flat' ? 'selected' : ''}>平面</option>
+                        <option value="mechanical" ${spot.parking_type === 'mechanical' ? 'selected' : ''}>機械</option>
+                    </select>
+                </div>
+                <div>
+                    <label>樓層（最多20字）：</label>
+                    <input type="text" id="editFloorLevel" value="${spot.floor_level || ''}" maxlength="20">
+                </div>
+                <div>
+                    <label>計價方式：</label>
+                    <select id="editPricingType">
+                        <option value="hourly" ${spot.pricing_type === 'hourly' ? 'selected' : ''}>按小時</option>
+                        <option value="monthly" ${spot.pricing_type === 'monthly' ? 'selected' : ''}>按月</option>
+                    </select>
+                </div>
+                <div>
+                    <label>每半小時價格（元）：</label>
+                    <input type="number" id="editPricePerHalfHour" value="${spot.price_per_half_hour || 0}" step="0.01" min="0">
+                </div>
+                <div>
+                    <label>每日最高價格（元）：</label>
+                    <input type="number" id="editDailyMaxPrice" value="${spot.daily_max_price || 0}" step="0.01" min="0">
+                </div>
+                <div>
+                    <label>經度（-180 到 180）：</label>
+                    <input type="number" id="editLongitude" value="${spot.longitude || 0}" step="0.000001" min="-180" max="180">
+                </div>
+                <div>
+                    <label>緯度（-90 到 90）：</label>
+                    <input type="number" id="editLatitude" value="${spot.latitude || 0}" step="0.000001" min="-90" max="90">
+                </div>
+                <div id="editAvailableDaysContainer">
+                    <label>可用日期：</label>
+                    <button type="button" id="addEditDateButton">添加日期</button>
+                </div>
+                <button type="button" id="saveEditSpotButton">保存</button>
+                <button type="button" id="cancelEditSpotButton">取消</button>
+            </form>
+        `;
+            editFormContainer.style.display = "block";
+
+            const availableDaysContainer = document.getElementById("editAvailableDaysContainer");
+            const addDateButton = document.getElementById("addEditDateButton");
+
+            // 動態添加日期範圍
+            function addDateRangeEntry() {
+                const dateEntry = document.createElement("div");
+                dateEntry.className = "date-range-entry";
+                dateEntry.innerHTML = `
+                <label>日期 (YYYY-MM-DD)：</label>
+                <input type="date" class="edit-available-date">
+                <label>是否可用：</label>
+                <input type="checkbox" class="edit-available-status" checked>
+                <button type="button" class="remove-date">移除</button>
+            `;
+                availableDaysContainer.appendChild(dateEntry);
+
+                dateEntry.querySelector(".remove-date").addEventListener("click", () => {
+                    dateEntry.remove();
+                });
+            }
+
+            addDateButton.addEventListener("click", addDateRangeEntry);
+
+            // 填充現有可用日期（如果有）
+            if (spot.available_days && Array.isArray(spot.available_days)) {
+                spot.available_days.forEach(day => {
+                    addDateRangeEntry();
+                    const lastEntry = availableDaysContainer.lastElementChild;
+                    lastEntry.querySelector(".edit-available-date").value = day.date;
+                    lastEntry.querySelector(".edit-available-status").checked = day.is_available;
+                });
+            }
+
+            // 保存編輯
+            document.getElementById("saveEditSpotButton").addEventListener("click", async () => {
+                const updatedSpot = {
+                    location: document.getElementById("editLocation").value.trim(),
+                    parking_type: document.getElementById("editParkingType").value,
+                    floor_level: document.getElementById("editFloorLevel").value.trim(),
+                    pricing_type: document.getElementById("editPricingType").value,
+                    price_per_half_hour: parseFloat(document.getElementById("editPricePerHalfHour").value) || 0,
+                    daily_max_price: parseFloat(document.getElementById("editDailyMaxPrice").value) || 0,
+                    longitude: parseFloat(document.getElementById("editLongitude").value) || 0,
+                    latitude: parseFloat(document.getElementById("editLatitude").value) || 0,
+                };
+
+                // 驗證輸入
+                if (updatedSpot.location.length > 50) {
+                    alert("位置最多 50 個字符！");
+                    return;
+                }
+                if (!["flat", "mechanical"].includes(updatedSpot.parking_type)) {
+                    alert("停車類型必須為 'flat' 或 'mechanical'！");
+                    return;
+                }
+                if (updatedSpot.floor_level.length > 20) {
+                    alert("樓層最多 20 個字符！");
+                    return;
+                }
+                if (!["hourly", "monthly"].includes(updatedSpot.pricing_type)) {
+                    alert("計價方式必須為 'hourly' 或 'monthly'！");
+                    return;
+                }
+                if (updatedSpot.price_per_half_hour < 0) {
+                    alert("每半小時價格必須為正數！");
+                    return;
+                }
+                if (updatedSpot.daily_max_price < 0) {
+                    alert("每日最高價格必須為正數！");
+                    return;
+                }
+                if (updatedSpot.longitude < -180 || updatedSpot.longitude > 180) {
+                    alert("經度必須在 -180 到 180 之間！");
+                    return;
+                }
+                if (updatedSpot.latitude < -90 || updatedSpot.latitude > 90) {
+                    alert("緯度必須在 -90 到 90 之間！");
+                    return;
+                }
+
+                // 處理可用日期
+                const dateEntries = availableDaysContainer.querySelectorAll(".date-range-entry");
+                const availableDays = [];
+                for (const entry of dateEntries) {
+                    const date = entry.querySelector(".edit-available-date").value;
+                    const isAvailable = entry.querySelector(".edit-available-status").checked;
+
+                    if (!date) {
+                        alert("請為每個可用日期選擇日期！");
+                        return;
+                    }
+                    if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+                        alert("日期格式不正確，請使用 YYYY-MM-DD 格式！");
+                        return;
+                    }
+
+                    availableDays.push({ date, is_available: isAvailable });
+                }
+                if (availableDays.length > 0) {
+                    updatedSpot.available_days = availableDays;
+                }
+
+                try {
+                    const token = getToken();
+                    if (!token) throw new Error("認證令牌缺失，請重新登入！");
+
+                    const spotId = document.getElementById("editSpotId").value;
+                    const response = await fetch(`${API_URL}/parking/${spotId}`, {
+                        method: 'PUT',
+                        headers: {
+                            "Content-Type": "application/json",
+                            "Authorization": `Bearer ${token}`
+                        },
+                        body: JSON.stringify(updatedSpot)
+                    });
+
+                    if (!response.ok) {
+                        if (response.status === 401) throw new Error("認證失敗，請重新登入！");
+                        const errorData = await response.json();
+                        throw new Error(`HTTP error! Status: ${response.status}, Message: ${errorData.error || '未知錯誤'}`);
+                    }
+
+                    alert("車位已成功更新！");
+                    editFormContainer.style.display = "none";
+                    loadAllSpots();
+                } catch (error) {
+                    console.error("Failed to update spot:", error);
+                    alert(`無法更新車位，請檢查後端服務 (錯誤: ${error.message})`);
+                    if (error.message === "認證失敗，請重新登入！") {
+                        removeToken();
+                        showLoginPage(true);
+                    }
+                }
+            });
+
+            // 取消編輯
+            document.getElementById("cancelEditSpotButton").addEventListener("click", () => {
+                editFormContainer.style.display = "none";
+            });
+        }
+
+        // 獲取並顯示所有車位
         async function loadAllSpots() {
             try {
                 const token = getToken();
@@ -990,12 +1193,11 @@ document.addEventListener("DOMContentLoaded", async function () {
                 const memberId = getMemberId();
                 if (!memberId) throw new Error("無法獲取會員 ID，請重新登入！");
 
-                // 根據角色決定 API 端點
                 let url;
                 if (role === "shared_owner") {
                     url = `${API_URL}/parking/my-spots`;
                 } else if (role === "renter") {
-                    url = `${API_URL}/parking/my-spots`; // 假設後端有此端點，否則需調整
+                    url = `${API_URL}/parking/my-spots`;
                 } else if (role === "admin") {
                     url = `${API_URL}/parking/my-spots`;
                 }
@@ -1008,22 +1210,16 @@ document.addEventListener("DOMContentLoaded", async function () {
                     }
                 });
 
-                // 檢查回應狀態
                 if (!response.ok) {
-                    if (response.status === 404) {
-                        throw new Error("後端資源未找到 (404)，請檢查 API 端點是否正確配置！");
-                    } else if (response.status === 401) {
-                        throw new Error("認證失敗，請重新登入！");
-                    }
+                    if (response.status === 404) throw new Error("後端資源未找到 (404)，請檢查 API 端點是否正確配置！");
+                    if (response.status === 401) throw new Error("認證失敗，請重新登入！");
                     const errorData = await response.text();
                     throw new Error(`HTTP 錯誤！狀態: ${response.status}, 回應: ${errorData}`);
                 }
 
-                // 檢查 Content-Type
                 const contentType = response.headers.get('content-type');
                 if (!contentType || !contentType.includes('application/json')) {
                     const textResponse = await response.text();
-                    console.error("非 JSON 回應:", textResponse);
                     throw new Error("後端返回非 JSON 響應，請檢查伺服器配置 (回應內容: " + textResponse.substring(0, 100) + "...)");
                 }
 
@@ -1036,27 +1232,18 @@ document.addEventListener("DOMContentLoaded", async function () {
 
                 if (spots.length === 0) {
                     parkingTableBody.innerHTML = '<tr><td colspan="7">無車位資料</td></tr>';
-                    availableDaysTableBody.innerHTML = '<tr><td colspan="3">無車位資料</td></tr>';
                     return;
                 }
 
                 parkingTableBody.innerHTML = '';
-                availableDaysTableBody.innerHTML = '';
                 const parkingFragment = document.createDocumentFragment();
-                const availableDaysFragment = document.createDocumentFragment();
 
                 spots.forEach(spot => {
-                    // 驗證 spot 物件是否有效
                     if (!spot || typeof spot !== 'object') {
                         console.warn("Invalid spot data skipped:", spot);
                         return;
                     }
-                    if (spot.pricing_type === "daily") {
-                        console.warn(`Spot ID ${spot.spot_id} has unsupported pricing type 'daily', skipping.`);
-                        return;
-                    }
 
-                    // 填充主車位表格
                     const row = document.createElement("tr");
                     row.setAttribute("data-id", `${spot.spot_id || '未知'}`);
 
@@ -1077,18 +1264,14 @@ document.addEventListener("DOMContentLoaded", async function () {
                     </td>
                 `;
 
-                    // 編輯按鈕事件
                     row.querySelector(".edit-btn").addEventListener("click", (e) => {
                         e.stopPropagation();
                         showEditForm(spot);
                     });
 
-                    // 刪除按鈕事件
                     row.querySelector(".delete-btn").addEventListener("click", async (e) => {
                         e.stopPropagation();
-                        if (!confirm(`確定要刪除車位 ${spot.spot_id || '未知'} 嗎？此操作無法恢復！`)) {
-                            return;
-                        }
+                        if (!confirm(`確定要刪除車位 ${spot.spot_id || '未知'} 嗎？此操作無法恢復！`)) return;
 
                         try {
                             const token = getToken();
@@ -1109,12 +1292,8 @@ document.addEventListener("DOMContentLoaded", async function () {
 
                             alert(`車位 ${spot.spot_id || '未知'} 已成功刪除！`);
                             row.remove();
-                            // 同時移除可用日期表格中的相關記錄
-                            const relatedRows = availableDaysTableBody.querySelectorAll(`tr[data-spot-id="${spot.spot_id || ''}"]`);
-                            relatedRows.forEach(r => r.remove());
                             if (parkingTableBody.children.length === 0) {
                                 parkingTableBody.innerHTML = '<tr><td colspan="7">無車位資料</td></tr>';
-                                availableDaysTableBody.innerHTML = '<tr><td colspan="3">無車位資料</td></tr>';
                             }
                         } catch (error) {
                             console.error("Failed to delete spot:", error);
@@ -1126,65 +1305,27 @@ document.addEventListener("DOMContentLoaded", async function () {
                         }
                     });
 
-                    // 點擊行選擇車位並高亮可用日期
                     row.addEventListener("click", () => {
                         setParkingSpotId(spot.spot_id || null);
                         alert(`已選擇車位 ${spot.spot_id || '未知'}，您現在可以查詢此車位的收入！`);
-                        highlightAvailableDays(spot.spot_id || null);
                     });
 
                     parkingFragment.appendChild(row);
-
-                    // 填充可用日期表格
-                    if (spot.available_days && Array.isArray(spot.available_days)) {
-                        spot.available_days.forEach(day => {
-                            if (!day || typeof day !== 'object') {
-                                console.warn("Invalid available day data skipped:", day);
-                                return;
-                            }
-                            const dayRow = document.createElement("tr");
-                            dayRow.setAttribute("data-spot-id", `${spot.spot_id || '未知'}`);
-                            dayRow.innerHTML = `
-                            <td>${spot.spot_id || '未知'}</td>
-                            <td>${day.date || '未知'}</td>
-                            <td>${day.is_available === true ? '是' : day.is_available === false ? '否' : '未知'}</td>
-                        `;
-                            availableDaysFragment.appendChild(dayRow);
-                        });
-                    } else {
-                        console.warn(`No valid available_days for spot ${spot.spot_id || '未知'}`);
-                    }
                 });
 
                 if (parkingFragment.children.length === 0) {
                     parkingTableBody.innerHTML = '<tr><td colspan="7">無車位資料</td></tr>';
-                    availableDaysTableBody.innerHTML = '<tr><td colspan="3">無車位資料</td></tr>';
                 } else {
                     parkingTableBody.appendChild(parkingFragment);
-                    availableDaysTableBody.appendChild(availableDaysFragment);
                 }
             } catch (error) {
                 console.error("Failed to load spots:", error);
                 parkingTableBody.innerHTML = `<tr><td colspan="7">載入車位資料失敗 (錯誤: ${error.message})</td></tr>`;
-                availableDaysTableBody.innerHTML = `<tr><td colspan="3">載入車位資料失敗 (錯誤: ${error.message})</td></tr>`;
                 if (error.message.includes("認證失敗")) {
                     removeToken();
                     showLoginPage(true);
                 }
             }
-        }
-
-        // 高亮顯示可用日期表格中的相關記錄
-        function highlightAvailableDays(spotId) {
-            const allRows = availableDaysTableBody.querySelectorAll("tr");
-            allRows.forEach(row => {
-                const rowSpotId = row.getAttribute("data-spot-id");
-                if (rowSpotId === (spotId?.toString() || null)) {
-                    row.style.backgroundColor = "#e0f7fa"; // 淺藍色高亮
-                } else {
-                    row.style.backgroundColor = ""; // 清除其他行的高亮
-                }
-            });
         }
 
         // 進入頁面時自動加載所有車位
