@@ -375,19 +375,19 @@ document.addEventListener("DOMContentLoaded", async function () {
 
         // 檢查 Google Maps API 是否已載入
         const addParkingMap = document.getElementById("addParkingMap");
-const latitudeInput = document.getElementById("latitudeInput");
-const longitudeInput = document.getElementById("longitudeInput");
+        const latitudeInput = document.getElementById("latitudeInput");
+        const longitudeInput = document.getElementById("longitudeInput");
 
-if (!addParkingMap || !latitudeInput || !longitudeInput) {
-    console.error("Required elements for map in addParking not found: addParkingMap, latitudeInput, or longitudeInput");
-    alert("地圖容器或經緯度輸入框未找到，地圖功能將不可用。");
-    return;
-}
+        if (!addParkingMap || !latitudeInput || !longitudeInput) {
+            console.error("Required elements for map in addParking not found: addParkingMap, latitudeInput, or longitudeInput");
+            alert("地圖容器或經緯度輸入框未找到，地圖功能將不可用。");
+            return;
+        }
 
         let map, marker;
         if (!window.isGoogleMapsLoaded || !window.google || !google.maps) {
             console.error("Google Maps API 未載入或載入失敗");
-            alert("無法載入 Google Maps API，請檢查網路連線或 API 金鑰是否有效。地圖功能將不可用，但您仍可手動輸入經緯度。");
+            alert("無法載入 Google Maps API，請檢查網路連線或 API 金鑰是否有效。地圖功能將不可用，但您仍可手動輸入經全世界經緯度。");
             addParkingMap.style.display = "none";
             latitudeInput.disabled = false;
             longitudeInput.disabled = false;
@@ -1264,15 +1264,26 @@ if (!addParkingMap || !latitudeInput || !longitudeInput) {
 
                 const data = await response.json();
                 const profile = data.data || data.profile || data;
-                profileData.innerHTML = `
+
+                // 根據角色動態顯示個人資料
+                let profileHTML = `
                     <p><strong>姓名：</strong> ${profile.name || '未提供'}</p>
                     <p><strong>電話：</strong> ${profile.phone || '未提供'}</p>
                     <p><strong>電子郵件：</strong> ${profile.email || '未提供'}</p>
-                    <p><strong>車牌號碼：</strong> ${profile.license_plate || '未提供'}</p>
-                    <p><strong>車型：</strong> ${profile.car_model || '未提供'}</p>
                     <p><strong>付款方式：</strong> ${profile.payment_method || '未提供'}</p>
                     <p><strong>信用卡號：</strong> ${profile.payment_info || '未提供'}</p>
                 `;
+
+                if (role === "renter") {
+                    profileHTML += `
+                        <p><strong>車牌號碼：</strong> ${profile.license_plate || '未提供'}</p>
+                        <p><strong>車型：</strong> ${profile.car_model || '未提供'}</p>
+                    `;
+                }
+
+                profileData.innerHTML = profileHTML;
+
+                // 填充編輯表單
                 editName.value = profile.name || '';
                 editPhone.value = profile.phone || '';
                 editEmail.value = profile.email || '';
@@ -1280,6 +1291,12 @@ if (!addParkingMap || !latitudeInput || !longitudeInput) {
                 editCarModel.value = profile.car_model || '';
                 editPaymentMethod.value = profile.payment_method || 'credit_card';
                 editCardNumber.value = profile.payment_info || '';
+
+                // 根據角色顯示或隱藏租用者專用欄位
+                const renterEditFields = document.getElementById("renterEditFields");
+                if (renterEditFields) {
+                    renterEditFields.style.display = role === "renter" ? "block" : "none";
+                }
             } catch (error) {
                 console.error("Failed to load profile:", error);
                 profileData.innerHTML = `<p>載入個人資料失敗（錯誤: ${error.message}）</p>`;
@@ -1300,12 +1317,29 @@ if (!addParkingMap || !latitudeInput || !longitudeInput) {
                 name: editName.value.trim(),
                 phone: editPhone.value.trim(),
                 email: editEmail.value.trim(),
-                license_plate: editLicensePlate.value.trim(),
-                car_model: editCarModel.value.trim(),
                 payment_method: editPaymentMethod.value,
                 payment_info: editCardNumber.value.trim()
             };
 
+            // 如果是租用者，添加車牌號碼和車型
+            if (role === "renter") {
+                updatedProfile.license_plate = editLicensePlate.value.trim();
+                updatedProfile.car_model = editCarModel.value.trim();
+
+                // 驗證車牌號碼格式（例如 AAA-1111）
+                if (updatedProfile.license_plate && !/^[A-Z]{2,3}-[0-9]{3,4}$/.test(updatedProfile.license_plate)) {
+                    alert("請提供有效的車牌號碼（格式如：AAA-1111）！");
+                    return;
+                }
+
+                // 驗證車型（簡單檢查不為空）
+                if (!updatedProfile.car_model) {
+                    alert("車型為必填項！");
+                    return;
+                }
+            }
+
+            // 共用欄位驗證
             if (!updatedProfile.name) {
                 alert("姓名為必填項！");
                 return;
@@ -1316,6 +1350,10 @@ if (!addParkingMap || !latitudeInput || !longitudeInput) {
             }
             if (!updatedProfile.email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(updatedProfile.email)) {
                 alert("請提供有效的電子郵件地址！");
+                return;
+            }
+            if (!updatedProfile.payment_info || !/^[0-9]{16}$/.test(updatedProfile.payment_info)) {
+                alert("請提供有效的信用卡號（16 位數字）！");
                 return;
             }
 
@@ -1626,6 +1664,7 @@ if (!addParkingMap || !latitudeInput || !longitudeInput) {
             if (event.key === "Enter") handleReserveSearch();
         });
     }
+
     // 預約停車點擊處理
     async function handleReserveParkingClick(spotId, startDate, endDate, startTime, endTime, row) {
         if (!await checkAuth()) return;
@@ -1699,6 +1738,7 @@ if (!addParkingMap || !latitudeInput || !longitudeInput) {
         async function handleIncomeSearch() {
             const startDate = startDateInput.value;
             const endDate = endDateInput.value;
+
 
             if (!startDate || !endDate) {
                 alert("請選擇開始和結束日期！");
