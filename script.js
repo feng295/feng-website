@@ -1600,7 +1600,7 @@ document.addEventListener("DOMContentLoaded", async function () {
             const filterFloor = reserveFloor ? reserveFloor.value : 'all';
             const filterPricing = reservePricing ? reservePricing.value : 'all';
             const filterStatus = reserveStatus ? reserveStatus.value : 'all';
-
+        
             const selectedDateObj = new Date(selectedDate);
             const today = new Date();
             today.setHours(0, 0, 0, 0);
@@ -1608,21 +1608,21 @@ document.addEventListener("DOMContentLoaded", async function () {
                 alert("無法選擇過去的日期！");
                 return;
             }
-
+        
             const [startHour, startMinute] = startTime.split(":").map(Number);
             const [endHour, endMinute] = endTime.split(":").map(Number);
             const startDateTime = new Date(selectedDate);
             startDateTime.setHours(startHour, startMinute);
             const endDateTime = new Date(selectedDate);
             endDateTime.setHours(endHour, endMinute);
-
+        
             if (startDateTime >= endDateTime) {
                 alert("結束時間必須晚於開始時間！");
                 return;
             }
-
+        
             parkingTableBody.innerHTML = '<tr><td colspan="7">載入中...</td></tr>';
-
+        
             let latitude = 23.5654, longitude = 119.5762;
             try {
                 const position = await new Promise((resolve, reject) => {
@@ -1635,18 +1635,19 @@ document.addEventListener("DOMContentLoaded", async function () {
                 console.warn("Failed to get user location, using default:", error.message);
                 alert("無法獲取您的位置，將使用預設位置（澎湖）。請確保已允許位置權限。");
             }
-
+        
             const timeZoneOffset = "+08:00";
             const startDateTimeStr = `${selectedDate}T${startTime}:00${timeZoneOffset}`;
             const endDateTimeStr = `${selectedDate}T${endTime}:00${timeZoneOffset}`;
-
+        
             let retries = 3, spots = null;
             while (retries > 0) {
                 try {
                     const token = getToken();
                     if (!token) throw new Error("認證令牌缺失，請重新登入！");
-
+        
                     const queryParams = new URLSearchParams({
+                        date: selectedDate, // 添加 date 參數
                         start_date: selectedDate,
                         end_date: selectedDate,
                         start_time: startDateTimeStr,
@@ -1662,7 +1663,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                         const errorData = await response.json();
                         throw new Error(`HTTP error! Status: ${response.status}, Message: ${errorData.error || '未知錯誤'}`);
                     }
-
+        
                     const data = await response.json();
                     spots = data.data || data.spots || data;
                     if (!Array.isArray(spots)) throw new Error("後端返回的車位資料格式錯誤，應為陣列");
