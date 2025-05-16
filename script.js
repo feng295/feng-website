@@ -82,13 +82,13 @@ document.addEventListener("DOMContentLoaded", async function () {
         try {
             const token = localStorage.getItem("token") || "";
             if (!token || typeof token !== "string" || token.trim() === "") {
-                console.warn("Invalid or missing token in localStorage");
-                return "";
+                console.log("No valid token found in localStorage, user may need to log in.");
+                return null;
             }
             return token;
         } catch (error) {
             console.error("Failed to get token from localStorage:", error);
-            return "";
+            return null;
         }
     }
 
@@ -436,7 +436,7 @@ document.addEventListener("DOMContentLoaded", async function () {
         }
 
         let map, marker;
-        if (!window.isGoogleMapsLoaded || !window.google || !google.maps) {
+        if (!window.google || !google.maps) {
             console.error("Google Maps API 未載入或載入失敗");
             alert("無法載入 Google Maps API，請檢查網路連線或 API 金鑰是否有效。地圖功能將不可用，但您仍可手動輸入經全世界經緯度。");
             addParkingMap.style.display = "none";
@@ -701,7 +701,7 @@ document.addEventListener("DOMContentLoaded", async function () {
     // 檢查是否已登入（檢查 token 是否存在）
     async function checkAuth(silent = false) {
         const token = getToken();
-        if (!token || token.trim() === "") {
+        if (!token) {
             if (!silent) alert("請先登入！");
             showLoginPage();
             return false;
