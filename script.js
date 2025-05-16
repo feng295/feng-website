@@ -289,9 +289,9 @@ document.addEventListener("DOMContentLoaded", async function () {
         addParkingSection.style.display = "block";
         if (!addParkingSection.innerHTML.trim()) {
             addParkingSection.innerHTML = `
-                <p>載入中...</p>
-                <!-- 其他動態內容將在此後添加 -->
-            `;
+            <p>載入中...</p>
+            <!-- 其他動態內容將在此後添加 -->
+        `;
         }
 
         // 自動填充會員 ID
@@ -311,7 +311,16 @@ document.addEventListener("DOMContentLoaded", async function () {
             pricingTypeSelect.innerHTML = `<option value="hourly" selected>按小時</option>`;
             priceLabel.textContent = "半小時費用（元）：";
         } else {
-            console.warn("pricingTypeSelect or priceLabel not found, skipping pricing setup");
+            console.warn("pricingTypeSelect or priceLabel not found, using fallback pricing setup");
+            addParkingSection.innerHTML += `
+            <div>
+                <label id="newPriceLabel">半小時費用（元）：</label>
+                <select id="newPricingType">
+                    <option value="hourly" selected>按小時</option>
+                </select>
+                <input type="number" id="newPrice" value="20.00" step="0.01" min="0" required>
+            </div>
+        `;
         }
 
         // 修改可用日期：使用日期範圍選擇
@@ -341,14 +350,14 @@ document.addEventListener("DOMContentLoaded", async function () {
             const dateRangeEntry = document.createElement("div");
             dateRangeEntry.className = "date-range-entry";
             dateRangeEntry.innerHTML = `
-                <label>開始日期 (YYYY-MM-DD)：</label>
-                <input type="date" class="start-date">
-                <label>結束日期 (YYYY-MM-DD)：</label>
-                <input type="date" class="end-date">
-                <button type="button" class="generate-dates">生成日期</button>
-                <button type="button" class="remove-range">移除</button>
-                <div class="date-list"></div>
-            `;
+            <label>開始日期 (YYYY-MM-DD)：</label>
+            <input type="date" class="start-date">
+            <label>結束日期 (YYYY-MM-DD)：</label>
+            <input type="date" class="end-date">
+            <button type="button" class="generate-dates">生成日期</button>
+            <button type="button" class="remove-range">移除</button>
+            <div class="date-list"></div>
+        `;
             availableDaysContainer.appendChild(dateRangeEntry);
 
             const startDateInput = dateRangeEntry.querySelector(".start-date");
@@ -375,11 +384,11 @@ document.addEventListener("DOMContentLoaded", async function () {
                     const dateEntry = document.createElement("div");
                     dateEntry.className = "date-entry";
                     dateEntry.innerHTML = `
-                        <label>日期：${date}</label>
-                        <input type="hidden" class="available-date" value="${date}">
-                        <label>是否可用：</label>
-                        <input type="checkbox" class="available-status" checked>
-                    `;
+                    <label>日期：${date}</label>
+                    <input type="hidden" class="available-date" value="${date}">
+                    <label>是否可用：</label>
+                    <input type="checkbox" class="available-status" checked>
+                `;
                     dateList.appendChild(dateEntry);
                 });
             });
@@ -398,8 +407,18 @@ document.addEventListener("DOMContentLoaded", async function () {
 
         if (!addParkingMap || !latitudeInput || !longitudeInput) {
             console.error("Required elements for map in addParking not found: addParkingMap, latitudeInput, or longitudeInput");
-            alert("地圖容器或經緯度輸入框未找到，地圖功能將不可用。");
-            return;
+            alert("地圖容器或經緯度輸入框未找到，地圖功能將不可用，但您仍可繼續新增車位。");
+            addParkingSection.innerHTML += `
+            <div id="addParkingMap" style="height: 400px; width: 100%; display: none;"></div>
+            <div>
+                <label>經度 (預設)：</label>
+                <input type="number" id="latitudeInput" value="23.5654" step="0.000001" readonly>
+            </div>
+            <div>
+                <label>緯度 (預設)：</label>
+                <input type="number" id="longitudeInput" value="119.5762" step="0.000001" readonly>
+            </div>
+        `;
         }
 
         // 固定經緯度為澎湖縣中心
@@ -413,22 +432,21 @@ document.addEventListener("DOMContentLoaded", async function () {
             console.error("Google Maps API 未載入或載入失敗");
             alert("無法載入 Google Maps API，請檢查網路連線或 API 金鑰是否有效。地圖功能將不可用，但您仍可繼續新增車位。");
             addParkingMap.style.display = "none";
-            return;
+        } else {
+            // 初始化地圖，添加 mapId
+            addParkingMap.style.display = "block";
+            map = new google.maps.Map(addParkingMap, {
+                center: { lat: 23.5654, lng: 119.5762 }, // 固定為澎湖縣中心
+                zoom: 15,
+                mapId: "4a9410e1706e086d447136ee" // 使用您提供的 mapId
+            });
+
+            marker = new google.maps.marker.AdvancedMarkerElement({
+                position: { lat: 23.5654, lng: 119.5762 },
+                map: map,
+                title: "固定位置",
+            });
         }
-
-        // 初始化地圖，添加 mapId
-        addParkingMap.style.display = "block";
-        map = new google.maps.Map(addParkingMap, {
-            center: { lat: 23.5654, lng: 119.5762 }, // 固定為澎湖縣中心
-            zoom: 15,
-            mapId: "4a9410e1706e086d447136ee" // 使用您提供的 mapId
-        });
-
-        marker = new google.maps.marker.AdvancedMarkerElement({
-            position: { lat: 23.5654, lng: 119.5762 },
-            map: map,
-            title: "固定位置",
-        });
 
         // 移除地圖點擊事件，因為經緯度已固定
         latitudeInput.readOnly = true;
@@ -1533,7 +1551,7 @@ document.addEventListener("DOMContentLoaded", async function () {
             const filterFloor = reserveFloor ? reserveFloor.value : 'all';
             const filterPricing = reservePricing ? reservePricing.value : 'all';
             const filterStatus = reserveStatus ? reserveStatus.value : 'all';
-        
+
             const selectedDateObj = new Date(selectedDate);
             const today = new Date();
             today.setHours(0, 0, 0, 0);
@@ -1541,34 +1559,34 @@ document.addEventListener("DOMContentLoaded", async function () {
                 alert("無法選擇過去的日期！");
                 return;
             }
-        
+
             const [startHour, startMinute] = startTime.split(":").map(Number);
             const [endHour, endMinute] = endTime.split(":").map(Number);
             const startDateTime = new Date(selectedDate);
             startDateTime.setHours(startHour, startMinute);
             const endDateTime = new Date(selectedDate);
             endDateTime.setHours(endHour, endMinute);
-        
+
             if (startDateTime >= endDateTime) {
                 alert("結束時間必須晚於開始時間！");
                 return;
             }
-        
+
             parkingTableBody.innerHTML = '<tr><td colspan="7">載入中...</td></tr>';
-        
+
             const latitude = 23.5654;
             const longitude = 119.5762;
-        
+
             const timeZoneOffset = "+08:00";
             const startDateTimeStr = `${selectedDate}T${startTime}:00${timeZoneOffset}`;
             const endDateTimeStr = `${selectedDate}T${endTime}:00${timeZoneOffset}`;
-        
+
             let retries = 3, spots = null;
             while (retries > 0) {
                 try {
                     const token = getToken();
                     if (!token) throw new Error("認證令牌缺失，請重新登入！");
-        
+
                     const queryParams = new URLSearchParams({
                         date: selectedDate, // 添加 date 參數
                         start_date: selectedDate,
@@ -1586,7 +1604,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                         const errorData = await response.json();
                         throw new Error(`HTTP error! Status: ${response.status}, Message: ${errorData.error || '未知錯誤'}`);
                     }
-        
+
                     const data = await response.json();
                     spots = data.data || data.spots || data;
                     if (!Array.isArray(spots)) throw new Error("後端返回的車位資料格式錯誤，應為陣列");
