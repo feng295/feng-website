@@ -358,19 +358,10 @@ a:hover {
     font-weight: bold;
 }
 
-#viewParkingTable tr.available,
-#My\ parking\ spaceTable tr.available,
-#reserveParkingTable tr.available {
-    background-color: #e0ffe0;
-}
-
-#viewParkingTable tr.occupied,
-#viewParkingTable tr.reserved,
-#My\ parking\ spaceTable tr.occupied,
-#My\ parking\ spaceTable tr.reserved,
-#reserveParkingTable tr.occupied,
-#reserveParkingTable tr.reserved {
-    background-color: #ffe0e0;
+#viewParkingTable tr,
+#reserveParkingTable tr,
+#My\ parking\ spaceTable tr {
+    background-color: #fff;
 }
 
 #viewParkingTable button,
@@ -573,18 +564,4 @@ a:hover {
         width: 100%;
         margin-bottom: 5px;
     }
-}
-
-/* Updated style for reserveParkingTable background to match My parking spaceTable */
-#reserveParkingTable tr.available {
-    background-color: #e0ffe0;
-}
-
-#reserveParkingTable tr.occupied,
-#reserveParkingTable tr.reserved {
-    background-color: #ffe0e0;
-}
-
-#reserveParkingTable tr {
-    background-color: #fff;
 }
