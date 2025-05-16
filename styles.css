@@ -574,3 +574,8 @@ a:hover {
         margin-bottom: 5px;
     }
 }
+
+/* Updated style for reserveParkingTable background */
+#reserveParkingTable tr {
+    background-color: white;
+}
