@@ -359,17 +359,17 @@ a:hover {
 }
 
 #viewParkingTable tr.available,
-#reserveParkingTable tr.available,
-#My\ parking\ spaceTable tr.available {
+#My\ parking\ spaceTable tr.available,
+#reserveParkingTable tr.available {
     background-color: #e0ffe0;
 }
 
 #viewParkingTable tr.occupied,
 #viewParkingTable tr.reserved,
-#reserveParkingTable tr.occupied,
-#reserveParkingTable tr.reserved,
 #My\ parking\ spaceTable tr.occupied,
-#My\ parking\ spaceTable tr.reserved {
+#My\ parking\ spaceTable tr.reserved,
+#reserveParkingTable tr.occupied,
+#reserveParkingTable tr.reserved {
     background-color: #ffe0e0;
 }
 
