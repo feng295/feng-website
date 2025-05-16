@@ -296,10 +296,10 @@ document.addEventListener("DOMContentLoaded", async function () {
         }
         memberIdInput.value = memberId;
 
-        // 動態調整費用標籤（僅保留按小時）
+        // 動態調整費用標籤（固定為按小時）
         const pricingTypeSelect = document.getElementById("newPricingType");
         const priceLabel = document.getElementById("newPriceLabel");
-        pricingTypeSelect.innerHTML = `<option value="hourly">按小時</option>`;
+        pricingTypeSelect.innerHTML = `<option value="hourly" selected>按小時</option>`;
         priceLabel.textContent = "半小時費用（元）：";
 
         // 修改可用日期：使用日期範圍選擇
@@ -384,94 +384,37 @@ document.addEventListener("DOMContentLoaded", async function () {
             return;
         }
 
+        // 固定經緯度為澎湖縣中心
+        latitudeInput.value = 23.5654;
+        longitudeInput.value = 119.5762;
+        latitudeInput.disabled = true;
+        longitudeInput.disabled = true;
+
         let map, marker;
         if (!window.isGoogleMapsLoaded || !window.google || !google.maps) {
             console.error("Google Maps API 未載入或載入失敗");
-            alert("無法載入 Google Maps API，請檢查網路連線或 API 金鑰是否有效。地圖功能將不可用，但您仍可手動輸入經全世界經緯度。");
+            alert("無法載入 Google Maps API，請檢查網路連線或 API 金鑰是否有效。地圖功能將不可用，但您仍可繼續新增車位。");
             addParkingMap.style.display = "none";
-            latitudeInput.disabled = false;
-            longitudeInput.disabled = false;
-            latitudeInput.placeholder = "請手動輸入緯度";
-            longitudeInput.placeholder = "請手動輸入經度";
             return;
         }
 
         // 初始化地圖，添加 mapId
         addParkingMap.style.display = "block";
         map = new google.maps.Map(addParkingMap, {
-            center: { lat: 23.5654, lng: 119.5762 }, // 預設為澎湖縣中心
+            center: { lat: 23.5654, lng: 119.5762 }, // 固定為澎湖縣中心
             zoom: 15,
             mapId: "4a9410e1706e086d447136ee" // 使用您提供的 mapId
         });
 
-        // 嘗試獲取用戶當前位置
-        if (navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition(
-                (position) => {
-                    const userLocation = {
-                        lat: position.coords.latitude,
-                        lng: position.coords.longitude,
-                    };
-                    map.setCenter(userLocation);
-                    latitudeInput.value = userLocation.lat;
-                    longitudeInput.value = userLocation.lng;
-                    marker = new google.maps.marker.AdvancedMarkerElement({
-                        position: userLocation,
-                        map: map,
-                        title: "選定位置",
-                    });
-                },
-                (error) => {
-                    console.warn("Failed to get user location:", error.message);
-                    let errorMsg = "無法獲取您的位置，將使用預設位置（澎湖）。請確保已允許位置權限。";
-                    if (error.message.includes("secure origins")) {
-                        errorMsg += " 您可能正在使用不安全的來源（HTTP）。請使用 HTTPS 或在 localhost 上測試。";
-                    }
-                    alert(errorMsg);
-                    latitudeInput.value = 23.5654;
-                    longitudeInput.value = 119.5762;
-                    marker = new google.maps.marker.AdvancedMarkerElement({
-                        position: { lat: 23.5654, lng: 119.5762 },
-                        map: map,
-                        title: "預設位置",
-                    });
-                },
-                { timeout: 10000, maximumAge: 0 }
-            );
-        } else {
-            console.warn("Browser does not support geolocation");
-            alert("您的瀏覽器不支援地理位置功能，將使用預設位置（澎湖）。");
-            latitudeInput.value = 23.5654;
-            longitudeInput.value = 119.5762;
-            marker = new google.maps.marker.AdvancedMarkerElement({
-                position: { lat: 23.5654, lng: 119.5762 },
-                map: map,
-                title: "預設位置",
-            });
-        }
-
-        // 地圖點擊事件：更新經緯度和標記，並顯示資訊視窗
-        map.addListener("click", (event) => {
-            const lat = event.latLng.lat();
-            const lng = event.latLng.lng();
-            latitudeInput.value = lat.toFixed(6);
-            longitudeInput.value = lng.toFixed(6);
-
-            if (marker) {
-                marker.position = event.latLng; // AdvancedMarkerElement 使用直接賦值
-            } else {
-                marker = new google.maps.marker.AdvancedMarkerElement({
-                    position: event.latLng,
-                    map: map,
-                    title: "選定位置",
-                });
-            }
-
-            const infoWindow = new google.maps.InfoWindow({
-                content: `選定位置：<br>緯度：${lat.toFixed(6)}<br>經度：${lng.toFixed(6)}`,
-            });
-            infoWindow.open(map, marker);
+        marker = new google.maps.marker.AdvancedMarkerElement({
+            position: { lat: 23.5654, lng: 119.5762 },
+            map: map,
+            title: "固定位置",
         });
+
+        // 移除地圖點擊事件，因為經緯度已固定
+        latitudeInput.readOnly = true;
+        longitudeInput.readOnly = true;
 
         // 保存車位按鈕事件
         const saveNewSpotButton = document.getElementById("saveNewSpotButton");
@@ -486,7 +429,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                 location: document.getElementById("newLocation").value.trim(),
                 parking_type: document.getElementById("newParkingType").value,
                 floor_level: document.getElementById("newFloorLevel").value.trim(),
-                pricing_type: document.getElementById("newPricingType").value,
+                pricing_type: "hourly", // 固定為按小時
             };
 
             // 驗證必填字段
@@ -510,10 +453,6 @@ document.addEventListener("DOMContentLoaded", async function () {
                 alert("樓層最多 20 個字符！");
                 return;
             }
-            if (newSpot.pricing_type !== "hourly") {
-                alert("計費方式必須為 'hourly'！");
-                return;
-            }
 
             // 處理費用字段
             const priceInput = document.getElementById("newPrice").value;
@@ -532,19 +471,9 @@ document.addEventListener("DOMContentLoaded", async function () {
             }
             newSpot.daily_max_price = maxDailyPrice;
 
-            // 處理經緯度
-            let latitude = parseFloat(latitudeInput.value) || 0.0;
-            let longitude = parseFloat(longitudeInput.value) || 0.0;
-            if (isNaN(latitude) || latitude < -90 || latitude > 90) {
-                console.warn(`Latitude ${latitude} out of range (-90 to 90), resetting to default 0.0`);
-                latitude = 0.0;
-            }
-            if (isNaN(longitude) || longitude < -180 || longitude > 180) {
-                console.warn(`Longitude ${longitude} out of range (-180 to 180), resetting to default 0.0`);
-                longitude = 0.0;
-            }
-            newSpot.latitude = latitude;
-            newSpot.longitude = longitude;
+            // 固定經緯度
+            newSpot.latitude = 23.5654;
+            newSpot.longitude = 119.5762;
 
             // 處理可用日期
             const dateEntries = availableDaysContainer.querySelectorAll(".date-entry");
@@ -1012,7 +941,7 @@ document.addEventListener("DOMContentLoaded", async function () {
             <div>
                 <label>計價方式：</label>
                 <select id="editPricingType" required>
-                    <option value="hourly" ${spot.pricing_type === 'hourly' ? 'selected' : ''}>按小時</option>
+                    <option value="hourly" selected>按小時</option>
                 </select>
             </div>
             <div>
@@ -1024,12 +953,12 @@ document.addEventListener("DOMContentLoaded", async function () {
                 <input type="number" id="editDailyMaxPrice" value="${spot.daily_max_price || 0}" step="0.01" min="0" required>
             </div>
             <div>
-                <label>經度（-180 到 180）：</label>
-                <input type="number" id="editLongitude" value="${spot.longitude || 0}" step="0.000001" min="-180" max="180" required>
+                <label>經度（固定值）：</label>
+                <input type="number" id="editLongitude" value="119.5762" step="0.000001" readonly>
             </div>
             <div>
-                <label>緯度（-90 到 90）：</label>
-                <input type="number" id="editLatitude" value="${spot.latitude || 0}" step="0.000001" min="-90" max="90" required>
+                <label>緯度（固定值）：</label>
+                <input type="number" id="editLatitude" value="23.5654" step="0.000001" readonly>
             </div>
             <div id="editAvailableDaysContainer">
                 <label>可用日期：</label>
@@ -1080,11 +1009,11 @@ document.addEventListener("DOMContentLoaded", async function () {
                     location: document.getElementById("editLocation").value.trim(),
                     parking_type: document.getElementById("editParkingType").value,
                     floor_level: document.getElementById("editFloorLevel").value.trim() || "ground", // 預設值 "ground"
-                    pricing_type: document.getElementById("editPricingType").value,
+                    pricing_type: "hourly", // 固定為按小時
                     price_per_half_hour: parseFloat(document.getElementById("editPricePerHalfHour").value) || 0,
                     daily_max_price: parseFloat(document.getElementById("editDailyMaxPrice").value) || 0,
-                    longitude: parseFloat(document.getElementById("editLongitude").value) || 0,
-                    latitude: parseFloat(document.getElementById("editLatitude").value) || 0,
+                    longitude: 119.5762, // 固定值
+                    latitude: 23.5654, // 固定值
                 };
 
                 // 增強驗證
@@ -1110,24 +1039,12 @@ document.addEventListener("DOMContentLoaded", async function () {
                     alert("樓層最多 20 個字符！");
                     return;
                 }
-                if (!["hourly"].includes(updatedSpot.pricing_type)) {
-                    alert("計價方式必須為 'hourly'！");
-                    return;
-                }
                 if (updatedSpot.price_per_half_hour < 0) {
                     alert("每半小時價格必須為正數！");
                     return;
                 }
                 if (updatedSpot.daily_max_price < 0) {
                     alert("每日最高價格必須為正數！");
-                    return;
-                }
-                if (updatedSpot.longitude < -180 || updatedSpot.longitude > 180) {
-                    alert("經度必須在 -180 到 180 之間！");
-                    return;
-                }
-                if (updatedSpot.latitude < -90 || updatedSpot.latitude > 90) {
-                    alert("緯度必須在 -90 到 90 之間！");
                     return;
                 }
 
@@ -1254,16 +1171,14 @@ document.addEventListener("DOMContentLoaded", async function () {
                     const row = document.createElement("tr");
                     row.setAttribute("data-id", `${spot.spot_id || '未知'}`);
 
-                    const priceDisplay = spot.pricing_type === "hourly"
-                        ? `${spot.price_per_half_hour || 0} 元/半小時`
-                        : `${spot.monthly_price || 0} 元/月`;
+                    const priceDisplay = `${spot.price_per_half_hour || 0} 元/半小時`;
 
                     row.innerHTML = `
                     <td>${spot.spot_id || '未知'}</td>
                     <td>${spot.location || '未知'}</td>
                     <td>${spot.parking_type === "flat" ? "平面" : "機械"}</td>
                     <td>${spot.floor_level === "ground" ? "地面" : `地下${spot.floor_level?.startsWith("B") ? spot.floor_level.slice(1) : spot.floor_level || '未知'}樓`}</td>
-                    <td>${spot.pricing_type === "hourly" ? "按小時" : "按月"}</td>
+                    <td>按小時</td>
                     <td>${priceDisplay}</td>
                     <td>
                         <button class="edit-btn">編輯</button>
@@ -1623,18 +1538,8 @@ document.addEventListener("DOMContentLoaded", async function () {
         
             parkingTableBody.innerHTML = '<tr><td colspan="7">載入中...</td></tr>';
         
-            let latitude = 23.5654, longitude = 119.5762;
-            try {
-                const position = await new Promise((resolve, reject) => {
-                    if (!navigator.geolocation) reject(new Error("瀏覽器不支援地理位置功能"));
-                    navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 10000, maximumAge: 0 });
-                });
-                latitude = position.coords.latitude;
-                longitude = position.coords.longitude;
-            } catch (error) {
-                console.warn("Failed to get user location, using default:", error.message);
-                alert("無法獲取您的位置，將使用預設位置（澎湖）。請確保已允許位置權限。");
-            }
+            const latitude = 23.5654;
+            const longitude = 119.5762;
         
             const timeZoneOffset = "+08:00";
             const startDateTimeStr = `${selectedDate}T${startTime}:00${timeZoneOffset}`;
@@ -1695,7 +1600,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                 if (filterCity !== "all") match = match && spot.location === filterCity;
                 if (filterType !== "all") match = match && spot.parking_type === filterType;
                 if (filterFloor !== "all") match = match && spot.floor_level === filterFloor;
-                if (filterPricing !== "all") match = match && spot.pricing_type === filterPricing;
+                if (filterPricing !== "all") match = match && spot.pricing_type === "hourly";
                 if (filterStatus !== "all") match = match && (filterStatus === "available" ? spot.status === "可用" : filterStatus === "occupied" ? ["已佔用", "預約"].includes(spot.status) : true);
                 return match;
             });
@@ -1712,38 +1617,23 @@ document.addEventListener("DOMContentLoaded", async function () {
 
             const bounds = new google.maps.LatLngBounds();
             filteredSpots.forEach(spot => {
-                let latitude = spot.latitude;
-                let longitude = spot.longitude;
+                let latitude = 23.5654;
+                let longitude = 119.5762;
                 const address = spot.location || '未知';
 
-                if (!latitude || !longitude) {
-                    const geocoder = new google.maps.Geocoder();
-                    geocoder.geocode({ address: address }, (results, status) => {
-                        if (status === google.maps.GeocoderStatus.OK && results[0]) {
-                            latitude = results[0].geometry.location.lat();
-                            longitude = results[0].geometry.location.lng();
-                            updateMarker(latitude, longitude, spot);
-                        }
-                    });
-                } else {
-                    updateMarker(latitude, longitude, spot);
-                }
+                const position = { lat: parseFloat(latitude), lng: parseFloat(longitude) };
+                let markerIcon = { url: "http://maps.google.com/mapfiles/ms/icons/green-dot.png" };
+                if (spot.status === "已佔用") markerIcon = { url: "http://maps.google.com/mapfiles/ms/icons/red-dot.png" };
+                else if (spot.status === "預約") markerIcon = { url: "http://maps.google.com/mapfiles/ms/icons/blue-dot.png" };
 
-                function updateMarker(lat, lng, spot) {
-                    const position = { lat: parseFloat(lat), lng: parseFloat(lng) };
-                    let markerIcon = { url: "http://maps.google.com/mapfiles/ms/icons/green-dot.png" };
-                    if (spot.status === "已佔用") markerIcon = { url: "http://maps.google.com/mapfiles/ms/icons/red-dot.png" };
-                    else if (spot.status === "預約") markerIcon = { url: "http://maps.google.com/mapfiles/ms/icons/blue-dot.png" };
-
-                    const marker = new google.maps.marker.AdvancedMarkerElement({
-                        position: position,
-                        map: map,
-                        title: `車位 ${spot.spot_id} - ${address}`,
-                        icon: markerIcon
-                    });
-                    map.markers.push(marker);
-                    bounds.extend(position);
-                }
+                const marker = new google.maps.marker.AdvancedMarkerElement({
+                    position: position,
+                    map: map,
+                    title: `車位 ${spot.spot_id} - ${address}`,
+                    icon: markerIcon
+                });
+                map.markers.push(marker);
+                bounds.extend(position);
             });
 
             map.fitBounds(bounds);
@@ -1756,16 +1646,14 @@ document.addEventListener("DOMContentLoaded", async function () {
                 row.setAttribute("data-id", spot.spot_id);
                 row.classList.add(spot.status === "可用" ? "available" : spot.status === "預約" ? "reserved" : "occupied");
 
-                const priceDisplay = spot.pricing_type === "hourly"
-                    ? `${spot.price_per_half_hour || 0} 元/半小時`
-                    : `${spot.monthly_price || 0} 元/月`;
+                const priceDisplay = `${spot.price_per_half_hour || 0} 元/半小時`;
 
                 row.innerHTML = `
                     <td>${spot.spot_id}</td>
                     <td>${spot.location || '未知'}</td>
                     <td>${spot.parking_type === "flat" ? "平面" : "機械"}</td>
                     <td>${spot.floor_level === "ground" ? "地面" : `地下${spot.floor_level.startsWith("B") ? spot.floor_level.slice(1) : spot.floor_level}樓`}</td>
-                    <td>${spot.pricing_type === "hourly" ? "按小時" : "按月"}</td>
+                    <td>按小時</td>
                     <td>${priceDisplay}</td>
                     <td>
                         <button class="reserve-btn" ${spot.status === "可用" ? '' : 'disabled'}>預約</button>
