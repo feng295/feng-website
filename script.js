@@ -281,10 +281,18 @@ document.addEventListener("DOMContentLoaded", async function () {
         const addParkingSection = document.getElementById("addParking");
         if (!addParkingSection) {
             console.error("addParking section not found");
+            alert("無法載入「新增車位」頁面，頁面元素缺失，請聯繫管理員！");
             return;
         }
 
+        // 確保 section 可見並設置內容
         addParkingSection.style.display = "block";
+        if (!addParkingSection.innerHTML.trim()) {
+            addParkingSection.innerHTML = `
+                <p>載入中...</p>
+                <!-- 其他動態內容將在此後添加 -->
+            `;
+        }
 
         // 自動填充會員 ID
         const memberIdInput = document.getElementById("memberIdInput");
@@ -299,12 +307,22 @@ document.addEventListener("DOMContentLoaded", async function () {
         // 動態調整費用標籤（固定為按小時）
         const pricingTypeSelect = document.getElementById("newPricingType");
         const priceLabel = document.getElementById("newPriceLabel");
-        pricingTypeSelect.innerHTML = `<option value="hourly" selected>按小時</option>`;
-        priceLabel.textContent = "半小時費用（元）：";
+        if (pricingTypeSelect && priceLabel) {
+            pricingTypeSelect.innerHTML = `<option value="hourly" selected>按小時</option>`;
+            priceLabel.textContent = "半小時費用（元）：";
+        } else {
+            console.warn("pricingTypeSelect or priceLabel not found, skipping pricing setup");
+        }
 
         // 修改可用日期：使用日期範圍選擇
         const availableDaysContainer = document.getElementById("availableDaysContainer");
         const addDateButton = document.getElementById("addDateButton");
+
+        if (!availableDaysContainer || !addDateButton) {
+            console.error("availableDaysContainer or addDateButton not found");
+            alert("日期選擇器元素缺失，請檢查 HTML 結構！");
+            return;
+        }
 
         // 動態生成日期範圍內的所有日期
         function generateDateRange(startDate, endDate) {
@@ -1709,10 +1727,14 @@ document.addEventListener("DOMContentLoaded", async function () {
             const endDateTime = `${endDate}T${endTime}:00`;
 
             const token = getToken();
-            const response = await fetch(`${API_URL}/rent`, {
-                method: "POST",
+            const response = await fetch(`${API_URL}/parking/reserve`, {
+                method: 'POST',
                 headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
-                body: JSON.stringify({ parking_spot_id: spotId, start_time: startDateTime, end_time: endDateTime })
+                body: JSON.stringify({
+                    spot_id: spotId,
+                    start_time: startDateTime,
+                    end_time: endDateTime
+                })
             });
             if (!response.headers.get('content-type')?.includes('application/json')) {
                 throw new Error("後端返回非 JSON 響應，請檢查伺服器配置");
