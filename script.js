@@ -1817,6 +1817,10 @@ document.addEventListener("DOMContentLoaded", async function () {
                 alert("日期格式不正確，請使用 YYYY-MM-DD 格式！");
                 return;
             }
+            if (!parkingSpotId) {
+                alert("請輸入車位 ID！");
+                return;
+            }
 
             incomeTableBody.innerHTML = '<tr><td colspan="5">載入中...</td></tr>';
 
@@ -1824,8 +1828,10 @@ document.addEventListener("DOMContentLoaded", async function () {
                 const token = getToken();
                 if (!token) throw new Error("認證令牌缺失，請重新登入！");
 
-                let selectedParkingSpotId = parkingSpotId ? parseInt(parkingSpotId) : getParkingSpotId();
-                if (!selectedParkingSpotId) throw new Error("請先在「我的車位」中選擇一個停車位或輸入車位 ID！");
+                let selectedParkingSpotId = parseInt(parkingSpotId);
+                if (isNaN(selectedParkingSpotId) || selectedParkingSpotId <= 0) {
+                    throw new Error("請輸入有效的車位 ID！");
+                }
                 setParkingSpotId(selectedParkingSpotId);
 
                 const queryParams = new URLSearchParams({
@@ -1862,36 +1868,40 @@ document.addEventListener("DOMContentLoaded", async function () {
                 const relatedSpots = (incomeData.spots || []).filter(spot => spot.spot_id === selectedParkingSpotId);
                 const location = relatedSpots.length > 0 ? relatedSpots[0].location : '未知';
 
+                // 計算總收入
+                let totalIncome = 0;
                 if (relatedRents.length > 0) {
                     relatedRents.forEach(rent => {
+                        const cost = parseFloat(rent.total_cost) || 0;
+                        totalIncome += cost;
                         const row = document.createElement("tr");
                         row.innerHTML = `
-                        <td>${rent.spot_id}</td>
-                        <td>${location}</td>
-                        <td>${rent.start_time?.split(' ')[0] || 'N/A'}</td>
-                        <td>${rent.actual_end_time?.split(' ')[0] || 'N/A'}</td>
-                        <td>${rent.total_cost} 元</td>
-                    `;
+                            <td>${rent.spot_id}</td>
+                            <td>${location}</td>
+                            <td>${rent.start_time?.split(' ')[0] || 'N/A'}</td>
+                            <td>${rent.actual_end_time?.split(' ')[0] || 'N/A'}</td>
+                            <td>${cost} 元</td>
+                        `;
                         fragment.appendChild(row);
                     });
                 } else {
                     const row = document.createElement("tr");
                     row.innerHTML = `
-                    <td>${selectedParkingSpotId}</td>
-                    <td>${location}</td>
-                    <td>${incomeData.start_date || 'N/A'}</td>
-                    <td>${incomeData.end_date || 'N/A'}</td>
-                    <td>0 元</td>
-                `;
+                        <td>${selectedParkingSpotId}</td>
+                        <td>${location}</td>
+                        <td>${incomeData.start_date || 'N/A'}</td>
+                        <td>${incomeData.end_date || 'N/A'}</td>
+                        <td>0 元</td>
+                    `;
                     fragment.appendChild(row);
                 }
 
                 incomeTableBody.appendChild(fragment);
-                totalIncomeDisplay.innerHTML = `<p>總收入：${incomeData.total_income || 0} 元</p>`;
+                totalIncomeDisplay.innerHTML = `<p>總收入：${totalIncome} 元</p>`;
 
             } catch (error) {
                 console.error("Failed to fetch income data:", error);
-                alert("無法載入收入資料，請稍後再試或聯繫管理員。");
+                alert("無法載入收入資料，請稍後再試或聯繫管理員。錯誤訊息：" + error.message);
                 incomeTableBody.innerHTML = '<tr><td colspan="5">無法載入收入資料</td></tr>';
                 totalIncomeDisplay.innerHTML = '<p>總收入：0 元</p>';
                 if (error.message === "認證失敗，請重新登入！") {
