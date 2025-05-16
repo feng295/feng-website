@@ -924,7 +924,7 @@ document.addEventListener("DOMContentLoaded", async function () {
         showLoginPage();
     });
 
-    // 設置我的車位（僅限 shared_owner 和 admin）
+    // 設置我的車位
     function setupMyParkingSpace() {
         const role = getRole();
         console.log("Current role in setupMyParkingSpace:", role);
@@ -1258,11 +1258,6 @@ document.addEventListener("DOMContentLoaded", async function () {
                                 showLoginPage(true);
                             }
                         }
-                    });
-
-                    row.addEventListener("click", () => {
-                        setParkingSpotId(spot.spot_id || null);
-                        alert(`已選擇車位 ${spot.spot_id || '未知'}，您現在可以查詢此車位的收入！`);
                     });
 
                     parkingFragment.appendChild(row);
