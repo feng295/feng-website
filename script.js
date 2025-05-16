@@ -1792,8 +1792,9 @@ document.addEventListener("DOMContentLoaded", async function () {
         const endDateInput = document.getElementById("endDate");
         const incomeSearchButton = document.getElementById("incomeSearchButton");
         const incomeTableBody = document.getElementById("incomeTableBody");
+        const incomeParkingSpotIdInput = document.getElementById("incomeParkingSpotId");
 
-        if (!startDateInput || !endDateInput || !incomeSearchButton || !incomeTableBody) {
+        if (!startDateInput || !endDateInput || !incomeSearchButton || !incomeTableBody || !incomeParkingSpotIdInput) {
             console.error("Required DOM elements missing for income inquiry");
             alert("頁面元素載入失敗，請檢查 DOM 結構！");
             return;
@@ -1802,6 +1803,7 @@ document.addEventListener("DOMContentLoaded", async function () {
         async function handleIncomeSearch() {
             const startDate = startDateInput.value;
             const endDate = endDateInput.value;
+            const parkingSpotId = incomeParkingSpotIdInput.value.trim();
 
             if (!startDate || !endDate) {
                 alert("請選擇開始和結束日期！");
@@ -1816,16 +1818,25 @@ document.addEventListener("DOMContentLoaded", async function () {
                 return;
             }
 
-            incomeTableBody.innerHTML = '<tr><td colspan="5">載入中...</td></tr>';
+            incomeTableBody.innerHTML = '<tr><td colspan="6">載入中...</td></tr>';
 
             try {
                 const token = getToken();
                 if (!token) throw new Error("認證令牌缺失，請重新登入！");
 
-                const parkingSpotId = getParkingSpotId();
-                if (!parkingSpotId) throw new Error("請先在「我的車位」或「預約車位」中選擇一個停車位！");
+                // 從輸入欄位獲取車位 ID，若未輸入則使用 localStorage 中的值
+                let selectedParkingSpotId = parkingSpotId ? parseInt(parkingSpotId) : getParkingSpotId();
+                if (!selectedParkingSpotId) throw new Error("請先在「我的車位」中選擇一個停車位或輸入車位 ID！");
 
-                const response = await fetch(`${API_URL}/parking/${parkingSpotId}/income?start_date=${encodeURIComponent(startDate)}&end_date=${encodeURIComponent(endDate)}`, {
+                // 更新 localStorage 中的車位 ID
+                setParkingSpotId(selectedParkingSpotId);
+
+                const queryParams = new URLSearchParams({
+                    start_date: startDate,
+                    end_date: endDate,
+                    spot_id: selectedParkingSpotId
+                });
+                const response = await fetch(`${API_URL}/parking/income?${queryParams.toString()}`, {
                     method: 'GET',
                     headers: {
                         "Content-Type": "application/json",
@@ -1847,19 +1858,45 @@ document.addEventListener("DOMContentLoaded", async function () {
                 }
 
                 incomeTableBody.innerHTML = '';
-                const row = document.createElement("tr");
-                row.innerHTML = `
-                    <td>${incomeData.spot_id || 'N/A'}</td>
-                    <td>${incomeData.location || '未知'}</td>
-                    <td>${incomeData.start_date || 'N/A'}</td>
-                    <td>${incomeData.end_date || 'N/A'}</td>
-                    <td>${incomeData.total_income || 0} 元</td>
-                `;
-                incomeTableBody.appendChild(row);
+                const fragment = document.createDocumentFragment();
+
+                // 過濾與所選車位 ID 相關的租金記錄
+                const relatedRents = (incomeData.rents || []).filter(rent => rent.spot_id === selectedParkingSpotId);
+                const relatedSpots = (incomeData.spots || []).filter(spot => spot.spot_id === selectedParkingSpotId);
+
+                // 如果有租金記錄，顯示每筆記錄
+                if (relatedRents.length > 0) {
+                    relatedRents.forEach(rent => {
+                        const row = document.createElement("tr");
+                        row.innerHTML = `
+                            <td>${rent.spot_id || 'N/A'}</td>
+                            <td>${relatedSpots.length > 0 ? relatedSpots[0].location : '未知'}</td>
+                            <td>${rent.start_time || 'N/A'}</td>
+                            <td>${rent.actual_end_time || 'N/A'}</td>
+                            <td>${rent.total_cost || 0} 元</td>
+                            <td>${incomeData.total_income || 0} 元</td>
+                        `;
+                        fragment.appendChild(row);
+                    });
+                } else {
+                    // 如果沒有租金記錄，顯示車位資訊但費用為 0
+                    const row = document.createElement("tr");
+                    row.innerHTML = `
+                        <td>${selectedParkingSpotId}</td>
+                        <td>${relatedSpots.length > 0 ? relatedSpots[0].location : '未知'}</td>
+                        <td>${incomeData.start_date || 'N/A'}</td>
+                        <td>${incomeData.end_date || 'N/A'}</td>
+                        <td>0 元</td>
+                        <td>${incomeData.total_income || 0} 元</td>
+                    `;
+                    fragment.appendChild(row);
+                }
+
+                incomeTableBody.appendChild(fragment);
             } catch (error) {
                 console.error("Failed to fetch income data:", error);
                 alert("無法載入收入資料，請稍後再試或聯繫管理員。");
-                incomeTableBody.innerHTML = '<tr><td colspan="5">無法載入收入資料</td></tr>';
+                incomeTableBody.innerHTML = '<tr><td colspan="6">無法載入收入資料</td></tr>';
                 if (error.message === "認證失敗，請重新登入！") {
                     removeToken();
                     showLoginPage(true);
