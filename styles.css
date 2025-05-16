@@ -575,7 +575,16 @@ a:hover {
     }
 }
 
-/* Updated style for reserveParkingTable background */
+/* Updated style for reserveParkingTable background to match My parking spaceTable */
+#reserveParkingTable tr.available {
+    background-color: #e0ffe0;
+}
+
+#reserveParkingTable tr.occupied,
+#reserveParkingTable tr.reserved {
+    background-color: #ffe0e0;
+}
+
 #reserveParkingTable tr {
-    background-color: white;
+    background-color: #fff;
 }
