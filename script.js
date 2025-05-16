@@ -436,7 +436,7 @@ document.addEventListener("DOMContentLoaded", async function () {
         }
 
         let map, marker;
-        if (!window.google || !google.maps) {
+        if (!window.isGoogleMapsLoaded || !window.google || !google.maps) {
             console.error("Google Maps API 未載入或載入失敗");
             alert("無法載入 Google Maps API，請檢查網路連線或 API 金鑰是否有效。地圖功能將不可用，但您仍可手動輸入經全世界經緯度。");
             addParkingMap.style.display = "none";
