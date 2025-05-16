@@ -332,7 +332,6 @@ document.addEventListener("DOMContentLoaded", async function () {
         const addParkingSection = document.getElementById("addParking");
         if (!addParkingSection) {
             console.error("addParking section not found");
-            alert("無法載入「新增車位」頁面，頁面元素缺失，請檢查 HTML 結構！");
             return;
         }
 
@@ -340,11 +339,6 @@ document.addEventListener("DOMContentLoaded", async function () {
 
         // 自動填充會員 ID
         const memberIdInput = document.getElementById("memberIdInput");
-        if (!memberIdInput) {
-            console.error("memberIdInput not found");
-            alert("無法找到會員 ID 輸入框，請檢查頁面結構！");
-            return;
-        }
         const memberId = getMemberId();
         if (!memberId) {
             alert("無法獲取會員 ID，請重新登入！");
@@ -353,25 +347,15 @@ document.addEventListener("DOMContentLoaded", async function () {
         }
         memberIdInput.value = memberId;
 
-        // 固定計價方式為按小時
+        // 動態調整費用標籤（僅保留按小時）
         const pricingTypeSelect = document.getElementById("newPricingType");
         const priceLabel = document.getElementById("newPriceLabel");
-        if (!pricingTypeSelect || !priceLabel) {
-            console.error("Required elements missing in addParking section: newPricingType or newPriceLabel");
-            alert("「新增車位」頁面元素缺失，請檢查 HTML 結構！");
-            return;
-        }
         pricingTypeSelect.innerHTML = `<option value="hourly">按小時</option>`;
         priceLabel.textContent = "半小時費用（元）：";
 
         // 修改可用日期：使用日期範圍選擇
         const availableDaysContainer = document.getElementById("availableDaysContainer");
         const addDateButton = document.getElementById("addDateButton");
-        if (!availableDaysContainer || !addDateButton) {
-            console.error("Required elements missing in addParking section: availableDaysContainer or addDateButton");
-            alert("「新增車位」頁面元素缺失，請檢查 HTML 結構！");
-            return;
-        }
 
         // 動態生成日期範圍內的所有日期
         function generateDateRange(startDate, endDate) {
@@ -440,32 +424,120 @@ document.addEventListener("DOMContentLoaded", async function () {
 
         addDateButton.addEventListener("click", addDateRangeEntry);
 
+        // 檢查 Google Maps API 是否已載入
+        const addParkingMap = document.getElementById("addParkingMap");
+        const latitudeInput = document.getElementById("latitudeInput");
+        const longitudeInput = document.getElementById("longitudeInput");
+
+        if (!addParkingMap || !latitudeInput || !longitudeInput) {
+            console.error("Required elements for map in addParking not found: addParkingMap, latitudeInput, or longitudeInput");
+            alert("地圖容器或經緯度輸入框未找到，地圖功能將不可用。");
+            return;
+        }
+
+        let map, marker;
+        if (!window.isGoogleMapsLoaded || !window.google || !google.maps) {
+            console.error("Google Maps API 未載入或載入失敗");
+            alert("無法載入 Google Maps API，請檢查網路連線或 API 金鑰是否有效。地圖功能將不可用，但您仍可手動輸入經全世界經緯度。");
+            addParkingMap.style.display = "none";
+            latitudeInput.disabled = false;
+            longitudeInput.disabled = false;
+            latitudeInput.placeholder = "請手動輸入緯度";
+            longitudeInput.placeholder = "請手動輸入經度";
+            return;
+        }
+
+        // 初始化地圖，添加 mapId
+        addParkingMap.style.display = "block";
+        map = new google.maps.Map(addParkingMap, {
+            center: { lat: 23.5654, lng: 119.5762 }, // 預設為澎湖縣中心
+            zoom: 15,
+            mapId: "4a9410e1706e086d447136ee" // 使用您提供的 mapId
+        });
+
+        // 嘗試獲取用戶當前位置
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    const userLocation = {
+                        lat: position.coords.latitude,
+                        lng: position.coords.longitude,
+                    };
+                    map.setCenter(userLocation);
+                    latitudeInput.value = userLocation.lat;
+                    longitudeInput.value = userLocation.lng;
+                    marker = new google.maps.marker.AdvancedMarkerElement({
+                        position: userLocation,
+                        map: map,
+                        title: "選定位置",
+                    });
+                },
+                (error) => {
+                    console.warn("Failed to get user location:", error.message);
+                    let errorMsg = "無法獲取您的位置，將使用預設位置（澎湖）。請確保已允許位置權限。";
+                    if (error.message.includes("secure origins")) {
+                        errorMsg += " 您可能正在使用不安全的來源（HTTP）。請使用 HTTPS 或在 localhost 上測試。";
+                    }
+                    alert(errorMsg);
+                    latitudeInput.value = 23.5654;
+                    longitudeInput.value = 119.5762;
+                    marker = new google.maps.marker.AdvancedMarkerElement({
+                        position: { lat: 23.5654, lng: 119.5762 },
+                        map: map,
+                        title: "預設位置",
+                    });
+                },
+                { timeout: 10000, maximumAge: 0 }
+            );
+        } else {
+            console.warn("Browser does not support geolocation");
+            alert("您的瀏覽器不支援地理位置功能，將使用預設位置（澎湖）。");
+            latitudeInput.value = 23.5654;
+            longitudeInput.value = 119.5762;
+            marker = new google.maps.marker.AdvancedMarkerElement({
+                position: { lat: 23.5654, lng: 119.5762 },
+                map: map,
+                title: "預設位置",
+            });
+        }
+
+        // 地圖點擊事件：更新經緯度和標記，並顯示資訊視窗
+        map.addListener("click", (event) => {
+            const lat = event.latLng.lat();
+            const lng = event.latLng.lng();
+            latitudeInput.value = lat.toFixed(6);
+            longitudeInput.value = lng.toFixed(6);
+
+            if (marker) {
+                marker.position = event.latLng; // AdvancedMarkerElement 使用直接賦值
+            } else {
+                marker = new google.maps.marker.AdvancedMarkerElement({
+                    position: event.latLng,
+                    map: map,
+                    title: "選定位置",
+                });
+            }
+
+            const infoWindow = new google.maps.InfoWindow({
+                content: `選定位置：<br>緯度：${lat.toFixed(6)}<br>經度：${lng.toFixed(6)}`,
+            });
+            infoWindow.open(map, marker);
+        });
+
         // 保存車位按鈕事件
         const saveNewSpotButton = document.getElementById("saveNewSpotButton");
         if (!saveNewSpotButton) {
             console.error("saveNewSpotButton not found in the DOM");
-            alert("無法找到「保存」按鈕，請檢查頁面結構！");
+            alert("無法找到保存按鈕，請檢查頁面結構！");
             return;
         }
         saveNewSpotButton.addEventListener("click", async () => {
-            const newLocationInput = document.getElementById("newLocation");
-            const newParkingTypeSelect = document.getElementById("newParkingType");
-            const newFloorLevelInput = document.getElementById("newFloorLevel");
-            const newPriceInput = document.getElementById("newPrice");
-            const newMaxDailyPriceInput = document.getElementById("newMaxDailyPrice");
-
-            if (!newLocationInput || !newParkingTypeSelect || !newFloorLevelInput || !newPriceInput || !newMaxDailyPriceInput) {
-                console.error("Required input elements for new spot are missing");
-                alert("「新增車位」表單元素缺失，請檢查頁面結構！");
-                return;
-            }
-
             const newSpot = {
                 member_id: parseInt(memberIdInput.value),
-                location: newLocationInput.value.trim() || '',
-                parking_type: newParkingTypeSelect.value || '',
-                floor_level: newFloorLevelInput.value.trim() || '',
-                pricing_type: "hourly", // 固定為按小時
+                location: document.getElementById("newLocation").value.trim(),
+                parking_type: document.getElementById("newParkingType").value,
+                floor_level: document.getElementById("newFloorLevel").value.trim(),
+                pricing_type: document.getElementById("newPricingType").value,
             };
 
             // 驗證必填字段
@@ -489,32 +561,48 @@ document.addEventListener("DOMContentLoaded", async function () {
                 alert("樓層最多 20 個字符！");
                 return;
             }
+            if (newSpot.pricing_type !== "hourly") {
+                alert("計費方式必須為 'hourly'！");
+                return;
+            }
 
             // 處理費用字段
-            const price = newPriceInput.value ? parseFloat(newPriceInput.value) : 20.00;
+            const priceInput = document.getElementById("newPrice").value;
+            const price = priceInput ? parseFloat(priceInput) : 20.00;
             if (isNaN(price) || price < 0) {
                 alert("費用必須為正數！");
                 return;
             }
             newSpot.price_per_half_hour = price;
 
-            const maxDailyPrice = newMaxDailyPriceInput.value ? parseFloat(newMaxDailyPriceInput.value) : 300.00;
+            const maxDailyPriceInput = document.getElementById("newMaxDailyPrice").value;
+            const maxDailyPrice = maxDailyPriceInput ? parseFloat(maxDailyPriceInput) : 300.00;
             if (isNaN(maxDailyPrice) || maxDailyPrice < 0) {
                 alert("每日最高價格必須為正數！");
                 return;
             }
             newSpot.daily_max_price = maxDailyPrice;
 
-            // 固定經緯度
-            newSpot.latitude = 23.5654;
-            newSpot.longitude = 119.5762;
+            // 處理經緯度
+            let latitude = parseFloat(latitudeInput.value) || 0.0;
+            let longitude = parseFloat(longitudeInput.value) || 0.0;
+            if (isNaN(latitude) || latitude < -90 || latitude > 90) {
+                console.warn(`Latitude ${latitude} out of range (-90 to 90), resetting to default 0.0`);
+                latitude = 0.0;
+            }
+            if (isNaN(longitude) || longitude < -180 || longitude > 180) {
+                console.warn(`Longitude ${longitude} out of range (-180 to 180), resetting to default 0.0`);
+                longitude = 0.0;
+            }
+            newSpot.latitude = latitude;
+            newSpot.longitude = longitude;
 
             // 處理可用日期
             const dateEntries = availableDaysContainer.querySelectorAll(".date-entry");
             const availableDays = [];
             for (const entry of dateEntries) {
-                const date = entry.querySelector(".available-date")?.value || '';
-                const isAvailable = entry.querySelector(".available-status")?.checked || false;
+                const date = entry.querySelector(".available-date").value;
+                const isAvailable = entry.querySelector(".available-status").checked;
 
                 if (!date) {
                     alert("請為每個可用日期選擇日期！");
@@ -545,20 +633,13 @@ document.addEventListener("DOMContentLoaded", async function () {
 
                 if (!response.ok) {
                     if (response.status === 401) throw new Error("認證失敗，請重新登入！");
-                    const errorData = await response.json().catch(() => ({ error: '未知錯誤' }));
+                    const errorData = await response.json();
                     throw new Error(`HTTP error! Status: ${response.status}, Message: ${errorData.error || '未知錯誤'}`);
                 }
 
                 const result = await response.json();
                 alert("車位已成功新增！");
                 addParkingSection.innerHTML = "<p>車位已成功新增！</p>";
-                // 自動跳轉到「我的車位」頁面並刷新
-                const myParkingSpaceSection = document.getElementById("My parking space");
-                if (myParkingSpaceSection) {
-                    addParkingSection.style.display = "none";
-                    myParkingSpaceSection.style.display = "block";
-                    setupMyParkingSpace();
-                }
             } catch (error) {
                 console.error("Failed to add spot:", error);
                 alert(`無法新增車位，請檢查後端服務 (錯誤: ${error.message})`);
@@ -572,7 +653,7 @@ document.addEventListener("DOMContentLoaded", async function () {
         const cancelAddButton = document.getElementById("cancelAddButton");
         if (!cancelAddButton) {
             console.error("cancelAddButton not found in the DOM");
-            alert("無法找到「取消」按鈕，請檢查頁面結構！");
+            alert("無法找到取消按鈕，請檢查頁面結構！");
             return;
         }
         cancelAddButton.addEventListener("click", () => {
