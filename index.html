@@ -91,26 +91,12 @@
                         <input type="text" id="newFloorLevel" placeholder="例如 1F">
                     </div>
                     <div class="input-group">
-                        <label for="newPricingType">計費方式：</label>
-                        <select id="newPricingType">
-                            <option value="hourly">按小時</option>
-                        </select>
-                    </div>
-                    <div class="input-group">
                         <label id="newPriceLabel" for="newPrice">半小時費用（元）：</label>
                         <input type="number" id="newPrice" step="0.01" value="20.00">
                     </div>
                     <div class="input-group">
                         <label for="newMaxDailyPrice">每日最高價格（元）：</label>
                         <input type="number" id="newMaxDailyPrice" step="0.01" value="300.00">
-                    </div>
-                    <div class="input-group">
-                        <label for="latitudeInput">緯度：</label>
-                        <input type="text" id="latitudeInput" readonly>
-                    </div>
-                    <div class="input-group">
-                        <label for="longitudeInput">經度：</label>
-                        <input type="text" id="longitudeInput" readonly>
                     </div>
                     <div id="addParkingMap"></div>
                     <div class="input-group">
@@ -132,13 +118,14 @@
                                 <th>地址</th>
                                 <th>類型</th>
                                 <th>樓層</th>
-                                <th>計費方式</th>
                                 <th>費用</th>
                                 <th>操作</th>
                             </tr>
                         </thead>
                         <tbody id="My parking spaceTableBody">
-                            <tr><td colspan="7">請選擇車位以查看詳情</td></tr>
+                            <tr>
+                                <td colspan="6">請選擇車位以查看詳情</td>
+                            </tr>
                         </tbody>
                     </table>
                 </div>
@@ -188,10 +175,6 @@
                             <option value="b2">地下2樓</option>
                             <option value="b3">地下3樓</option>
                         </select>
-                        <label for="reservePricing">計價方式：</label>
-                        <select id="reservePricing">
-                            <option value="hourly">按小時計費</option>
-                        </select>
                         <label for="reserveStatus">車位狀態：</label>
                         <select id="reserveStatus">
                             <option value="all">全部</option>
@@ -216,14 +199,13 @@
                                     <th>縣市</th>
                                     <th>類型</th>
                                     <th>樓層</th>
-                                    <th>計價方式</th>
                                     <th>狀態</th>
                                     <th>操作</th>
                                 </tr>
                             </thead>
                             <tbody id="reserveParkingTableBody">
                                 <tr>
-                                    <td colspan="7">請選擇日期並點擊查詢以查看可用車位</td>
+                                    <td colspan="6">請選擇日期並點擊查詢以查看可用車位</td>
                                 </tr>
                             </tbody>
                         </table>
@@ -240,6 +222,8 @@
                         <input type="date" id="startDate" name="startDate">
                         <label for="endDate">結束日期：</label>
                         <input type="date" id="endDate" name="endDate">
+                        <label>車位 ID：</label>
+                        <input type="number" id="incomeParkingSpotId" placeholder="輸入車位 ID">
                         <button id="incomeSearchButton">查詢</button>
                     </div>
                     <div class="parking-spaces-table">
