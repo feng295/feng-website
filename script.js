@@ -204,7 +204,6 @@ document.addEventListener("DOMContentLoaded", async function () {
             `;
         } else if (role === "renter") {
             navList.innerHTML = `
-                <li><a href="#" class="nav-link" data-target="My parking space">我的車位</a></li>
                 <li><a href="#" class="nav-link" data-target="reserveParking">預約車位</a></li>
                 <li><a href="#" class="nav-link" data-target="history">歷史紀錄</a></li>
                 <li><a href="#" class="nav-link" data-target="profile">個人資料</a></li>
@@ -224,7 +223,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 
         const defaultSectionId = role === "shared_owner" ? "My parking space" :
             role === "renter" ? "reserveParking" :
-                role === "admin" ? "viewAllUsers" : "My parking space";
+                role === "admin" ? "viewAllUsers" : "profile";
         const defaultSection = document.getElementById(defaultSectionId);
 
         if (!defaultSection) {
@@ -238,7 +237,7 @@ document.addEventListener("DOMContentLoaded", async function () {
         else if (defaultSectionId === "viewAllUsers") setupViewAllUsers();
         else if (defaultSectionId === "incomeInquiry") setupIncomeInquiry();
         else if (defaultSectionId === "addParking") setupAddParking();
-        else setupMyParkingSpace();
+        else setupProfile();
 
         const navLinks = document.querySelectorAll(".nav-link");
         navLinks.forEach(link => {
@@ -925,11 +924,11 @@ document.addEventListener("DOMContentLoaded", async function () {
         showLoginPage();
     });
 
-    // 設置我的車位
+    // 設置我的車位（僅限 shared_owner 和 admin）
     function setupMyParkingSpace() {
         const role = getRole();
         console.log("Current role in setupMyParkingSpace:", role);
-        if (!["shared_owner", "renter", "admin"].includes(role)) {
+        if (!["shared_owner", "admin"].includes(role)) {
             alert("您沒有權限訪問此功能！");
             return;
         }
@@ -1155,8 +1154,6 @@ document.addEventListener("DOMContentLoaded", async function () {
 
                 let url;
                 if (role === "shared_owner") {
-                    url = `${API_URL}/parking/my-spots`;
-                } else if (role === "renter") {
                     url = `${API_URL}/parking/my-spots`;
                 } else if (role === "admin") {
                     url = `${API_URL}/parking/my-spots`;
