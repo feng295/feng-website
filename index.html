@@ -77,7 +77,8 @@
                     </div>
                     <div class="input-group">
                         <label for="newLocation">地址：</label>
-                        <input type="text" id="newLocation" placeholder="請輸入地址" maxlength="50" required aria-label="車位地址">
+                        <input type="text" id="newLocation" placeholder="請輸入地址" maxlength="50" required
+                            aria-label="車位地址">
                     </div>
                     <div class="input-group">
                         <label for="newParkingType">停車類型：</label>
@@ -98,19 +99,23 @@
                     </div>
                     <div class="input-group">
                         <label id="newPriceLabel" for="newPrice">半小時費用（元）：</label>
-                        <input type="number" id="newPrice" step="0.01" value="20.00" min="0" required aria-label="每半小時費用（元）">
+                        <input type="number" id="newPrice" step="0.01" value="20.00" min="0" required
+                            aria-label="每半小時費用（元）">
                     </div>
                     <div class="input-group">
                         <label for="newMaxDailyPrice">每日最高價格（元）：</label>
-                        <input type="number" id="newMaxDailyPrice" step="0.01" value="300.00" min="0" required aria-label="每日最高價格（元）">
+                        <input type="number" id="newMaxDailyPrice" step="0.01" value="300.00" min="0" required
+                            aria-label="每日最高價格（元）">
                     </div>
                     <div class="input-group">
                         <label for="latitudeInput">經度：</label>
-                        <input type="number" id="latitudeInput" step="0.000001" value="23.5654" readonly aria-label="經度（唯讀）">
+                        <input type="number" id="latitudeInput" step="0.000001" value="23.5654" readonly
+                            aria-label="經度（唯讀）">
                     </div>
                     <div class="input-group">
                         <label for="longitudeInput">緯度：</label>
-                        <input type="number" id="longitudeInput" step="0.000001" value="119.5762" readonly aria-label="緯度（唯讀）">
+                        <input type="number" id="longitudeInput" step="0.000001" value="119.5762" readonly
+                            aria-label="緯度（唯讀）">
                     </div>
                     <div id="addParkingMap" style="height: 400px; width: 100%;"></div>
                     <div class="input-group">
@@ -251,15 +256,17 @@
                                     <th>開始日期</th>
                                     <th>結束日期</th>
                                     <th>費用</th>
-                                    <th>總收入</th>
                                 </tr>
                             </thead>
                             <tbody id="incomeTableBody">
                                 <tr>
-                                    <td colspan="6">請選擇車位和日期以查看收入明細</td>
+                                    <td colspan="5">請選擇車位和日期以查看收入明細</td>
                                 </tr>
                             </tbody>
                         </table>
+                    </div>
+                    <div id="totalIncomeDisplay" class="total-income">
+                        <p>總收入：0 元 (起止日期：N/A 至 N/A)</p>
                     </div>
                 </div>
                 <div id="viewAllUsers" class="content-section" style="display: none;">
