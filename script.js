@@ -198,7 +198,7 @@ document.addEventListener("DOMContentLoaded", async function () {
         if (role === "shared_owner") {
             navList.innerHTML = `
                 <li><a href="#" class="nav-link" data-target="addParking">新增車位</a></li>
-                <li><a href="#" class="nav-link" data-target="My parking space">我的車位</a></li>
+                <li><a href="#" class="nav-link" data-target="My parking space">我的列表</a></li>
                 <li><a href="#" class="nav-link" data-target="incomeInquiry">收入查詢</a></li>
                 <li><a href="#" class="nav-link" data-target="profile">個人資料</a></li>
             `;
@@ -211,7 +211,7 @@ document.addEventListener("DOMContentLoaded", async function () {
         } else if (role === "admin") {
             navList.innerHTML = `
                 <li><a href="#" class="nav-link" data-target="addParking">新增車位</a></li>
-                <li><a href="#" class="nav-link" data-target="My parking space">我的車位</a></li>
+                <li><a href="#" class="nav-link" data-target="My parking space">我的列表</a></li>
                 <li><a href="#" class="nav-link" data-target="viewAllUsers">查看所有用戶資料</a></li>
                 <li><a href="#" class="nav-link" data-target="profile">個人資料</a></li>
             `;
@@ -303,101 +303,19 @@ document.addEventListener("DOMContentLoaded", async function () {
         }
         memberIdInput.value = memberId;
 
-        // 動態調整費用標籤（固定為按小時）
-        const pricingTypeSelect = document.getElementById("newPricingType");
+        // 動態調整費用標籤（固定為按小時，移除計價方式選擇）
         const priceLabel = document.getElementById("newPriceLabel");
-        if (pricingTypeSelect && priceLabel) {
-            pricingTypeSelect.innerHTML = `<option value="hourly" selected>按小時</option>`;
+        if (priceLabel) {
             priceLabel.textContent = "半小時費用（元）：";
         } else {
-            console.warn("pricingTypeSelect or priceLabel not found, using fallback pricing setup");
+            console.warn("priceLabel not found, using fallback pricing setup");
             addParkingSection.innerHTML += `
             <div>
                 <label id="newPriceLabel">半小時費用（元）：</label>
-                <select id="newPricingType">
-                    <option value="hourly" selected>按小時</option>
-                </select>
                 <input type="number" id="newPrice" value="20.00" step="0.01" min="0" required>
             </div>
         `;
         }
-
-        // 修改可用日期：使用日期範圍選擇
-        const availableDaysContainer = document.getElementById("availableDaysContainer");
-        const addDateButton = document.getElementById("addDateButton");
-
-        if (!availableDaysContainer || !addDateButton) {
-            console.error("availableDaysContainer or addDateButton not found");
-            alert("日期選擇器元素缺失，請檢查 HTML 結構！");
-            return;
-        }
-
-        // 動態生成日期範圍內的所有日期
-        function generateDateRange(startDate, endDate) {
-            const dates = [];
-            let currentDate = new Date(startDate);
-            const end = new Date(endDate);
-            while (currentDate <= end) {
-                dates.push(new Date(currentDate).toISOString().split('T')[0]);
-                currentDate.setDate(currentDate.getDate() + 1);
-            }
-            return dates;
-        }
-
-        // 顯示日期範圍選擇器和生成的日期
-        function addDateRangeEntry() {
-            const dateRangeEntry = document.createElement("div");
-            dateRangeEntry.className = "date-range-entry";
-            dateRangeEntry.innerHTML = `
-            <label>開始日期 (YYYY-MM-DD)：</label>
-            <input type="date" class="start-date">
-            <label>結束日期 (YYYY-MM-DD)：</label>
-            <input type="date" class="end-date">
-            <button type="button" class="generate-dates">生成日期</button>
-            <button type="button" class="remove-range">移除</button>
-            <div class="date-list"></div>
-        `;
-            availableDaysContainer.appendChild(dateRangeEntry);
-
-            const startDateInput = dateRangeEntry.querySelector(".start-date");
-            const endDateInput = dateRangeEntry.querySelector(".end-date");
-            const generateButton = dateRangeEntry.querySelector(".generate-dates");
-            const dateList = dateRangeEntry.querySelector(".date-list");
-
-            generateButton.addEventListener("click", () => {
-                const startDate = startDateInput.value;
-                const endDate = endDateInput.value;
-
-                if (!startDate || !endDate) {
-                    alert("請選擇開始和結束日期！");
-                    return;
-                }
-                if (startDate > endDate) {
-                    alert("開始日期不能晚於結束日期！");
-                    return;
-                }
-
-                const dates = generateDateRange(startDate, endDate);
-                dateList.innerHTML = '';
-                dates.forEach(date => {
-                    const dateEntry = document.createElement("div");
-                    dateEntry.className = "date-entry";
-                    dateEntry.innerHTML = `
-                    <label>日期：${date}</label>
-                    <input type="hidden" class="available-date" value="${date}">
-                    <label>是否可用：</label>
-                    <input type="checkbox" class="available-status" checked>
-                `;
-                    dateList.appendChild(dateEntry);
-                });
-            });
-
-            dateRangeEntry.querySelector(".remove-range").addEventListener("click", () => {
-                dateRangeEntry.remove();
-            });
-        }
-
-        addDateButton.addEventListener("click", addDateRangeEntry);
 
         // 檢查 Google Maps API 是否已載入
         const addParkingMap = document.getElementById("addParkingMap");
@@ -410,19 +328,19 @@ document.addEventListener("DOMContentLoaded", async function () {
             addParkingSection.innerHTML += `
             <div id="addParkingMap" style="height: 400px; width: 100%; display: none;"></div>
             <div>
-                <label>經度 (預設)：</label>
-                <input type="number" id="latitudeInput" value="23.5654" step="0.000001" readonly>
+                <label>經度：</label>
+                <input type="number" id="latitudeInput" value="23.5705" step="0.000001" readonly>
             </div>
             <div>
-                <label>緯度 (預設)：</label>
-                <input type="number" id="longitudeInput" value="119.5762" step="0.000001" readonly>
+                <label>緯度：</label>
+                <input type="number" id="longitudeInput" value="119.5688" step="0.000001" readonly>
             </div>
         `;
         }
 
-        // 固定經緯度為澎湖縣中心
-        latitudeInput.value = 23.5654;
-        longitudeInput.value = 119.5762;
+        // 固定經緯度為國立澎湖科技大學
+        latitudeInput.value = 23.5705;
+        longitudeInput.value = 119.5688;
         latitudeInput.disabled = true;
         longitudeInput.disabled = true;
 
@@ -435,15 +353,15 @@ document.addEventListener("DOMContentLoaded", async function () {
             // 初始化地圖，添加 mapId
             addParkingMap.style.display = "block";
             map = new google.maps.Map(addParkingMap, {
-                center: { lat: 23.5654, lng: 119.5762 }, // 固定為澎湖縣中心
+                center: { lat: 23.5705, lng: 119.5688 }, // 固定為國立澎湖科技大學
                 zoom: 15,
                 mapId: "4a9410e1706e086d447136ee" // 使用您提供的 mapId
             });
 
             marker = new google.maps.marker.AdvancedMarkerElement({
-                position: { lat: 23.5654, lng: 119.5762 },
+                position: { lat: 23.5705, lng: 119.5688 },
                 map: map,
-                title: "固定位置",
+                title: "國立澎湖科技大學",
             });
         }
 
@@ -507,30 +425,8 @@ document.addEventListener("DOMContentLoaded", async function () {
             newSpot.daily_max_price = maxDailyPrice;
 
             // 固定經緯度
-            newSpot.latitude = 23.5654;
-            newSpot.longitude = 119.5762;
-
-            // 處理可用日期
-            const dateEntries = availableDaysContainer.querySelectorAll(".date-entry");
-            const availableDays = [];
-            for (const entry of dateEntries) {
-                const date = entry.querySelector(".available-date").value;
-                const isAvailable = entry.querySelector(".available-status").checked;
-
-                if (!date) {
-                    alert("請為每個可用日期選擇日期！");
-                    return;
-                }
-                if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
-                    alert("日期格式不正確，請使用 YYYY-MM-DD 格式！");
-                    return;
-                }
-
-                availableDays.push({ date, is_available: isAvailable });
-            }
-            if (availableDays.length > 0) {
-                newSpot.available_days = availableDays;
-            }
+            newSpot.latitude = 23.5705;
+            newSpot.longitude = 119.5688;
 
             try {
                 const token = getToken();
@@ -924,7 +820,7 @@ document.addEventListener("DOMContentLoaded", async function () {
         showLoginPage();
     });
 
-    // 設置我的車位
+    // 設置我的列表
     function setupMyParkingSpace() {
         const role = getRole();
         console.log("Current role in setupMyParkingSpace:", role);
@@ -936,7 +832,7 @@ document.addEventListener("DOMContentLoaded", async function () {
         const parkingTableBody = document.getElementById("My parking spaceTableBody");
         if (!parkingTableBody) {
             console.error("Required element not found for My parking space: parkingTableBody");
-            alert("無法載入「我的車位」頁面，頁面元素缺失，請聯繫管理員！");
+            alert("無法載入「我的列表」頁面，頁面元素缺失，請聯繫管理員！");
             return;
         }
 
@@ -955,103 +851,59 @@ document.addEventListener("DOMContentLoaded", async function () {
         // 顯示編輯表單
         function showEditForm(spot) {
             editFormContainer.innerHTML = `
-        <h3>編輯車位</h3>
-        <form id="editParkingForm">
-            <input type="hidden" id="editSpotId" value="${spot.spot_id || ''}">
-            <div>
-                <label>位置：</label>
-                <input type="text" id="editLocation" value="${spot.location || ''}" maxlength="50" required>
-            </div>
-            <div>
-                <label>停車類型：</label>
-                <select id="editParkingType" required>
-                    <option value="flat" ${spot.parking_type === 'flat' ? 'selected' : ''}>平面</option>
-                    <option value="mechanical" ${spot.parking_type === 'mechanical' ? 'selected' : ''}>機械</option>
-                </select>
-            </div>
-            <div>
-                <label>樓層（"ground", "1F", "B1" 等，留空將使用預設值 "ground"）：</label>
-                <input type="text" id="editFloorLevel" value="${spot.floor_level || ''}" maxlength="20" placeholder="例如: ground, 1F, B1">
-            </div>
-            <div>
-                <label>計價方式：</label>
-                <select id="editPricingType" required>
-                    <option value="hourly" selected>按小時</option>
-                </select>
-            </div>
-            <div>
-                <label>每半小時價格（元）：</label>
-                <input type="number" id="editPricePerHalfHour" value="${spot.price_per_half_hour || 0}" step="0.01" min="0" required>
-            </div>
-            <div>
-                <label>每日最高價格（元）：</label>
-                <input type="number" id="editDailyMaxPrice" value="${spot.daily_max_price || 0}" step="0.01" min="0" required>
-            </div>
-            <div>
-                <label>經度（固定值）：</label>
-                <input type="number" id="editLongitude" value="119.5762" step="0.000001" readonly>
-            </div>
-            <div>
-                <label>緯度（固定值）：</label>
-                <input type="number" id="editLatitude" value="23.5654" step="0.000001" readonly>
-            </div>
-            <div id="editAvailableDaysContainer">
-                <label>可用日期：</label>
-                <button type="button" id="addEditDateButton">添加日期</button>
-            </div>
-            <button type="button" id="saveEditSpotButton">保存</button>
-            <button type="button" id="cancelEditSpotButton">取消</button>
-        </form>
-    `;
+                <h3>編輯車位</h3>
+                <form id="editParkingForm">
+                    <input type="hidden" id="editSpotId" value="${spot.spot_id || ''}">
+                    <div>
+                        <label>位置：</label>
+                        <input type="text" id="editLocation" value="${spot.location || ''}" maxlength="50" required>
+                    </div>
+                    <div>
+                        <label>停車類型：</label>
+                        <select id="editParkingType" required>
+                            <option value="flat" ${spot.parking_type === 'flat' ? 'selected' : ''}>平面</option>
+                            <option value="mechanical" ${spot.parking_type === 'mechanical' ? 'selected' : ''}>機械</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label>樓層（"ground", "1F", "B1" 等，留空將使用預設值 "ground"）：</label>
+                        <input type="text" id="editFloorLevel" value="${spot.floor_level || ''}" maxlength="20" placeholder="例如: ground, 1F, B1">
+                    </div>
+                    <div>
+                        <label>每半小時價格（元）：</label>
+                        <input type="number" id="editPricePerHalfHour" value="${spot.price_per_half_hour || 0}" step="0.01" min="0" required>
+                    </div>
+                    <div>
+                        <label>每日最高價格（元）：</label>
+                        <input type="number" id="editDailyMaxPrice" value="${spot.daily_max_price || 0}" step="0.01" min="0" required>
+                    </div>
+                    <div>
+                        <label>經度：</label>
+                        <input type="number" id="editLongitude" value="119.5688" step="0.000001" readonly>
+                    </div>
+                    <div>
+                        <label>緯度：</label>
+                        <input type="number" id="editLatitude" value="23.5705" step="0.000001" readonly>
+                    </div>
+                    <button type="button" id="saveEditSpotButton">保存</button>
+                    <button type="button" id="cancelEditSpotButton">取消</button>
+                </form>
+            `;
             editFormContainer.style.display = "block";
-
-            const availableDaysContainer = document.getElementById("editAvailableDaysContainer");
-            const addDateButton = document.getElementById("addEditDateButton");
-
-            // 動態添加日期範圍
-            function addDateRangeEntry() {
-                const dateEntry = document.createElement("div");
-                dateEntry.className = "date-range-entry";
-                dateEntry.innerHTML = `
-            <label>日期 (YYYY-MM-DD)：</label>
-            <input type="date" class="edit-available-date" required>
-            <label>是否可用：</label>
-            <input type="checkbox" class="edit-available-status" checked>
-            <button type="button" class="remove-range">移除</button>
-        `;
-                availableDaysContainer.appendChild(dateEntry);
-
-                dateEntry.querySelector(".remove-range").addEventListener("click", () => {
-                    dateEntry.remove();
-                });
-            }
-
-            addDateButton.addEventListener("click", addDateRangeEntry);
-
-            // 填充現有可用日期（如果有）
-            if (spot.available_days && Array.isArray(spot.available_days)) {
-                spot.available_days.forEach(day => {
-                    addDateRangeEntry();
-                    const lastEntry = availableDaysContainer.lastElementChild;
-                    lastEntry.querySelector(".edit-available-date").value = day.date;
-                    lastEntry.querySelector(".edit-available-status").checked = day.is_available;
-                });
-            }
 
             // 保存編輯
             document.getElementById("saveEditSpotButton").addEventListener("click", async () => {
                 const updatedSpot = {
                     location: document.getElementById("editLocation").value.trim(),
                     parking_type: document.getElementById("editParkingType").value,
-                    floor_level: document.getElementById("editFloorLevel").value.trim() || "ground", // 預設值 "ground"
-                    pricing_type: "hourly", // 固定為按小時
+                    floor_level: document.getElementById("editFloorLevel").value.trim() || "ground",
+                    pricing_type: "hourly",
                     price_per_half_hour: parseFloat(document.getElementById("editPricePerHalfHour").value) || 0,
                     daily_max_price: parseFloat(document.getElementById("editDailyMaxPrice").value) || 0,
-                    longitude: 119.5762, // 固定值
-                    latitude: 23.5654, // 固定值
+                    longitude: 119.5688,
+                    latitude: 23.5705,
                 };
 
-                // 增強驗證
                 if (!updatedSpot.location) {
                     alert("位置為必填項！");
                     return;
@@ -1064,7 +916,6 @@ document.addEventListener("DOMContentLoaded", async function () {
                     alert("停車類型必須為 'flat' 或 'mechanical'！");
                     return;
                 }
-                // 驗證 floor_level 格式
                 const floorLevelPattern = /^(ground|([1-9][0-9]*[F])|(B[1-9][0-9]*))$/i;
                 if (updatedSpot.floor_level && !floorLevelPattern.test(updatedSpot.floor_level)) {
                     alert("樓層格式無效！請使用 'ground', '1F', 'B1' 等格式（最多20字）。");
@@ -1081,28 +932,6 @@ document.addEventListener("DOMContentLoaded", async function () {
                 if (updatedSpot.daily_max_price < 0) {
                     alert("每日最高價格必須為正數！");
                     return;
-                }
-
-                // 處理可用日期
-                const dateEntries = availableDaysContainer.querySelectorAll(".date-range-entry");
-                const availableDays = [];
-                for (const entry of dateEntries) {
-                    const date = entry.querySelector(".edit-available-date").value;
-                    const isAvailable = entry.querySelector(".edit-available-status").checked;
-
-                    if (!date) {
-                        alert("請為每個可用日期選擇日期！");
-                        return;
-                    }
-                    if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
-                        alert("日期格式不正確，請使用 YYYY-MM-DD 格式！");
-                        return;
-                    }
-
-                    availableDays.push({ date, is_available: isAvailable });
-                }
-                if (availableDays.length > 0) {
-                    updatedSpot.available_days = availableDays;
                 }
 
                 try {
@@ -1503,12 +1332,12 @@ document.addEventListener("DOMContentLoaded", async function () {
             return;
         }
 
-        // 設置初始日期和時間，考慮當前時間 (2025-05-16 18:07 CST)
-        const today = new Date().toISOString().split('T')[0]; // 2025-05-16
+        const now = new Date();
+        const today = now.toISOString().split('T')[0]; // 2025-05-19
         reserveDateInput.value = today;
-        const currentHour = 18; // 當前小時
-        startTimeInput.value = currentHour < 9 ? "09:00" : `${currentHour + 1}:00`; // 下一個小時或9:00
-        endTimeInput.value = `${currentHour + 2 < 23 ? currentHour + 2 : 23}:00`; // 結束時間為下下小時或23:00
+        const currentHour = now.getHours(); // 23
+        startTimeInput.value = currentHour < 9 ? "09:00" : `${currentHour + 1 < 24 ? currentHour + 1 : 9}:00`; // 09:00
+        endTimeInput.value = `${currentHour + 2 < 24 ? currentHour + 2 : 23}:00`; // 23:00
 
         async function handleReserveSearch() {
             const selectedDate = reserveDateInput.value;
@@ -1537,8 +1366,8 @@ document.addEventListener("DOMContentLoaded", async function () {
 
             parkingTableBody.innerHTML = '<tr><td colspan="7">載入中...</td></tr>';
 
-            const latitude = 23.5654;
-            const longitude = 119.5762;
+            const latitude = 23.5705;
+            const longitude = 119.5688;
 
             const startDateTimeStr = `${selectedDate}T${startTime}:00`;
             const endDateTimeStr = `${selectedDate}T${endTime}:00`;
@@ -1600,16 +1429,16 @@ document.addEventListener("DOMContentLoaded", async function () {
                 const priceDisplay = `${spot.price_per_half_hour || 0} 元/半小時`;
 
                 row.innerHTML = `
-                <td>${spot.spot_id}</td>
-                <td>${spot.location || '未知'}</td>
-                <td>${spot.parking_type === "flat" ? "平面" : "機械"}</td>
-                <td>${spot.floor_level === "ground" ? "地面" : `地下${spot.floor_level.startsWith("B") ? spot.floor_level.slice(1) : spot.floor_level}樓`}</td>
-                <td>按小時</td>
-                <td>${priceDisplay}</td>
-                <td>
-                    <button class="reserve-btn" ${spot.status === "可用" ? '' : 'disabled'}>預約</button>
-                </td>
-            `;
+                    <td>${spot.spot_id}</td>
+                    <td>${spot.location || '未知'}</td>
+                    <td>${spot.parking_type === "flat" ? "平面" : "機械"}</td>
+                    <td>${spot.floor_level === "ground" ? "地面" : `地下${spot.floor_level.startsWith("B") ? spot.floor_level.slice(1) : spot.floor_level}樓`}</td>
+                    <td>按小時</td>
+                    <td>${priceDisplay}</td>
+                    <td>
+                        <button class="reserve-btn" ${spot.status === "可用" ? '' : 'disabled'}>預約</button>
+                    </td>
+                `;
                 if (spot.status === "可用") {
                     row.querySelector(".reserve-btn").addEventListener("click", () => {
                         handleReserveParkingClick(spot.spot_id, selectedDate, selectedDate, startTime, endTime, row);
