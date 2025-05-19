@@ -329,18 +329,18 @@ document.addEventListener("DOMContentLoaded", async function () {
             <div id="addParkingMap" style="height: 400px; width: 100%; display: none;"></div>
             <div>
                 <label>經度：</label>
-                <input type="number" id="latitudeInput" value="23.5705" step="0.000001" readonly>
+                <input type="number" id="latitudeInput" value="23.57461380558428" step="0.000001" readonly>
             </div>
             <div>
                 <label>緯度：</label>
-                <input type="number" id="longitudeInput" value="119.5688" step="0.000001" readonly>
+                <input type="number" id="longitudeInput" value="119.58110318336162" step="0.000001" readonly>
             </div>
         `;
         }
 
         // 固定經緯度為國立澎湖科技大學
-        latitudeInput.value = 23.5705;
-        longitudeInput.value = 119.5688;
+        latitudeInput.value = 23.57461380558428;
+        longitudeInput.value = 119.58110318336162;
         latitudeInput.disabled = true;
         longitudeInput.disabled = true;
 
@@ -353,13 +353,13 @@ document.addEventListener("DOMContentLoaded", async function () {
             // 初始化地圖，添加 mapId
             addParkingMap.style.display = "block";
             map = new google.maps.Map(addParkingMap, {
-                center: { lat: 23.5705, lng: 119.5688 }, // 固定為國立澎湖科技大學
+                center: { lat: 23.57461380558428, lng: 119.58110318336162 }, // 固定為國立澎湖科技大學
                 zoom: 15,
                 mapId: "4a9410e1706e086d447136ee" // 使用您提供的 mapId
             });
 
             marker = new google.maps.marker.AdvancedMarkerElement({
-                position: { lat: 23.5705, lng: 119.5688 },
+                position: { lat: 23.57461380558428, lng: 119.58110318336162 },
                 map: map,
                 title: "國立澎湖科技大學",
             });
@@ -425,8 +425,8 @@ document.addEventListener("DOMContentLoaded", async function () {
             newSpot.daily_max_price = maxDailyPrice;
 
             // 固定經緯度
-            newSpot.latitude = 23.5705;
-            newSpot.longitude = 119.5688;
+            newSpot.latitude = 23.57461380558428;
+            newSpot.longitude = 119.58110318336162;
 
             try {
                 const token = getToken();
@@ -879,11 +879,11 @@ document.addEventListener("DOMContentLoaded", async function () {
                     </div>
                     <div>
                         <label>經度：</label>
-                        <input type="number" id="editLongitude" value="119.5688" step="0.000001" readonly>
+                        <input type="number" id="editLongitude" value="119.58110318336162" step="0.000001" readonly>
                     </div>
                     <div>
                         <label>緯度：</label>
-                        <input type="number" id="editLatitude" value="23.5705" step="0.000001" readonly>
+                        <input type="number" id="editLatitude" value="23.57461380558428" step="0.000001" readonly>
                     </div>
                     <button type="button" id="saveEditSpotButton">保存</button>
                     <button type="button" id="cancelEditSpotButton">取消</button>
@@ -900,8 +900,8 @@ document.addEventListener("DOMContentLoaded", async function () {
                     pricing_type: "hourly",
                     price_per_half_hour: parseFloat(document.getElementById("editPricePerHalfHour").value) || 0,
                     daily_max_price: parseFloat(document.getElementById("editDailyMaxPrice").value) || 0,
-                    longitude: 119.5688,
-                    latitude: 23.5705,
+                    longitude: 119.58110318336162,
+                    latitude: 23.57461380558428,
                 };
 
                 if (!updatedSpot.location) {
@@ -1315,35 +1315,43 @@ document.addEventListener("DOMContentLoaded", async function () {
             alert("此功能僅限租用者使用！");
             return;
         }
-
+    
         if (!await checkAuth()) return;
-
+    
         const reserveSection = document.getElementById("reserveParking");
         reserveSection.style.display = "block";
-
+    
         const reserveDateInput = document.getElementById("reserveDate");
         const startTimeInput = document.getElementById("startTime");
         const endTimeInput = document.getElementById("endTime");
         const reserveSearchButton = document.getElementById("reserveSearchButton");
         const parkingTableBody = document.getElementById("reserveParkingTableBody");
-
+    
         if (!reserveDateInput || !startTimeInput || !endTimeInput || !reserveSearchButton || !parkingTableBody) {
             console.warn("Required elements not found for reserveParking");
             return;
         }
-
-        const now = new Date();
+    
+        // 動態獲取當前日期和時間
+        const now = new Date(); // 2025-05-19 23:18 CST
         const today = now.toISOString().split('T')[0]; // 2025-05-19
         reserveDateInput.value = today;
         const currentHour = now.getHours(); // 23
-        startTimeInput.value = currentHour < 9 ? "09:00" : `${currentHour + 1 < 24 ? currentHour + 1 : 9}:00`; // 09:00
-        endTimeInput.value = `${currentHour + 2 < 24 ? currentHour + 2 : 23}:00`; // 23:00
-
+        const currentMinute = now.getMinutes(); // 18
+    
+        // 設置開始時間為下一個整點或次日9:00
+        const nextHour = currentHour + 1;
+        startTimeInput.value = nextHour < 24 ? `${nextHour}:00` : "09:00";
+    
+        // 設置結束時間為開始時間後2小時，或23:00
+        const endHour = nextHour + 2 < 24 ? nextHour + 2 : 23;
+        endTimeInput.value = `${endHour}:00`;
+    
         async function handleReserveSearch() {
             const selectedDate = reserveDateInput.value;
             const startTime = startTimeInput.value;
             const endTime = endTimeInput.value;
-
+    
             const selectedDateObj = new Date(selectedDate);
             const today = new Date();
             today.setHours(0, 0, 0, 0);
@@ -1351,33 +1359,33 @@ document.addEventListener("DOMContentLoaded", async function () {
                 alert("無法選擇過去的日期！");
                 return;
             }
-
+    
             const [startHour, startMinute] = startTime.split(":").map(Number);
             const [endHour, endMinute] = endTime.split(":").map(Number);
             const startDateTime = new Date(selectedDate);
             startDateTime.setHours(startHour, startMinute);
             const endDateTime = new Date(selectedDate);
             endDateTime.setHours(endHour, endMinute);
-
+    
             if (startDateTime >= endDateTime) {
                 alert("結束時間必須晚於開始時間！");
                 return;
             }
-
+    
             parkingTableBody.innerHTML = '<tr><td colspan="7">載入中...</td></tr>';
-
-            const latitude = 23.5705;
-            const longitude = 119.5688;
-
+    
+            const latitude = 23.57461380558428;
+            const longitude = 119.58110318336162;
+    
             const startDateTimeStr = `${selectedDate}T${startTime}:00`;
             const endDateTimeStr = `${selectedDate}T${endTime}:00`;
-
+    
             let retries = 3, spots = null;
             while (retries > 0) {
                 try {
                     const token = getToken();
                     if (!token) throw new Error("認證令牌缺失，請重新登入！");
-
+    
                     const queryParams = new URLSearchParams({
                         date: selectedDate,
                         start_time: startDateTimeStr,
@@ -1393,7 +1401,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                         const errorData = await response.json();
                         throw new Error(`HTTP error! Status: ${response.status}, Message: ${errorData.error || '未知錯誤'}`);
                     }
-
+    
                     const data = await response.json();
                     spots = data.data || data.spots || data;
                     if (!Array.isArray(spots)) throw new Error("後端返回的車位資料格式錯誤，應為陣列");
@@ -1413,21 +1421,21 @@ document.addEventListener("DOMContentLoaded", async function () {
                     await new Promise(resolve => setTimeout(resolve, 1000));
                 }
             }
-
+    
             if (!spots || spots.length === 0) {
                 parkingTableBody.innerHTML = '<tr><td colspan="7">無可用車位，請嘗試更改日期或時間</td></tr>';
                 return;
             }
-
+    
             parkingTableBody.innerHTML = '';
             const fragment = document.createDocumentFragment();
             spots.forEach(spot => {
                 const row = document.createElement("tr");
                 row.setAttribute("data-id", spot.spot_id);
                 row.classList.add(spot.status === "可用" ? "available" : spot.status === "預約" ? "reserved" : "occupied");
-
+    
                 const priceDisplay = `${spot.price_per_half_hour || 0} 元/半小時`;
-
+    
                 row.innerHTML = `
                     <td>${spot.spot_id}</td>
                     <td>${spot.location || '未知'}</td>
@@ -1447,10 +1455,10 @@ document.addEventListener("DOMContentLoaded", async function () {
                 }
                 fragment.appendChild(row);
             });
-
+    
             parkingTableBody.appendChild(fragment);
         }
-
+    
         const refreshInterval = setInterval(async () => {
             if (reserveSection.style.display === "none") {
                 clearInterval(refreshInterval);
@@ -1459,7 +1467,7 @@ document.addEventListener("DOMContentLoaded", async function () {
             await handleReserveSearch();
             console.log("車位狀態已更新");
         }, 30000);
-
+    
         reserveSearchButton.addEventListener("click", handleReserveSearch);
     }
 
