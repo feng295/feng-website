@@ -288,9 +288,9 @@ document.addEventListener("DOMContentLoaded", async function () {
         addParkingSection.style.display = "block";
         if (!addParkingSection.innerHTML.trim()) {
             addParkingSection.innerHTML = `
-            <p>載入中...</p>
-            <!-- 其他動態內容將在此後添加 -->
-        `;
+                <p>載入中...</p>
+                <!-- 其他動態內容將在此後添加 -->
+            `;
         }
 
         // 自動填充會員 ID
@@ -310,11 +310,11 @@ document.addEventListener("DOMContentLoaded", async function () {
         } else {
             console.warn("priceLabel not found, using fallback pricing setup");
             addParkingSection.innerHTML += `
-            <div>
-                <label id="newPriceLabel">半小時費用（元）：</label>
-                <input type="number" id="newPrice" value="20.00" step="0.01" min="0" required>
-            </div>
-        `;
+                <div>
+                    <label id="newPriceLabel">半小時費用（元）：</label>
+                    <input type="number" id="newPrice" value="20.00" step="0.01" min="0" required>
+                </div>
+            `;
         }
 
         // 檢查 Google Maps API 是否已載入
@@ -326,16 +326,16 @@ document.addEventListener("DOMContentLoaded", async function () {
             console.error("Required elements for map in addParking not found: addParkingMap, latitudeInput, or longitudeInput");
             alert("地圖容器或經緯度輸入框未找到，地圖功能將不可用，但您仍可繼續新增車位。");
             addParkingSection.innerHTML += `
-            <div id="addParkingMap" style="height: 400px; width: 100%; display: none;"></div>
-            <div>
-                <label>經度：</label>
-                <input type="number" id="latitudeInput" value="23.57461380558428" step="0.000001" readonly>
-            </div>
-            <div>
-                <label>緯度：</label>
-                <input type="number" id="longitudeInput" value="119.58110318336162" step="0.000001" readonly>
-            </div>
-        `;
+                <div id="addParkingMap" style="height: 400px; width: 100%; display: none;"></div>
+                <div>
+                    <label>經度：</label>
+                    <input type="number" id="latitudeInput" value="23.57461380558428" step="0.000001" readonly>
+                </div>
+                <div>
+                    <label>緯度：</label>
+                    <input type="number" id="longitudeInput" value="119.58110318336162" step="0.000001" readonly>
+                </div>
+            `;
         }
 
         // 固定經緯度為國立澎湖科技大學
@@ -369,7 +369,7 @@ document.addEventListener("DOMContentLoaded", async function () {
         latitudeInput.readOnly = true;
         longitudeInput.readOnly = true;
 
-        // 可用日期邏輯
+        // 可用日期邏輯（移除是否可用）
         const availableDaysContainer = document.getElementById("availableDaysContainer");
         const addDateButton = document.getElementById("addDateButton");
 
@@ -377,12 +377,10 @@ document.addEventListener("DOMContentLoaded", async function () {
             const dateEntry = document.createElement("div");
             dateEntry.className = "date-range-entry";
             dateEntry.innerHTML = `
-            <label>日期 (YYYY-MM-DD)：</label>
-            <input type="date" class="new-available-date" required>
-            <label>是否可用：</label>
-            <input type="checkbox" class="new-available-status" checked>
-            <button type="button" class="remove-range">移除</button>
-        `;
+                <label>日期 (YYYY-MM-DD)：</label>
+                <input type="date" class="new-available-date" required>
+                <button type="button" class="remove-range">移除</button>
+            `;
             availableDaysContainer.appendChild(dateEntry);
 
             dateEntry.querySelector(".remove-range").addEventListener("click", () => {
@@ -452,12 +450,11 @@ document.addEventListener("DOMContentLoaded", async function () {
             newSpot.latitude = 23.57461380558428;
             newSpot.longitude = 119.58110318336162;
 
-            // 處理可用日期
+            // 處理可用日期（移除是否可用，假設所有日期均可用）
             const dateEntries = availableDaysContainer.querySelectorAll(".date-range-entry");
             const availableDays = [];
             for (const entry of dateEntries) {
                 const date = entry.querySelector(".new-available-date").value;
-                const isAvailable = entry.querySelector(".new-available-status").checked;
 
                 if (!date) {
                     alert("請為每個可用日期選擇日期！");
@@ -468,7 +465,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                     return;
                 }
 
-                availableDays.push({ date, is_available: isAvailable });
+                availableDays.push({ date });
             }
             if (availableDays.length > 0) {
                 newSpot.available_days = availableDays;
