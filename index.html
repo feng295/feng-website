@@ -111,6 +111,10 @@
                         <input type="number" id="longitudeInput" step="0.000001" value="119.58110318336162" readonly
                             aria-label="緯度">
                     </div>
+                    <div id="availableDaysContainer">
+                        <label>可用日期：</label>
+                        <button type="button" id="addDateButton">添加日期</button>
+                    </div>
                     <div id="addParkingMap" style="height: 400px; width: 100%;"></div>
                     <div style="margin-top: 10px;">
                         <button id="saveNewSpotButton" aria-label="保存新車位">新增車位</button>
@@ -229,11 +233,9 @@
                     <h2>收入查詢</h2>
                     <div class="search-container">
                         <label for="startDate">開始日期：</label>
-                        <input type="date" id="startDate" name="startDate" value="2025-05-01">
+                        <input type="date" id="startDate" required>
                         <label for="endDate">結束日期：</label>
-                        <input type="date" id="endDate" name="endDate" value="2025-05-16">
-                        <label>車位 ID：</label>
-                        <input type="number" id="incomeParkingSpotId" placeholder="輸入車位 ID">
+                        <input type="date" id="endDate" required>
                         <button id="incomeSearchButton">查詢</button>
                     </div>
                     <div class="parking-spaces-table">

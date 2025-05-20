@@ -268,7 +268,7 @@ document.addEventListener("DOMContentLoaded", async function () {
         });
     }
 
-    // 新增車位功能
+    // 設置新增車位功能
     function setupAddParking() {
         const role = getRole();
         console.log("Current role in setupAddParking:", role);
@@ -369,6 +369,30 @@ document.addEventListener("DOMContentLoaded", async function () {
         latitudeInput.readOnly = true;
         longitudeInput.readOnly = true;
 
+        // 可用日期邏輯
+        const availableDaysContainer = document.getElementById("availableDaysContainer");
+        const addDateButton = document.getElementById("addDateButton");
+
+        function addDateRangeEntry() {
+            const dateEntry = document.createElement("div");
+            dateEntry.className = "date-range-entry";
+            dateEntry.innerHTML = `
+            <label>日期 (YYYY-MM-DD)：</label>
+            <input type="date" class="new-available-date" required>
+            <label>是否可用：</label>
+            <input type="checkbox" class="new-available-status" checked>
+            <button type="button" class="remove-range">移除</button>
+        `;
+            availableDaysContainer.appendChild(dateEntry);
+
+            dateEntry.querySelector(".remove-range").addEventListener("click", () => {
+                dateEntry.remove();
+            });
+        }
+
+        addDateButton.addEventListener("click", addDateRangeEntry);
+        addDateRangeEntry(); // 初始添加一個日期輸入
+
         // 保存車位按鈕事件
         const saveNewSpotButton = document.getElementById("saveNewSpotButton");
         if (!saveNewSpotButton) {
@@ -427,6 +451,28 @@ document.addEventListener("DOMContentLoaded", async function () {
             // 固定經緯度
             newSpot.latitude = 23.57461380558428;
             newSpot.longitude = 119.58110318336162;
+
+            // 處理可用日期
+            const dateEntries = availableDaysContainer.querySelectorAll(".date-range-entry");
+            const availableDays = [];
+            for (const entry of dateEntries) {
+                const date = entry.querySelector(".new-available-date").value;
+                const isAvailable = entry.querySelector(".new-available-status").checked;
+
+                if (!date) {
+                    alert("請為每個可用日期選擇日期！");
+                    return;
+                }
+                if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+                    alert("日期格式不正確，請使用 YYYY-MM-DD 格式！");
+                    return;
+                }
+
+                availableDays.push({ date, is_available: isAvailable });
+            }
+            if (availableDays.length > 0) {
+                newSpot.available_days = availableDays;
+            }
 
             try {
                 const token = getToken();
@@ -1315,43 +1361,43 @@ document.addEventListener("DOMContentLoaded", async function () {
             alert("此功能僅限租用者使用！");
             return;
         }
-    
+
         if (!await checkAuth()) return;
-    
+
         const reserveSection = document.getElementById("reserveParking");
         reserveSection.style.display = "block";
-    
+
         const reserveDateInput = document.getElementById("reserveDate");
         const startTimeInput = document.getElementById("startTime");
         const endTimeInput = document.getElementById("endTime");
         const reserveSearchButton = document.getElementById("reserveSearchButton");
         const parkingTableBody = document.getElementById("reserveParkingTableBody");
-    
+
         if (!reserveDateInput || !startTimeInput || !endTimeInput || !reserveSearchButton || !parkingTableBody) {
             console.warn("Required elements not found for reserveParking");
             return;
         }
-    
+
         // 動態獲取當前日期和時間
         const now = new Date(); // 2025-05-19 23:18 CST
         const today = now.toISOString().split('T')[0]; // 2025-05-19
         reserveDateInput.value = today;
         const currentHour = now.getHours(); // 23
         const currentMinute = now.getMinutes(); // 18
-    
+
         // 設置開始時間為下一個整點或次日9:00
         const nextHour = currentHour + 1;
         startTimeInput.value = nextHour < 24 ? `${nextHour}:00` : "09:00";
-    
+
         // 設置結束時間為開始時間後2小時，或23:00
         const endHour = nextHour + 2 < 24 ? nextHour + 2 : 23;
         endTimeInput.value = `${endHour}:00`;
-    
+
         async function handleReserveSearch() {
             const selectedDate = reserveDateInput.value;
             const startTime = startTimeInput.value;
             const endTime = endTimeInput.value;
-    
+
             const selectedDateObj = new Date(selectedDate);
             const today = new Date();
             today.setHours(0, 0, 0, 0);
@@ -1359,33 +1405,33 @@ document.addEventListener("DOMContentLoaded", async function () {
                 alert("無法選擇過去的日期！");
                 return;
             }
-    
+
             const [startHour, startMinute] = startTime.split(":").map(Number);
             const [endHour, endMinute] = endTime.split(":").map(Number);
             const startDateTime = new Date(selectedDate);
             startDateTime.setHours(startHour, startMinute);
             const endDateTime = new Date(selectedDate);
             endDateTime.setHours(endHour, endMinute);
-    
+
             if (startDateTime >= endDateTime) {
                 alert("結束時間必須晚於開始時間！");
                 return;
             }
-    
+
             parkingTableBody.innerHTML = '<tr><td colspan="7">載入中...</td></tr>';
-    
+
             const latitude = 23.57461380558428;
             const longitude = 119.58110318336162;
-    
+
             const startDateTimeStr = `${selectedDate}T${startTime}:00`;
             const endDateTimeStr = `${selectedDate}T${endTime}:00`;
-    
+
             let retries = 3, spots = null;
             while (retries > 0) {
                 try {
                     const token = getToken();
                     if (!token) throw new Error("認證令牌缺失，請重新登入！");
-    
+
                     const queryParams = new URLSearchParams({
                         date: selectedDate,
                         start_time: startDateTimeStr,
@@ -1401,7 +1447,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                         const errorData = await response.json();
                         throw new Error(`HTTP error! Status: ${response.status}, Message: ${errorData.error || '未知錯誤'}`);
                     }
-    
+
                     const data = await response.json();
                     spots = data.data || data.spots || data;
                     if (!Array.isArray(spots)) throw new Error("後端返回的車位資料格式錯誤，應為陣列");
@@ -1421,21 +1467,21 @@ document.addEventListener("DOMContentLoaded", async function () {
                     await new Promise(resolve => setTimeout(resolve, 1000));
                 }
             }
-    
+
             if (!spots || spots.length === 0) {
                 parkingTableBody.innerHTML = '<tr><td colspan="7">無可用車位，請嘗試更改日期或時間</td></tr>';
                 return;
             }
-    
+
             parkingTableBody.innerHTML = '';
             const fragment = document.createDocumentFragment();
             spots.forEach(spot => {
                 const row = document.createElement("tr");
                 row.setAttribute("data-id", spot.spot_id);
                 row.classList.add(spot.status === "可用" ? "available" : spot.status === "預約" ? "reserved" : "occupied");
-    
+
                 const priceDisplay = `${spot.price_per_half_hour || 0} 元/半小時`;
-    
+
                 row.innerHTML = `
                     <td>${spot.spot_id}</td>
                     <td>${spot.location || '未知'}</td>
@@ -1455,10 +1501,10 @@ document.addEventListener("DOMContentLoaded", async function () {
                 }
                 fragment.appendChild(row);
             });
-    
+
             parkingTableBody.appendChild(fragment);
         }
-    
+
         const refreshInterval = setInterval(async () => {
             if (reserveSection.style.display === "none") {
                 clearInterval(refreshInterval);
@@ -1467,7 +1513,7 @@ document.addEventListener("DOMContentLoaded", async function () {
             await handleReserveSearch();
             console.log("車位狀態已更新");
         }, 30000);
-    
+
         reserveSearchButton.addEventListener("click", handleReserveSearch);
     }
 
@@ -1537,19 +1583,30 @@ document.addEventListener("DOMContentLoaded", async function () {
         const endDateInput = document.getElementById("endDate");
         const incomeSearchButton = document.getElementById("incomeSearchButton");
         const incomeTableBody = document.getElementById("incomeTableBody");
-        const incomeParkingSpotIdInput = document.getElementById("incomeParkingSpotId");
         const totalIncomeDisplay = document.getElementById("totalIncomeDisplay");
 
-        if (!startDateInput || !endDateInput || !incomeSearchButton || !incomeTableBody || !incomeParkingSpotIdInput || !totalIncomeDisplay) {
+        if (!startDateInput || !endDateInput || !incomeSearchButton || !incomeTableBody || !totalIncomeDisplay) {
             console.error("Required DOM elements missing for income inquiry");
             alert("頁面元素載入失敗，請檢查 DOM 結構！");
             return;
         }
 
+        // 動態設置預設日期範圍
+        const today = new Date(); // 2025-05-20
+        const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1); // 當月1號：2025-05-01
+
+        const todayStr = today.toISOString().split('T')[0]; // 2025-05-20
+        const firstDayStr = firstDayOfMonth.toISOString().split('T')[0]; // 2025-05-01
+
+        // 設置預設值：startDate 為當月1號，endDate 為今天
+        startDateInput.value = firstDayStr; // 2025-05-01
+        endDateInput.value = todayStr; // 2025-05-20
+        startDateInput.min = firstDayStr; // 限制最小日期為當月1號
+        endDateInput.min = firstDayStr; // 限制最小日期為當月1號
+
         async function handleIncomeSearch() {
             const startDate = startDateInput.value;
             const endDate = endDateInput.value;
-            const parkingSpotId = incomeParkingSpotIdInput.value.trim();
 
             if (!startDate || !endDate) {
                 alert("請選擇開始和結束日期！");
@@ -1563,10 +1620,6 @@ document.addEventListener("DOMContentLoaded", async function () {
                 alert("日期格式不正確，請使用 YYYY-MM-DD 格式！");
                 return;
             }
-            if (!parkingSpotId) {
-                alert("請輸入車位 ID！");
-                return;
-            }
 
             incomeTableBody.innerHTML = '<tr><td colspan="5">載入中...</td></tr>';
 
@@ -1574,16 +1627,13 @@ document.addEventListener("DOMContentLoaded", async function () {
                 const token = getToken();
                 if (!token) throw new Error("認證令牌缺失，請重新登入！");
 
-                let selectedParkingSpotId = parseInt(parkingSpotId);
-                if (isNaN(selectedParkingSpotId) || selectedParkingSpotId <= 0) {
-                    throw new Error("請輸入有效的車位 ID！");
-                }
-                setParkingSpotId(selectedParkingSpotId);
+                const memberId = getMemberId();
+                if (!memberId) throw new Error("無法獲取會員 ID，請重新登入！");
 
                 const queryParams = new URLSearchParams({
                     start_date: startDate,
                     end_date: endDate,
-                    spot_id: selectedParkingSpotId
+                    member_id: memberId // 根據會員 ID 查詢
                 });
 
                 const response = await fetch(`${API_URL}/parking/income?${queryParams.toString()}`, {
@@ -1610,36 +1660,34 @@ document.addEventListener("DOMContentLoaded", async function () {
                 incomeTableBody.innerHTML = '';
                 const fragment = document.createDocumentFragment();
 
-                const relatedRents = (incomeData.rents || []).filter(rent => rent.spot_id === selectedParkingSpotId);
-                const relatedSpots = (incomeData.spots || []).filter(spot => spot.spot_id === selectedParkingSpotId);
-                const location = relatedSpots.length > 0 ? relatedSpots[0].location : '未知';
+                const rents = incomeData.rents || [];
+                const spots = incomeData.spots || [];
+                const totalIncome = incomeData.total_income || 0;
 
-                // 計算總收入
-                let totalIncome = 0;
-                if (relatedRents.length > 0) {
-                    relatedRents.forEach(rent => {
-                        const cost = parseFloat(rent.total_cost) || 0;
-                        totalIncome += cost;
-                        const row = document.createElement("tr");
-                        row.innerHTML = `
-                            <td>${rent.spot_id}</td>
-                            <td>${location}</td>
-                            <td>${rent.start_time?.split(' ')[0] || 'N/A'}</td>
-                            <td>${rent.actual_end_time?.split(' ')[0] || 'N/A'}</td>
-                            <td>${cost} 元</td>
-                        `;
-                        fragment.appendChild(row);
-                    });
-                } else {
+                if (rents.length === 0) {
                     const row = document.createElement("tr");
                     row.innerHTML = `
-                        <td>${selectedParkingSpotId}</td>
-                        <td>${location}</td>
-                        <td>${incomeData.start_date || 'N/A'}</td>
-                        <td>${incomeData.end_date || 'N/A'}</td>
-                        <td>0 元</td>
-                    `;
+                    <td colspan="5">無收入記錄</td>
+                `;
                     fragment.appendChild(row);
+                } else {
+                    rents.forEach(rent => {
+                        const spot = spots.find(s => s.spot_id === rent.spot_id) || {};
+                        const location = spot.location || '未知';
+                        const startTime = rent.start_time.split(' ')[0] || 'N/A';
+                        const endTime = rent.actual_end_time ? rent.actual_end_time.split(' ')[0] : 'N/A';
+                        const cost = parseFloat(rent.total_cost) || 0;
+
+                        const row = document.createElement("tr");
+                        row.innerHTML = `
+                        <td>${rent.spot_id}</td>
+                        <td>${location}</td>
+                        <td>${startTime}</td>
+                        <td>${endTime}</td>
+                        <td>${cost} 元</td>
+                    `;
+                        fragment.appendChild(row);
+                    });
                 }
 
                 incomeTableBody.appendChild(fragment);
@@ -1655,6 +1703,15 @@ document.addEventListener("DOMContentLoaded", async function () {
                     showLoginPage(true);
                 }
             }
+        }
+
+        // 當用戶點選「收入查詢」時，動態更新 endDate 為當前日期
+        const incomeInquiryLink = document.querySelector('.nav-link[data-target="incomeInquiry"]');
+        if (incomeInquiryLink) {
+            incomeInquiryLink.addEventListener('click', () => {
+                const currentDate = new Date().toISOString().split('T')[0]; // 當前日期：2025-05-20
+                endDateInput.value = currentDate; // 更新結束日期為今天
+            });
         }
 
         incomeSearchButton.addEventListener("click", handleIncomeSearch);
