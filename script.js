@@ -1415,7 +1415,7 @@ document.addEventListener("DOMContentLoaded", async function () {
         let map = window.map || null;
         if (!map) {
             map = new google.maps.Map(reserveParkingMap, {
-                center: { lat: 23.57461380558428, lng: 119.58110318336162 }, // 預設為固定座標
+                center: { lat: 23.57461380558428, lng: 119.58110318336162 },
                 zoom: 15,
                 mapId: "4a9410e1706e086d447136ee"
             });
@@ -1465,8 +1465,8 @@ document.addEventListener("DOMContentLoaded", async function () {
 
             parkingTableBody.innerHTML = '<tr><td colspan="7">載入中...</td></tr>';
 
-            let latitude = 23.57461380558428; // 預設為固定經度
-            let longitude = 119.58110318336162; // 預設為固定緯度
+            let latitude = 23.57461380558428;
+            let longitude = 119.58110318336162;
             try {
                 const position = await new Promise((resolve, reject) => {
                     if (!navigator.geolocation) reject(new Error("瀏覽器不支援地理位置功能"));
@@ -1474,12 +1474,11 @@ document.addEventListener("DOMContentLoaded", async function () {
                 });
                 latitude = position.coords.latitude;
                 longitude = position.coords.longitude;
-                // 更新地圖中心點為用戶位置
                 map.setCenter({ lat: latitude, lng: longitude });
             } catch (error) {
                 console.warn("Failed to get user location, using default:", error.message);
                 alert("無法獲取您的位置，將使用預設位置（國立澎湖科技大學）。請確保已允許位置權限。");
-                map.setCenter({ lat: latitude, lng: longitude }); // 確保地圖中心點為預設座標
+                map.setCenter({ lat: latitude, lng: longitude });
             }
 
             const timeZoneOffset = "+08:00";
@@ -1577,15 +1576,25 @@ document.addEventListener("DOMContentLoaded", async function () {
 
                 function updateMarker(lat, lng, spot) {
                     const position = { lat: parseFloat(lat), lng: parseFloat(lng) };
-                    let markerIcon = { url: "http://maps.google.com/mapfiles/ms/icons/green-dot.png" };
-                    if (spot.status === "已佔用") markerIcon = { url: "http://maps.google.com/mapfiles/ms/icons/red-dot.png" };
-                    else if (spot.status === "預約") markerIcon = { url: "http://maps.google.com/mapfiles/ms/icons/blue-dot.png" };
+                    // 使用 content 屬性創建自定義標記
+                    const markerElement = document.createElement("div");
+                    markerElement.style.width = "20px";
+                    markerElement.style.height = "20px";
+                    markerElement.style.borderRadius = "50%";
+                    markerElement.style.border = "2px solid white";
+                    if (spot.status === "可用") {
+                        markerElement.style.backgroundColor = "green";
+                    } else if (spot.status === "已佔用") {
+                        markerElement.style.backgroundColor = "red";
+                    } else if (spot.status === "預約") {
+                        markerElement.style.backgroundColor = "blue";
+                    }
 
                     const marker = new google.maps.marker.AdvancedMarkerElement({
                         position: position,
                         map: map,
-                        title: `車位 ${spot.spot_id} - ${address}`,
-                        icon: markerIcon
+                        content: markerElement,
+                        title: `車位 ${spot.spot_id} - ${address}`
                     });
                     map.markers.push(marker);
                     bounds.extend(position);
