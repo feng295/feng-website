@@ -195,7 +195,7 @@
                             <option value="occupied">使用中</option>
                         </select>
                         <label for="reserveDate">選擇日期：</label>
-                        <input type="date" id="reserveDate"  required>
+                        <input type="date" id="reserveDate" required>
                         <label for="startTime">開始時間：</label>
                         <input type="time" id="startTime" required>
                         <label for="endTime">結束時間：</label>
@@ -232,10 +232,10 @@
                 <div id="incomeInquiry" class="content-section" style="display: none;">
                     <h2>收入查詢</h2>
                     <div class="search-container">
-                        <label for="startDate">開始日期與時間：</label>
-                        <input type="datetime-local" id="startDate" required value="2025-05-01T00:00">
-                        <label for="endDate">結束日期與時間：</label>
-                        <input type="datetime-local" id="endDate" required value="2025-05-20T19:20">
+                        <label for="startDate">開始日期：</label>
+                        <input type="date" id="startDate" required>
+                        <label for="endDate">結束日期：</label>
+                        <input type="date" id="endDate" required>
                         <button id="incomeSearchButton">查詢</button>
                     </div>
                     <div class="parking-spaces-table">
@@ -244,14 +244,14 @@
                                 <tr>
                                     <th>車位 ID</th>
                                     <th>位置</th>
-                                    <th>開始日期</th>
-                                    <th>結束日期</th>
+                                    <th>開始日期與時間</th>
+                                    <th>結束日期與時間</th>
                                     <th>費用</th>
                                 </tr>
                             </thead>
                             <tbody id="incomeTableBody">
                                 <tr>
-                                    <td colspan="5">請選擇車位和日期以查看收入明細</td>
+                                    <td colspan="5">請選擇日期以查看收入明細</td>
                                 </tr>
                             </tbody>
                         </table>
