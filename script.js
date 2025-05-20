@@ -1570,6 +1570,7 @@ document.addEventListener("DOMContentLoaded", async function () {
             }
         }
     }
+
     // 設置收入查詢
     function setupIncomeInquiry() {
         const role = getRole();
@@ -1591,33 +1592,33 @@ document.addEventListener("DOMContentLoaded", async function () {
             return;
         }
 
-        // 動態設置預設日期範圍
-        const today = new Date(); // 2025-05-20
-        const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1); // 當月1號：2025-05-01
+        // 動態設置預設日期與時間範圍
+        const today = new Date(); // 2025-05-20 19:23 CST
+        const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1, 0, 0, 0); // 當月1號 00:00:00
 
-        const todayStr = today.toISOString().split('T')[0]; // 2025-05-20
-        const firstDayStr = firstDayOfMonth.toISOString().split('T')[0]; // 2025-05-01
+        const todayStr = today.toISOString().slice(0, 16); // 2025-05-20T19:23
+        const firstDayStr = firstDayOfMonth.toISOString().slice(0, 16); // 2025-05-01T00:00
 
-        // 設置預設值：startDate 為當月1號，endDate 為今天
-        startDateInput.value = firstDayStr; // 2025-05-01
-        endDateInput.value = todayStr; // 2025-05-20
-        startDateInput.min = firstDayStr; // 限制最小日期為當月1號
-        endDateInput.min = firstDayStr; // 限制最小日期為當月1號
+        // 設置預設值：startDate 為當月1號 00:00，endDate 為今天當前時間
+        startDateInput.value = firstDayStr; // 2025-05-01T00:00
+        endDateInput.value = todayStr; // 2025-05-20T19:23
+        startDateInput.min = firstDayStr; // 限制最小日期時間為當月1號 00:00
+        endDateInput.min = firstDayStr; // 限制最小日期時間為當月1號 00:00
 
         async function handleIncomeSearch() {
-            const startDate = startDateInput.value;
-            const endDate = endDateInput.value;
+            const startDate = startDateInput.value; // 例如 2025-05-01T00:00
+            const endDate = endDateInput.value;     // 例如 2025-05-20T19:23
 
             if (!startDate || !endDate) {
-                alert("請選擇開始和結束日期！");
+                alert("請選擇開始和結束日期與時間！");
                 return;
             }
             if (startDate > endDate) {
-                alert("開始日期不能晚於結束日期！");
+                alert("開始日期與時間不能晚於結束日期與時間！");
                 return;
             }
-            if (!/^\d{4}-\d{2}-\d{2}$/.test(startDate) || !/^\d{4}-\d{2}-\d{2}$/.test(endDate)) {
-                alert("日期格式不正確，請使用 YYYY-MM-DD 格式！");
+            if (!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(startDate) || !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(endDate)) {
+                alert("日期與時間格式不正確，請使用 YYYY-MM-DDThh:mm 格式！");
                 return;
             }
 
@@ -1631,9 +1632,9 @@ document.addEventListener("DOMContentLoaded", async function () {
                 if (!memberId) throw new Error("無法獲取會員 ID，請重新登入！");
 
                 const queryParams = new URLSearchParams({
-                    start_date: startDate,
-                    end_date: endDate,
-                    member_id: memberId // 根據會員 ID 查詢
+                    start_date: startDate, // 傳遞完整日期時間
+                    end_date: endDate,     // 傳遞完整日期時間
+                    member_id: memberId    // 根據會員 ID 查詢
                 });
 
                 const response = await fetch(`${API_URL}/parking/income?${queryParams.toString()}`, {
@@ -1674,8 +1675,8 @@ document.addEventListener("DOMContentLoaded", async function () {
                     rents.forEach(rent => {
                         const spot = spots.find(s => s.spot_id === rent.spot_id) || {};
                         const location = spot.location || '未知';
-                        const startTime = rent.start_time.split(' ')[0] || 'N/A';
-                        const endTime = rent.actual_end_time ? rent.actual_end_time.split(' ')[0] : 'N/A';
+                        const startTime = rent.start_time || 'N/A'; // 保留完整日期時間，例如 2025-05-01T12:00:00
+                        const endTime = rent.actual_end_time || 'N/A'; // 保留完整日期時間
                         const cost = parseFloat(rent.total_cost) || 0;
 
                         const row = document.createElement("tr");
@@ -1705,19 +1706,17 @@ document.addEventListener("DOMContentLoaded", async function () {
             }
         }
 
-        // 當用戶點選「收入查詢」時，動態更新 endDate 為當前日期
+        // 當用戶點選「收入查詢」時，動態更新 endDate 為當前日期與時間
         const incomeInquiryLink = document.querySelector('.nav-link[data-target="incomeInquiry"]');
         if (incomeInquiryLink) {
             incomeInquiryLink.addEventListener('click', () => {
-                const currentDate = new Date().toISOString().split('T')[0]; // 當前日期：2025-05-20
-                endDateInput.value = currentDate; // 更新結束日期為今天
+                const currentDateTime = new Date().toISOString().slice(0, 16); // 當前日期時間：2025-05-20T19:23
+                endDateInput.value = currentDateTime; // 更新結束日期與時間為今天當前時間
             });
         }
 
         incomeSearchButton.addEventListener("click", handleIncomeSearch);
     }
-
-
 
     // 添加歷史紀錄
     function addToHistory(action) {

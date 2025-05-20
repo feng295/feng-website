@@ -195,7 +195,7 @@
                             <option value="occupied">使用中</option>
                         </select>
                         <label for="reserveDate">選擇日期：</label>
-                        <input type="date" id="reserveDate" value="2025-05-19">
+                        <input type="date" id="reserveDate"  required>
                         <label for="startTime">開始時間：</label>
                         <input type="time" id="startTime" required>
                         <label for="endTime">結束時間：</label>
@@ -232,10 +232,10 @@
                 <div id="incomeInquiry" class="content-section" style="display: none;">
                     <h2>收入查詢</h2>
                     <div class="search-container">
-                        <label for="startDate">開始日期：</label>
-                        <input type="date" id="startDate" required>
-                        <label for="endDate">結束日期：</label>
-                        <input type="date" id="endDate" required>
+                        <label for="startDate">開始日期與時間：</label>
+                        <input type="datetime-local" id="startDate" required value="2025-05-01T00:00">
+                        <label for="endDate">結束日期與時間：</label>
+                        <input type="datetime-local" id="endDate" required value="2025-05-20T19:20">
                         <button id="incomeSearchButton">查詢</button>
                     </div>
                     <div class="parking-spaces-table">
