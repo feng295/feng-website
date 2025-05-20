@@ -1592,21 +1592,16 @@ document.addEventListener("DOMContentLoaded", async function () {
             return;
         }
 
-        // 動態設置預設日期範圍
-        const today = new Date(); // 2025-05-20 19:52 CST
-        const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1); // 當月1號
-
+        // 動態設置預設結束日期
+        const today = new Date(); // 2025-05-20 20:04 CST
         const todayStr = today.toISOString().split('T')[0]; // 2025-05-20
-        const firstDayStr = firstDayOfMonth.toISOString().split('T')[0]; // 2025-05-01
 
-        // 設置預設值：startDate 為當月1號，endDate 初始為今天
-        startDateInput.value = firstDayStr; // 2025-05-01
+        // 僅設置預設結束日期為今天，startDate 由使用者自行選擇
         endDateInput.value = todayStr; // 2025-05-20
-        startDateInput.min = firstDayStr; // 限制最小日期為當月1號
-        endDateInput.min = firstDayStr; // 限制最小日期為當月1號
+        endDateInput.min = "2025-01-01"; // 設置一個合理的最小日期，例如今年1月1日
 
         async function handleIncomeSearch() {
-            const startDate = startDateInput.value; // 例如 2025-05-01
+            const startDate = startDateInput.value; // 使用者選擇的日期，例如 2025-05-01
             const endDate = endDateInput.value;     // 例如 2025-05-20
 
             if (!startDate || !endDate) {
