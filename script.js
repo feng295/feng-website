@@ -185,9 +185,9 @@ document.addEventListener("DOMContentLoaded", async function () {
         history.pushState({ role }, '', newPath);
         console.log(`URL updated to: ${window.location.pathname}`);
 
-        if (role === "shared_owner") pageTitle.textContent = "Shared Owner";
-        else if (role === "renter") pageTitle.textContent = "Renter";
-        else if (role === "admin") pageTitle.textContent = "Admin";
+        if (role === "shared_owner") pageTitle.textContent = "共享者";
+        else if (role === "renter") pageTitle.textContent = "租用者";
+        else if (role === "admin") pageTitle.textContent = "管理員";
 
         const navList = document.querySelector(".function-list ul");
         if (!navList) {
@@ -204,7 +204,6 @@ document.addEventListener("DOMContentLoaded", async function () {
             `;
         } else if (role === "renter") {
             navList.innerHTML = `
-                <li><a href="#" class="nav-link" data-target="My parking space">我的車位</a></li>
                 <li><a href="#" class="nav-link" data-target="reserveParking">預約車位</a></li>
                 <li><a href="#" class="nav-link" data-target="history">歷史紀錄</a></li>
                 <li><a href="#" class="nav-link" data-target="profile">個人資料</a></li>
@@ -1512,6 +1511,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                     const data = await response.json();
                     spots = data.data || data.spots || data;
                     if (!Array.isArray(spots)) throw new Error("後端返回的車位資料格式錯誤，應為陣列");
+                    console.log("Fetched spots:", spots);
                     break;
                 } catch (error) {
                     console.error(`Failed to fetch available spots (attempt ${4 - retries}/3):`, error);
@@ -1576,18 +1576,21 @@ document.addEventListener("DOMContentLoaded", async function () {
 
                 function updateMarker(lat, lng, spot) {
                     const position = { lat: parseFloat(lat), lng: parseFloat(lng) };
-                    // 使用 content 屬性創建自定義標記
                     const markerElement = document.createElement("div");
                     markerElement.style.width = "20px";
                     markerElement.style.height = "20px";
                     markerElement.style.borderRadius = "50%";
                     markerElement.style.border = "2px solid white";
+                    console.log("Spot status:", spot.status);
                     if (spot.status === "可用") {
                         markerElement.style.backgroundColor = "green";
                     } else if (spot.status === "已佔用") {
                         markerElement.style.backgroundColor = "red";
                     } else if (spot.status === "預約") {
                         markerElement.style.backgroundColor = "blue";
+                    } else {
+                        console.warn("Unknown status:", spot.status);
+                        markerElement.style.backgroundColor = "gray";
                     }
 
                     const marker = new google.maps.marker.AdvancedMarkerElement({
@@ -1611,16 +1614,17 @@ document.addEventListener("DOMContentLoaded", async function () {
                 row.setAttribute("data-id", spot.spot_id);
                 row.classList.add(spot.status === "可用" ? "available" : spot.status === "預約" ? "reserved" : "occupied");
 
+                // 只顯示按小時計費的價格
                 const priceDisplay = spot.pricing_type === "hourly"
                     ? `${spot.price_per_half_hour || 0} 元/半小時`
-                    : `${spot.monthly_price || 0} 元/月`;
+                    : "不適用";
 
                 row.innerHTML = `
                 <td>${spot.spot_id}</td>
                 <td>${spot.location || '未知'}</td>
                 <td>${spot.parking_type === "flat" ? "平面" : "機械"}</td>
                 <td>${spot.floor_level === "ground" ? "地面" : `地下${spot.floor_level.startsWith("B") ? spot.floor_level.slice(1) : spot.floor_level}樓`}</td>
-                <td>${spot.pricing_type === "hourly" ? "按小時" : "按月"}</td>
+                <td>${spot.pricing_type === "hourly" ? "按小時" : "不適用"}</td>
                 <td>${priceDisplay}</td>
                 <td>
                     <button class="reserve-btn" ${spot.status === "可用" ? '' : 'disabled'}>預約</button>
