@@ -1371,8 +1371,9 @@ document.addEventListener("DOMContentLoaded", async function () {
 
         const role = getRole();
         console.log("Current role in setupReserveParking:", role);
-        if (role !== "renter") {
-            alert("此功能僅限租用者使用！");
+        // 根據後端需求，/reserve 端點允許 renter 和 shared_owner
+        if (role !== "renter" && role !== "shared_owner") {
+            alert("此功能僅限租用者或共享車主使用！");
             return;
         }
 
@@ -1670,8 +1671,9 @@ document.addEventListener("DOMContentLoaded", async function () {
         if (!await checkAuth()) return;
 
         const role = getRole();
-        if (role !== "renter") {
-            alert("此功能僅限租用者使用！");
+        // 根據後端需求，/reserve 端點允許 renter 和 shared_owner
+        if (role !== "renter" && role !== "shared_owner") {
+            alert("此功能僅限租用者或共享車主使用！");
             return;
         }
 
@@ -1691,7 +1693,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                 body: JSON.stringify({
                     spot_id: spotId,
                     start_time: startDateTime,
-                    end_time: endDateTime
+                    end_time: endTime
                 })
             });
 
