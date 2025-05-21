@@ -1652,7 +1652,7 @@ document.addEventListener("DOMContentLoaded", async function () {
             }
             await debouncedHandleReserveSearch();
             console.log("車位狀態已更新");
-        }, 30000);
+        }, 60000);
 
         const newButton = reserveSearchButton.cloneNode(true);
         reserveSearchButton.parentNode.replaceChild(newButton, reserveSearchButton);
@@ -1685,7 +1685,7 @@ document.addEventListener("DOMContentLoaded", async function () {
             const endDateTime = `${endDate}T${endTime}:00`;
 
             const token = getToken();
-            const response = await fetch(`${API_URL}/parking/reserve`, {
+            const response = await fetch(`${API_URL}/api/v1/rent/reserve`, {
                 method: 'POST',
                 headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
                 body: JSON.stringify({
@@ -1694,14 +1694,35 @@ document.addEventListener("DOMContentLoaded", async function () {
                     end_time: endDateTime
                 })
             });
-            if (!response.headers.get('content-type')?.includes('application/json')) {
-                throw new Error("後端返回非 JSON 響應，請檢查伺服器配置");
-            }
+
+            // 檢查響應狀態碼
             if (!response.ok) {
-                if (response.status === 401) throw new Error("認證失敗，請重新登入！");
-                const result = await response.json();
-                throw new Error(result.error || `預約失敗！（錯誤碼：${response.status}）`);
+                if (response.status === 404) {
+                    throw new Error("預約端點未找到（404），請確認後端服務是否運行，或檢查 API 路徑是否正確");
+                }
+                if (response.status === 401) {
+                    throw new Error("認證失敗，請重新登入！");
+                }
+
+                // 嘗試解析錯誤訊息
+                const contentType = response.headers.get('content-type');
+                if (contentType?.includes('application/json')) {
+                    const result = await response.json();
+                    throw new Error(result.error || `預約失敗！（錯誤碼：${response.status}）`);
+                } else {
+                    // 如果不是 JSON，嘗試讀取純文本錯誤訊息
+                    const text = await response.text();
+                    throw new Error(`後端返回非 JSON 響應：${text || '未知錯誤'}，請檢查伺服器配置`);
+                }
             }
+
+            // 確保響應是 JSON 格式
+            const contentType = response.headers.get('content-type');
+            if (!contentType?.includes('application/json')) {
+                const text = await response.text();
+                throw new Error(`後端返回非 JSON 響應：${text || '未知錯誤'}，請檢查伺服器配置`);
+            }
+
             await response.json();
             row.classList.remove("available");
             row.classList.add("reserved");
