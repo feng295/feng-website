@@ -1402,9 +1402,9 @@ document.addEventListener("DOMContentLoaded", async function () {
         }
 
         const today = new Date().toISOString().split('T')[0];
-        reserveDateInput.value = today;
-        startTimeInput.value = "09:00";
-        endTimeInput.value = "17:00";
+        reserveDateInput.value = today; // 當前日期：2025-05-21
+        startTimeInput.value = "23:40"; // 設置為當天剩餘時間，默認晚於 23:34
+        endTimeInput.value = "00:00";   // 跨日結束時間
 
         if (!window.isGoogleMapsLoaded || !window.google || !google.maps) {
             console.error("Google Maps API 未載入或載入失敗");
@@ -1424,8 +1424,6 @@ document.addEventListener("DOMContentLoaded", async function () {
             window.map = map;
             reserveParkingMap.style.display = "none";
         }
-
-        // 移除 await fetchReservations();
 
         const debounce = (func, delay) => {
             let timeout;
@@ -1691,10 +1689,15 @@ document.addEventListener("DOMContentLoaded", async function () {
             const startDateTime = startDateTimeObj.toISOString(); // 完整 RFC 3339 格式
             const endDateTime = endDateTimeObj.toISOString();     // 完整 RFC 3339 格式
 
-            // 檢查是否為過去時間
+            // 檢查是否為過去時間，允許當天剩餘時間
             const now = new Date();
-            if (startDateTimeObj < now || endDateTimeObj < now) {
-                throw new Error("無法預約過去的時間，請選擇未來時間！");
+            const todayStart = new Date(now);
+            todayStart.setHours(0, 0, 0, 0); // 當天開始時間
+            if (startDateTimeObj < now && startDateTimeObj < todayStart.setDate(todayStart.getDate() + 1)) {
+                throw new Error(`無法預約過去的時間！請選擇 ${now.toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit' })} 之後的時間或未來日期。`);
+            }
+            if (endDateTimeObj <= now) {
+                throw new Error(`結束時間必須晚於當前時間 ${now.toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit' })}！請重新選擇。`);
             }
 
             // 檢查日期是否在 available_days 中
@@ -1784,7 +1787,6 @@ document.addEventListener("DOMContentLoaded", async function () {
             row.classList.add("reserved");
             row.querySelector(".reserve-btn").style.display = "none";
 
-            // 移除確認按鈕邏輯，因為不再需要 rentId
             row.querySelector("td:nth-child(6)").textContent = "預約";
             addToHistory(`預約車位 ${spotId} 於 ${startDateTime} 至 ${endDateTime}`);
             alert(`車位 ${spotId} 已成功預約！`);
@@ -1797,7 +1799,6 @@ document.addEventListener("DOMContentLoaded", async function () {
             }
         }
     }
-
     // 確認預約
     async function handleConfirmReservation(rentId, row) {
         if (!await checkAuth()) return;
