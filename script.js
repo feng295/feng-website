@@ -1454,9 +1454,9 @@ document.addEventListener("DOMContentLoaded", async function () {
             const [startHour, startMinute] = startTime.split(":").map(Number);
             const [endHour, endMinute] = endTime.split(":").map(Number);
             const startDateTime = new Date(selectedDate);
-            startDateTime.setHours(startHour, startMinute);
+            startDateTime.setHours(startHour, startMinute, 0, 0);
             const endDateTime = new Date(selectedDate);
-            endDateTime.setHours(endHour, endMinute);
+            endDateTime.setHours(endHour, endMinute, 0, 0);
 
             if (startDateTime >= endDateTime) {
                 alert("結束時間必須晚於開始時間！");
@@ -1481,9 +1481,8 @@ document.addEventListener("DOMContentLoaded", async function () {
                 map.setCenter({ lat: latitude, lng: longitude });
             }
 
-            const timeZoneOffset = "+08:00";
-            const startDateTimeStr = `${selectedDate}T${startTime}:00${timeZoneOffset}`;
-            const endDateTimeStr = `${selectedDate}T${endTime}:00${timeZoneOffset}`;
+            const startDateTimeStr = startDateTime.toISOString().slice(0, 19); // 格式化為 YYYY-MM-DDThh:mm:ss
+            const endDateTimeStr = endDateTime.toISOString().slice(0, 19);     // 格式化為 YYYY-MM-DDThh:mm:ss
 
             let retries = 3, spots = null;
             while (retries > 0) {
@@ -1683,17 +1682,18 @@ document.addEventListener("DOMContentLoaded", async function () {
                 return;
             }
 
-            const startDateTime = `${startDate}T${startTime}:00`;
-            const endDateTime = `${endDate}T${endTime}:00`;
+            // 構建正確的日期時間格式 YYYY-MM-DDThh:mm:ss
+            const startDateTime = new Date(`${startDate}T${startTime}:00`).toISOString().slice(0, 19);
+            const endDateTime = new Date(`${endDate}T${endTime}:00`).toISOString().slice(0, 19);
 
             const token = getToken();
-            const response = await fetch(`${API_URL}/rent/reserve`, {
+            const response = await fetch(`${API_URL}/reserve`, {
                 method: 'POST',
                 headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
                 body: JSON.stringify({
                     spot_id: spotId,
                     start_time: startDateTime,
-                    end_time: endTime
+                    end_time: endDateTime
                 })
             });
 
