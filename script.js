@@ -1689,7 +1689,7 @@ document.addEventListener("DOMContentLoaded", async function () {
             const endDateTime = endDateTimeObj.toISOString();     // 完整 RFC 3339 格式
 
             const token = getToken();
-            const response = await fetch(`${API_URL}/reserve`, {
+            const response = await fetch(`${API_URL}/rent/reserve`, {
                 method: 'POST',
                 headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
                 body: JSON.stringify({
