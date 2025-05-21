@@ -1481,8 +1481,8 @@ document.addEventListener("DOMContentLoaded", async function () {
                 map.setCenter({ lat: latitude, lng: longitude });
             }
 
-            const startDateTimeStr = startDateTime.toISOString().slice(0, 19); // 格式化為 YYYY-MM-DDThh:mm:ss
-            const endDateTimeStr = endDateTime.toISOString().slice(0, 19);     // 格式化為 YYYY-MM-DDThh:mm:ss
+            const startDateTimeStr = startDateTime.toISOString(); // 完整 RFC 3339 格式
+            const endDateTimeStr = endDateTime.toISOString();     // 完整 RFC 3339 格式
 
             let retries = 3, spots = null;
             while (retries > 0) {
@@ -1682,9 +1682,11 @@ document.addEventListener("DOMContentLoaded", async function () {
                 return;
             }
 
-            // 構建正確的日期時間格式 YYYY-MM-DDThh:mm:ss
-            const startDateTime = new Date(`${startDate}T${startTime}:00`).toISOString().slice(0, 19);
-            const endDateTime = new Date(`${endDate}T${endTime}:00`).toISOString().slice(0, 19);
+            // 構建正確的日期時間格式，符合 RFC 3339 格式（包含時區）
+            const startDateTimeObj = new Date(`${startDate}T${startTime}:00`);
+            const endDateTimeObj = new Date(`${endDate}T${endTime}:00`);
+            const startDateTime = startDateTimeObj.toISOString(); // 完整 RFC 3339 格式
+            const endDateTime = endDateTimeObj.toISOString();     // 完整 RFC 3339 格式
 
             const token = getToken();
             const response = await fetch(`${API_URL}/reserve`, {
