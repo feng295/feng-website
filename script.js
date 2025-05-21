@@ -1541,7 +1541,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                 if (filterType !== "all") match = match && spot.parking_type === filterType;
                 if (filterFloor !== "all") match = match && spot.floor_level === filterFloor;
                 if (filterPricing !== "all") match = match && spot.pricing_type === filterPricing;
-                if (filterStatus !== "all") match = match && (filterStatus === "available" ? spot.status === "可用" : filterStatus === "occupied" ? ["已佔用", "預約"].includes(spot.status) : true);
+                if (filterStatus !== "all") match = match && (filterStatus === "available" ? spot.status === "可用" || spot.status === "available" : filterStatus === "occupied" ? ["已佔用", "occupied", "預約", "reserved"].includes(spot.status) : true);
                 return match;
             });
 
@@ -1582,11 +1582,11 @@ document.addEventListener("DOMContentLoaded", async function () {
                     markerElement.style.borderRadius = "50%";
                     markerElement.style.border = "2px solid white";
                     console.log("Spot status:", spot.status);
-                    if (spot.status === "可用") {
+                    if (spot.status === "可用" || spot.status === "available") {
                         markerElement.style.backgroundColor = "green";
-                    } else if (spot.status === "已佔用") {
+                    } else if (spot.status === "已佔用" || spot.status === "occupied") {
                         markerElement.style.backgroundColor = "red";
-                    } else if (spot.status === "預約") {
+                    } else if (spot.status === "預約" || spot.status === "reserved") {
                         markerElement.style.backgroundColor = "blue";
                     } else {
                         console.warn("Unknown status:", spot.status);
@@ -1612,9 +1612,8 @@ document.addEventListener("DOMContentLoaded", async function () {
             filteredSpots.forEach(spot => {
                 const row = document.createElement("tr");
                 row.setAttribute("data-id", spot.spot_id);
-                row.classList.add(spot.status === "可用" ? "available" : spot.status === "預約" ? "reserved" : "occupied");
+                row.classList.add(spot.status === "可用" || spot.status === "available" ? "available" : spot.status === "預約" || spot.status === "reserved" ? "reserved" : "occupied");
 
-                // 只顯示按小時計費的價格
                 const priceDisplay = spot.pricing_type === "hourly"
                     ? `${spot.price_per_half_hour || 0} 元/半小時`
                     : "不適用";
@@ -1627,10 +1626,10 @@ document.addEventListener("DOMContentLoaded", async function () {
                 <td>${spot.pricing_type === "hourly" ? "按小時" : "不適用"}</td>
                 <td>${priceDisplay}</td>
                 <td>
-                    <button class="reserve-btn" ${spot.status === "可用" ? '' : 'disabled'}>預約</button>
+                    <button class="reserve-btn" ${spot.status === "可用" || spot.status === "available" ? '' : 'disabled'}>預約</button>
                 </td>
             `;
-                if (spot.status === "可用") {
+                if (spot.status === "可用" || spot.status === "available") {
                     row.querySelector(".reserve-btn").addEventListener("click", () => {
                         handleReserveParkingClick(spot.spot_id, selectedDate, selectedDate, startTime, endTime, row);
                         setParkingSpotId(spot.spot_id);
