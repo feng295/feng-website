@@ -198,7 +198,7 @@ document.addEventListener("DOMContentLoaded", async function () {
         if (role === "shared_owner") {
             navList.innerHTML = `
                 <li><a href="#" class="nav-link" data-target="addParking">新增車位</a></li>
-                <li><a href="#" class="nav-link" data-target="My parking space">我的車位</a></li>
+                <li><a href="#" class="nav-link" data-target="My parking space">我的列表</a></li>
                 <li><a href="#" class="nav-link" data-target="incomeInquiry">收入查詢</a></li>
                 <li><a href="#" class="nav-link" data-target="profile">個人資料</a></li>
             `;
@@ -1371,7 +1371,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 
         const role = getRole();
         console.log("Current role in setupReserveParking:", role);
-        // 根據後端需求，/reserve 端點允許 renter 和 shared_owner
+        // 根據後端需求，/rent/reserve 端點允許 renter 和 shared_owner
         if (role !== "renter" && role !== "shared_owner") {
             alert("此功能僅限租用者或共享車主使用！");
             return;
@@ -1394,6 +1394,7 @@ document.addEventListener("DOMContentLoaded", async function () {
         const reserveStatus = document.getElementById("reserveStatus");
         const parkingTableBody = document.getElementById("reserveParkingTableBody");
         const reserveParkingMap = document.getElementById("reserveParkingMap");
+        const reservationsTableBody = document.getElementById("reservationsTableBody"); // 新增：預約記錄表格
 
         if (!reserveDateInput || !startTimeInput || !endTimeInput || !reserveSearchButton || !parkingTableBody || !reserveParkingMap) {
             console.warn("Required elements not found for reserveParking");
@@ -1423,6 +1424,9 @@ document.addEventListener("DOMContentLoaded", async function () {
             window.map = map;
             reserveParkingMap.style.display = "none";
         }
+
+        // 查詢預約記錄
+        await fetchReservations();
 
         const debounce = (func, delay) => {
             let timeout;
@@ -1627,6 +1631,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                 <td>${priceDisplay}</td>
                 <td>
                     <button class="reserve-btn" ${spot.status === "可用" || spot.status === "available" ? '' : 'disabled'}>預約</button>
+                    <button class="confirm-btn" style="display: none;">確認預約</button>
                 </td>
             `;
                 if (spot.status === "可用" || spot.status === "available") {
@@ -1665,12 +1670,68 @@ document.addEventListener("DOMContentLoaded", async function () {
         });
     }
 
+    // 查詢所有預約記錄
+    async function fetchReservations() {
+        const role = getRole();
+        if (role !== "renter" && role !== "shared_owner") {
+            console.log("僅限 renter 和 shared_owner 查看預約記錄");
+            return;
+        }
+
+        const reservationsTableBody = document.getElementById("reservationsTableBody");
+        if (!reservationsTableBody) {
+            console.warn("未找到 reservationsTableBody 元素");
+            return;
+        }
+
+        try {
+            const token = getToken();
+            const response = await fetch(`${API_URL}/rent/reservations`, {
+                method: 'GET',
+                headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` }
+            });
+
+            if (!response.ok) {
+                if (response.status === 401) throw new Error("認證失敗，請重新登入！");
+                const errorData = await response.json();
+                throw new Error(`HTTP error! Status: ${response.status}, Message: ${errorData.error || '未知錯誤'}`);
+            }
+
+            const data = await response.json();
+            const reservations = data.reservations || data.data || data;
+            if (!Array.isArray(reservations)) throw new Error("後端返回的預約記錄格式錯誤，應為陣列");
+
+            reservationsTableBody.innerHTML = '';
+            const fragment = document.createDocumentFragment();
+            reservations.forEach(reservation => {
+                const row = document.createElement("tr");
+                row.innerHTML = `
+                <td>${reservation.id || '未知'}</td>
+                <td>${reservation.spot_id || '未知'}</td>
+                <td>${reservation.start_time || '未知'}</td>
+                <td>${reservation.end_time || '未知'}</td>
+                <td>${reservation.status || '未知'}</td>
+            `;
+                fragment.appendChild(row);
+            });
+
+            reservationsTableBody.appendChild(fragment);
+        } catch (error) {
+            console.error("Fetch reservations failed:", error);
+            reservationsTableBody.innerHTML = '<tr><td colspan="5">無法載入預約記錄</td></tr>';
+            if (error.message === "認證失敗，請重新登入！") {
+                removeToken();
+                showLoginPage(true);
+            }
+        }
+    }
+
     // 預約停車點擊處理
     async function handleReserveParkingClick(spotId, startDate, endDate, startTime, endTime, row) {
         if (!await checkAuth()) return;
 
         const role = getRole();
-        // 根據後端需求，/reserve 端點允許 renter 和 shared_owner
+        // 根據後端需求，/rent/reserve 端點允許 renter 和 shared_owner
         if (role !== "renter" && role !== "shared_owner") {
             alert("此功能僅限租用者或共享車主使用！");
             return;
@@ -1708,19 +1769,91 @@ document.addEventListener("DOMContentLoaded", async function () {
                     throw new Error("認證失敗，請重新登入！");
                 }
 
-                // 嘗試解析錯誤訊息
                 const contentType = response.headers.get('content-type');
                 if (contentType?.includes('application/json')) {
                     const result = await response.json();
                     throw new Error(result.error || `預約失敗！（錯誤碼：${response.status}）`);
                 } else {
-                    // 如果不是 JSON，嘗試讀取純文本錯誤訊息
                     const text = await response.text();
                     throw new Error(`後端返回非 JSON 響應：${text || '未知錯誤'}，請檢查伺服器配置`);
                 }
             }
 
-            // 確保響應是 JSON 格式
+            const contentType = response.headers.get('content-type');
+            if (!contentType?.includes('application/json')) {
+                const text = await response.text();
+                throw new Error(`後端返回非 JSON 響應：${text || '未知錯誤'}，請檢查伺服器配置`);
+            }
+
+            const result = await response.json();
+            const rentId = result.rent_id || result.id; // 假設後端返回預約 ID
+            if (!rentId) {
+                throw new Error("後端未返回預約 ID，無法繼續操作");
+            }
+
+            // 更新表格狀態
+            row.classList.remove("available");
+            row.classList.add("reserved");
+            row.querySelector(".reserve-btn").style.display = "none";
+
+            // 顯示確認預約按鈕（僅限 renter）
+            if (role === "renter") {
+                const confirmBtn = row.querySelector(".confirm-btn");
+                confirmBtn.style.display = "inline-block";
+                confirmBtn.addEventListener("click", () => handleConfirmReservation(rentId, row));
+            }
+
+            row.querySelector("td:nth-child(6)").textContent = "預約";
+            addToHistory(`預約車位 ${spotId} 於 ${startDateTime} 至 ${endDateTime}`);
+            alert(`車位 ${spotId} 已成功預約！預約 ID: ${rentId}`);
+
+            // 預約成功後刷新預約記錄
+            await fetchReservations();
+        } catch (error) {
+            console.error("Reserve failed:", error);
+            alert(error.message || "伺服器錯誤，請稍後再試！");
+            if (error.message === "認證失敗，請重新登入！") {
+                removeToken();
+                showLoginPage(true);
+            }
+        }
+    }
+
+    // 確認預約
+    async function handleConfirmReservation(rentId, row) {
+        if (!await checkAuth()) return;
+
+        const role = getRole();
+        if (role !== "renter") {
+            alert("此功能僅限租用者使用！");
+            return;
+        }
+
+        try {
+            const token = getToken();
+            const response = await fetch(`${API_URL}/rent/${rentId}/confirm`, {
+                method: 'POST',
+                headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` }
+            });
+
+            if (!response.ok) {
+                if (response.status === 404) {
+                    throw new Error("確認端點未找到（404），請確認後端服務是否運行，或檢查 API 路徑是否正確");
+                }
+                if (response.status === 401) {
+                    throw new Error("認證失敗，請重新登入！");
+                }
+
+                const contentType = response.headers.get('content-type');
+                if (contentType?.includes('application/json')) {
+                    const result = await response.json();
+                    throw new Error(result.error || `確認預約失敗！（錯誤碼：${response.status}）`);
+                } else {
+                    const text = await response.text();
+                    throw new Error(`後端返回非 JSON 響應：${text || '未知錯誤'}，請檢查伺服器配置`);
+                }
+            }
+
             const contentType = response.headers.get('content-type');
             if (!contentType?.includes('application/json')) {
                 const text = await response.text();
@@ -1728,14 +1861,13 @@ document.addEventListener("DOMContentLoaded", async function () {
             }
 
             await response.json();
-            row.classList.remove("available");
-            row.classList.add("reserved");
-            row.querySelector("button").disabled = true;
-            row.querySelector("td:nth-child(6)").textContent = "預約";
-            addToHistory(`預約車位 ${spotId} 於 ${startDateTime} 至 ${endDateTime}`);
-            alert(`車位 ${spotId} 已成功預約！`);
+            row.querySelector(".confirm-btn").style.display = "none";
+            alert(`預約 ${rentId} 已確認！`);
+
+            // 確認後刷新預約記錄
+            await fetchReservations();
         } catch (error) {
-            console.error("Reserve failed:", error);
+            console.error("Confirm reservation failed:", error);
             alert(error.message || "伺服器錯誤，請稍後再試！");
             if (error.message === "認證失敗，請重新登入！") {
                 removeToken();
@@ -1916,9 +2048,15 @@ document.addEventListener("DOMContentLoaded", async function () {
             }
             if (!response.ok) {
                 if (response.status === 401) throw new Error("認證失敗，請重新登入！");
-                throw new Error(`HTTP error! Status: ${response.status}`);
+                const errorData = await response.json();
+                throw new Error(`HTTP error! Status: ${response.status}, Message: ${errorData.message || '未知錯誤'}`);
             }
             const responseData = await response.json();
+            const historyList = document.getElementById("historyList");
+            if (!historyList) {
+                console.warn("historyList element not found");
+                return;
+            }
             historyList.innerHTML = "";
 
             let data = responseData.data || responseData;
@@ -1936,16 +2074,32 @@ document.addEventListener("DOMContentLoaded", async function () {
             data.forEach(record => {
                 const listItem = document.createElement("li");
                 const startTime = new Date(record.start_time).toLocaleString("zh-TW", { hour12: false });
-                const action = `租用車位 ${record.spot?.spot_id || record.parking_spot_id} (Rent ID: ${record.rent_id})`;
                 const endTime = record.actual_end_time
                     ? new Date(record.actual_end_time).toLocaleString("zh-TW", { hour12: false })
-                    : "尚未結束";
-                listItem.textContent = `${action} - 開始時間: ${startTime}, 結束時間: ${endTime}, 費用: ${record.total_cost} 元`;
+                    : (record.status === "pending" ? "尚未結束" : "已取消或無實際結束時間");
+                let statusText = "";
+                switch (record.status) {
+                    case "completed":
+                        statusText = "已完成";
+                        break;
+                    case "canceled":
+                        statusText = "已取消";
+                        break;
+                    case "pending":
+                        statusText = "待處理";
+                        break;
+                    default:
+                        statusText = "未知狀態";
+                }
+                listItem.textContent = `租用車位 ${record.spot_id} (Rent ID: ${record.rent_id}) - 開始時間: ${startTime}, 結束時間: ${endTime}, 費用: ${record.total_cost} 元, 狀態: ${statusText}`;
                 historyList.appendChild(listItem);
             });
         } catch (error) {
             console.error("Failed to load history:", error);
-            alert("無法載入歷史紀錄，請檢查後端服務");
+            const historyList = document.getElementById("historyList");
+            if (historyList) {
+                historyList.innerHTML = "<li>無法載入歷史紀錄，請檢查後端服務</li>";
+            }
             if (error.message === "認證失敗，請重新登入！") {
                 removeToken();
                 showLoginPage(true);

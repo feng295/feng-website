@@ -204,26 +204,38 @@
                     </div>
                     <div id="reserveParkingMap" style="height: 400px; width: 100%; margin-bottom: 20px; display: none;">
                     </div>
-                    <div class="parking-spaces-table">
-                        <table id="reserveParkingTable">
-                            <thead>
-                                <tr>
-                                    <th>車位編號</th>
-                                    <th>縣市</th>
-                                    <th>類型</th>
-                                    <th>樓層</th>
-                                    <th>計價方式</th>
-                                    <th>狀態</th>
-                                    <th>操作</th>
-                                </tr>
-                            </thead>
-                            <tbody id="reserveParkingTableBody">
-                                <tr>
-                                    <td colspan="7">請選擇日期並點擊查詢以查看可用車位</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
+                    <div id="reserveParkingMap" style="height: 400px; width: 100%;"></div>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>車位編號</th>
+                                <th>縣市</th>
+                                <th>類型</th>
+                                <th>樓層</th>
+                                <th>計價方式</th>
+                                <th>狀態</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="reserveParkingTableBody">
+                            <tr><td colspan="7">請選擇日期並點擊查詢以查看可用車位</td></tr>
+                        </tbody>
+                    </table>
+                    <h3>預約記錄</h3>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>預約ID</th>
+                                <th>車位編號</th>
+                                <th>開始時間</th>
+                                <th>結束時間</th>
+                                <th>狀態</th>
+                            </tr>
+                        </thead>
+                        <tbody id="reservationsTableBody">
+                            <tr><td colspan="5">載入中...</td></tr>
+                        </tbody>
+                    </table>
                 </div>
                 <div id="history" class="content-section" style="display: none;">
                     <h2>歷史紀錄</h2>
