@@ -1394,7 +1394,7 @@ document.addEventListener("DOMContentLoaded", async function () {
         const reserveStatus = document.getElementById("reserveStatus");
         const parkingTableBody = document.getElementById("reserveParkingTableBody");
         const reserveParkingMap = document.getElementById("reserveParkingMap");
-        const reservationsTableBody = document.getElementById("reservationsTableBody"); // 新增：預約記錄表格
+        // 移除 reservationsTableBody，因為不再需要
 
         if (!reserveDateInput || !startTimeInput || !endTimeInput || !reserveSearchButton || !parkingTableBody || !reserveParkingMap) {
             console.warn("Required elements not found for reserveParking");
@@ -1425,8 +1425,7 @@ document.addEventListener("DOMContentLoaded", async function () {
             reserveParkingMap.style.display = "none";
         }
 
-        // 查詢預約記錄
-        await fetchReservations();
+        // 移除 await fetchReservations();
 
         const debounce = (func, delay) => {
             let timeout;
@@ -1670,62 +1669,6 @@ document.addEventListener("DOMContentLoaded", async function () {
         });
     }
 
-    // 查詢所有預約記錄
-    async function fetchReservations() {
-        const role = getRole();
-        if (role !== "renter" && role !== "shared_owner") {
-            console.log("僅限 renter 和 shared_owner 查看預約記錄");
-            return;
-        }
-
-        const reservationsTableBody = document.getElementById("reservationsTableBody");
-        if (!reservationsTableBody) {
-            console.warn("未找到 reservationsTableBody 元素");
-            return;
-        }
-
-        try {
-            const token = getToken();
-            const response = await fetch(`${API_URL}/rent/reservations`, {
-                method: 'GET',
-                headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` }
-            });
-
-            if (!response.ok) {
-                if (response.status === 401) throw new Error("認證失敗，請重新登入！");
-                const errorData = await response.json();
-                throw new Error(`HTTP error! Status: ${response.status}, Message: ${errorData.error || '未知錯誤'}`);
-            }
-
-            const data = await response.json();
-            const reservations = data.reservations || data.data || data;
-            if (!Array.isArray(reservations)) throw new Error("後端返回的預約記錄格式錯誤，應為陣列");
-
-            reservationsTableBody.innerHTML = '';
-            const fragment = document.createDocumentFragment();
-            reservations.forEach(reservation => {
-                const row = document.createElement("tr");
-                row.innerHTML = `
-                <td>${reservation.id || '未知'}</td>
-                <td>${reservation.spot_id || '未知'}</td>
-                <td>${reservation.start_time || '未知'}</td>
-                <td>${reservation.end_time || '未知'}</td>
-                <td>${reservation.status || '未知'}</td>
-            `;
-                fragment.appendChild(row);
-            });
-
-            reservationsTableBody.appendChild(fragment);
-        } catch (error) {
-            console.error("Fetch reservations failed:", error);
-            reservationsTableBody.innerHTML = '<tr><td colspan="5">無法載入預約記錄</td></tr>';
-            if (error.message === "認證失敗，請重新登入！") {
-                removeToken();
-                showLoginPage(true);
-            }
-        }
-    }
-
     // 預約停車點擊處理
     async function handleReserveParkingClick(spotId, startDate, endDate, startTime, endTime, row) {
         if (!await checkAuth()) return;
@@ -1807,8 +1750,7 @@ document.addEventListener("DOMContentLoaded", async function () {
             addToHistory(`預約車位 ${spotId} 於 ${startDateTime} 至 ${endDateTime}`);
             alert(`車位 ${spotId} 已成功預約！預約 ID: ${rentId}`);
 
-            // 預約成功後刷新預約記錄
-            await fetchReservations();
+            // 移除 await fetchReservations();
         } catch (error) {
             console.error("Reserve failed:", error);
             alert(error.message || "伺服器錯誤，請稍後再試！");
@@ -1864,8 +1806,7 @@ document.addEventListener("DOMContentLoaded", async function () {
             row.querySelector(".confirm-btn").style.display = "none";
             alert(`預約 ${rentId} 已確認！`);
 
-            // 確認後刷新預約記錄
-            await fetchReservations();
+            // 移除 await fetchReservations();
         } catch (error) {
             console.error("Confirm reservation failed:", error);
             alert(error.message || "伺服器錯誤，請稍後再試！");
