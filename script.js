@@ -1687,7 +1687,7 @@ document.addEventListener("DOMContentLoaded", async function () {
             const endDateTime = `${endDate}T${endTime}:00`;
 
             const token = getToken();
-            const response = await fetch(`${API_URL}/api/v1/rent/reserve`, {
+            const response = await fetch(`${API_URL}/rent/reserve`, {
                 method: 'POST',
                 headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
                 body: JSON.stringify({
