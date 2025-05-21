@@ -1691,6 +1691,12 @@ document.addEventListener("DOMContentLoaded", async function () {
             const startDateTime = startDateTimeObj.toISOString(); // 完整 RFC 3339 格式
             const endDateTime = endDateTimeObj.toISOString();     // 完整 RFC 3339 格式
 
+            // 檢查是否為過去時間
+            const now = new Date();
+            if (startDateTimeObj < now || endDateTimeObj < now) {
+                throw new Error("無法預約過去的時間，請選擇未來時間！");
+            }
+
             // 檢查日期是否在 available_days 中
             const selectedDate = startDate; // 例如 "2025-05-21"
             const token = getToken();
@@ -1752,7 +1758,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                 const contentType = response.headers.get('content-type');
                 if (contentType?.includes('application/json')) {
                     const result = await response.json();
-                    throw new Error(result.error || `預約失敗！（錯誤碼：${response.status}）`);
+                    throw new Error(result.error || result.message || `預約失敗！（錯誤碼：${response.status}）`);
                 } else {
                     const text = await response.text();
                     throw new Error(`後端返回非 JSON 響應：${text || '未知錯誤'}，請檢查伺服器配置`);
@@ -1766,9 +1772,11 @@ document.addEventListener("DOMContentLoaded", async function () {
             }
 
             const result = await response.json();
-            const rentId = result.rent_id || result.id; // 假設後端返回預約 ID
-            if (!rentId) {
-                throw new Error("後端未返回預約 ID，無法繼續操作");
+            console.log("後端回應:", result); // 記錄後端回應以便調試
+
+            // 檢查回應狀態
+            if (result.status === false) {
+                throw new Error(result.message || "預約失敗，後端未提供具體錯誤訊息");
             }
 
             // 更新表格狀態
@@ -1776,16 +1784,10 @@ document.addEventListener("DOMContentLoaded", async function () {
             row.classList.add("reserved");
             row.querySelector(".reserve-btn").style.display = "none";
 
-            // 顯示確認預約按鈕（僅限 renter）
-            if (role === "renter") {
-                const confirmBtn = row.querySelector(".confirm-btn");
-                confirmBtn.style.display = "inline-block";
-                confirmBtn.addEventListener("click", () => handleConfirmReservation(rentId, row));
-            }
-
+            // 移除確認按鈕邏輯，因為不再需要 rentId
             row.querySelector("td:nth-child(6)").textContent = "預約";
             addToHistory(`預約車位 ${spotId} 於 ${startDateTime} 至 ${endDateTime}`);
-            alert(`車位 ${spotId} 已成功預約！預約 ID: ${rentId}`);
+            alert(`車位 ${spotId} 已成功預約！`);
         } catch (error) {
             console.error("Reserve failed:", error);
             alert(error.message || "伺服器錯誤，請稍後再試！");
