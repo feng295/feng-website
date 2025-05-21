@@ -1674,7 +1674,6 @@ document.addEventListener("DOMContentLoaded", async function () {
         if (!await checkAuth()) return;
 
         const role = getRole();
-        // 根據後端需求，/rent/reserve 端點允許 renter 和 shared_owner
         if (role !== "renter" && role !== "shared_owner") {
             alert("此功能僅限租用者或共享車主使用！");
             return;
@@ -1692,7 +1691,45 @@ document.addEventListener("DOMContentLoaded", async function () {
             const startDateTime = startDateTimeObj.toISOString(); // 完整 RFC 3339 格式
             const endDateTime = endDateTimeObj.toISOString();     // 完整 RFC 3339 格式
 
+            // 檢查日期是否在 available_days 中
+            const selectedDate = startDate; // 例如 "2025-05-21"
             const token = getToken();
+
+            // 先查詢車位詳情，包括 available_days 和現有預約
+            const spotResponse = await fetch(`${API_URL}/parking/${spotId}`, {
+                headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` }
+            });
+
+            if (!spotResponse.ok) {
+                throw new Error("無法獲取車位詳情，請稍後再試！");
+            }
+
+            const spotData = await spotResponse.json();
+            const parkingSpot = spotData.data || spotData.parking_spot || spotData;
+
+            // 檢查 available_days
+            const availableDays = parkingSpot.available_days || [];
+            const isDateAvailable = availableDays.some(day => day.date === selectedDate && day.is_available);
+            if (!isDateAvailable) {
+                throw new Error(`車位 ${spotId} 在 ${selectedDate} 不可用，請選擇其他日期！`);
+            }
+
+            // 檢查時間段是否與現有預約衝突
+            const existingRents = parkingSpot.rents || [];
+            const startTimeObj = new Date(startDateTime);
+            const endTimeObj = new Date(endDateTime);
+
+            const hasConflict = existingRents.some(rent => {
+                const rentStart = new Date(rent.start_time);
+                const rentEnd = new Date(rent.end_time);
+                return (startTimeObj < rentEnd && endTimeObj > rentStart);
+            });
+
+            if (hasConflict) {
+                throw new Error(`車位 ${spotId} 在指定時間段（${startTime} 至 ${endTime}）已被預約，請選擇其他時間！`);
+            }
+
+            // 發送預約請求
             const response = await fetch(`${API_URL}/rent/reserve`, {
                 method: 'POST',
                 headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
@@ -1749,8 +1786,6 @@ document.addEventListener("DOMContentLoaded", async function () {
             row.querySelector("td:nth-child(6)").textContent = "預約";
             addToHistory(`預約車位 ${spotId} 於 ${startDateTime} 至 ${endDateTime}`);
             alert(`車位 ${spotId} 已成功預約！預約 ID: ${rentId}`);
-
-            // 移除 await fetchReservations();
         } catch (error) {
             console.error("Reserve failed:", error);
             alert(error.message || "伺服器錯誤，請稍後再試！");
