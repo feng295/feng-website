@@ -1672,6 +1672,7 @@ document.addEventListener("DOMContentLoaded", async function () {
         if (!await checkAuth()) return;
 
         const role = getRole();
+        // 根據後端需求，/rent/reserve 端點允許 renter 和 shared_owner
         if (role !== "renter" && role !== "shared_owner") {
             alert("此功能僅限租用者或共享車主使用！");
             return;
@@ -1689,56 +1690,7 @@ document.addEventListener("DOMContentLoaded", async function () {
             const startDateTime = startDateTimeObj.toISOString(); // 完整 RFC 3339 格式
             const endDateTime = endDateTimeObj.toISOString();     // 完整 RFC 3339 格式
 
-            // 檢查是否為過去時間，允許當天剩餘時間
-            const now = new Date();
-            const todayStart = new Date(now);
-            todayStart.setHours(0, 0, 0, 0); // 當天開始時間
-            if (startDateTimeObj < now && startDateTimeObj < todayStart.setDate(todayStart.getDate() + 1)) {
-                throw new Error(`無法預約過去的時間！請選擇 ${now.toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit' })} 之後的時間或未來日期。`);
-            }
-            if (endDateTimeObj <= now) {
-                throw new Error(`結束時間必須晚於當前時間 ${now.toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit' })}！請重新選擇。`);
-            }
-
-            // 檢查日期是否在 available_days 中
-            const selectedDate = startDate; // 例如 "2025-05-21"
             const token = getToken();
-
-            // 先查詢車位詳情，包括 available_days 和現有預約
-            const spotResponse = await fetch(`${API_URL}/parking/${spotId}`, {
-                headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` }
-            });
-
-            if (!spotResponse.ok) {
-                throw new Error("無法獲取車位詳情，請稍後再試！");
-            }
-
-            const spotData = await spotResponse.json();
-            const parkingSpot = spotData.data || spotData.parking_spot || spotData;
-
-            // 檢查 available_days
-            const availableDays = parkingSpot.available_days || [];
-            const isDateAvailable = availableDays.some(day => day.date === selectedDate && day.is_available);
-            if (!isDateAvailable) {
-                throw new Error(`車位 ${spotId} 在 ${selectedDate} 不可用，請選擇其他日期！`);
-            }
-
-            // 檢查時間段是否與現有預約衝突
-            const existingRents = parkingSpot.rents || [];
-            const startTimeObj = new Date(startDateTime);
-            const endTimeObj = new Date(endDateTime);
-
-            const hasConflict = existingRents.some(rent => {
-                const rentStart = new Date(rent.start_time);
-                const rentEnd = new Date(rent.end_time);
-                return (startTimeObj < rentEnd && endTimeObj > rentStart);
-            });
-
-            if (hasConflict) {
-                throw new Error(`車位 ${spotId} 在指定時間段（${startTime} 至 ${endTime}）已被預約，請選擇其他時間！`);
-            }
-
-            // 發送預約請求
             const response = await fetch(`${API_URL}/rent/reserve`, {
                 method: 'POST',
                 headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
@@ -1761,7 +1713,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                 const contentType = response.headers.get('content-type');
                 if (contentType?.includes('application/json')) {
                     const result = await response.json();
-                    throw new Error(result.error || result.message || `預約失敗！（錯誤碼：${response.status}）`);
+                    throw new Error(result.error || `預約失敗！（錯誤碼：${response.status}）`);
                 } else {
                     const text = await response.text();
                     throw new Error(`後端返回非 JSON 響應：${text || '未知錯誤'}，請檢查伺服器配置`);
@@ -1775,11 +1727,9 @@ document.addEventListener("DOMContentLoaded", async function () {
             }
 
             const result = await response.json();
-            console.log("後端回應:", result); // 記錄後端回應以便調試
-
-            // 檢查回應狀態
-            if (result.status === false) {
-                throw new Error(result.message || "預約失敗，後端未提供具體錯誤訊息");
+            const rentId = result.rent_id || result.id; // 假設後端返回預約 ID
+            if (!rentId) {
+                throw new Error("後端未返回預約 ID，無法繼續操作");
             }
 
             // 更新表格狀態
@@ -1787,9 +1737,19 @@ document.addEventListener("DOMContentLoaded", async function () {
             row.classList.add("reserved");
             row.querySelector(".reserve-btn").style.display = "none";
 
+            // 顯示確認預約按鈕（僅限 renter）
+            if (role === "renter") {
+                const confirmBtn = row.querySelector(".confirm-btn");
+                confirmBtn.style.display = "inline-block";
+                confirmBtn.addEventListener("click", () => handleConfirmReservation(rentId, row));
+            }
+
             row.querySelector("td:nth-child(6)").textContent = "預約";
             addToHistory(`預約車位 ${spotId} 於 ${startDateTime} 至 ${endDateTime}`);
-            alert(`車位 ${spotId} 已成功預約！`);
+            alert(`車位 ${spotId} 已成功預約！預約 ID: ${rentId}`);
+
+            // 預約成功後刷新預約記錄
+            await fetchReservations();
         } catch (error) {
             console.error("Reserve failed:", error);
             alert(error.message || "伺服器錯誤，請稍後再試！");
@@ -1799,6 +1759,7 @@ document.addEventListener("DOMContentLoaded", async function () {
             }
         }
     }
+
     // 確認預約
     async function handleConfirmReservation(rentId, row) {
         if (!await checkAuth()) return;
@@ -1844,7 +1805,8 @@ document.addEventListener("DOMContentLoaded", async function () {
             row.querySelector(".confirm-btn").style.display = "none";
             alert(`預約 ${rentId} 已確認！`);
 
-            // 移除 await fetchReservations();
+            // 確認後刷新預約記錄
+            await fetchReservations();
         } catch (error) {
             console.error("Confirm reservation failed:", error);
             alert(error.message || "伺服器錯誤，請稍後再試！");
@@ -1854,7 +1816,6 @@ document.addEventListener("DOMContentLoaded", async function () {
             }
         }
     }
-
     // 設置收入查詢
     function setupIncomeInquiry() {
         const role = getRole();
