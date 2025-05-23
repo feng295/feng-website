@@ -1403,8 +1403,8 @@ document.addEventListener("DOMContentLoaded", async function () {
         const now = new Date();
         const currentHour = now.getHours().toString().padStart(2, '0');
         const currentMinute = now.getMinutes().toString().padStart(2, '0');
-        startTimeInput.value = `${currentHour}:${currentMinute}`; // 設置為當前時間 13:51
-        endTimeInput.value = "15:00"; // 設置為當天稍晚時間
+        startTimeInput.value = `${currentHour}:${currentMinute}`; // 設置為當前時間 14:14
+        endTimeInput.value = "23:59"; // 設置為當天稍晚時間
 
         // 設置最小時間為當前時間，防止選擇過去時間
         startTimeInput.min = `${currentHour}:${currentMinute}`;
@@ -1412,7 +1412,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 
         if (!window.isGoogleMapsLoaded || !window.google || !google.maps) {
             console.error("Google Maps API 未載入或載入失敗");
-            alert("無法載入 Google Maps API，請檢查網路連線或 API 金鑰是否有效。地圖功能將不可用。");
+            alert("無法載入 Google Maps API，請檢查網路連線、API 金鑰是否有效，或腳本載入順序。地圖功能將不可用。");
             reserveParkingMap.style.display = "none";
             return;
         }
@@ -1611,8 +1611,8 @@ document.addEventListener("DOMContentLoaded", async function () {
                         title: `車位 ${spot.spot_id} - ${address}`
                     });
 
-                    // 添加點擊事件
-                    marker.addListener("click", () => {
+                    // 使用 gmp-click 事件代替 click
+                    marker.addListener("gmp-click", () => {
                         if (spot.status === "可用" || spot.status === "available") {
                             handleReserveParkingClick(spot.spot_id, selectedDate, selectedDate, startTime, endTime, null);
                             alert(`已嘗試預約車位 ${spot.spot_id}，請檢查表格更新。`);
@@ -1649,13 +1649,18 @@ document.addEventListener("DOMContentLoaded", async function () {
                 <td>${priceDisplay}</td>
                 <td>
                     <button class="reserve-btn" ${spot.status === "可用" || spot.status === "available" ? '' : 'disabled'}>預約</button>
-                    <button class="confirm-btn" style="display: none;">確認預約</button>
+                    <button class="confirm-btn" style="display: ${spot.status === '預約' || spot.status === 'reserved' ? '' : 'none'};" data-spot-id="${spot.spot_id}">確認預約</button>
                 </td>
             `;
                 if (spot.status === "可用" || spot.status === "available") {
                     row.querySelector(".reserve-btn").addEventListener("click", () => {
                         handleReserveParkingClick(spot.spot_id, selectedDate, selectedDate, startTime, endTime, row);
                         setParkingSpotId(spot.spot_id);
+                    });
+                }
+                if (spot.status === "預約" || spot.status === "reserved") {
+                    row.querySelector(".confirm-btn").addEventListener("click", () => {
+                        confirmReservation(spot.spot_id);
                     });
                 }
                 fragment.appendChild(row);
@@ -1799,16 +1804,27 @@ document.addEventListener("DOMContentLoaded", async function () {
                 throw new Error(result.message || "預約失敗，後端未提供具體錯誤訊息");
             }
 
-            // 更新表格狀態
+            // 更新表格和地圖狀態
             if (row) {
                 row.classList.remove("available");
                 row.classList.add("reserved");
-                row.querySelector(".reserve-btn").style.display = "none";
+                const reserveBtn = row.querySelector(".reserve-btn");
+                reserveBtn.disabled = true;
+                reserveBtn.style.display = "none";
                 row.querySelector("td:nth-child(6)").textContent = "預約";
+                row.querySelector(".confirm-btn").style.display = ""; // 顯示確認按鈕
             }
 
+            // 更新地圖標記
+            map.markers.forEach(marker => {
+                const markerElement = marker.content;
+                if (markerElement && marker.title.includes(`車位 ${spotId}`)) {
+                    markerElement.style.backgroundColor = "blue"; // 改為藍色表示預約
+                }
+            });
+
             addToHistory(`預約車位 ${spotId} 於 ${startDateTime} 至 ${endDateTime}`);
-            alert(`車位 ${spotId} 已成功預約！`);
+            alert(`車位 ${spotId} 已成功預約！請點擊「確認預約」完成。`);
         } catch (error) {
             console.error("Reserve failed:", error);
             alert(error.message || "伺服器錯誤，請稍後再試！");
@@ -1820,7 +1836,7 @@ document.addEventListener("DOMContentLoaded", async function () {
     }
 
     // 確認預約
-    async function handleConfirmReservation(rentId, row) {
+    async function confirmReservation(spotId) {
         if (!await checkAuth()) return;
 
         const role = getRole();
@@ -1831,14 +1847,16 @@ document.addEventListener("DOMContentLoaded", async function () {
 
         try {
             const token = getToken();
-            const response = await fetch(`${API_URL}/rent/${rentId}/confirm`, {
+            if (!token) throw new Error("認證令牌缺失，請重新登入！");
+
+            const response = await fetch(`${API_URL}/rent/${spotId}/confirm`, {
                 method: 'POST',
                 headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` }
             });
 
             if (!response.ok) {
                 if (response.status === 404) {
-                    throw new Error("確認端點未找到（404），請確認後端服務是否運行，或檢查 API 路徑是否正確");
+                    throw new Error("確認預約端點未找到（404），請確認後端服務是否運行，或檢查 API 路徑是否正確");
                 }
                 if (response.status === 401) {
                     throw new Error("認證失敗，請重新登入！");
@@ -1847,7 +1865,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                 const contentType = response.headers.get('content-type');
                 if (contentType?.includes('application/json')) {
                     const result = await response.json();
-                    throw new Error(result.error || `確認預約失敗！（錯誤碼：${response.status}）`);
+                    throw new Error(result.error || result.message || `確認失敗！（錯誤碼：${response.status}）`);
                 } else {
                     const text = await response.text();
                     throw new Error(`後端返回非 JSON 響應：${text || '未知錯誤'}，請檢查伺服器配置`);
@@ -1860,14 +1878,35 @@ document.addEventListener("DOMContentLoaded", async function () {
                 throw new Error(`後端返回非 JSON 響應：${text || '未知錯誤'}，請檢查伺服器配置`);
             }
 
-            await response.json();
-            row.querySelector(".confirm-btn").style.display = "none";
-            alert(`預約 ${rentId} 已確認！`);
+            const result = await response.json();
+            console.log("確認回應:", result);
 
-            // 確認後刷新預約記錄
-            await fetchReservations();
+            if (result.status === false) {
+                throw new Error(result.message || "確認失敗，後端未提供具體錯誤訊息");
+            }
+
+            // 更新表格和地圖狀態
+            const row = document.querySelector(`tr[data-id="${spotId}"]`);
+            if (row) {
+                row.classList.remove("reserved");
+                row.classList.add("confirmed");
+                row.querySelector(".confirm-btn").disabled = true; // 禁用確認按鈕
+                row.querySelector(".confirm-btn").style.display = "none";
+                row.querySelector("td:nth-child(6)").textContent = "已確認";
+            }
+
+            // 更新地圖標記
+            map.markers.forEach(marker => {
+                const markerElement = marker.content;
+                if (markerElement && marker.title.includes(`車位 ${spotId}`)) {
+                    markerElement.style.backgroundColor = "purple"; // 改為紫色表示已確認（可自定義）
+                }
+            });
+
+            addToHistory(`確認車位 ${spotId} 預約`);
+            alert(`車位 ${spotId} 預約已成功確認！`);
         } catch (error) {
-            console.error("Confirm reservation failed:", error);
+            console.error("Confirm failed:", error);
             alert(error.message || "伺服器錯誤，請稍後再試！");
             if (error.message === "認證失敗，請重新登入！") {
                 removeToken();
@@ -1875,6 +1914,8 @@ document.addEventListener("DOMContentLoaded", async function () {
             }
         }
     }
+
+
     // 設置收入查詢
     function setupIncomeInquiry() {
         const role = getRole();
