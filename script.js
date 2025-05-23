@@ -1403,7 +1403,7 @@ document.addEventListener("DOMContentLoaded", async function () {
         const now = new Date();
         const currentHour = now.getHours().toString().padStart(2, '0');
         const currentMinute = now.getMinutes().toString().padStart(2, '0');
-        startTimeInput.value = `${currentHour}:${currentMinute}`; // 設置為當前時間 14:38
+        startTimeInput.value = `${currentHour}:${currentMinute}`; // 設置為當前時間 15:00
         endTimeInput.value = "23:59"; // 設置為當天稍晚時間
 
         // 設置最小時間為當前時間，防止選擇過去時間
@@ -1670,7 +1670,6 @@ document.addEventListener("DOMContentLoaded", async function () {
                 <td>
                     <button class="reserve-btn" ${!isDateAvailable || (spot.status !== "可用" && spot.status !== "available") ? 'disabled' : ''}>預約</button>
                     <button class="confirm-btn" style="display: ${spot.status === '預約' || spot.status === 'reserved' ? '' : 'none'};" data-spot-id="${spot.spot_id}">確認預約</button>
-                    <button class="leave-btn" style="display: ${spot.status === 'confirmed' ? '' : 'none'};" data-spot-id="${spot.spot_id}">離開結算</button>
                 </td>
             `;
                 if (spot.status === "可用" || spot.status === "available" && isDateAvailable) {
@@ -1682,11 +1681,6 @@ document.addEventListener("DOMContentLoaded", async function () {
                 if (spot.status === "預約" || spot.status === "reserved") {
                     row.querySelector(".confirm-btn").addEventListener("click", () => {
                         confirmReservation(spot.spot_id);
-                    });
-                }
-                if (spot.status === "confirmed") {
-                    row.querySelector(".leave-btn").addEventListener("click", () => {
-                        leaveParkingSpot(spot.spot_id);
                     });
                 }
                 fragment.appendChild(row);
@@ -1909,20 +1903,21 @@ document.addEventListener("DOMContentLoaded", async function () {
                 throw new Error(result.message || "確認失敗，後端未提供具體錯誤訊息");
             }
 
+            // 更新表格和地圖狀態
             const row = document.querySelector(`tr[data-id="${spotId}"]`);
             if (row) {
                 row.classList.remove("reserved");
                 row.classList.add("confirmed");
-                row.querySelector(".confirm-btn").disabled = true;
+                row.querySelector(".confirm-btn").disabled = true; // 禁用確認按鈕
                 row.querySelector(".confirm-btn").style.display = "none";
                 row.querySelector("td:nth-child(6)").textContent = "已確認";
-                row.querySelector(".leave-btn").style.display = "";
             }
 
+            // 更新地圖標記
             map.markers.forEach(marker => {
                 const markerElement = marker.content;
                 if (markerElement && marker.title.includes(`車位 ${spotId}`)) {
-                    markerElement.style.backgroundColor = "purple";
+                    markerElement.style.backgroundColor = "purple"; // 改為紫色表示已確認（可自定義）
                 }
             });
 
@@ -1930,111 +1925,6 @@ document.addEventListener("DOMContentLoaded", async function () {
             alert(`車位 ${spotId} 預約已成功確認！`);
         } catch (error) {
             console.error("Confirm failed:", error);
-            alert(error.message || "伺服器錯誤，請稍後再試！");
-            if (error.message === "認證失敗，請重新登入！") {
-                removeToken();
-                showLoginPage(true);
-            }
-        }
-    }
-
-    // 離開結算
-    async function leaveParkingSpot(spotId) {
-        if (!await checkAuth()) return;
-
-        const role = getRole();
-        if (role !== "renter") {
-            alert("此功能僅限租用者使用！");
-            return;
-        }
-
-        try {
-            const token = getToken();
-            if (!token) throw new Error("認證令牌缺失，請重新登入！");
-
-            const spotResponse = await fetch(`${API_URL}/parking/${spotId}`, {
-                headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` }
-            });
-
-            if (!spotResponse.ok) {
-                throw new Error("無法獲取車位詳情，請稍後再試！");
-            }
-
-            const spotData = await spotResponse.json();
-            const parkingSpot = spotData.data || spotData.parking_spot || spotData;
-            const existingRents = parkingSpot.rents || [];
-            const currentRent = existingRents.find(rent => rent.spot_id === spotId && rent.status === "confirmed");
-
-            if (!currentRent) {
-                throw new Error("找不到對應的已確認預約！");
-            }
-
-            const startTime = new Date(currentRent.start_time);
-            const actualEndTime = new Date();
-
-            if (actualEndTime < startTime) {
-                throw new Error("實際結束時間不能早於開始時間！");
-            }
-
-            const response = await fetch(`${API_URL}/rent/${spotId}/leave`, {
-                method: 'POST',
-                headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
-                body: JSON.stringify({
-                    actual_end_time: actualEndTime.toISOString()
-                })
-            });
-
-            if (!response.ok) {
-                if (response.status === 404) {
-                    throw new Error("離開結算端點未找到（404），請確認後端服務是否運行，或檢查 API 路徑是否正確");
-                }
-                if (response.status === 401) {
-                    throw new Error("認證失敗，請重新登入！");
-                }
-
-                const contentType = response.headers.get('content-type');
-                if (contentType?.includes('application/json')) {
-                    const result = await response.json();
-                    throw new Error(result.error || result.message || `離開結算失敗！（錯誤碼：${response.status}）`);
-                } else {
-                    const text = await response.text();
-                    throw new Error(`後端返回非 JSON 響應：${text || '未知錯誤'}，請檢查伺服器配置`);
-                }
-            }
-
-            const contentType = response.headers.get('content-type');
-            if (!contentType?.includes('application/json')) {
-                const text = await response.text();
-                throw new Error(`後端返回非 JSON 響應：${text || '未知錯誤'}，請檢查伺服器配置`);
-            }
-
-            const result = await response.json();
-            console.log("離開結算回應:", result);
-
-            if (result.status === false) {
-                throw new Error(result.message || "離開結算失敗，後端未提供具體錯誤訊息");
-            }
-
-            const row = document.querySelector(`tr[data-id="${spotId}"]`);
-            if (row) {
-                row.classList.remove("confirmed");
-                row.classList.add("vacant");
-                row.querySelector(".leave-btn").disabled = true;
-                row.querySelector(".leave-btn").style.display = "none";
-                row.querySelector("td:nth-child(6)").textContent = "已結算";
-            }
-
-            map.markers.forEach(marker => {
-                const markerElement = marker.content;
-                if (markerElement && marker.title.includes(`車位 ${spotId}`)) {
-                    markerElement.style.backgroundColor = "green";
-                }
-            });
-
-            addToHistory(`車位 ${spotId} 離開結算，實際結束時間：${actualEndTime.toISOString()}`);
-            alert(`車位 ${spotId} 離開結算已完成！`);
-        } catch (error) {
-            console.error("Leave failed:", error);
             alert(error.message || "伺服器錯誤，請稍後再試！");
             if (error.message === "認證失敗，請重新登入！") {
                 removeToken();
