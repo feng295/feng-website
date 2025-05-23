@@ -1401,7 +1401,7 @@ document.addEventListener("DOMContentLoaded", async function () {
         const now = new Date();
         const currentHour = now.getHours().toString().padStart(2, '0');
         const currentMinute = now.getMinutes().toString().padStart(2, '0');
-        startTimeInput.value = `${currentHour}:${currentMinute}`; // 設置為當前時間 16:34
+        startTimeInput.value = `${currentHour}:${currentMinute}`; // 當前時間 16:53
         endTimeInput.value = "23:59"; // 設置為當天稍晚時間
 
         startTimeInput.min = `${currentHour}:${currentMinute}`;
@@ -1542,7 +1542,6 @@ document.addEventListener("DOMContentLoaded", async function () {
                 return;
             }
 
-            // 檢查每個車位的預約衝突，並過濾出未被預約的車位
             const spotDetailsPromises = spots.map(async (spot) => {
                 try {
                     const spotResponse = await fetch(`${API_URL}/parking/${spot.spot_id}`, {
@@ -1557,15 +1556,28 @@ document.addEventListener("DOMContentLoaded", async function () {
                     const availableDays = parkingSpot.available_days || [];
                     const isDateAvailable = availableDays.some(day => day.date === selectedDate && day.is_available);
 
-                    // 檢查時間段是否與現有預約衝突
+                    // 檢查預約結束時間
                     const existingRents = parkingSpot.rents || [];
+                    const now = new Date();
+                    const hasExpired = existingRents.every(rent => {
+                        const rentEnd = new Date(rent.end_time);
+                        return rentEnd < now; // 如果所有預約結束時間小於當前時間，則視為已過期
+                    });
+
+                    // 檢查時間段是否與現有預約衝突
                     const startTimeObj = new Date(startDateTimeStr);
                     const endTimeObj = new Date(endDateTimeStr);
                     const hasConflict = existingRents.some(rent => {
                         const rentStart = new Date(rent.start_time);
                         const rentEnd = new Date(rent.end_time);
-                        return (startTimeObj < rentEnd && endTimeObj > rentStart);
+                        return (startTimeObj < rentEnd && endTimeObj > rentStart) && !hasExpired;
                     });
+
+                    // 如果預約已結束，恢復為可用狀態
+                    if (hasExpired && (spot.status === "預約" || spot.status === "reserved")) {
+                        await updateSpotStatus(spot.spot_id, "available"); // 調用後端更新狀態
+                        spot.status = "available"; // 更新前端狀態
+                    }
 
                     return { spot, isDateAvailable, hasConflict };
                 } catch (error) {
@@ -1576,10 +1588,8 @@ document.addEventListener("DOMContentLoaded", async function () {
 
             const spotDetails = await Promise.all(spotDetailsPromises);
 
-            // 過濾出未被預約且日期可用的車位
             const availableSpots = spotDetails.filter(({ isDateAvailable, hasConflict }) => isDateAvailable && !hasConflict).map(({ spot }) => spot);
 
-            // 根據篩選條件進一步過濾
             let filteredSpots = availableSpots.filter(spot => {
                 let match = true;
                 if (searchQuery) match = match && (spot.spot_id.toString().toLowerCase().includes(searchQuery) || spot.location?.toLowerCase().includes(searchQuery));
@@ -1655,7 +1665,6 @@ document.addEventListener("DOMContentLoaded", async function () {
             parkingTableBody.innerHTML = '';
             const fragment = document.createDocumentFragment();
             spotDetails.forEach(({ spot, isDateAvailable, hasConflict }) => {
-                // 如果車位在指定時間段已被預約，則禁用預約按鈕
                 const isDisabled = !isDateAvailable || hasConflict || (spot.status !== "可用" && spot.status !== "available");
 
                 const row = document.createElement("tr");
@@ -1712,6 +1721,29 @@ document.addEventListener("DOMContentLoaded", async function () {
             if (event.key === "Enter") debouncedHandleReserveSearch();
         });
     }
+
+    // 更新車位狀態的輔助函數
+    async function updateSpotStatus(spotId, status) {
+        try {
+            const token = getToken();
+            if (!token) throw new Error("認證令牌缺失，請重新登入！");
+
+            const response = await fetch(`${API_URL}/parking/${spotId}/status`, {
+                method: 'PUT',
+                headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
+                body: JSON.stringify({ status })
+            });
+
+            if (!response.ok) {
+                throw new Error(`更新車位 ${spotId} 狀態失敗，狀態碼: ${response.status}`);
+            }
+
+            console.log(`車位 ${spotId} 狀態已更新為 ${status}`);
+        } catch (error) {
+            console.error(`更新車位 ${spotId} 狀態失敗:`, error);
+        }
+    }
+
     // 預約停車點擊處理
     async function handleReserveParkingClick(spotId, startDate, endDate, startTime, endTime, row) {
         if (!await checkAuth()) return;
