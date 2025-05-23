@@ -1358,11 +1358,9 @@ document.addEventListener("DOMContentLoaded", async function () {
     }
 
     // 設置預約停車
-    // 在 setupReserveParking 開始時清理舊的定時器
     let refreshIntervalId = null;
 
     async function setupReserveParking() {
-        // 清理舊的定時器
         if (refreshIntervalId) {
             clearInterval(refreshIntervalId);
             refreshIntervalId = null;
@@ -1403,10 +1401,9 @@ document.addEventListener("DOMContentLoaded", async function () {
         const now = new Date();
         const currentHour = now.getHours().toString().padStart(2, '0');
         const currentMinute = now.getMinutes().toString().padStart(2, '0');
-        startTimeInput.value = `${currentHour}:${currentMinute}`; // 設置為當前時間 15:00
+        startTimeInput.value = `${currentHour}:${currentMinute}`; // 設置為當前時間 16:34
         endTimeInput.value = "23:59"; // 設置為當天稍晚時間
 
-        // 設置最小時間為當前時間，防止選擇過去時間
         startTimeInput.min = `${currentHour}:${currentMinute}`;
         endTimeInput.min = `${currentHour}:${currentMinute}`;
 
@@ -1545,48 +1542,57 @@ document.addEventListener("DOMContentLoaded", async function () {
                 return;
             }
 
-            let filteredSpots = spots.filter(spot => {
-                let match = true;
-                if (searchQuery) match = match && (spot.spot_id.toString().toLowerCase().includes(searchQuery) || spot.location?.toLowerCase().includes(searchQuery));
-                if (filterCity !== "all") match = match && spot.location === filterCity;
-                if (filterType !== "all") match = match && spot.parking_type === filterType;
-                if (filterFloor !== "all") match = match && spot.floor_level === filterFloor;
-                if (filterPricing !== "all") match = match && spot.pricing_type === filterPricing;
-                if (filterStatus !== "all") match = match && (filterStatus === "available" ? spot.status === "可用" || spot.status === "available" : filterStatus === "occupied" ? ["已佔用", "occupied", "預約", "reserved"].includes(spot.status) : true);
-                return match;
-            });
-
-            if (filteredSpots.length === 0) {
-                parkingTableBody.innerHTML = '<tr><td colspan="7">無符合條件的車位，請嘗試更改篩選條件</td></tr>';
-                return;
-            }
-
-            const spotDetailsPromises = filteredSpots.map(async (spot) => {
+            // 檢查每個車位的預約衝突，並過濾出未被預約的車位
+            const spotDetailsPromises = spots.map(async (spot) => {
                 try {
                     const spotResponse = await fetch(`${API_URL}/parking/${spot.spot_id}`, {
                         headers: { "Content-Type": "application/json", "Authorization": `Bearer ${getToken()}` }
                     });
                     if (!spotResponse.ok) {
                         console.error(`Failed to fetch details for spot ${spot.spot_id}: ${spotResponse.status}`);
-                        return { spot, isDateAvailable: false };
+                        return { spot, isDateAvailable: false, hasConflict: false };
                     }
                     const spotData = await spotResponse.json();
                     const parkingSpot = spotData.data || spotData.parking_spot || spotData;
                     const availableDays = parkingSpot.available_days || [];
                     const isDateAvailable = availableDays.some(day => day.date === selectedDate && day.is_available);
-                    return { spot, isDateAvailable };
+
+                    // 檢查時間段是否與現有預約衝突
+                    const existingRents = parkingSpot.rents || [];
+                    const startTimeObj = new Date(startDateTimeStr);
+                    const endTimeObj = new Date(endDateTimeStr);
+                    const hasConflict = existingRents.some(rent => {
+                        const rentStart = new Date(rent.start_time);
+                        const rentEnd = new Date(rent.end_time);
+                        return (startTimeObj < rentEnd && endTimeObj > rentStart);
+                    });
+
+                    return { spot, isDateAvailable, hasConflict };
                 } catch (error) {
                     console.error(`Error fetching details for spot ${spot.spot_id}:`, error);
-                    return { spot, isDateAvailable: false };
+                    return { spot, isDateAvailable: false, hasConflict: false };
                 }
             });
 
             const spotDetails = await Promise.all(spotDetailsPromises);
 
-            const availableSpots = spotDetails.filter(({ isDateAvailable }) => isDateAvailable).map(({ spot }) => spot);
+            // 過濾出未被預約且日期可用的車位
+            const availableSpots = spotDetails.filter(({ isDateAvailable, hasConflict }) => isDateAvailable && !hasConflict).map(({ spot }) => spot);
 
-            if (availableSpots.length === 0) {
-                parkingTableBody.innerHTML = '<tr><td colspan="7">無可用車位，請嘗試更改日期或時間</td></tr>';
+            // 根據篩選條件進一步過濾
+            let filteredSpots = availableSpots.filter(spot => {
+                let match = true;
+                if (searchQuery) match = match && (spot.spot_id.toString().toLowerCase().includes(searchQuery) || spot.location?.toLowerCase().includes(searchQuery));
+                if (filterCity !== "all") match = match && spot.location === filterCity;
+                if (filterType !== "all") match = match && spot.parking_type === filterType;
+                if (filterFloor !== "all") match = match && spot.floor_level === filterFloor;
+                if (filterPricing !== "all") match = match && spot.pricing_type === filterPricing;
+                if (filterStatus !== "all") match = match && (filterStatus === "available" ? spot.status === "可用" || spot.status === "available" : filterStatus === "occupied" ? ["已佔用", "occupied"].includes(spot.status) : filterStatus === "reserved" ? ["預約", "reserved"].includes(spot.status) : true);
+                return match;
+            });
+
+            if (filteredSpots.length === 0) {
+                parkingTableBody.innerHTML = '<tr><td colspan="7">無符合條件的車位，請嘗試更改篩選條件</td></tr>';
                 reserveParkingMap.style.display = "none";
                 return;
             }
@@ -1597,7 +1603,7 @@ document.addEventListener("DOMContentLoaded", async function () {
             map.markers = [];
 
             const bounds = new google.maps.LatLngBounds();
-            availableSpots.forEach(spot => {
+            filteredSpots.forEach(spot => {
                 let latitude = spot.latitude;
                 let longitude = spot.longitude;
 
@@ -1608,13 +1614,10 @@ document.addEventListener("DOMContentLoaded", async function () {
                     markerElement.style.height = "20px";
                     markerElement.style.borderRadius = "50%";
                     markerElement.style.border = "2px solid white";
-                    console.log("Spot status:", spot.status);
                     if (spot.status === "可用" || spot.status === "available") {
                         markerElement.style.backgroundColor = "green";
                     } else if (spot.status === "已佔用" || spot.status === "occupied") {
                         markerElement.style.backgroundColor = "red";
-                    } else if (spot.status === "預約" || spot.status === "reserved") {
-                        markerElement.style.backgroundColor = "blue";
                     } else {
                         console.warn("Unknown status:", spot.status);
                         markerElement.style.backgroundColor = "gray";
@@ -1643,7 +1646,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 
             if (!bounds.isEmpty()) {
                 map.fitBounds(bounds);
-                if (availableSpots.length === 1) map.setZoom(15);
+                if (filteredSpots.length === 1) map.setZoom(15);
             } else {
                 map.setCenter({ lat: latitude, lng: longitude });
                 map.setZoom(15);
@@ -1651,7 +1654,10 @@ document.addEventListener("DOMContentLoaded", async function () {
 
             parkingTableBody.innerHTML = '';
             const fragment = document.createDocumentFragment();
-            spotDetails.forEach(({ spot, isDateAvailable }) => {
+            spotDetails.forEach(({ spot, isDateAvailable, hasConflict }) => {
+                // 如果車位在指定時間段已被預約，則禁用預約按鈕
+                const isDisabled = !isDateAvailable || hasConflict || (spot.status !== "可用" && spot.status !== "available");
+
                 const row = document.createElement("tr");
                 row.setAttribute("data-id", spot.spot_id);
                 row.classList.add(spot.status === "可用" || spot.status === "available" ? "available" : spot.status === "預約" || spot.status === "reserved" ? "reserved" : "occupied");
@@ -1668,19 +1674,13 @@ document.addEventListener("DOMContentLoaded", async function () {
                 <td>${spot.pricing_type === "hourly" ? "按小時" : "不適用"}</td>
                 <td>${priceDisplay}</td>
                 <td>
-                    <button class="reserve-btn" ${!isDateAvailable || (spot.status !== "可用" && spot.status !== "available") ? 'disabled' : ''}>預約</button>
-                    <button class="confirm-btn" style="display: ${spot.status === '預約' || spot.status === 'reserved' ? '' : 'none'};" data-spot-id="${spot.spot_id}">確認預約</button>
+                    <button class="reserve-btn" ${isDisabled ? 'disabled' : ''}>預約</button>
                 </td>
             `;
-                if (spot.status === "可用" || spot.status === "available" && isDateAvailable) {
+                if (!isDisabled) {
                     row.querySelector(".reserve-btn").addEventListener("click", () => {
                         handleReserveParkingClick(spot.spot_id, selectedDate, selectedDate, startTime, endTime, row);
                         setParkingSpotId(spot.spot_id);
-                    });
-                }
-                if (spot.status === "預約" || spot.status === "reserved") {
-                    row.querySelector(".confirm-btn").addEventListener("click", () => {
-                        confirmReservation(spot.spot_id);
                     });
                 }
                 fragment.appendChild(row);
@@ -1712,7 +1712,6 @@ document.addEventListener("DOMContentLoaded", async function () {
             if (event.key === "Enter") debouncedHandleReserveSearch();
         });
     }
-
     // 預約停車點擊處理
     async function handleReserveParkingClick(spotId, startDate, endDate, startTime, endTime, row) {
         if (!await checkAuth()) return;
@@ -1729,13 +1728,11 @@ document.addEventListener("DOMContentLoaded", async function () {
                 return;
             }
 
-            // 構建正確的日期時間格式，符合 RFC 3339 格式（包含時區）
             const startDateTimeObj = new Date(`${startDate}T${startTime}:00`);
             const endDateTimeObj = new Date(`${endDate}T${endTime}:00`);
             const startDateTime = startDateTimeObj.toISOString();
             const endDateTime = endDateTimeObj.toISOString();
 
-            // 檢查是否為過去時間
             const now = new Date();
             if (startDateTimeObj < now) {
                 throw new Error(`start_time 必須為當天 ${now.toLocaleDateString('zh-TW')} ${now.toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit' })} 之後或未來時間！`);
@@ -1744,7 +1741,6 @@ document.addEventListener("DOMContentLoaded", async function () {
                 throw new Error(`結束時間必須晚於開始時間 ${startTime}！`);
             }
 
-            // 檢查日期是否在 available_days 中
             const selectedDate = startDate;
             const token = getToken();
 
@@ -1764,7 +1760,6 @@ document.addEventListener("DOMContentLoaded", async function () {
                 throw new Error(`車位 ${spotId} 在 ${selectedDate} 無可用位置，無法預約！`);
             }
 
-            // 檢查時間段是否與現有預約衝突
             const existingRents = parkingSpot.rents || [];
             const startTimeObj = new Date(startDateTime);
             const endTimeObj = new Date(endDateTime);
@@ -1779,7 +1774,6 @@ document.addEventListener("DOMContentLoaded", async function () {
                 throw new Error(`車位 ${spotId} 在指定時間段（${startTime} 至 ${endTime}）已被預約，請選擇其他時間！`);
             }
 
-            // 發送預約請求
             const response = await fetch(`${API_URL}/rent/reserve`, {
                 method: 'POST',
                 headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
@@ -1790,7 +1784,6 @@ document.addEventListener("DOMContentLoaded", async function () {
                 })
             });
 
-            // 檢查響應狀態碼
             if (!response.ok) {
                 if (response.status === 404) {
                     throw new Error("預約端點未找到（404），請確認後端服務是否運行，或檢查 API 路徑是否正確");
@@ -1829,8 +1822,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                 const reserveBtn = row.querySelector(".reserve-btn");
                 reserveBtn.disabled = true;
                 reserveBtn.style.display = "none";
-                row.querySelector("td:nth-child(6)").textContent = "預約";
-                row.querySelector(".confirm-btn").style.display = "";
+                row.querySelector("td:nth-child(6)").textContent = "已預約";
             }
 
             // 更新地圖標記
@@ -1842,7 +1834,7 @@ document.addEventListener("DOMContentLoaded", async function () {
             });
 
             addToHistory(`預約車位 ${spotId} 於 ${startDateTime} 至 ${endDateTime}`);
-            alert(`車位 ${spotId} 已成功預約！請點擊「確認預約」完成。`);
+            alert(`車位 ${spotId} 已成功預約！`);
         } catch (error) {
             console.error("Reserve failed:", error);
             alert(error.message || "伺服器錯誤，請稍後再試！");
@@ -1852,87 +1844,6 @@ document.addEventListener("DOMContentLoaded", async function () {
             }
         }
     }
-
-    // 確認預約
-    async function confirmReservation(spotId) {
-        if (!await checkAuth()) return;
-
-        const role = getRole();
-        if (role !== "renter") {
-            alert("此功能僅限租用者使用！");
-            return;
-        }
-
-        try {
-            const token = getToken();
-            if (!token) throw new Error("認證令牌缺失，請重新登入！");
-
-            const response = await fetch(`${API_URL}/rent/${spotId}/confirm`, {
-                method: 'POST',
-                headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` }
-            });
-
-            if (!response.ok) {
-                if (response.status === 404) {
-                    throw new Error("確認預約端點未找到（404），請確認後端服務是否運行，或檢查 API 路徑是否正確");
-                }
-                if (response.status === 401) {
-                    throw new Error("認證失敗，請重新登入！");
-                }
-
-                const contentType = response.headers.get('content-type');
-                if (contentType?.includes('application/json')) {
-                    const result = await response.json();
-                    throw new Error(result.error || result.message || `確認失敗！（錯誤碼：${response.status}）`);
-                } else {
-                    const text = await response.text();
-                    throw new Error(`後端返回非 JSON 響應：${text || '未知錯誤'}，請檢查伺服器配置`);
-                }
-            }
-
-            const contentType = response.headers.get('content-type');
-            if (!contentType?.includes('application/json')) {
-                const text = await response.text();
-                throw new Error(`後端返回非 JSON 響應：${text || '未知錯誤'}，請檢查伺服器配置`);
-            }
-
-            const result = await response.json();
-            console.log("確認回應:", result);
-
-            if (result.status === false) {
-                throw new Error(result.message || "確認失敗，後端未提供具體錯誤訊息");
-            }
-
-            // 更新表格和地圖狀態
-            const row = document.querySelector(`tr[data-id="${spotId}"]`);
-            if (row) {
-                row.classList.remove("reserved");
-                row.classList.add("confirmed");
-                row.querySelector(".confirm-btn").disabled = true; // 禁用確認按鈕
-                row.querySelector(".confirm-btn").style.display = "none";
-                row.querySelector("td:nth-child(6)").textContent = "已確認";
-            }
-
-            // 更新地圖標記
-            map.markers.forEach(marker => {
-                const markerElement = marker.content;
-                if (markerElement && marker.title.includes(`車位 ${spotId}`)) {
-                    markerElement.style.backgroundColor = "purple"; // 改為紫色表示已確認（可自定義）
-                }
-            });
-
-            addToHistory(`確認車位 ${spotId} 預約`);
-            alert(`車位 ${spotId} 預約已成功確認！`);
-        } catch (error) {
-            console.error("Confirm failed:", error);
-            alert(error.message || "伺服器錯誤，請稍後再試！");
-            if (error.message === "認證失敗，請重新登入！") {
-                removeToken();
-                showLoginPage(true);
-            }
-        }
-    }
-
 
     // 設置收入查詢
     function setupIncomeInquiry() {
