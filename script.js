@@ -203,23 +203,23 @@ document.addEventListener("DOMContentLoaded", async function () {
 
         if (role === "shared_owner") {
             navList.innerHTML = `
-                <li><a href="#" class="nav-link" data-target="addParking">新增車位</a></li>
-                <li><a href="#" class="nav-link" data-target="My parking space">我的列表</a></li>
+                <li><a href="#" class="nav-link" data-target="addParking">車位資訊維護</a></li>
+                <li><a href="#" class="nav-link" data-target="My parking space">車位列表</a></li>
                 <li><a href="#" class="nav-link" data-target="incomeInquiry">收入查詢</a></li>
-                <li><a href="#" class="nav-link" data-target="profile">個人資料</a></li>
+                <li><a href="#" class="nav-link" data-target="profile">個人資訊</a></li>
             `;
         } else if (role === "renter") {
             navList.innerHTML = `
                 <li><a href="#" class="nav-link" data-target="reserveParking">預約車位</a></li>
-                <li><a href="#" class="nav-link" data-target="history">歷史紀錄</a></li>
-                <li><a href="#" class="nav-link" data-target="profile">個人資料</a></li>
+                <li><a href="#" class="nav-link" data-target="history">租用紀錄</a></li>
+                <li><a href="#" class="nav-link" data-target="profile">個人資訊</a></li>
             `;
         } else if (role === "admin") {
             navList.innerHTML = `
-                <li><a href="#" class="nav-link" data-target="addParking">新增車位</a></li>
-                <li><a href="#" class="nav-link" data-target="My parking space">我的車位</a></li>
+                <li><a href="#" class="nav-link" data-target="addParking">車位資訊維護</a></li>
+                <li><a href="#" class="nav-link" data-target="My parking space">車位車位</a></li>
                 <li><a href="#" class="nav-link" data-target="viewAllUsers">查看所有用戶資料</a></li>
-                <li><a href="#" class="nav-link" data-target="profile">個人資料</a></li>
+                <li><a href="#" class="nav-link" data-target="profile">個人資訊</a></li>
             `;
         }
 
@@ -281,7 +281,7 @@ document.addEventListener("DOMContentLoaded", async function () {
         });
     }
 
-    // 設置新增車位功能
+    // 設置新增車位車位資訊維護功能
     async function setupAddParking() {
         const role = getRole();
         console.log("Current role in setupAddParking:", role);
@@ -862,7 +862,7 @@ document.addEventListener("DOMContentLoaded", async function () {
         showLoginPage();
     });
 
-    // 設置我的列表
+    // 設置車位列表
     function setupMyParkingSpace() {
         const role = getRole();
         console.log("Current role in setupMyParkingSpace:", role);
@@ -874,7 +874,7 @@ document.addEventListener("DOMContentLoaded", async function () {
         const parkingTableBody = document.getElementById("My parking spaceTableBody");
         if (!parkingTableBody) {
             console.error("Required element not found for My parking space: parkingTableBody");
-            alert("無法載入「我的列表」頁面，頁面元素缺失，請聯繫管理員！");
+            alert("無法載入「車位列表」頁面，頁面元素缺失，請聯繫管理員！");
             return;
         }
 
@@ -1153,7 +1153,7 @@ document.addEventListener("DOMContentLoaded", async function () {
         loadAllSpots();
     }
 
-    // 設置個人資料
+    // 設置個人資訊
     function setupProfile() {
         const role = getRole();
         console.log("Current role in setupProfile:", role);
@@ -1165,7 +1165,7 @@ document.addEventListener("DOMContentLoaded", async function () {
         const profileSection = document.getElementById("profile");
         if (!profileSection) {
             console.error("profile section not found");
-            alert("無法載入「個人資料」頁面，頁面元素缺失，請聯繫管理員！");
+            alert("無法載入「個人資訊」頁面，頁面元素缺失，請聯繫管理員！");
             return;
         }
         profileSection.style.display = "block";
@@ -1185,7 +1185,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 
         if (!profileData || !editProfileForm || !editName || !editPhone || !editEmail || !editLicensePlate || !editCarModel || !editPaymentMethod || !editCardNumber || !saveProfileButton || !editProfileButton || !cancelEditProfileButton) {
             console.error("Required elements for profile section are missing");
-            alert("個人資料頁面元素缺失，請聯繫管理員！");
+            alert("個人資訊頁面元素缺失，請聯繫管理員！");
             return;
         }
 
@@ -1214,7 +1214,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                 const data = await response.json();
                 const profile = data.data || data.profile || data;
 
-                // 根據角色動態顯示個人資料
+                // 根據角色動態顯示個人資訊
                 let profileHTML = `
                     <p><strong>姓名：</strong> ${profile.name || '未提供'}</p>
                     <p><strong>電話：</strong> ${profile.phone || '未提供'}</p>
@@ -1248,7 +1248,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                 }
             } catch (error) {
                 console.error("Failed to load profile:", error);
-                profileData.innerHTML = `<p>載入個人資料失敗（錯誤: ${error.message}）</p>`;
+                profileData.innerHTML = `<p>載入個人資訊失敗（錯誤: ${error.message}）</p>`;
                 if (error.message.includes("認證失敗")) {
                     removeToken();
                     showLoginPage(true);
@@ -1326,13 +1326,13 @@ document.addEventListener("DOMContentLoaded", async function () {
                 }
 
                 const result = await response.json();
-                alert("個人資料更新成功！");
+                alert("個人資訊更新成功！");
                 editProfileForm.style.display = "none";
                 profileData.style.display = "block";
                 loadProfile();
             } catch (error) {
                 console.error("Failed to update profile:", error);
-                alert(`更新個人資料失敗（錯誤: ${error.message}）`);
+                alert(`更新個人資訊失敗（錯誤: ${error.message}）`);
                 if (error.message.includes("認證失敗")) {
                     removeToken();
                     showLoginPage(true);
@@ -2019,7 +2019,7 @@ async function setupReserveParking() {
         incomeSearchButton.addEventListener("click", handleIncomeSearch);
     }
 
-    // 添加歷史紀錄
+    // 添加租用紀錄
     function addToHistory(action) {
         const now = new Date();
         const timestamp = now.toLocaleString("zh-TW", { hour12: false });
@@ -2028,7 +2028,7 @@ async function setupReserveParking() {
         historyList.appendChild(listItem);
     }
 
-    // 載入歷史紀錄
+    // 載入租用紀錄
     async function loadHistory() {
         const role = getRole();
         console.log("Current role in loadHistory:", role);
@@ -2063,7 +2063,7 @@ async function setupReserveParking() {
             let data = responseData.data || responseData;
             if (!Array.isArray(data)) {
                 console.error("History data is not an array:", responseData);
-                alert("歷史紀錄格式錯誤，請檢查後端服務");
+                alert("租用紀錄格式錯誤，請檢查後端服務");
                 return;
             }
 
@@ -2099,7 +2099,7 @@ async function setupReserveParking() {
             console.error("Failed to load history:", error);
             const historyList = document.getElementById("historyList");
             if (historyList) {
-                historyList.innerHTML = "<li>無法載入歷史紀錄，請檢查後端服務</li>";
+                historyList.innerHTML = "<li>無法載入租用紀錄，請檢查後端服務</li>";
             }
             if (error.message === "認證失敗，請重新登入！") {
                 removeToken();
