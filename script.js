@@ -1405,13 +1405,13 @@ document.addEventListener("DOMContentLoaded", async function () {
             return;
         }
 
-        const now = new Date(); // 當前時間：2025-05-27 22:09 CST
+        const now = new Date(); // 當前時間：2025-05-27 22:19 CST
         const today = now.toISOString().split('T')[0];
         reserveDateInput.value = today; // 設為 2025-05-27
 
         const currentHour = now.getHours().toString().padStart(2, '0');
         const currentMinute = now.getMinutes().toString().padStart(2, '0');
-        startTimeInput.value = `${currentHour}:${currentMinute}`; // 設為 "22:09"
+        startTimeInput.value = `${currentHour}:${currentMinute}`; // 設為 "22:19"
 
         // 設置結束時間為開始時間後 1 小時，但不超過 23:59
         const endDateTime = new Date(now.getTime() + 60 * 60 * 1000); // 當前時間 + 1 小時
@@ -1420,7 +1420,7 @@ document.addEventListener("DOMContentLoaded", async function () {
         if (endHour >= 23 && endMinute > 59) {
             endTimeInput.value = "23:59"; // 如果超過 23:59，設為當天最後時間
         } else {
-            endTimeInput.value = `${endHour.toString().padStart(2, '0')}:${endMinute.toString().padStart(2, '0')}`; // 設為 "23:09"
+            endTimeInput.value = `${endHour.toString().padStart(2, '0')}:${endMinute.toString().padStart(2, '0')}`; // 設為 "23:19"
         }
 
         startTimeInput.min = `${currentHour}:${currentMinute}`; // 限制開始時間不早於當前時間
@@ -1480,12 +1480,6 @@ document.addEventListener("DOMContentLoaded", async function () {
 
             if (startDateTime >= endDateTime) {
                 alert("結束時間必須晚於開始時間！");
-                return;
-            }
-
-            const now = new Date(); // 當前時間：2025-05-27 22:09 CST
-            if (startDateTime < now) {
-                alert(`開始時間必須晚於或等於當前時間 ${now.toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit' })}！`);
                 return;
             }
 
