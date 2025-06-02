@@ -1225,13 +1225,25 @@ document.addEventListener("DOMContentLoaded", async function () {
                 const data = await response.json();
                 const profile = data.data || data.profile || data;
 
-                // 根據角色動態顯示個人資訊
+                // 根據角色動態顯示個人資訊，並隱藏信用卡號中間8碼
+                let maskedCardNumber = '未提供';
+                if (profile.payment_info) {
+                    const card = profile.payment_info.replace(/\D/g, ""); // 移除非數字字符
+                    if (card.length === 16) {
+                        const firstFour = card.slice(0, 4);
+                        const lastFour = card.slice(-4);
+                        maskedCardNumber = `${firstFour}-****-****-${lastFour}`;
+                    } else {
+                        maskedCardNumber = profile.payment_info; // 如果格式不正確，保持原樣
+                    }
+                }
+
                 let profileHTML = `
                     <p><strong>姓名：</strong> ${profile.name || '未提供'}</p>
                     <p><strong>電話：</strong> ${profile.phone || '未提供'}</p>
                     <p><strong>電子郵件：</strong> ${profile.email || '未提供'}</p>
                     <p><strong>付款方式：</strong> ${profile.payment_method || '未提供'}</p>
-                    <p><strong>信用卡號：</strong> ${profile.payment_info || '未提供'}</p>
+                    <p><strong>信用卡號：</strong> ${maskedCardNumber}</p>
                 `;
 
                 if (role === "renter") {
