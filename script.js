@@ -1404,13 +1404,13 @@ document.addEventListener("DOMContentLoaded", async function () {
             return;
         }
 
-        const now = new Date(); // 當前時間：2025-06-02 14:49 CST
+        const now = new Date(); // 當前時間：2025-06-02 15:02 CST
         const today = now.toISOString().split('T')[0];
         reserveDateInput.value = today; // 設為 2025-06-02
 
         const currentHour = now.getHours().toString().padStart(2, '0');
         const currentMinute = now.getMinutes().toString().padStart(2, '0');
-        startTimeInput.value = `${currentHour}:${currentMinute}`; // 設為 "14:49"
+        startTimeInput.value = `${currentHour}:${currentMinute}`; // 設為 "15:02"
 
         // 設置結束時間為開始時間後 1 小時，但不超過 23:59
         const endDateTime = new Date(now.getTime() + 60 * 60 * 1000); // 當前時間 + 1 小時
@@ -1419,7 +1419,7 @@ document.addEventListener("DOMContentLoaded", async function () {
         if (endHour >= 23 && endMinute > 59) {
             endTimeInput.value = "23:59"; // 如果超過 23:59，設為當天最後時間
         } else {
-            endTimeInput.value = `${endHour.toString().padStart(2, '0')}:${endMinute.toString().padStart(2, '0')}`; // 設為 "15:49"
+            endTimeInput.value = `${endHour.toString().padStart(2, '0')}:${endMinute.toString().padStart(2, '0')}`; // 設為 "16:02"
         }
 
         startTimeInput.min = `${currentHour}:${currentMinute}`; // 限制開始時間不早於當前時間
@@ -1454,8 +1454,49 @@ document.addEventListener("DOMContentLoaded", async function () {
                 });
                 map.markers = [];
                 window.map = map;
+
+                // 添加用戶位置標記
+                const userMarkerElement = document.createElement("div");
+                userMarkerElement.style.width = "15px";
+                userMarkerElement.style.height = "15px";
+                userMarkerElement.style.borderRadius = "50%";
+                userMarkerElement.style.backgroundColor = "blue";
+                userMarkerElement.style.border = "2px solid white";
+
+                const userMarker = new google.maps.marker.AdvancedMarkerElement({
+                    position: { lat: userLatitude, lng: userLongitude },
+                    map: map,
+                    content: userMarkerElement,
+                    title: "您的位置"
+                });
+                map.markers.push(userMarker);
             } else {
                 map.setCenter({ lat: userLatitude, lng: userLongitude }); // 更新既有地圖的中心
+
+                // 更新或添加用戶位置標記
+                let userMarkerExists = map.markers.some(marker => marker.title === "您的位置");
+                if (!userMarkerExists) {
+                    const userMarkerElement = document.createElement("div");
+                    userMarkerElement.style.width = "15px";
+                    userMarkerElement.style.height = "15px";
+                    userMarkerElement.style.borderRadius = "50%";
+                    userMarkerElement.style.backgroundColor = "blue";
+                    userMarkerElement.style.border = "2px solid white";
+
+                    const userMarker = new google.maps.marker.AdvancedMarkerElement({
+                        position: { lat: userLatitude, lng: userLongitude },
+                        map: map,
+                        content: userMarkerElement,
+                        title: "您的位置"
+                    });
+                    map.markers.push(userMarker);
+                } else {
+                    map.markers.forEach(marker => {
+                        if (marker.title === "您的位置") {
+                            marker.position = { lat: userLatitude, lng: userLongitude };
+                        }
+                    });
+                }
             }
             reserveParkingMap.style.display = "none";
         } catch (error) {
@@ -1511,7 +1552,15 @@ document.addEventListener("DOMContentLoaded", async function () {
                 });
                 latitude = position.coords.latitude;
                 longitude = position.coords.longitude;
-                if (map) map.setCenter({ lat: latitude, lng: longitude });
+                if (map) {
+                    map.setCenter({ lat: latitude, lng: longitude });
+                    // 更新用戶位置標記
+                    map.markers.forEach(marker => {
+                        if (marker.title === "您的位置") {
+                            marker.position = { lat: latitude, lng: longitude };
+                        }
+                    });
+                }
             } catch (error) {
                 console.warn("Failed to get user location, using previously set location:", error.message);
                 alert("無法獲取您的位置，將使用先前設定的位置。請確保已允許位置權限。");
@@ -1785,7 +1834,7 @@ document.addEventListener("DOMContentLoaded", async function () {
             const startDateTime = startDateTimeObj.toISOString();
             const endDateTime = endDateTimeObj.toISOString();
 
-            const now = new Date(); // 當前時間：2025-06-02 14:49 CST
+            const now = new Date(); // 當前時間：2025-06-02 15:02 CST
             if (startDateTimeObj < now) {
                 throw new Error(`開始時間必須晚於或等於當前時間 ${now.toLocaleDateString('zh-TW')} ${now.toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit' })}！`);
             }
