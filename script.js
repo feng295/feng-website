@@ -1396,7 +1396,6 @@ document.addEventListener("DOMContentLoaded", async function () {
         const reserveCity = document.getElementById("reserveCity");
         const reserveParkingType = document.getElementById("reserveParkingType");
         const reserveFloor = document.getElementById("reserveFloor");
-        const reserveStatus = document.getElementById("reserveStatus");
         const parkingTableBody = document.getElementById("reserveParkingTableBody");
         const reserveParkingMap = document.getElementById("reserveParkingMap");
 
@@ -1405,55 +1404,58 @@ document.addEventListener("DOMContentLoaded", async function () {
             return;
         }
 
-        const now = new Date(); // 當前時間：2025-05-28 23:43 CST
+        const now = new Date("2025-05-31T15:29:00+08:00"); // 當前時間：2025-05-31 15:29 CST
         const today = now.toISOString().split('T')[0];
-        reserveDateInput.value = today; // 設為 2025-05-28
+        reserveDateInput.value = today; // 設為 2025-05-31
 
         const currentHour = now.getHours().toString().padStart(2, '0');
         const currentMinute = now.getMinutes().toString().padStart(2, '0');
-        startTimeInput.value = `${currentHour}:${currentMinute}`; // 設為 "23:43"
+        startTimeInput.value = `${currentHour}:${currentMinute}`; // 設為 "15:29"
 
         // 設置結束時間為開始時間後 1 小時，但不超過 23:59
-        const startDateTime = new Date(`${today}T${startTimeInput.value}:00`);
-        const endDateTime = new Date(startDateTime.getTime() + 60 * 60 * 1000); // 開始時間 + 1 小時
+        const endDateTime = new Date(now.getTime() + 60 * 60 * 1000); // 當前時間 + 1 小時
         const endHour = endDateTime.getHours();
         const endMinute = endDateTime.getMinutes();
-        if (endDateTime.getDate() !== startDateTime.getDate() || endHour >= 24) {
-            endTimeInput.value = "23:59"; // 跨天或超過 23:59，設為當天 23:59
+        if (endHour >= 23 && endMinute > 59) {
+            endTimeInput.value = "23:59"; // 如果超過 23:59，設為當天最後時間
         } else {
-            endTimeInput.value = `${endHour.toString().padStart(2, '0')}:${endMinute.toString().padStart(2, '0')}`; // 設為 "00:43"（若未跨天）
+            endTimeInput.value = `${endHour.toString().padStart(2, '0')}:${endMinute.toString().padStart(2, '0')}`; // 設為 "16:29"
         }
 
-        // 設置開始時間和結束時間的最小值
         startTimeInput.min = `${currentHour}:${currentMinute}`; // 限制開始時間不早於當前時間
-        endTimeInput.min = startTimeInput.value; // 結束時間不早於開始時間
-
-        // 動態更新結束時間的最小值
-        startTimeInput.addEventListener("change", () => {
-            const startDateTime = new Date(`${reserveDateInput.value}T${startTimeInput.value}:00`);
-            const endDateTime = new Date(startDateTime.getTime() + 60 * 60 * 1000); // 開始時間 + 1 小時
-            const endHour = endDateTime.getHours();
-            const endMinute = endDateTime.getMinutes();
-            if (endDateTime.getDate() !== startDateTime.getDate() || endHour >= 24) {
-                endTimeInput.value = "23:59"; // 跨天或超過 23:59，設為當天 23:59
-            } else {
-                endTimeInput.value = `${endHour.toString().padStart(2, '0')}:${endMinute.toString().padStart(2, '0')}`;
-            }
-            endTimeInput.min = startTimeInput.value; // 更新結束時間最小值
-        });
+        endTimeInput.min = `${currentHour}:${currentMinute}`; // 限制結束時間不早於當前時間
 
         let map;
+        let userLatitude, userLongitude;
+
+        // 嘗試獲取用戶當前位置
+        try {
+            const position = await new Promise((resolve, reject) => {
+                if (!navigator.geolocation) reject(new Error("瀏覽器不支援地理位置功能"));
+                navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 10000, maximumAge: 0 });
+            });
+            userLatitude = position.coords.latitude;
+            userLongitude = position.coords.longitude;
+        } catch (error) {
+            console.warn("Failed to get user location, using default:", error.message);
+            alert("無法獲取您的位置，將使用預設位置（國立澎湖科技大學）。請確保已允許位置權限。");
+            userLatitude = 23.57461380558428; // 預設位置
+            userLongitude = 119.58110318336162;
+        }
+
         try {
             await waitForGoogleMaps();
             map = window.map || null;
             if (!map) {
                 map = new google.maps.Map(reserveParkingMap, {
-                    center: { lat: 23.57461380558428, lng: 119.58110318336162 },
+                    center: { lat: userLatitude, lng: userLongitude }, // 以用戶位置為中心
                     zoom: 15,
                     mapId: "4a9410e1706e086d447136ee"
                 });
                 map.markers = [];
                 window.map = map;
+            } else {
+                map.setCenter({ lat: userLatitude, lng: userLongitude }); // 更新既有地圖的中心
             }
             reserveParkingMap.style.display = "none";
         } catch (error) {
@@ -1477,7 +1479,6 @@ document.addEventListener("DOMContentLoaded", async function () {
             const filterCity = reserveCity ? reserveCity.value : 'all';
             const filterType = reserveParkingType ? reserveParkingType.value : 'all';
             const filterFloor = reserveFloor ? reserveFloor.value : 'all';
-            const filterStatus = reserveStatus ? reserveStatus.value : 'all';
 
             const selectedDateObj = new Date(selectedDate);
             const today = new Date();
@@ -1501,8 +1502,8 @@ document.addEventListener("DOMContentLoaded", async function () {
 
             parkingTableBody.innerHTML = '<tr><td colspan="7">載入中...</td></tr>';
 
-            let latitude = 23.57461380558428;
-            let longitude = 119.58110318336162;
+            let latitude = userLatitude;
+            let longitude = userLongitude;
             try {
                 const position = await new Promise((resolve, reject) => {
                     if (!navigator.geolocation) reject(new Error("瀏覽器不支援地理位置功能"));
@@ -1512,8 +1513,8 @@ document.addEventListener("DOMContentLoaded", async function () {
                 longitude = position.coords.longitude;
                 if (map) map.setCenter({ lat: latitude, lng: longitude });
             } catch (error) {
-                console.warn("Failed to get user location, using default:", error.message);
-                alert("無法獲取您的位置，將使用預設位置（國立澎湖科技大學）。請確保已允許位置權限。");
+                console.warn("Failed to get user location, using previously set location:", error.message);
+                alert("無法獲取您的位置，將使用先前設定的位置。請確保已允許位置權限。");
                 if (map) map.setCenter({ lat: latitude, lng: longitude });
             }
 
@@ -1621,7 +1622,6 @@ document.addEventListener("DOMContentLoaded", async function () {
                 if (filterCity !== "all") match = match && spot.location === filterCity;
                 if (filterType !== "all") match = match && spot.parking_type === filterType;
                 if (filterFloor !== "all") match = match && spot.floor_level === filterFloor;
-                if (filterStatus !== "all") match = match && (filterStatus === "available" ? spot.status === "可用" || spot.status === "available" : filterStatus === "occupied" ? ["已佔用", "occupied"].includes(spot.status) : filterStatus === "reserved" ? ["預約", "reserved"].includes(spot.status) : true);
                 return match;
             });
 
@@ -1702,16 +1702,16 @@ document.addEventListener("DOMContentLoaded", async function () {
                     : "不適用";
 
                 row.innerHTML = `
-                    <td>${spot.spot_id}</td>
-                    <td>${spot.location || '未知'}</td>
-                    <td>${spot.parking_type === "flat" ? "平面" : "機械"}</td>
-                    <td>${spot.floor_level === "ground" ? "地面" : `地下${spot.floor_level.startsWith("B") ? spot.floor_level.slice(1) : spot.floor_level}樓`}</td>
-                    <td>${spot.pricing_type === "hourly" ? "按小時" : "不適用"}</td>
-                    <td>${priceDisplay}</td>
-                    <td>
-                        <button class="reserve-btn" ${isDisabled ? 'disabled' : ''}>預約</button>
-                    </td>
-                `;
+                <td>${spot.spot_id}</td>
+                <td>${spot.location || '未知'}</td>
+                <td>${spot.parking_type === "flat" ? "平面" : "機械"}</td>
+                <td>${spot.floor_level === "ground" ? "地面" : `地下${spot.floor_level.startsWith("B") ? spot.floor_level.slice(1) : spot.floor_level}樓`}</td>
+                <td>${spot.pricing_type === "hourly" ? "按小時" : "不適用"}</td>
+                <td>${priceDisplay}</td>
+                <td>
+                    <button class="reserve-btn" ${isDisabled ? 'disabled' : ''}>預約</button>
+                </td>
+            `;
                 if (!isDisabled) {
                     row.querySelector(".reserve-btn").addEventListener("click", () => {
                         handleReserveParkingClick(spot.spot_id, selectedDate, selectedDate, startTime, endTime, row);
@@ -1785,7 +1785,7 @@ document.addEventListener("DOMContentLoaded", async function () {
             const startDateTime = startDateTimeObj.toISOString();
             const endDateTime = endDateTimeObj.toISOString();
 
-            const now = new Date(); // 當前時間：2025-05-28 23:43 CST
+            const now = new Date(); // 當前時間：2025-05-31 15:25 CST
             if (startDateTimeObj < now) {
                 throw new Error(`開始時間必須晚於或等於當前時間 ${now.toLocaleDateString('zh-TW')} ${now.toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit' })}！`);
             }
