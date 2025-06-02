@@ -2202,20 +2202,25 @@ document.addEventListener("DOMContentLoaded", async function () {
                     ? new Date(record.actual_end_time).toLocaleString("zh-TW", { hour12: false })
                     : (record.status === "pending" ? "尚未結束" : "已取消或無實際結束時間");
                 let statusText = "";
+                let statusColor = "";
                 switch (record.status) {
                     case "completed":
                         statusText = "已完成";
+                        statusColor = "green";
                         break;
                     case "canceled":
                         statusText = "已取消";
+                        statusColor = "red";
                         break;
                     case "pending":
                         statusText = "待處理";
+                        statusColor = "orange";
                         break;
                     default:
                         statusText = "未知狀態";
+                        statusColor = "gray";
                 }
-                listItem.textContent = `租用車位 ${record.spot_id} (Rent ID: ${record.rent_id}) - 開始時間: ${startTime}, 結束時間: ${endTime}, 費用: ${record.total_cost} 元, 狀態: ${statusText}`;
+                listItem.innerHTML = `租用車位 ${record.spot_id} (Rent ID: ${record.rent_id}) - 開始時間: ${startTime}, 結束時間: ${endTime}, 費用: ${record.total_cost} 元, 狀態: <span style="color: ${statusColor}">${statusText}</span>`;
                 historyList.appendChild(listItem);
             });
         } catch (error) {
