@@ -1427,16 +1427,16 @@ document.addEventListener("DOMContentLoaded", async function () {
             return;
         }
 
-        const now = new Date(); // Current time: 2025-06-03 20:24 CST
+        const now = new Date(); // Current time: 2025-06-03 20:57 CST
         const today = now.toISOString().split('T')[0];
         reserveDateInput.value = today; // Set to 2025-06-03
 
         const currentHour = now.getHours().toString().padStart(2, '0');
         const currentMinute = now.getMinutes().toString().padStart(2, '0');
-        startTimeInput.value = `${currentHour}:${currentMinute}`; // Set to "20:24"
+        startTimeInput.value = `${currentHour}:${currentMinute}`; // Set to "20:57"
         startTimeInput.min = `${currentHour}:${currentMinute}`; // Restrict start time to current or later
 
-        endTimeInput.value = `${(parseInt(currentHour) + 1).toString().padStart(2, '0')}:${currentMinute}`; // Set to "21:24"
+        endTimeInput.value = `${(parseInt(currentHour) + 1).toString().padStart(2, '0')}:${currentMinute}`; // Set to "21:57"
         endTimeInput.min = "00:00"; // Allow midnight start
 
         let map;
@@ -1468,54 +1468,10 @@ document.addEventListener("DOMContentLoaded", async function () {
                 map.markers = [];
                 window.map = map;
 
-                // Add user marker (red pin with exclamation)
-                const userMarkerElement = document.createElement("div");
-                userMarkerElement.style.width = "30px";
-                userMarkerElement.style.height = "40px";
-                userMarkerElement.style.background = "red";
-                userMarkerElement.style.borderRadius = "50% 50% 50% 0";
-                userMarkerElement.style.position = "relative";
-                userMarkerElement.style.transform = "rotate(-45deg)";
-                userMarkerElement.style.overflow = "hidden";
-
-                const dot = document.createElement("div");
-                dot.style.width = "10px";
-                dot.style.height = "10px";
-                dot.style.background = "black";
-                dot.style.borderRadius = "50%";
-                dot.style.position = "absolute";
-                dot.style.top = "50%";
-                dot.style.left = "50%";
-                dot.style.transform = "translate(-50%, -50%)";
-
-                const exclamation = document.createElement("div");
-                exclamation.style.width = "10px";
-                exclamation.style.height = "15px";
-                exclamation.style.background = "white";
-                exclamation.style.position = "absolute";
-                exclamation.style.top = "25%";
-                exclamation.style.left = "50%";
-                exclamation.style.transform = "translate(-50%, 0)";
-                exclamation.style.borderRadius = "2px";
-
-                const dotBottom = document.createElement("div");
-                dotBottom.style.width = "10px";
-                dotBottom.style.height = "5px";
-                dotBottom.style.background = "white";
-                dotBottom.style.position = "absolute";
-                dotBottom.style.top = "50%";
-                dotBottom.style.left = "50%";
-                dotBottom.style.transform = "translate(-50%, 0)";
-                dotBottom.style.borderRadius = "50%";
-
-                userMarkerElement.appendChild(dot);
-                userMarkerElement.appendChild(exclamation);
-                userMarkerElement.appendChild(dotBottom);
-
+                // Add user marker (default Google Maps marker style, consistent with setupAddParking)
                 const userMarker = new google.maps.marker.AdvancedMarkerElement({
                     position: { lat: userLatitude, lng: userLongitude },
                     map: map,
-                    content: userMarkerElement,
                     title: "您的位置"
                 });
                 map.markers.push(userMarker);
@@ -1524,53 +1480,9 @@ document.addEventListener("DOMContentLoaded", async function () {
 
                 let userMarkerExists = map.markers.some(marker => marker.title === "您的位置");
                 if (!userMarkerExists) {
-                    const userMarkerElement = document.createElement("div");
-                    userMarkerElement.style.width = "30px";
-                    userMarkerElement.style.height = "40px";
-                    userMarkerElement.style.background = "red";
-                    userMarkerElement.style.borderRadius = "50% 50% 50% 0";
-                    userMarkerElement.style.position = "relative";
-                    userMarkerElement.style.transform = "rotate(-45deg)";
-                    userMarkerElement.style.overflow = "hidden";
-
-                    const dot = document.createElement("div");
-                    dot.style.width = "10px";
-                    dot.style.height = "10px";
-                    dot.style.background = "black";
-                    dot.style.borderRadius = "50%";
-                    dot.style.position = "absolute";
-                    dot.style.top = "50%";
-                    dot.style.left = "50%";
-                    dot.style.transform = "translate(-50%, -50%)";
-
-                    const exclamation = document.createElement("div");
-                    exclamation.style.width = "10px";
-                    exclamation.style.height = "15px";
-                    exclamation.style.background = "white";
-                    exclamation.style.position = "absolute";
-                    exclamation.style.top = "25%";
-                    exclamation.style.left = "50%";
-                    exclamation.style.transform = "translate(-50%, 0)";
-                    exclamation.style.borderRadius = "2px";
-
-                    const dotBottom = document.createElement("div");
-                    dotBottom.style.width = "10px";
-                    dotBottom.style.height = "5px";
-                    dotBottom.style.background = "white";
-                    dotBottom.style.position = "absolute";
-                    dotBottom.style.top = "50%";
-                    dotBottom.style.left = "50%";
-                    dotBottom.style.transform = "translate(-50%, 0)";
-                    dotBottom.style.borderRadius = "50%";
-
-                    userMarkerElement.appendChild(dot);
-                    userMarkerElement.appendChild(exclamation);
-                    userMarkerElement.appendChild(dotBottom);
-
                     const userMarker = new google.maps.marker.AdvancedMarkerElement({
                         position: { lat: userLatitude, lng: userLongitude },
                         map: map,
-                        content: userMarkerElement,
                         title: "您的位置"
                     });
                     map.markers.push(userMarker);
@@ -1812,54 +1724,10 @@ document.addEventListener("DOMContentLoaded", async function () {
                 }
             });
 
-            // Re-add user marker (red pin with exclamation)
-            const userMarkerElement = document.createElement("div");
-            userMarkerElement.style.width = "30px";
-            userMarkerElement.style.height = "40px";
-            userMarkerElement.style.background = "red";
-            userMarkerElement.style.borderRadius = "50% 50% 50% 0";
-            userMarkerElement.style.position = "relative";
-            userMarkerElement.style.transform = "rotate(-45deg)";
-            userMarkerElement.style.overflow = "hidden";
-
-            const dot = document.createElement("div");
-            dot.style.width = "10px";
-            dot.style.height = "10px";
-            dot.style.background = "black";
-            dot.style.borderRadius = "50%";
-            dot.style.position = "absolute";
-            dot.style.top = "50%";
-            dot.style.left = "50%";
-            dot.style.transform = "translate(-50%, -50%)";
-
-            const exclamation = document.createElement("div");
-            exclamation.style.width = "10px";
-            exclamation.style.height = "15px";
-            exclamation.style.background = "white";
-            exclamation.style.position = "absolute";
-            exclamation.style.top = "25%";
-            exclamation.style.left = "50%";
-            exclamation.style.transform = "translate(-50%, 0)";
-            exclamation.style.borderRadius = "2px";
-
-            const dotBottom = document.createElement("div");
-            dotBottom.style.width = "10px";
-            dotBottom.style.height = "5px";
-            dotBottom.style.background = "white";
-            dotBottom.style.position = "absolute";
-            dotBottom.style.top = "50%";
-            dotBottom.style.left = "50%";
-            dotBottom.style.transform = "translate(-50%, 0)";
-            dotBottom.style.borderRadius = "50%";
-
-            userMarkerElement.appendChild(dot);
-            userMarkerElement.appendChild(exclamation);
-            userMarkerElement.appendChild(dotBottom);
-
+            // Re-add user marker (default Google Maps marker style, consistent with setupAddParking)
             const userMarker = new google.maps.marker.AdvancedMarkerElement({
                 position: { lat: latitude, lng: longitude },
                 map: map,
-                content: userMarkerElement,
                 title: "您的位置"
             });
             map.markers.push(userMarker);
@@ -1967,7 +1835,7 @@ document.addEventListener("DOMContentLoaded", async function () {
             const startDateTime = startDateTimeObj.toISOString();
             const endDateTime = endDateTimeObj.toISOString();
 
-            const now = new Date(); // Current time: 2025-06-03 20:24 CST
+            const now = new Date(); // Current time: 2025-06-03 20:57 CST
             if (startDateTimeObj < now) {
                 throw new Error(`開始時間必須晚於或等於當前時間 ${now.toLocaleDateString('zh-TW')} ${now.toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit' })}！`);
             }
