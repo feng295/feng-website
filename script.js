@@ -908,7 +908,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                 <form id="editParkingForm">
                     <input type="hidden" id="editSpotId" value="${spot.spot_id || ''}">
                     <div>
-                        <label>位置：</label>
+                        <label>地址：</label>
                         <input type="text" id="editLocation" value="${spot.location || ''}" maxlength="50" required>
                     </div>
                     <div>
@@ -919,7 +919,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                         </select>
                     </div>
                     <div>
-                        <label>樓層（"ground", "1F", "B1" 等，留空將使用預設值 "ground"）：</label>
+                        <label>樓層：</label>
                         <input type="text" id="editFloorLevel" value="${spot.floor_level || ''}" maxlength="20" placeholder="例如: ground, 1F, B1">
                     </div>
                     <div>
