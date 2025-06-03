@@ -1427,26 +1427,18 @@ document.addEventListener("DOMContentLoaded", async function () {
             return;
         }
 
-        const now = new Date(); // 當前時間：2025-06-02 15:10 CST
-        const today = now.toISOString().split('T')[0];
-        reserveDateInput.value = today; // 設為 2025-06-02
+        const loginTime = getLoginTime(); // 假設這是用戶登入時間的函數，返回 Date 物件
+        const today = loginTime.toISOString().split('T')[0];
+        reserveDateInput.value = today; // 設為登入日期，例如 2025-06-03
 
-        const currentHour = now.getHours().toString().padStart(2, '0');
-        const currentMinute = now.getMinutes().toString().padStart(2, '0');
-        startTimeInput.value = `${currentHour}:${currentMinute}`; // 設為 "15:10"
+        const loginHour = loginTime.getHours().toString().padStart(2, '0');
+        const loginMinute = loginTime.getMinutes().toString().padStart(2, '0');
+        startTimeInput.value = `${loginHour}:${loginMinute}`; // 設為登入時間，例如 "19:20"
+        startTimeInput.min = `${loginHour}:${loginMinute}`; // 限制開始時間不早於登入時間
 
-        // 設置結束時間為開始時間後 1 小時，但不超過 23:59
-        const endDateTime = new Date(now.getTime() + 60 * 60 * 1000); // 當前時間 + 1 小時
-        const endHour = endDateTime.getHours();
-        const endMinute = endDateTime.getMinutes();
-        if (endHour >= 23 && endMinute > 59) {
-            endTimeInput.value = "23:59"; // 如果超過 23:59，設為當天最後時間
-        } else {
-            endTimeInput.value = `${endHour.toString().padStart(2, '0')}:${endMinute.toString().padStart(2, '0')}`; // 設為 "16:10"
-        }
-
-        startTimeInput.min = `${currentHour}:${currentMinute}`; // 限制開始時間不早於當前時間
-        endTimeInput.min = `${currentHour}:${currentMinute}`; // 限制結束時間不早於當前時間
+        // 移除結束時間的日期限制，允許跨日
+        endTimeInput.value = `${(parseInt(loginHour) + 1).toString().padStart(2, '0')}:${loginMinute}`; // 設為登入時間後 1 小時，例如 "20:20"
+        endTimeInput.min = "00:00"; // 允許從午夜開始
 
         let map;
         let userLatitude, userLongitude;
@@ -1853,7 +1845,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 
             const response = await fetch(`${API_URL}/parking/${spotId}/status`, {
                 method: 'PUT',
-                headers: { "Content-Type": "application/json", "Authorization": ` Bearer ${token}` },
+                headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
                 body: JSON.stringify({ status })
             });
 
@@ -1888,7 +1880,7 @@ document.addEventListener("DOMContentLoaded", async function () {
             const startDateTime = startDateTimeObj.toISOString();
             const endDateTime = endDateTimeObj.toISOString();
 
-            const now = new Date(); // 當前時間：2025-06-02 15:10 CST
+            const now = new Date(); // 當前時間：2025-06-03 19:20 CST
             if (startDateTimeObj < now) {
                 throw new Error(`開始時間必須晚於或等於當前時間 ${now.toLocaleDateString('zh-TW')} ${now.toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit' })}！`);
             }
