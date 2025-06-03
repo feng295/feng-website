@@ -1392,7 +1392,7 @@ document.addEventListener("DOMContentLoaded", async function () {
     }
 
     // 設置預約停車
-    let refreshIntervalId = null;
+let refreshIntervalId = null;
 
     async function setupReserveParking() {
         if (refreshIntervalId) {
