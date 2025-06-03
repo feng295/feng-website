@@ -1401,7 +1401,7 @@ document.addEventListener("DOMContentLoaded", async function () {
         }
 
         const role = getRole();
-        console.log("Current role in setupReserveParking:", role);
+        console.log("User role in setupReserveParking:", role);
         if (role !== "renter" && role !== "shared_owner") {
             alert("此功能僅限租用者或共享車主使用！");
             return;
@@ -1423,39 +1423,37 @@ document.addEventListener("DOMContentLoaded", async function () {
         const reserveParkingMap = document.getElementById("reserveParkingMap");
 
         if (!reserveDateInput || !startTimeInput || !endTimeInput || !reserveSearchButton || !parkingTableBody || !reserveParkingMap) {
-            console.warn("Required elements not found for reserveParking");
+            console.warn("Required elements for reserveParking not found.");
             return;
         }
 
-        const now = new Date(); // 當前時間：2025-06-03 19:42 CST
+        const now = new Date(); // Current time: 2025-06-03 20:24 CST
         const today = now.toISOString().split('T')[0];
-        reserveDateInput.value = today; // 設為 2025-06-03
+        reserveDateInput.value = today; // Set to 2025-06-03
 
         const currentHour = now.getHours().toString().padStart(2, '0');
         const currentMinute = now.getMinutes().toString().padStart(2, '0');
-        startTimeInput.value = `${currentHour}:${currentMinute}`; // 設為 "19:42"
-        startTimeInput.min = `${currentHour}:${currentMinute}`; // 限制開始時間不早於當前時間
+        startTimeInput.value = `${currentHour}:${currentMinute}`; // Set to "20:24"
+        startTimeInput.min = `${currentHour}:${currentMinute}`; // Restrict start time to current or later
 
-        // 移除結束時間的日期限制，允許跨日
-        endTimeInput.value = `${(parseInt(currentHour) + 1).toString().padStart(2, '0')}:${currentMinute}`; // 設為 "20:42"
-        endTimeInput.min = "00:00"; // 允許從午夜開始
+        endTimeInput.value = `${(parseInt(currentHour) + 1).toString().padStart(2, '0')}:${currentMinute}`; // Set to "21:24"
+        endTimeInput.min = "00:00"; // Allow midnight start
 
         let map;
         let userLatitude, userLongitude;
 
-        // 嘗試獲取用戶當前位置
         try {
             const position = await new Promise((resolve, reject) => {
-                if (!navigator.geolocation) reject(new Error("瀏覽器不支援地理位置功能"));
+                if (!navigator.geolocation) reject(new Error("Geolocation not supported by browser"));
                 navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 10000, maximumAge: 0 });
             });
             userLatitude = position.coords.latitude;
             userLongitude = position.coords.longitude;
         } catch (error) {
-            console.warn("Failed to get user location, using default:", error.message);
-            alert("無法獲取您的位置，將使用預設位置（國立澎湖科技大學）。請確保已允許位置權限。");
-            userLatitude = 23.57461380558428; // 預設位置
-            userLongitude = 119.58110318336162;
+            console.warn("Unable to retrieve location, using fallback:", error.message);
+            alert("無法獲取您的位置，將使用預設位置（國立公園）。請確認已允許定位權限。");
+            userLatitude = 23.574613;
+            userLongitude = 119.398103;
         }
 
         try {
@@ -1463,20 +1461,56 @@ document.addEventListener("DOMContentLoaded", async function () {
             map = window.map || null;
             if (!map) {
                 map = new google.maps.Map(reserveParkingMap, {
-                    center: { lat: userLatitude, lng: userLongitude }, // 以用戶位置為中心
-                    zoom: 15,
-                    mapId: "4a9410e1706e086d447136ee"
+                    center: { lat: userLatitude, lng: userLongitude },
+                    zoom: 14,
+                    mapId: "4a41f0e1706e086d"
                 });
                 map.markers = [];
                 window.map = map;
 
-                // 添加用戶位置標記（紫色圓點）
+                // Add user marker (red pin with exclamation)
                 const userMarkerElement = document.createElement("div");
-                userMarkerElement.style.width = "20px";
-                userMarkerElement.style.height = "20px";
-                userMarkerElement.style.borderRadius = "50%";
-                userMarkerElement.style.border = "2px solid white";
-                userMarkerElement.style.backgroundColor = "purple";
+                userMarkerElement.style.width = "30px";
+                userMarkerElement.style.height = "40px";
+                userMarkerElement.style.background = "red";
+                userMarkerElement.style.borderRadius = "50% 50% 50% 0";
+                userMarkerElement.style.position = "relative";
+                userMarkerElement.style.transform = "rotate(-45deg)";
+                userMarkerElement.style.overflow = "hidden";
+
+                const dot = document.createElement("div");
+                dot.style.width = "10px";
+                dot.style.height = "10px";
+                dot.style.background = "black";
+                dot.style.borderRadius = "50%";
+                dot.style.position = "absolute";
+                dot.style.top = "50%";
+                dot.style.left = "50%";
+                dot.style.transform = "translate(-50%, -50%)";
+
+                const exclamation = document.createElement("div");
+                exclamation.style.width = "10px";
+                exclamation.style.height = "15px";
+                exclamation.style.background = "white";
+                exclamation.style.position = "absolute";
+                exclamation.style.top = "25%";
+                exclamation.style.left = "50%";
+                exclamation.style.transform = "translate(-50%, 0)";
+                exclamation.style.borderRadius = "2px";
+
+                const dotBottom = document.createElement("div");
+                dotBottom.style.width = "10px";
+                dotBottom.style.height = "5px";
+                dotBottom.style.background = "white";
+                dotBottom.style.position = "absolute";
+                dotBottom.style.top = "50%";
+                dotBottom.style.left = "50%";
+                dotBottom.style.transform = "translate(-50%, 0)";
+                dotBottom.style.borderRadius = "50%";
+
+                userMarkerElement.appendChild(dot);
+                userMarkerElement.appendChild(exclamation);
+                userMarkerElement.appendChild(dotBottom);
 
                 const userMarker = new google.maps.marker.AdvancedMarkerElement({
                     position: { lat: userLatitude, lng: userLongitude },
@@ -1486,17 +1520,52 @@ document.addEventListener("DOMContentLoaded", async function () {
                 });
                 map.markers.push(userMarker);
             } else {
-                map.setCenter({ lat: userLatitude, lng: userLongitude }); // 更新既有地圖的中心
+                map.setCenter({ lat: userLatitude, lng: userLongitude });
 
-                // 更新或添加用戶位置標記（紫色圓點）
                 let userMarkerExists = map.markers.some(marker => marker.title === "您的位置");
                 if (!userMarkerExists) {
                     const userMarkerElement = document.createElement("div");
-                    userMarkerElement.style.width = "20px";
-                    userMarkerElement.style.height = "20px";
-                    userMarkerElement.style.borderRadius = "50%";
-                    userMarkerElement.style.border = "2px solid white";
-                    userMarkerElement.style.backgroundColor = "purple";
+                    userMarkerElement.style.width = "30px";
+                    userMarkerElement.style.height = "40px";
+                    userMarkerElement.style.background = "red";
+                    userMarkerElement.style.borderRadius = "50% 50% 50% 0";
+                    userMarkerElement.style.position = "relative";
+                    userMarkerElement.style.transform = "rotate(-45deg)";
+                    userMarkerElement.style.overflow = "hidden";
+
+                    const dot = document.createElement("div");
+                    dot.style.width = "10px";
+                    dot.style.height = "10px";
+                    dot.style.background = "black";
+                    dot.style.borderRadius = "50%";
+                    dot.style.position = "absolute";
+                    dot.style.top = "50%";
+                    dot.style.left = "50%";
+                    dot.style.transform = "translate(-50%, -50%)";
+
+                    const exclamation = document.createElement("div");
+                    exclamation.style.width = "10px";
+                    exclamation.style.height = "15px";
+                    exclamation.style.background = "white";
+                    exclamation.style.position = "absolute";
+                    exclamation.style.top = "25%";
+                    exclamation.style.left = "50%";
+                    exclamation.style.transform = "translate(-50%, 0)";
+                    exclamation.style.borderRadius = "2px";
+
+                    const dotBottom = document.createElement("div");
+                    dotBottom.style.width = "10px";
+                    dotBottom.style.height = "5px";
+                    dotBottom.style.background = "white";
+                    dotBottom.style.position = "absolute";
+                    dotBottom.style.top = "50%";
+                    dotBottom.style.left = "50%";
+                    dotBottom.style.transform = "translate(-50%, 0)";
+                    dotBottom.style.borderRadius = "50%";
+
+                    userMarkerElement.appendChild(dot);
+                    userMarkerElement.appendChild(exclamation);
+                    userMarkerElement.appendChild(dotBottom);
 
                     const userMarker = new google.maps.marker.AdvancedMarkerElement({
                         position: { lat: userLatitude, lng: userLongitude },
@@ -1515,7 +1584,7 @@ document.addEventListener("DOMContentLoaded", async function () {
             }
             reserveParkingMap.style.display = "none";
         } catch (error) {
-            console.error("Google Maps API 未載入或載入失敗:", error);
+            console.error("Google Maps API failed to load:", error);
             alert("無法載入 Google Maps API，請檢查網路連線或 API 金鑰是否有效。地圖功能將不可用，但您仍可繼續查詢車位。");
             reserveParkingMap.style.display = "none";
         }
@@ -1562,14 +1631,13 @@ document.addEventListener("DOMContentLoaded", async function () {
             let longitude = userLongitude;
             try {
                 const position = await new Promise((resolve, reject) => {
-                    if (!navigator.geolocation) reject(new Error("瀏覽器不支援地理位置功能"));
+                    if (!navigator.geolocation) reject(new Error("Geolocation not supported by browser"));
                     navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 10000, maximumAge: 0 });
                 });
                 latitude = position.coords.latitude;
                 longitude = position.coords.longitude;
                 if (map) {
                     map.setCenter({ lat: latitude, lng: longitude });
-                    // 更新用戶位置標記
                     map.markers.forEach(marker => {
                         if (marker.title === "您的位置") {
                             marker.position = { lat: latitude, lng: longitude };
@@ -1577,8 +1645,8 @@ document.addEventListener("DOMContentLoaded", async function () {
                     });
                 }
             } catch (error) {
-                console.warn("Failed to get user location, using previously set location:", error.message);
-                alert("無法獲取您的位置，將使用先前設定的位置。請確保已允許位置權限。");
+                console.warn("Failed to retrieve location, using previous:", error.message);
+                alert("無法獲取您的位置，將使用先前設定的位置。請確認已允許定位權限。");
                 if (map) map.setCenter({ lat: latitude, lng: longitude });
             }
 
@@ -1612,10 +1680,10 @@ document.addEventListener("DOMContentLoaded", async function () {
                     const data = await response.json();
                     spots = data.data || data.spots || data;
                     if (!Array.isArray(spots)) throw new Error("後端返回的車位資料格式錯誤，應為陣列");
-                    console.log("Fetched spots:", spots);
+                    console.log("Fetched parking spots:", spots);
                     break;
                 } catch (error) {
-                    console.error(`Failed to fetch available spots (attempt ${4 - retries}/3):`, error);
+                    console.error(`Fetch attempt ${4 - retries}/3 failed:`, error);
                     retries--;
                     if (retries === 0) {
                         alert(`無法載入車位資料，請檢查後端服務 (錯誤: ${error.message})`);
@@ -1642,7 +1710,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                         headers: { "Content-Type": "application/json", "Authorization": `Bearer ${getToken()}` }
                     });
                     if (!spotResponse.ok) {
-                        console.error(`Failed to fetch details for spot ${spot.spot_id}: ${spotResponse.status}`);
+                        console.error(`Failed to fetch spot ${spot.spot_id} details: ${spotResponse.status}`);
                         return { spot, isDateAvailable: false, hasConflict: false };
                     }
                     const spotData = await spotResponse.json();
@@ -1672,7 +1740,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 
                     return { spot, isDateAvailable, hasConflict };
                 } catch (error) {
-                    console.error(`Error fetching details for spot ${spot.spot_id}:`, error);
+                    console.error(`Error fetching spot ${spot.spot_id} details:`, error);
                     return { spot, isDateAvailable: false, hasConflict: false };
                 }
             });
@@ -1719,7 +1787,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                     } else if (spot.status === "已佔用" || spot.status === "occupied") {
                         markerElement.style.backgroundColor = "red";
                     } else {
-                        console.warn("Unknown status:", spot.status);
+                        console.warn("Unrecognized status:", spot.status);
                         markerElement.style.backgroundColor = "gray";
                     }
 
@@ -1744,13 +1812,49 @@ document.addEventListener("DOMContentLoaded", async function () {
                 }
             });
 
-            // 重新添加用戶位置標記（紫色圓點）
+            // Re-add user marker (red pin with exclamation)
             const userMarkerElement = document.createElement("div");
-            userMarkerElement.style.width = "20px";
-            userMarkerElement.style.height = "20px";
-            userMarkerElement.style.borderRadius = "50%";
-            userMarkerElement.style.border = "2px solid white";
-            userMarkerElement.style.backgroundColor = "purple";
+            userMarkerElement.style.width = "30px";
+            userMarkerElement.style.height = "40px";
+            userMarkerElement.style.background = "red";
+            userMarkerElement.style.borderRadius = "50% 50% 50% 0";
+            userMarkerElement.style.position = "relative";
+            userMarkerElement.style.transform = "rotate(-45deg)";
+            userMarkerElement.style.overflow = "hidden";
+
+            const dot = document.createElement("div");
+            dot.style.width = "10px";
+            dot.style.height = "10px";
+            dot.style.background = "black";
+            dot.style.borderRadius = "50%";
+            dot.style.position = "absolute";
+            dot.style.top = "50%";
+            dot.style.left = "50%";
+            dot.style.transform = "translate(-50%, -50%)";
+
+            const exclamation = document.createElement("div");
+            exclamation.style.width = "10px";
+            exclamation.style.height = "15px";
+            exclamation.style.background = "white";
+            exclamation.style.position = "absolute";
+            exclamation.style.top = "25%";
+            exclamation.style.left = "50%";
+            exclamation.style.transform = "translate(-50%, 0)";
+            exclamation.style.borderRadius = "2px";
+
+            const dotBottom = document.createElement("div");
+            dotBottom.style.width = "10px";
+            dotBottom.style.height = "5px";
+            dotBottom.style.background = "white";
+            dotBottom.style.position = "absolute";
+            dotBottom.style.top = "50%";
+            dotBottom.style.left = "50%";
+            dotBottom.style.transform = "translate(-50%, 0)";
+            dotBottom.style.borderRadius = "50%";
+
+            userMarkerElement.appendChild(dot);
+            userMarkerElement.appendChild(exclamation);
+            userMarkerElement.appendChild(dotBottom);
 
             const userMarker = new google.maps.marker.AdvancedMarkerElement({
                 position: { lat: latitude, lng: longitude },
@@ -1762,10 +1866,10 @@ document.addEventListener("DOMContentLoaded", async function () {
 
             if (map && !bounds.isEmpty()) {
                 map.fitBounds(bounds);
-                if (filteredSpots.length === 1) map.setZoom(15);
+                if (filteredSpots.length === 1) map.setZoom(14);
             } else if (map) {
                 map.setCenter({ lat: latitude, lng: longitude });
-                map.setZoom(15);
+                map.setZoom(14);
             }
 
             parkingTableBody.innerHTML = '';
@@ -1814,7 +1918,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                 return;
             }
             await debouncedHandleReserveSearch();
-            console.log("車位狀態已更新");
+            console.log("Parking spot status updated.");
         }, 60000);
 
         const newButton = reserveSearchButton.cloneNode(true);
@@ -1822,7 +1926,6 @@ document.addEventListener("DOMContentLoaded", async function () {
         newButton.addEventListener("click", debouncedHandleReserveSearch);
     }
 
-    // 更新車位狀態的輔助函數
     async function updateSpotStatus(spotId, status) {
         try {
             const token = getToken();
@@ -1835,16 +1938,15 @@ document.addEventListener("DOMContentLoaded", async function () {
             });
 
             if (!response.ok) {
-                throw new Error(`更新車位 ${spotId} 狀態失敗，狀態碼: ${response.status}`);
+                throw new Error(`Failed to update spot ${spotId} status, code: ${response.status}`);
             }
 
-            console.log(`車位 ${spotId} 狀態已更新為 ${status}`);
+            console.log(`Spot ${spotId} status updated to ${status}`);
         } catch (error) {
-            console.error(`更新車位 ${spotId} 狀態失敗:`, error);
+            console.error(`Failed to update spot ${spotId} status:`, error);
         }
     }
 
-    // 預約停車點擊處理
     async function handleReserveParkingClick(spotId, startDate, endDate, startTime, endTime, row) {
         if (!await checkAuth()) return;
 
@@ -1865,7 +1967,7 @@ document.addEventListener("DOMContentLoaded", async function () {
             const startDateTime = startDateTimeObj.toISOString();
             const endDateTime = endDateTimeObj.toISOString();
 
-            const now = new Date(); // 當前時間：2025-06-03 19:42 CST
+            const now = new Date(); // Current time: 2025-06-03 20:24 CST
             if (startDateTimeObj < now) {
                 throw new Error(`開始時間必須晚於或等於當前時間 ${now.toLocaleDateString('zh-TW')} ${now.toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit' })}！`);
             }
@@ -1941,7 +2043,7 @@ document.addEventListener("DOMContentLoaded", async function () {
             }
 
             const result = await response.json();
-            console.log("後端回應:", result);
+            console.log("Backend response:", result);
 
             if (result.status === false) {
                 throw new Error(result.message || "預約失敗，後端未提供具體錯誤訊息");
@@ -1968,7 +2070,7 @@ document.addEventListener("DOMContentLoaded", async function () {
             addToHistory(`預約車位 ${spotId} 於 ${startDateTime} 至 ${endDateTime}`);
             alert(`車位 ${spotId} 已成功預約！`);
         } catch (error) {
-            console.error("Reserve failed:", error);
+            console.error("Reservation failed:", error);
             alert(error.message || "伺服器錯誤，請稍後再試！");
             if (error.message === "認證失敗，請重新登入！") {
                 removeToken();
