@@ -1427,7 +1427,7 @@ document.addEventListener("DOMContentLoaded", async function () {
         startTimeInput.min = `${currentHour}:${currentMinute}`; // Restrict start time to current or later
 
         endTimeInput.value = `${(parseInt(currentHour) + 1).toString().padStart(2, '0')}:${currentMinute}`; // Set to "21:57"
-        endTimeInput.min = "00:00"; // Allow midnight start
+        endTimeInput.min = "12:00"; // Allow midnight start
 
         let map;
         let userLatitude, userLongitude;
