@@ -639,21 +639,11 @@ document.addEventListener("DOMContentLoaded", async function () {
         else showError("請輸入有效車牌號碼（格式如 AAA-1111）");
     });
 
-    // 信用卡號輸入格式化並隱藏中間8碼
+    // 信用卡號輸入格式化（自動加上 "-"）
     cardNumberInput.addEventListener("input", function () {
-        let value = cardNumberInput.value.replace(/\D/g, ""); // 移除非數字字符
-        if (value.length > 16) value = value.slice(0, 16); // 限制為16位
-
-        // 格式化並隱藏中間8碼
-        if (value.length >= 4) {
-            const firstFour = value.slice(0, 4);
-            const lastFour = value.length >= 12 ? value.slice(-4) : "";
-            const maskedMiddle = "********";
-            value = firstFour + (value.length > 4 ? "-" + maskedMiddle : "") + (lastFour ? "-" + lastFour : "");
-        } else {
-            value = value; // 少於4位不格式化
-        }
-
+        let value = cardNumberInput.value.replace(/\D/g, "");
+        value = value.replace(/(\d{4})(?=\d)/g, "$1-");
+        if (value.length > 19) value = value.slice(0, 19);
         cardNumberInput.value = value;
     });
 
