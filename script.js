@@ -300,9 +300,9 @@ document.addEventListener("DOMContentLoaded", async function () {
         addParkingSection.style.display = "block";
         if (!addParkingSection.innerHTML.trim()) {
             addParkingSection.innerHTML = `
-                <p>載入中...</p>
-                <!-- 其他動態內容將在此後添加 -->
-            `;
+            <p>載入中...</p>
+            <!-- 其他動態內容將在此後添加 -->
+        `;
         }
 
         const memberIdInput = document.getElementById("memberIdInput");
@@ -320,11 +320,11 @@ document.addEventListener("DOMContentLoaded", async function () {
         } else {
             console.warn("priceLabel not found, using fallback pricing setup");
             addParkingSection.innerHTML += `
-                <div>
-                    <label id="newPriceLabel">半小時費用（元）：</label>
-                    <input type="number" id="newPrice" value="20.00" step="0.01" min="0" required>
-                </div>
-            `;
+            <div>
+                <label id="newPriceLabel">半小時費用（元）：</label>
+                <input type="number" id="newPrice" value="20.00" step="0.01" min="0" required>
+            </div>
+        `;
         }
 
         const addParkingMap = document.getElementById("addParkingMap");
@@ -335,20 +335,35 @@ document.addEventListener("DOMContentLoaded", async function () {
             console.error("Required elements for map in addParking not found: addParkingMap, latitudeInput, or longitudeInput");
             alert("地圖容器或經緯度輸入框未找到，地圖功能將不可用，但您仍可繼續新增車位。");
             addParkingSection.innerHTML += `
-                <div id="addParkingMap" style="height: 400px; width: 100%; display: none;"></div>
-                <div>
-                    <label>經度：</label>
-                    <input type="number" id="latitudeInput" value="23.57461380558428" step="0.000001" readonly>
-                </div>
-                <div>
-                    <label>緯度：</label>
-                    <input type="number" id="longitudeInput" value="119.58110318336162" step="0.000001" readonly>
-                </div>
-            `;
+            <div id="addParkingMap" style="height: 400px; width: 100%; display: none;"></div>
+            <div>
+                <label>經度：</label>
+                <input type="number" id="latitudeInput" value="" step="0.000001" readonly>
+            </div>
+            <div>
+                <label>緯度：</label>
+                <input type="number" id="longitudeInput" value="" step="0.000001" readonly>
+            </div>
+        `;
         }
 
-        latitudeInput.value = 23.57461380558428;
-        longitudeInput.value = 119.58110318336162;
+        let userLatitude, userLongitude;
+        try {
+            const position = await new Promise((resolve, reject) => {
+                if (!navigator.geolocation) reject(new Error("Geolocation not supported by browser"));
+                navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 10000, maximumAge: 0 });
+            });
+            userLatitude = position.coords.latitude;
+            userLongitude = position.coords.longitude;
+        } catch (error) {
+            console.warn("Unable to retrieve location, using fallback coordinates:", error.message);
+            alert("無法獲取您的位置，將使用預設位置（國立澎湖科技大學）。請確認已允許定位權限。");
+            userLatitude = 23.57461380558428;
+            userLongitude = 119.58110318336162;
+        }
+
+        latitudeInput.value = userLatitude;
+        longitudeInput.value = userLongitude;
         latitudeInput.disabled = true;
         longitudeInput.disabled = true;
 
@@ -357,15 +372,15 @@ document.addEventListener("DOMContentLoaded", async function () {
             await waitForGoogleMaps();
             addParkingMap.style.display = "block";
             map = new google.maps.Map(addParkingMap, {
-                center: { lat: 23.57461380558428, lng: 119.58110318336162 },
+                center: { lat: userLatitude, lng: userLongitude },
                 zoom: 15,
                 mapId: "4a9410e1706e086d447136ee"
             });
 
             marker = new google.maps.marker.AdvancedMarkerElement({
-                position: { lat: 23.57461380558428, lng: 119.58110318336162 },
+                position: { lat: userLatitude, lng: userLongitude },
                 map: map,
-                title: "國立澎湖科技大學",
+                title: "當前位置",
             });
         } catch (error) {
             console.error("Google Maps API 未載入或載入失敗:", error);
@@ -383,10 +398,10 @@ document.addEventListener("DOMContentLoaded", async function () {
             const dateEntry = document.createElement("div");
             dateEntry.className = "date-range-entry";
             dateEntry.innerHTML = `
-                <label>日期 (YYYY-MM-DD)：</label>
-                <input type="date" class="new-available-date" required>
-                <button type="button" class="remove-range">移除</button>
-            `;
+            <label>日期 (YYYY-MM-DD)：</label>
+            <input type="date" class="new-available-date" required>
+            <button type="button" class="remove-range">移除</button>
+        `;
             availableDaysContainer.appendChild(dateEntry);
 
             dateEntry.querySelector(".remove-range").addEventListener("click", () => {
@@ -449,8 +464,8 @@ document.addEventListener("DOMContentLoaded", async function () {
             }
             newSpot.daily_max_price = maxDailyPrice;
 
-            newSpot.latitude = 23.57461380558428;
-            newSpot.longitude = 119.58110318336162;
+            newSpot.latitude = userLatitude;
+            newSpot.longitude = userLongitude;
 
             const dateEntries = availableDaysContainer.querySelectorAll(".date-range-entry");
             const availableDays = [];
