@@ -907,46 +907,61 @@ document.addEventListener("DOMContentLoaded", async function () {
         }
 
         // 顯示編輯表單
-        function showEditForm(spot) {
+        async function showEditForm(spot) {
+            let userLatitude, userLongitude;
+            try {
+                const position = await new Promise((resolve, reject) => {
+                    if (!navigator.geolocation) reject(new Error("Geolocation not supported by browser"));
+                    navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 10000, maximumAge: 0 });
+                });
+                userLatitude = position.coords.latitude;
+                userLongitude = position.coords.longitude;
+            } catch (error) {
+                console.warn("Unable to retrieve location, using fallback coordinates:", error.message);
+                alert("無法獲取您的位置，將使用預設位置（國立澎湖科技大學）。請確認已允許定位權限。");
+                userLatitude = 23.57461380558428;
+                userLongitude = 119.58110318336162;
+            }
+
             editFormContainer.innerHTML = `
-                <h3>編輯車位</h3>
-                <form id="editParkingForm">
-                    <input type="hidden" id="editSpotId" value="${spot.spot_id || ''}">
-                    <div>
-                        <label>地址：</label>
-                        <input type="text" id="editLocation" value="${spot.location || ''}" maxlength="50" required>
-                    </div>
-                    <div>
-                        <label>停車類型：</label>
-                        <select id="editParkingType" required>
-                            <option value="flat" ${spot.parking_type === 'flat' ? 'selected' : ''}>平面</option>
-                            <option value="mechanical" ${spot.parking_type === 'mechanical' ? 'selected' : ''}>機械</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label>樓層：</label>
-                        <input type="text" id="editFloorLevel" value="${spot.floor_level || ''}" maxlength="20" placeholder="例如: ground, 1F, B1">
-                    </div>
-                    <div>
-                        <label>每半小時價格（元）：</label>
-                        <input type="number" id="editPricePerHalfHour" value="${spot.price_per_half_hour || 0}" step="0.01" min="0" required>
-                    </div>
-                    <div>
-                        <label>每日最高價格（元）：</label>
-                        <input type="number" id="editDailyMaxPrice" value="${spot.daily_max_price || 0}" step="0.01" min="0" required>
-                    </div>
-                    <div>
-                        <label>經度：</label>
-                        <input type="number" id="editLongitude" value="119.58110318336162" step="0.000001" readonly>
-                    </div>
-                    <div>
-                        <label>緯度：</label>
-                        <input type="number" id="editLatitude" value="23.57461380558428" step="0.000001" readonly>
-                    </div>
-                    <button type="button" id="saveEditSpotButton">保存</button>
-                    <button type="button" id="cancelEditSpotButton">取消</button>
-                </form>
-            `;
+            <h3>編輯車位</h3>
+            <form id="editParkingForm">
+                <input type="hidden" id="editSpotId" value="${spot.spot_id || ''}">
+                <div>
+                    <label>地址：</label>
+                    <input type="text" id="editLocation" value="${spot.location || ''}" maxlength="50" required>
+                </div>
+                <div>
+                    <label>停車類型：</label>
+                    <select id="editParkingType" required>
+                        <option value="flat" ${spot.parking_type === 'flat' ? 'selected' : ''}>平面</option>
+                        <option value="mechanical" ${spot.parking_type === 'mechanical' ? 'selected' : ''}>機械</option>
+                    </select>
+                </div>
+                <div>
+                    <label>樓層：</label>
+                    <input type="text" id="editFloorLevel" value="${spot.floor_level || ''}" maxlength="20" placeholder="例如: ground, 1F, B1">
+                </div>
+                <div>
+                    <label>每半小時價格（元）：</label>
+                    <input type="number" id="editPricePerHalfHour" value="${spot.price_per_half_hour || 0}" step="0.01" min="0" required>
+                </div>
+                <div>
+                    <label>每日最高價格（元）：</label>
+                    <input type="number" id="editDailyMaxPrice" value="${spot.daily_max_price || 0}" step="0.01" min="0" required>
+                </div>
+                <div>
+                    <label>經度：</label>
+                    <input type="number" id="editLongitude" value="${userLongitude}" step="0.000001" readonly>
+                </div>
+                <div>
+                    <label>緯度：</label>
+                    <input type="number" id="editLatitude" value="${userLatitude}" step="0.000001" readonly>
+                </div>
+                <button type="button" id="saveEditSpotButton">保存</button>
+                <button type="button" id="cancelEditSpotButton">取消</button>
+            </form>
+        `;
             editFormContainer.style.display = "block";
 
             // 保存編輯
@@ -958,8 +973,8 @@ document.addEventListener("DOMContentLoaded", async function () {
                     pricing_type: "hourly",
                     price_per_half_hour: parseFloat(document.getElementById("editPricePerHalfHour").value) || 0,
                     daily_max_price: parseFloat(document.getElementById("editDailyMaxPrice").value) || 0,
-                    longitude: 119.58110318336162,
-                    latitude: 23.57461380558428,
+                    longitude: userLongitude,
+                    latitude: userLatitude,
                 };
 
                 if (!updatedSpot.location) {
@@ -1094,17 +1109,17 @@ document.addEventListener("DOMContentLoaded", async function () {
                     const priceDisplay = `${spot.price_per_half_hour || 0} 元/半小時`;
 
                     row.innerHTML = `
-                    <td>${spot.spot_id || '未知'}</td>
-                    <td>${spot.location || '未知'}</td>
-                    <td>${spot.parking_type === "flat" ? "平面" : "機械"}</td>
-                    <td>${spot.floor_level === "ground" ? "地面" : `地下${spot.floor_level?.startsWith("B") ? spot.floor_level.slice(1) : spot.floor_level || '未知'}樓`}</td>
-                    <td>按小時</td>
-                    <td>${priceDisplay}</td>
-                    <td>
-                        <button class="edit-btn">編輯</button>
-                        <button class="delete-btn">刪除</button>
-                    </td>
-                `;
+                <td>${spot.spot_id || '未知'}</td>
+                <td>${spot.location || '未知'}</td>
+                <td>${spot.parking_type === "flat" ? "平面" : "機械"}</td>
+                <td>${spot.floor_level === "ground" ? "地面" : `地下${spot.floor_level?.startsWith("B") ? spot.floor_level.slice(1) : spot.floor_level || '未知'}樓`}</td>
+                <td>按小時</td>
+                <td>${priceDisplay}</td>
+                <td>
+                    <button class="edit-btn">編輯</button>
+                    <button class="delete-btn">刪除</button>
+                </td>
+            `;
 
                     row.querySelector(".edit-btn").addEventListener("click", (e) => {
                         e.stopPropagation();
@@ -1168,7 +1183,6 @@ document.addEventListener("DOMContentLoaded", async function () {
         // 進入頁面時自動加載所有車位
         loadAllSpots();
     }
-
     // 設置個人資訊
     function setupProfile() {
         const role = getRole();
