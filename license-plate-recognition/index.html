@@ -10,11 +10,13 @@
 <body>
     <div class="container">
         <h1>即時車牌辨識</h1>
-        <video id="video" autoplay playsinline></video>
-        <canvas id="canvas" style="display: none;" willReadFrequently="true"></canvas>
+        <video id="video" autoplay playsinline style="display: none;"></video> <!-- 隱藏 video -->
+        <canvas id="canvas" willReadFrequently="true"></canvas> <!-- 僅顯示 canvas -->
         <div id="result">
             <h2>辨識結果</h2>
             <p id="plateNumber">正在啟動攝影機...</p>
+            <button id="confirmButton" style="background-color: green; color: white; padding: 10px 20px; margin: 5px; border: none; border-radius: 5px; cursor: pointer; display: none;">確認</button>
+            <button id="rescanButton" style="background-color: red; color: white; padding: 10px 20px; margin: 5px; border: none; border-radius: 5px; cursor: pointer; display: none;">重新掃描</button>
         </div>
     </div>
     <script src="script.js"></script>
