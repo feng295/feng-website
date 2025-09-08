@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>即時車牌辨識系統</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://unpkg.com/tesseract.js@5.1.0/dist/tesseract.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <h1>即時車牌辨識</h1>
+        <video id="video" autoplay playsinline></video>
+        <canvas id="canvas" style="display: none;" willReadFrequently="true"></canvas>
+        <div id="result">
+            <h2>辨識結果</h2>
+            <p id="plateNumber">正在啟動攝影機...</p>
+        </div>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>
