@@ -5,16 +5,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>即時車牌辨識系統</title>
     <link rel="stylesheet" href="style.css">
+    <script src="https://docs.opencv.org/4.x/opencv.js" onerror="this.onerror=null; loadLocalOpenCV()"></script>
     <script src="https://unpkg.com/tesseract.js@5.1.0/dist/tesseract.min.js"></script>
 </head>
 <body>
     <div class="container">
         <h1>即時車牌辨識</h1>
-        <video id="video" autoplay playsinline style="display: none;"></video> <!-- 隱藏 video -->
-        <canvas id="canvas" willReadFrequently="true"></canvas> <!-- 僅顯示 canvas -->
+        <video id="video" autoplay playsinline></video>
         <div id="result">
             <h2>辨識結果</h2>
-            <p id="plateNumber">正在啟動攝影機...</p>
+            <p id="plateNumber">正在加載 OpenCV...</p>
             <button id="confirmButton" style="background-color: green; color: white; padding: 10px 20px; margin: 5px; border: none; border-radius: 5px; cursor: pointer; display: none;">確認</button>
             <button id="rescanButton" style="background-color: red; color: white; padding: 10px 20px; margin: 5px; border: none; border-radius: 5px; cursor: pointer; display: none;">重新掃描</button>
         </div>

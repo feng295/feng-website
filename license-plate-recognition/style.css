@@ -23,12 +23,8 @@ h1 {
 }
 
 video {
-    display: none; /* 隱藏 video */
-}
-
-canvas {
     max-width: 100%;
-    max-height: 400px; /* 增加高度以適應車牌影像 */
+    max-height: 400px;
     border: 1px solid #ccc;
     border-radius: 5px;
     margin: 20px 0;
