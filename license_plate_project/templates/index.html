@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>車牌辨識</title>
+    <link rel="icon" type="image/x-icon" href="/static/favicon.ico">
+    <style>
+        #video {
+            border: 2px solid #000;
+        }
+
+        #results {
+            padding: 10px;
+            border: 1px solid #ccc;
+            background-color: #f9fafb;
+            text-align: center;
+            overflow: hidden; /* 防止滾動條出現 */
+        }
+
+        #plateList {
+            list-style: none;
+            padding: 0;
+        }
+
+        #plateList li {
+            display: inline-block;
+            margin: 0 10px;
+            text-align: center;
+            font-size: 24px;
+            color: #000000;
+        }
+
+        #buttonContainer {
+            margin-top: 10px;
+            text-align: center;
+            display: none;
+        }
+
+        button {
+            padding: 15px 30px;
+            margin: 0 5px;
+            cursor: pointer;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 24px;
+        }
+
+        button:hover {
+            opacity: 0.9;
+        }
+
+        #confirmButton {
+            background-color: #4CAF50;
+        }
+
+        #confirmButton:hover {
+            background-color: #45a049;
+        }
+
+        #rescanButton {
+            background-color: #f44336;
+        }
+
+        #rescanButton:hover {
+            background-color: #da190b;
+        }
+
+        .loading {
+            color: #666;
+            font-style: italic;
+        }
+
+        .format-hint {
+            font-size: 14px;
+            color: #666;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+
+<body>
+    <h1 class="text-2xl font-bold text-center my-4">即時車牌辨識</h1>
+    <div class="flex justify-center">
+        <img id="video" src="/video_feed" width="640" height="480" class="border-2 border-black" />
+    </div>
+    <div id="results">
+        <h2 class="text-lg font-semibold">車牌號碼:</h2>
+        <ul id="plateList"></ul>
+        <div id="loading" class="loading" style="display: none;">載入中...</div>
+        <div id="buttonContainer">
+            <button id="confirmButton">確認</button>
+            <button id="rescanButton">重新掃描</button>
+        </div>
+        <div class="format-hint"></div>
+    </div>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        let intervalId = null;
+        let isScanningStopped = false;
+        let isStopRequested = false;
+        let lastPlates = [];
+
+        function updateResults() {
+            if (isScanningStopped || isStopRequested) return;
+            document.getElementById('loading').style.display = 'block';
+            fetch('/results')
+                .then(response => {
+                    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                    return response.json();
+                })
+                .then(data => {
+                    const plateList = document.getElementById('plateList');
+                    const buttonContainer = document.getElementById('buttonContainer');
+                    const loadingDiv = document.getElementById('loading');
+                    const currentPlates = data
+                        .map(line => {
+                            try {
+                                const result = JSON.parse(line);
+                                return typeof result === 'string' && result.length > 0 ? result : '未辨識';
+                            } catch (e) {
+                                console.error('解析錯誤:', line, e);
+                                return '解析錯誤';
+                            }
+                        })
+                        .filter(plate => plate && plate !== '未辨識' && plate !== '解析錯誤');
+
+                    const uniquePlates = [...new Set(currentPlates)];
+
+                    if (JSON.stringify(uniquePlates) !== JSON.stringify(lastPlates)) {
+                        if (uniquePlates.length > 0) {
+                            plateList.innerHTML = uniquePlates
+                                .map(plate => `<li class="text-black">${plate}</li>`)
+                                .join('');
+                            buttonContainer.style.display = 'block';
+                            clearInterval(intervalId);
+                            isScanningStopped = true;
+                            isStopRequested = true;
+                            fetch('/stop', { method: 'POST' })
+                                .then(response => {
+                                    if (!response.ok) {
+                                        throw new Error(`停止請求失敗: ${response.status} - ${response.statusText}`);
+                                    }
+                                    return response.json();
+                                })
+                                .then(data => {
+                                    console.log('停止回應:', data.message);
+                                    isStopRequested = false;
+                                })
+                                .catch(error => {
+                                    console.error('停止錯誤:', error);
+                                    isStopRequested = false;
+                                    setTimeout(() => {
+                                        if (isStopRequested) {
+                                            fetch('/stop', { method: 'POST' })
+                                                .then(resp => resp.json())
+                                                .then(() => isStopRequested = false)
+                                                .catch(err => console.error('重試失敗:', err));
+                                        }
+                                    }, 2000);
+                                });
+                        } else {
+                            plateList.innerHTML = '';
+                        }
+                        lastPlates = [...uniquePlates];
+                    }
+                    loadingDiv.style.display = 'none';
+                })
+                .catch(error => {
+                    console.error('錯誤:', error);
+                    document.getElementById('loading').style.display = 'none';
+                });
+        }
+
+        intervalId = setInterval(updateResults, 2000);
+
+        document.getElementById('confirmButton').addEventListener('click', () => {
+            const plateList = document.getElementById('plateList');
+            const plates = Array.from(plateList.getElementsByTagName('li')).map(li => li.textContent);
+            plateList.innerHTML = `<li class="text-green-600">${plates.join(', ')} (已確認)</li>`;
+            document.getElementById('buttonContainer').style.display = 'none';
+            setTimeout(() => {
+                isScanningStopped = false;
+                plateList.innerHTML = '';
+                const video = document.getElementById('video');
+                video.src = '/video_feed?' + new Date().getTime();
+                fetch('/start', { method: 'POST' })
+                    .then(response => {
+                        if (!response.ok) throw new Error(`啟動請求失敗: ${response.status}`);
+                        return response.json();
+                    })
+                    .then(data => {
+                        console.log(data.message);
+                        intervalId = setInterval(updateResults, 2000); // 保持 2000ms
+                    })
+                    .catch(error => {
+                        console.error('啟動錯誤:', error);
+                    });
+            }, 15000);
+        });
+
+        document.getElementById('rescanButton').addEventListener('click', () => {
+            const plateList = document.getElementById('plateList');
+            const buttonContainer = document.getElementById('buttonContainer');
+            plateList.innerHTML = '';
+            buttonContainer.style.display = 'none';
+            isScanningStopped = false;
+            isStopRequested = false;
+            clearInterval(intervalId);
+            intervalId = null;
+
+            const video = document.getElementById('video');
+            video.src = '/video_feed?' + new Date().getTime();
+            fetch('/start', { method: 'POST' })
+                .then(response => {
+                    if (!response.ok) throw new Error(`啟動請求失敗: ${response.status}`);
+                    return response.json();
+                })
+                .then(data => {
+                    console.log(data.message);
+                    intervalId = setInterval(updateResults, 2000); // 保持 2000ms
+                })
+                .catch(error => {
+                    console.error('啟動錯誤:', error);
+                });
+        });
+    </script>
+</body>
+
+</html>
