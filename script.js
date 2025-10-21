@@ -34,7 +34,6 @@ document.addEventListener("DOMContentLoaded", async function () {
     const nameInput = document.getElementById("name");
     const phoneInput = document.getElementById("phone");
     const roleInput = document.getElementById("role");
-    const paymentMethodInput = document.getElementById("payment_method");
     const cardNumberContainer = document.getElementById("cardNumberContainer");
     const cardNumberInput = document.getElementById("card_number");
     const renterFields = document.getElementById("renterFields");
@@ -600,15 +599,20 @@ document.addEventListener("DOMContentLoaded", async function () {
         }
     });
 
-    // 當身份改變時，顯示或隱藏租用者專用欄位
+    // 當身份改變時，顯示或隱藏租用者專用欄位和信用卡號
     roleInput.addEventListener("change", function () {
         if (roleInput.value.toLowerCase() === "renter" && !isLogin) {
             renterFields.style.display = "block";
             licensePlateInput.setAttribute("required", "true");
+            cardNumberContainer.style.display = "block";
+            cardNumberInput.setAttribute("required", "true");
         } else {
             renterFields.style.display = "none";
             licensePlateInput.removeAttribute("required");
             licensePlateInput.value = "";
+            cardNumberContainer.style.display = "none";
+            cardNumberInput.removeAttribute("required");
+            cardNumberInput.value = "";
         }
     });
 
@@ -666,14 +670,12 @@ document.addEventListener("DOMContentLoaded", async function () {
             nameInput.parentElement.style.display = "none";
             phoneInput.parentElement.style.display = "none";
             roleInput.parentElement.style.display = "none";
-            paymentMethodInput.parentElement.style.display = "none";
             cardNumberContainer.style.display = "none";
             renterFields.style.display = "none";
 
             nameInput.removeAttribute("required");
             phoneInput.removeAttribute("required");
             roleInput.removeAttribute("required");
-            paymentMethodInput.removeAttribute("required");
             cardNumberInput.removeAttribute("required");
             licensePlateInput.removeAttribute("required");
 
@@ -682,20 +684,26 @@ document.addEventListener("DOMContentLoaded", async function () {
         } else {
             nameInput.parentElement.style.display = "block";
             phoneInput.parentElement.style.display = "block";
-            paymentMethodInput.parentElement.style.display = "block";
             roleInput.parentElement.style.display = "block";
-            if (paymentMethodInput.value === "credit_card") cardNumberContainer.style.display = "block";
-            if (roleInput.value.toLowerCase() === "renter") renterFields.style.display = "block";
+            if (roleInput.value.toLowerCase() === "renter") {
+                renterFields.style.display = "block";
+                licensePlateInput.setAttribute("required", "true");
+                cardNumberContainer.style.display = "block";
+                cardNumberInput.setAttribute("required", "true");
+            } else {
+                renterFields.style.display = "none";
+                licensePlateInput.removeAttribute("required");
+                licensePlateInput.value = "";
+                cardNumberContainer.style.display = "none";
+                cardNumberInput.removeAttribute("required");
+                cardNumberInput.value = "";
+            }
+
             emailInput.setAttribute("required", "true");
             passwordInput.setAttribute("required", "true");
             nameInput.setAttribute("required", "true");
             phoneInput.setAttribute("required", "true");
             roleInput.setAttribute("required", "true");
-            paymentMethodInput.setAttribute("required", "true");
-            if (paymentMethodInput.value === "credit_card") cardNumberInput.setAttribute("required", "true");
-            if (roleInput.value.toLowerCase() === "renter") {
-                licensePlateInput.setAttribute("required", "true");
-            }
         }
     }
 
@@ -1188,8 +1196,7 @@ document.addEventListener("DOMContentLoaded", async function () {
         const editPhone = document.getElementById("editPhone");
         const editEmail = document.getElementById("editEmail");
         const editLicensePlate = document.getElementById("editLicensePlate");
-        const editCarModel = document.getElementById("editCarModel");
-        const editPaymentMethod = document.getElementById("editPaymentMethod");
+        const renterEditFields = document.getElementById("renterEditFields");
         const editCardNumber = document.getElementById("editCardNumber");
         const saveProfileButton = document.getElementById("saveProfileButton");
         const editProfileButton = document.getElementById("editProfileButton");
@@ -1243,14 +1250,12 @@ document.addEventListener("DOMContentLoaded", async function () {
                     <p><strong>姓名：</strong> ${profile.name || '未提供'}</p>
                     <p><strong>電話：</strong> ${profile.phone || '未提供'}</p>
                     <p><strong>電子郵件：</strong> ${profile.email || '未提供'}</p>
-                    <p><strong>付款方式：</strong> ${profile.payment_method || '未提供'}</p>
                     <p><strong>信用卡號：</strong> ${maskedCardNumber}</p>
                 `;
 
                 if (role === "renter") {
                     profileHTML += `
                         <p><strong>車牌號碼：</strong> ${profile.license_plate || '未提供'}</p>
-                        <p><strong>車型：</strong> ${profile.car_model || '未提供'}</p>
                     `;
                 }
 
