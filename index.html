@@ -32,21 +32,11 @@
             </div>
             <div class="input-group">
                 <label for="role">身份</label>
-                <select id="role" name="role" required>
-                    <option value="renter">租用者</option>
-                </select>
+                <input type="text" id="role" name="role" value="租用者" required>
             </div>
             <div id="renterFields" class="input-group" style="display: none;">
                 <label for="license_plate">車牌號碼</label>
                 <input type="text" id="license_plate" name="license_plate" placeholder="格式如: AAA-1111">
-                <label for="vehicle_type">車型</label>
-                <input type="text" id="vehicle_type" name="vehicle_type" placeholder="請輸入車型">
-            </div>
-            <div class="input-group">
-                <label for="payment_method">付款方式</label>
-                <select id="payment_method" name="payment_method" required>
-                    <option value="credit_card">信用卡</option>
-                </select>
             </div>
             <div id="cardNumberContainer" class="input-group" style="display: none;">
                 <label for="card_number">信用卡號</label>
