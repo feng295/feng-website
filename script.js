@@ -39,7 +39,6 @@ document.addEventListener("DOMContentLoaded", async function () {
     const cardNumberInput = document.getElementById("card_number");
     const renterFields = document.getElementById("renterFields");
     const licensePlateInput = document.getElementById("license_plate");
-    const vehicleTypeInput = document.getElementById("vehicle_type");
 
     // 檢查必要的 DOM 元素是否存在
     if (!emailInput || !passwordInput || !authForm || !logoutButton || !historyList) {
@@ -606,13 +605,11 @@ document.addEventListener("DOMContentLoaded", async function () {
         if (roleInput.value.toLowerCase() === "renter" && !isLogin) {
             renterFields.style.display = "block";
             licensePlateInput.setAttribute("required", "true");
-            vehicleTypeInput.setAttribute("required", "true");
         } else {
             renterFields.style.display = "none";
             licensePlateInput.removeAttribute("required");
             vehicleTypeInput.removeAttribute("required");
             licensePlateInput.value = "";
-            vehicleTypeInput.value = "";
         }
     });
 
@@ -832,13 +829,12 @@ document.addEventListener("DOMContentLoaded", async function () {
             const payment_method = paymentMethodInput.value;
             let payment_info = cardNumberInput.value.trim();
             const license_plate = licensePlateInput.value.trim();
-            const vehicle_type = vehicleTypeInput.value.trim();
 
             try {
                 const response = await fetch(`${API_URL}/members/register`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ name, email, password, phone, role, payment_method, payment_info, license_plate, vehicle_type })
+                    body: JSON.stringify({ name, email, password, phone, role, payment_method, payment_info, license_plate })
                 });
                 console.log(`Register response status: ${response.status}`);
                 if (!response.headers.get('content-type')?.includes('application/json')) {
@@ -2250,7 +2246,6 @@ document.addEventListener("DOMContentLoaded", async function () {
                         <td>${user.email || '未知'}</td>
                         <td>${user.phone || '未知'}</td>
                         <td>${user.license_plate || '無'}</td>
-                        <td>${user.vehicle_type || '無'}</td>
                     `;
                         renterFragment.appendChild(row);
                     });
