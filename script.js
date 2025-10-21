@@ -608,7 +608,6 @@ document.addEventListener("DOMContentLoaded", async function () {
         } else {
             renterFields.style.display = "none";
             licensePlateInput.removeAttribute("required");
-            vehicleTypeInput.removeAttribute("required");
             licensePlateInput.value = "";
         }
     });
@@ -677,7 +676,6 @@ document.addEventListener("DOMContentLoaded", async function () {
             paymentMethodInput.removeAttribute("required");
             cardNumberInput.removeAttribute("required");
             licensePlateInput.removeAttribute("required");
-            vehicleTypeInput.removeAttribute("required");
 
             emailInput.setAttribute("required", "true");
             passwordInput.setAttribute("required", "true");
@@ -697,7 +695,6 @@ document.addEventListener("DOMContentLoaded", async function () {
             if (paymentMethodInput.value === "credit_card") cardNumberInput.setAttribute("required", "true");
             if (roleInput.value.toLowerCase() === "renter") {
                 licensePlateInput.setAttribute("required", "true");
-                vehicleTypeInput.setAttribute("required", "true");
             }
         }
     }
