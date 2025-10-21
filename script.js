@@ -817,7 +817,6 @@ roleInput.addEventListener("change", function () {
             const name = nameInput.value.trim();
             const phone = phoneInput.value.trim();
             const role = roleInput.value.toLowerCase().trim();
-            const payment_method = paymentMethodInput.value;
             let payment_info = cardNumberInput.value.trim();
             const license_plate = licensePlateInput.value.trim();
 
@@ -825,7 +824,7 @@ roleInput.addEventListener("change", function () {
                 const response = await fetch(`${API_URL}/members/register`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ name, email, password, phone, role, payment_method, payment_info, license_plate })
+                    body: JSON.stringify({ name, email, password, phone, role, payment_info, license_plate })
                 });
                 console.log(`Register response status: ${response.status}`);
                 if (!response.headers.get('content-type')?.includes('application/json')) {
@@ -1253,7 +1252,6 @@ roleInput.addEventListener("change", function () {
                 editEmail.value = profile.email || '';
                 editLicensePlate.value = profile.license_plate || '';
                 editCarModel.value = profile.car_model || '';
-                editPaymentMethod.value = profile.payment_method || 'credit_card';
                 editCardNumber.value = profile.payment_info || '';
 
                 // 根據角色顯示或隱藏租用者專用欄位
@@ -1281,7 +1279,6 @@ roleInput.addEventListener("change", function () {
                 name: editName.value.trim(),
                 phone: editPhone.value.trim(),
                 email: editEmail.value.trim(),
-                payment_method: editPaymentMethod.value,
                 payment_info: editCardNumber.value.trim()
             };
 
