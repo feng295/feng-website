@@ -1187,7 +1187,7 @@ roleInput.addEventListener("change", function () {
         const editProfileButton = document.getElementById("editProfileButton");
         const cancelEditProfileButton = document.getElementById("cancelEditProfileButton");
 
-        if (!profileData || !editProfileForm || !editName || !editPhone || !editEmail || !editLicensePlate || !editCarModel || !editPaymentMethod || !editCardNumber || !saveProfileButton || !editProfileButton || !cancelEditProfileButton) {
+        if (!profileData || !editProfileForm || !editName || !editPhone || !editEmail || !editLicensePlate || !renterEditFields || !editCardNumber || !saveProfileButton || !editProfileButton || !cancelEditProfileButton) {
             console.error("Required elements for profile section are missing");
             alert("個人資訊頁面元素缺失，請聯繫管理員！");
             return;
@@ -1251,11 +1251,9 @@ roleInput.addEventListener("change", function () {
                 editPhone.value = profile.phone || '';
                 editEmail.value = profile.email || '';
                 editLicensePlate.value = profile.license_plate || '';
-                editCarModel.value = profile.car_model || '';
                 editCardNumber.value = profile.payment_info || '';
 
                 // 根據角色顯示或隱藏租用者專用欄位
-                const renterEditFields = document.getElementById("renterEditFields");
                 if (renterEditFields) {
                     renterEditFields.style.display = role === "renter" ? "block" : "none";
                 }
@@ -1282,20 +1280,13 @@ roleInput.addEventListener("change", function () {
                 payment_info: editCardNumber.value.trim()
             };
 
-            // 如果是租用者，添加車牌號碼和車型
+            // 如果是租用者，添加車牌號碼
             if (role === "renter") {
                 updatedProfile.license_plate = editLicensePlate.value.trim();
-                updatedProfile.car_model = editCarModel.value.trim();
 
                 // 驗證車牌號碼格式（例如 AAA-1111）
                 if (updatedProfile.license_plate && !/^[A-Z]{2,3}-[0-9]{3,4}$/.test(updatedProfile.license_plate)) {
                     alert("請提供有效的車牌號碼（格式如：AAA-1111）！");
-                    return;
-                }
-
-                // 驗證車型（簡單檢查不為空）
-                if (!updatedProfile.car_model) {
-                    alert("車型為必填項！");
                     return;
                 }
             }
