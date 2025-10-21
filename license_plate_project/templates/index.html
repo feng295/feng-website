@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>車牌辨識</title>
+    <link rel="icon" type="image/x-icon" href="/static/favicon.ico">
+    <style>
+        #video {
+            border: 2px solid #000;
+            display: block;
+            margin: 0 auto;
+        }
+
+        #results {
+            padding: 10px;
+            border: 1px solid #ccc;
+            background-color: #f9fafb;
+            text-align: center;
+            margin-top: 10px;
+            overflow: hidden;
+        }
+
+        #plateList {
+            list-style: none;
+            padding: 0;
+        }
+
+        #plateList li {
+            display: inline-block;
+            margin: 0 10px;
+            text-align: center;
+            font-size: 24px;
+            color: #000000;
+        }
+
+        #buttonContainer {
+            margin-top: 10px;
+            text-align: center;
+            display: none;
+        }
+
+        button {
+            padding: 15px 30px;
+            margin: 0 5px;
+            cursor: pointer;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 24px;
+        }
+
+        button:hover {
+            opacity: 0.9;
+        }
+
+        #confirmButton {
+            background-color: #4CAF50;
+        }
+
+        #confirmButton:hover {
+            background-color: #45a049;
+        }
+
+        #rescanButton {
+            background-color: #f44336;
+        }
+
+        #rescanButton:hover {
+            background-color: #da190b;
+        }
+
+        .loading {
+            color: #666;
+            font-style: italic;
+        }
+
+        .error {
+            color: #dc3545;
+            font-size: 16px;
+            margin-top: 5px;
+        }
+
+        .format-hint {
+            font-size: 14px;
+            color: #666;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+
+<body>
+    <h1 class="text-2xl font-bold text-center my-4">即時車牌辨識</h1>
+    <div class="flex justify-center">
+        <img id="video" src="/video_feed" width="640" height="480" class="border-2 border-black" onerror="this.onerror=null; this.src='/static/no-camera.jpg'; document.getElementById('error').innerText='鏡頭載入失敗，請檢查後端日誌或攝影機連接。';">
+    </div>
+    <div id="results">
+        <h2 class="text-lg font-semibold">車牌號碼:</h2>
+        <ul id="plateList"></ul>
+        <div id="loading" class="loading" style="display: none;">載入中...</div>
+        <div id="error" class="error" style="display: none;"></div>
+        <div id="buttonContainer">
+            <button id="confirmButton">確認</button>
+            <button id="rescanButton">重新掃描</button>
+        </div>
+        <div class="format-hint"></div>
+    </div>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        let intervalId = null;
+        let isScanningStopped = false;
+        let isStopRequested = false;
+        let lastPlates = [];
+
+        function updateResults() {
+            // 如果已經停止或正在發送停止請求，則退出
+            if (isScanningStopped || isStopRequested) return;
+
+            const loadingDiv = document.getElementById('loading');
+            const errorDiv = document.getElementById('error');
+            loadingDiv.style.display = 'block';
+            errorDiv.style.display = 'none';
+
+            fetch('/results')
+                .then(response => {
+                    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                    return response.json();
+                })
+                .then(data => {
+                    const plateList = document.getElementById('plateList');
+                    const buttonContainer = document.getElementById('buttonContainer');
+                    let currentPlates = [];
+
+                    if (Array.isArray(data)) {
+                        // 解析從 results.txt 讀取的 JSON 字符串
+                        currentPlates = data.map(line => {
+                            try {
+                                // 檢查是否為有效的 JSON 格式車牌
+                                const result = typeof line === 'string' ? JSON.parse(line) : line;
+                                // 確保結果是有效的非空字符串
+                                return typeof result === 'string' && result.length > 0 && result !== '尚未檢測到車牌' ? result : null;
+                            } catch (e) {
+                                // console.error('解析錯誤:', line, e); // 移除前端日誌避免干擾
+                                return null;
+                            }
+                        }).filter(plate => plate !== null); // 篩選掉無效或未辨識的結果
+                    } else {
+                        console.warn("收到非預期的 /results 數據格式:", data);
+                    }
+
+                    const uniquePlates = [...new Set(currentPlates)];
+
+                    console.log('當前有效車牌:', uniquePlates); 
+                    
+                    // 核心修正：只在「確實」檢測到有效車牌時才觸發停止
+                    if (uniquePlates.length > 0) {
+                        
+                        // 1. 顯示車牌
+                        plateList.innerHTML = uniquePlates
+                            .map(plate => `<li class="text-black">${plate}</li>`)
+                            .join('');
+                        buttonContainer.style.display = 'block';
+                        
+                        // 2. 停止輪詢結果
+                        clearInterval(intervalId);
+                        intervalId = null; 
+                        isScanningStopped = true;
+                        isStopRequested = true; // 設置停止旗標
+
+                        // 3. 通知後端停止鏡頭串流
+                        fetch('/stop', { method: 'POST' })
+                            .then(response => response.json())
+                            .then(data => {
+                                console.log('停止回應:', data.message);
+                                isStopRequested = false; // 停止成功後重置
+                            })
+                            .catch(error => {
+                                console.error('停止錯誤:', error);
+                                isStopRequested = false; 
+                            });
+                    } else {
+                        // 如果沒有檢測到車牌（最常見的情況），保持鏡頭和輪詢運行
+                        plateList.innerHTML = '<li class="text-gray-500">尚未檢測到車牌</li>';
+                        buttonContainer.style.display = 'none';
+                        // 確保不會意外觸發停止邏輯
+                    }
+                    
+                    lastPlates = [...uniquePlates];
+                    loadingDiv.style.display = 'none';
+                })
+                .catch(error => {
+                    console.error('數據加載失敗:', error);
+                    errorDiv.style.display = 'block';
+                    errorDiv.innerText = `數據加載失敗: ${error.message}`;
+                    loadingDiv.style.display = 'none';
+                });
+        }
+        
+        // 新增：頁面載入時自動啟動的邏輯
+        function initializeScanning() {
+            // 清除可能殘留的間隔計時器，確保只運行一個
+            if (intervalId) {
+                clearInterval(intervalId);
+                intervalId = null;
+            }
+
+            const video = document.getElementById('video');
+            // 使用新的時間戳重新載入影像源，確保/video_feed被重新請求
+            video.src = '/video_feed?' + new Date().getTime(); 
+            
+            fetch('/start', { method: 'POST' })
+                .then(response => {
+                    if (!response.ok) throw new Error(`啟動請求失敗: ${response.status}`);
+                    return response.json();
+                })
+                .then(data => {
+                    console.log(data.message);
+                    isScanningStopped = false; // 確保重啟時狀態正確
+                    // 啟動成功後，才開始輪詢結果
+                    if (!intervalId) {
+                        // 延遲開始輪詢，給予攝影機足夠的時間啟動和處理第一幀
+                        intervalId = setInterval(updateResults, 2000); 
+                    }
+                })
+                .catch(error => {
+                    console.error('啟動錯誤:', error);
+                    document.getElementById('error').innerText = `啟動失敗: ${error.message}`;
+                    document.getElementById('error').style.display = 'block';
+                });
+        }
+        
+        // 頁面載入完成後立即啟動掃描
+        window.addEventListener('load', initializeScanning);
+
+
+        // --- 確認按鈕邏輯 (保持不變) ---
+        document.getElementById('confirmButton').addEventListener('click', () => {
+            const plateList = document.getElementById('plateList');
+            const plates = Array.from(plateList.getElementsByTagName('li')).map(li => li.textContent);
+            plateList.innerHTML = `<li class="text-green-600">${plates.join(', ')} (已確認)</li>`;
+            document.getElementById('buttonContainer').style.display = 'none';
+            // 15秒後自動重新掃描
+            setTimeout(() => {
+                isScanningStopped = false;
+                plateList.innerHTML = '';
+                const video = document.getElementById('video');
+                video.src = '/video_feed?' + new Date().getTime();
+                fetch('/start', { method: 'POST' })
+                    .then(response => {
+                        if (!response.ok) throw new Error(`啟動請求失敗: ${response.status}`);
+                        return response.json();
+                    })
+                    .then(data => {
+                        console.log(data.message);
+                        intervalId = setInterval(updateResults, 2000);
+                    })
+                    .catch(error => {
+                        console.error('啟動錯誤:', error);
+                        document.getElementById('error').innerText = `啟動失敗: ${error.message}`;
+                    });
+            }, 15000);
+        });
+
+        // --- 重新掃描按鈕邏輯 (保持不變) ---
+        document.getElementById('rescanButton').addEventListener('click', () => {
+            const plateList = document.getElementById('plateList');
+            const buttonContainer = document.getElementById('buttonContainer');
+            const errorDiv = document.getElementById('error');
+            plateList.innerHTML = '';
+            buttonContainer.style.display = 'none';
+            errorDiv.style.display = 'none';
+            isScanningStopped = false;
+            isStopRequested = false;
+            clearInterval(intervalId);
+            intervalId = null;
+
+            const video = document.getElementById('video');
+            video.src = '/video_feed?' + new Date().getTime();
+            fetch('/start', { method: 'POST' })
+                .then(response => {
+                    if (!response.ok) throw new Error(`啟動請求失敗: ${response.status}`);
+                    return response.json();
+                })
+                .then(data => {
+                    console.log(data.message);
+                    intervalId = setInterval(updateResults, 2000);
+                })
+                .catch(error => {
+                    console.error('啟動錯誤:', error);
+                    document.getElementById('error').innerText = `啟動失敗: ${error.message}`;
+                });
+        });
+    </script>
+</body>
+</html>

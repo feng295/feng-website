@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>行動停車位管理資訊系統</title>
+    <link rel="stylesheet" href="./styles.css">
+    <script async defer
+        src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDx1m0ViIY5aCpF4Khxtuay2VZc6k3Ne0g&callback=initMap&loading=async&libraries=marker"></script>
+</head>
+
+<body>
+    <div class="container" id="authContainer">
+        <h2 id="formTitle">登入</h2>
+        <form id="authForm">
+            <div class="input-group">
+                <label for="name">姓名</label>
+                <input type="text" id="name" name="name" aria-required="true">
+            </div>
+            <div class="input-group">
+                <label for="email">電子郵件</label>
+                <input type="email" id="email" name="email" required>
+            </div>
+            <div class="input-group">
+                <label for="phone">電話號碼</label>
+                <input type="text" id="phone" name="phone">
+            </div>
+            <div class="input-group">
+                <label for="password">密碼</label>
+                <input type="password" id="password" name="password" required>
+            </div>
+            <div class="input-group">
+                <label for="role">身份</label>
+                <select id="role" name="role" required>
+                    <option value="renter">租用者</option>
+                </select>
+            </div>
+            <div id="renterFields" class="input-group" style="display: none;">
+                <label for="license_plate">車牌號碼</label>
+                <input type="text" id="license_plate" name="license_plate" placeholder="格式如: AAA-1111">
+                <label for="vehicle_type">車型</label>
+                <input type="text" id="vehicle_type" name="vehicle_type" placeholder="請輸入車型">
+            </div>
+            <div class="input-group">
+                <label for="payment_method">付款方式</label>
+                <select id="payment_method" name="payment_method" required>
+                    <option value="credit_card">信用卡</option>
+                </select>
+            </div>
+            <div id="cardNumberContainer" class="input-group" style="display: none;">
+                <label for="card_number">信用卡號</label>
+                <input type="text" id="card_number" name="card_number" placeholder="請輸入信用卡號" required>
+            </div>
+            <button type="submit" id="submitButton">登入</button>
+            <p id="toggleMessage">還沒有帳號？<a href="#" id="toggleLink">註冊</a></p>
+            <p id="errorMessage"></p>
+        </form>
+    </div>
+
+    <div id="parkingContainer" style="display: none;">
+        <h1 id="pageTitle"></h1>
+        <div class="system-container">
+            <div class="function-list">
+                <h1>功能清單</h1>
+                <ul></ul>
+            </div>
+            <div class="content-container">
+                <div id="addParking" class="content-section" style="display: none;">
+                    <h2>車位資訊維護</h2>
+                    <div class="input-group">
+                        <label for="memberIdInput">會員 ID：</label>
+                        <input type="text" id="memberIdInput" readonly aria-label="會員 ID（唯讀）">
+                    </div>
+                    <div class="input-group">
+                        <label for="newLocation">地址：</label>
+                        <input type="text" id="newLocation" placeholder="請輸入地址" maxlength="50" required
+                            aria-label="車位地址">
+                    </div>
+                    <div class="input-group">
+                        <label for="newParkingType">停車類型：</label>
+                        <select id="newParkingType" required aria-label="選擇停車類型">
+                            <option value="flat">平面</option>
+                            <option value="mechanical">機械</option>
+                        </select>
+                    </div>
+                    <div class="input-group">
+                        <label for="newFloorLevel">樓層：</label>
+                        <input type="text" id="newFloorLevel" placeholder="例如 1F" maxlength="20" aria-label="樓層（例如 1F）">
+                    </div>
+                    <div class="input-group">
+                        <label id="newPriceLabel" for="newPrice">半小時費用（元）：</label>
+                        <input type="number" id="newPrice" step="0.01" value="20.00" min="0" required
+                            aria-label="每半小時費用（元）">
+                    </div>
+                    <div class="input-group">
+                        <label for="newMaxDailyPrice">每日最高價格（元）：</label>
+                        <input type="number" id="newMaxDailyPrice" step="0.01" value="300.00" min="0" required
+                            aria-label="每日最高價格（元）">
+                    </div>
+                    <div class="input-group">
+                        <label for="latitudeInput">經度：</label>
+                        <input type="number" id="latitudeInput" step="0.000001" value="23.57461380558428" readonly
+                            aria-label="經度">
+                    </div>
+                    <div class="input-group">
+                        <label for="longitudeInput">緯度：</label>
+                        <input type="number" id="longitudeInput" step="0.000001" value="119.58110318336162" readonly
+                            aria-label="緯度">
+                    </div>
+                    <div id="availableDaysContainer">
+                        <label>可用日期：</label>
+                        <button type="button" id="addDateButton">添加日期</button>
+                    </div>
+                    <div id="addParkingMap" style="height: 400px; width: 100%;"></div>
+                    <div style="margin-top: 10px;">
+                        <button id="saveNewSpotButton" aria-label="保存新車位">新增車位</button>
+                        <button id="cancelAddButton" aria-label="取消新增車位">取消</button>
+                    </div>
+                </div>
+                <div id="My parking space" class="content-section" style="display: none;">
+                    <h2>車位列表</h2>
+                    <table border="1" id="viewParkingTable">
+                        <thead>
+                            <tr>
+                                <th>車位ID</th>
+                                <th>地址</th>
+                                <th>類型</th>
+                                <th>樓層</th>
+                                <th>計價方式</th>
+                                <th>費用</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="My parking spaceTableBody">
+                            <tr>
+                                <td colspan="7">請選擇車位以查看詳情</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div id="reserveParking" class="content-section" style="display: none;">
+                    <h2>預約車位</h2>
+                    <div class="search-container">
+                        <label for="reserveCity">縣市：</label>
+                        <select id="reserveCity">
+                            <option value="all">全部</option>
+                            <option value="taipei">台北市</option>
+                            <option value="new_taipei">新北市</option>
+                            <option value="taoyuan">桃園市</option>
+                            <option value="taichung">台中市</option>
+                            <option value="tainan">台南市</option>
+                            <option value="kaohsiung">高雄市</option>
+                            <option value="keelung">基隆市</option>
+                            <option value="hsinchu">新竹市</option>
+                            <option value="chiayi">嘉義市</option>
+                            <option value="yilan">宜蘭縣</option>
+                            <option value="hsinchu_county">新竹縣</option>
+                            <option value="miaoli">苗栗縣</option>
+                            <option value="changhua">彰化縣</option>
+                            <option value="nantou">南投縣</option>
+                            <option value="yunlin">雲林縣</option>
+                            <option value="chiayi_county">嘉義縣</option>
+                            <option value="pingtung">屏東縣</option>
+                            <option value="taitung">台東縣</option>
+                            <option value="hualien">花蓮縣</option>
+                            <option value="penghu">澎湖縣</option>
+                            <option value="kinmen">金門縣</option>
+                            <option value="lienchiang">連江縣</option>
+                        </select>
+                        <label for="reserveParkingType">車位類型：</label>
+                        <select id="reserveParkingType">
+                            <option value="all">全部</option>
+                            <option value="flat">平面車位</option>
+                            <option value="mechanical">機械車位</option>
+                        </select>
+                        <label for="reserveFloor">樓層：</label>
+                        <select id="reserveFloor">
+                            <option value="all">全部</option>
+                            <option value="ground">地面</option>
+                            <option value="b1">地下1樓</option>
+                            <option value="b2">地下2樓</option>
+                            <option value="b3">地下3樓</option>
+                        </select>
+                        <label for="reserveDate">選擇日期：</label>
+                        <input type="date" id="reserveDate" required>
+                        <label for="startTime">開始時間：</label>
+                        <input type="time" id="startTime" required>
+                        <label for="endTime">結束時間：</label>
+                        <input type="time" id="endTime" required>
+                        <button id="reserveSearchButton">查詢</button>
+                    </div>
+                    <div id="reserveParkingMap" style="height: 400px; width: 100%; margin-bottom: 20px; display: none;">
+                    </div>
+                    <div class="parking-spaces-table">
+                        <table id="reserveParkingTable">
+                            <thead>
+                                <tr>
+                                    <th>車位編號</th>
+                                    <th>縣市</th>
+                                    <th>類型</th>
+                                    <th>樓層</th>
+                                    <th>計價方式</th>
+                                    <th>狀態</th>
+                                    <th>操作</th>
+                                </tr>
+                            </thead>
+                            <tbody id="reserveParkingTableBody">
+                                <tr>
+                                    <td colspan="7">請選擇日期並點擊查詢以查看可用車位</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div id="history" class="content-section" style="display: none;">
+                    <h2>租用紀錄</h2>
+                    <ul id="historyList"></ul>
+                </div>
+                <div id="incomeInquiry" class="content-section" style="display: none;">
+                    <h2>收入查詢</h2>
+                    <div class="search-container">
+                        <label for="startDate">開始日期：</label>
+                        <input type="date" id="startDate" required>
+                        <label for="endDate">結束日期：</label>
+                        <input type="date" id="endDate" required>
+                        <button id="incomeSearchButton">查詢</button>
+                    </div>
+                    <div class="parking-spaces-table">
+                        <table id="incomeTable">
+                            <thead>
+                                <tr>
+                                    <th>車位 ID</th>
+                                    <th>位置</th>
+                                    <th>開始日期與時間</th>
+                                    <th>結束日期與時間</th>
+                                    <th>費用</th>
+                                </tr>
+                            </thead>
+                            <tbody id="incomeTableBody">
+                                <tr>
+                                    <td colspan="5">請選擇日期以查看收入明細</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div id="totalIncomeDisplay" class="total-income">
+                        <p>總收入：0 元</p>
+                    </div>
+                </div>
+                <div id="viewAllUsers" class="content-section" style="display: none;">
+                    <h2>查看所有用戶資料</h2>
+                    <h3>共享者資料</h3>
+                    <div class="parking-spaces-table">
+                        <table id="ownerTable">
+                            <thead>
+                                <tr>
+                                    <th>用戶ID</th>
+                                    <th>姓名</th>
+                                    <th>電子郵件</th>
+                                    <th>電話號碼</th>
+                                    <th>付款方式</th>
+                                    <th>付款資訊</th>
+                                </tr>
+                            </thead>
+                            <tbody id="ownerTableBody">
+                                <tr>
+                                    <td colspan="6">請點擊搜尋以查看共享者資料</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <h3>租用者資料</h3>
+                    <div class="parking-spaces-table">
+                        <table id="renterTable">
+                            <thead>
+                                <tr>
+                                    <th>用戶ID</th>
+                                    <th>姓名</th>
+                                    <th>電子郵件</th>
+                                    <th>電話號碼</th>
+                                    <th>車牌號碼</th>
+                                    <th>車型</th>
+                                </tr>
+                            </thead>
+                            <tbody id="renterTableBody">
+                                <tr>
+                                    <td colspan="6">請點擊搜尋以查看租用者資料</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div id="profile" class="content-section" style="display: none;">
+                    <h2>個人資訊</h2>
+                    <div id="profileData">
+                        <p>載入中...</p>
+                    </div>
+                    <div id="editProfileForm" style="display: none;">
+                        <h3>編輯個人資料</h3>
+                        <div>
+                            <label for="editName">姓名：</label>
+                            <input type="text" id="editName" aria-required="true">
+                        </div>
+                        <div>
+                            <label for="editPhone">電話：</label>
+                            <input type="text" id="editPhone">
+                        </div>
+                        <div>
+                            <label for="editEmail">電子郵件：</label>
+                            <input type="email" id="editEmail" aria-required="true">
+                        </div>
+                        <div id="renterEditFields" style="display: none;">
+                            <label for="editLicensePlate">車牌號碼：</label>
+                            <input type="text" id="editLicensePlate">
+                            <label for="editCarModel">車型：</label>
+                            <input type="text" id="editCarModel">
+                        </div>
+                        <div>
+                            <label for="editPaymentMethod">付款方式：</label>
+                            <select id="editPaymentMethod" required>
+                                <option value="credit_card">信用卡</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="editCardNumber">信用卡號：</label>
+                            <input type="text" id="editCardNumber" required>
+                        </div>
+                        <button id="saveProfileButton">保存</button>
+                        <button id="editProfileButton">編輯</button>
+                        <button id="cancelEditProfileButton">取消</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <button id="logoutButton">登出</button>
+    </div>
+
+    <script src="./script.js"></script>
+</body>
+
+</html>
