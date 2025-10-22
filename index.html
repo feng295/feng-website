@@ -59,11 +59,7 @@
             </div>
             <div class="content-container">
                 <div id="addParking" class="content-section" style="display: none;">
-                    <h2>車位資訊維護</h2>
-                    <div class="input-group">
-                        <label for="memberIdInput">會員 ID：</label>
-                        <input type="text" id="memberIdInput" readonly aria-label="會員 ID（唯讀）">
-                    </div>
+                    <h2>新增停車場</h2>
                     <div class="input-group">
                         <label for="newLocation">地址：</label>
                         <input type="text" id="newLocation" placeholder="請輸入地址" maxlength="50" required
@@ -77,32 +73,21 @@
                         </select>
                     </div>
                     <div class="input-group">
-                        <label for="newFloorLevel">樓層：</label>
-                        <input type="text" id="newFloorLevel" placeholder="例如 1F" maxlength="20" aria-label="樓層（例如 1F）">
-                    </div>
-                    <div class="input-group">
-                        <label id="newPriceLabel" for="newPrice">半小時費用（元）：</label>
-                        <input type="number" id="newPrice" step="0.01" value="20.00" min="0" required
-                            aria-label="每半小時費用（元）">
-                    </div>
-                    <div class="input-group">
-                        <label for="newMaxDailyPrice">每日最高價格（元）：</label>
-                        <input type="number" id="newMaxDailyPrice" step="0.01" value="300.00" min="0" required
-                            aria-label="每日最高價格（元）">
+                        <label id="newPriceLabel" for="newPrice">小時費用（元）：</label>
+                        <input type="number" id="newPrice" step="0.01" value="40.00" min="0" required
+                            aria-label="小時費用（元）">
                     </div>
                     <div class="input-group">
                         <label for="latitudeInput">經度：</label>
-                        <input type="number" id="latitudeInput" step="0.000001" value="23.57461380558428" readonly
-                            aria-label="經度">
+                        <input type="number" id="latitudeInput" step="0.000001" readonly aria-label="經度">
                     </div>
                     <div class="input-group">
                         <label for="longitudeInput">緯度：</label>
-                        <input type="number" id="longitudeInput" step="0.000001" value="119.58110318336162" readonly
-                            aria-label="緯度">
+                        <input type="number" id="longitudeInput" step="0.000001" readonly aria-label="緯度">
                     </div>
-                    <div id="availableDaysContainer">
-                        <label>可用日期：</label>
-                        <button type="button" id="addDateButton">添加日期</button>
+                    <div>
+                        <label for="newTotalSpots">總停車位數量：</label>
+                        <input type="number" id="newTotalSpots" value="1" min="1" required>
                     </div>
                     <div id="addParkingMap" style="height: 400px; width: 100%;"></div>
                     <div style="margin-top: 10px;">
