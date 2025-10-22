@@ -156,7 +156,7 @@ document.addEventListener("DOMContentLoaded", async function () {
         }
     }
 
-    // 顯示主畫面，並根據角色動態調整功能清单和預設畫面
+    // 顯示主畫面，並根據角色動態調整功能清單和預設畫面
     function showMainPage() {
         console.log("Entering showMainPage function");
 
@@ -189,7 +189,6 @@ document.addEventListener("DOMContentLoaded", async function () {
         history.pushState({ role }, '', newPath);
         console.log(`URL updated to: ${window.location.pathname}`);
 
-
         if (role === "renter") pageTitle.textContent = "租用者";
         else if (role === "admin") pageTitle.textContent = "管理員";
 
@@ -201,6 +200,8 @@ document.addEventListener("DOMContentLoaded", async function () {
 
         if (role === "renter") {
             navList.innerHTML = `
+                <li><a href="#" class="nav-link" data-target="rentParking">租用車位(進場)</a></li>
+                <li><a href="#" class="nav-link" data-target="settleParking">離開結算(出場)</a></li>
                 <li><a href="#" class="nav-link" data-target="reserveParking">預約車位</a></li>
                 <li><a href="#" class="nav-link" data-target="history">租用紀錄</a></li>
                 <li><a href="#" class="nav-link" data-target="profile">個人資訊</a></li>
@@ -214,6 +215,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                 <li><a href="#" class="nav-link" data-target="profile">個人資訊</a></li>
             `;
         }
+
         document.querySelectorAll(".content-section").forEach(section => {
             section.style.display = "none";
         });
@@ -233,6 +235,8 @@ document.addEventListener("DOMContentLoaded", async function () {
         else if (defaultSectionId === "viewAllUsers") setupViewAllUsers();
         else if (defaultSectionId === "incomeInquiry") setupIncomeInquiry();
         else if (defaultSectionId === "addParking") setupAddParking();
+        else if (defaultSectionId === "rentParking") setupRentParking();
+        else if (defaultSectionId === "settleParking") setupSettleParking();
         else setupMyParkingSpace();
 
         const navLinks = document.querySelectorAll(".nav-link");
@@ -240,35 +244,78 @@ document.addEventListener("DOMContentLoaded", async function () {
         navLinks.forEach(link => {
             const newLink = link.cloneNode(true);
             link.parentNode.replaceChild(newLink, link);
-        });
-
-        // 重新綁定事件
-        document.querySelectorAll(".nav-link").forEach(link => {
-            link.addEventListener("click", async function (event) {
-                event.preventDefault();
-                if (!await checkAuth()) return;
-
-                const targetId = this.getAttribute("data-target");
+            newLink.addEventListener("click", (e) => {
+                e.preventDefault();
+                const target = newLink.getAttribute("data-target");
+                console.log(`Nav link clicked, target: ${target}`);
                 document.querySelectorAll(".content-section").forEach(section => {
                     section.style.display = "none";
                 });
-
-                const targetSection = document.getElementById(targetId);
-                if (!targetSection) {
-                    console.error(`Target section "${targetId}" not found`);
-                    return;
+                const section = document.getElementById(target);
+                if (section) {
+                    section.style.display = "block";
+                    if (target === "My parking space") {
+                        setupMyParkingSpace();
+                    } else if (target === "reserveParking") {
+                        setupReserveParking();
+                    } else if (target === "history") {
+                        loadHistory();
+                    } else if (target === "incomeInquiry") {
+                        setupIncomeInquiry();
+                    } else if (target === "viewAllUsers") {
+                        setupViewAllUsers();
+                    } else if (target === "profile") {
+                        setupProfile();
+                    } else if (target === "addParking") {
+                        setupAddParking();
+                    } else if (target === "rentParking") {
+                        setupRentParking();
+                    } else if (target === "settleParking") {
+                        setupSettleParking();
+                    }
+                } else {
+                    console.error(`Section with ID "${target}" not found`);
                 }
-
-                targetSection.style.display = "block";
-                if (targetId === "My parking space") setupMyParkingSpace();
-                else if (targetId === "reserveParking") setupReserveParking();
-                else if (targetId === "history") loadHistory();
-                else if (targetId === "incomeInquiry") setupIncomeInquiry();
-                else if (targetId === "viewAllUsers") setupViewAllUsers();
-                else if (targetId === "addParking") setupAddParking();
-                else if (targetId === "profile") setupProfile();
             });
         });
+    }
+
+    // 設置租用車位(進場)頁面
+    function setupRentParking() {
+        const role = getRole();
+        console.log("Current role in setupRentParking:", role);
+        if (role !== "renter") {
+            alert("此功能僅限租用者使用！");
+            return;
+        }
+        const rentParkingSection = document.getElementById("rentParking");
+        if (!rentParkingSection) {
+            console.error("rentParking section not found");
+            alert("無法載入「租用車位(進場)」頁面，頁面元素缺失，請聯繫管理員！");
+            return;
+        }
+        rentParkingSection.style.display = "block";
+        // TODO: 實現進場功能邏輯（例如顯示可用車位、提交進場請求等）
+        console.log("Setup rentParking section");
+    }
+
+    // 設置離開結算(出場)頁面
+    function setupSettleParking() {
+        const role = getRole();
+        console.log("Current role in setupSettleParking:", role);
+        if (role !== "renter") {
+            alert("此功能僅限租用者使用！");
+            return;
+        }
+        const settleParkingSection = document.getElementById("settleParking");
+        if (!settleParkingSection) {
+            console.error("settleParking section not found");
+            alert("無法載入「離開結算(出場)」頁面，頁面元素缺失，請聯繫管理員！");
+            return;
+        }
+        settleParkingSection.style.display = "block";
+        // TODO: 實現出場結算功能邏輯（例如顯示當前租用車位、提交結算請求等）
+        console.log("Setup settleParking section");
     }
 
     // 設置新增車位功能
