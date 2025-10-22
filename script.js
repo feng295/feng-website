@@ -271,7 +271,7 @@ document.addEventListener("DOMContentLoaded", async function () {
         });
     }
 
-    // 設置新增車位車位資訊維護功能
+    // 設置新增車位功能
     async function setupAddParking() {
         const role = getRole();
         console.log("Current role in setupAddParking:", role);
@@ -288,33 +288,10 @@ document.addEventListener("DOMContentLoaded", async function () {
         }
 
         addParkingSection.style.display = "block";
-        if (!addParkingSection.innerHTML.trim()) {
-            addParkingSection.innerHTML = `
-            <p>載入中...</p>
-            <!-- 其他動態內容將在此後添加 -->
-        `;
-        }
-
-        const memberIdInput = document.getElementById("memberIdInput");
-        const memberId = getMemberId();
-        if (!memberId) {
-            alert("無法獲取會員 ID，請重新登入！");
-            showLoginPage();
-            return;
-        }
-        memberIdInput.value = memberId;
 
         const priceLabel = document.getElementById("newPriceLabel");
         if (priceLabel) {
-            priceLabel.textContent = "半小時費用（元）：";
-        } else {
-            console.warn("priceLabel not found, using fallback pricing setup");
-            addParkingSection.innerHTML += `
-            <div>
-                <label id="newPriceLabel">半小時費用（元）：</label>
-                <input type="number" id="newPrice" value="20.00" step="0.01" min="0" required>
-            </div>
-        `;
+            priceLabel.textContent = "小時費用（元）：";
         }
 
         const addParkingMap = document.getElementById("addParkingMap");
@@ -324,17 +301,8 @@ document.addEventListener("DOMContentLoaded", async function () {
         if (!addParkingMap || !latitudeInput || !longitudeInput) {
             console.error("Required elements for map in addParking not found: addParkingMap, latitudeInput, or longitudeInput");
             alert("地圖容器或經緯度輸入框未找到，地圖功能將不可用，但您仍可繼續新增車位。");
-            addParkingSection.innerHTML += `
-            <div id="addParkingMap" style="height: 400px; width: 100%; display: none;"></div>
-            <div>
-                <label>經度：</label>
-                <input type="number" id="latitudeInput" value="" step="0.000001" readonly>
-            </div>
-            <div>
-                <label>緯度：</label>
-                <input type="number" id="longitudeInput" value="" step="0.000001" readonly>
-            </div>
-        `;
+            addParkingMap.style.display = "none";
+            return;
         }
 
         let userLatitude, userLongitude;
@@ -356,6 +324,8 @@ document.addEventListener("DOMContentLoaded", async function () {
         longitudeInput.value = userLongitude;
         latitudeInput.disabled = true;
         longitudeInput.disabled = true;
+        latitudeInput.readOnly = true;
+        longitudeInput.readOnly = true;
 
         let map, marker;
         try {
@@ -378,101 +348,51 @@ document.addEventListener("DOMContentLoaded", async function () {
             addParkingMap.style.display = "none";
         }
 
-        latitudeInput.readOnly = true;
-        longitudeInput.readOnly = true;
-
-        const availableDaysContainer = document.getElementById("availableDaysContainer");
-        const addDateButton = document.getElementById("addDateButton");
-
-        function addDateRangeEntry() {
-            const dateEntry = document.createElement("div");
-            dateEntry.className = "date-range-entry";
-            dateEntry.innerHTML = `
-            <label>日期 (YYYY-MM-DD)：</label>
-            <input type="date" class="new-available-date" required>
-            <button type="button" class="remove-range">移除</button>
-        `;
-            availableDaysContainer.appendChild(dateEntry);
-
-            dateEntry.querySelector(".remove-range").addEventListener("click", () => {
-                dateEntry.remove();
-            });
-        }
-
-        addDateButton.addEventListener("click", addDateRangeEntry);
-        addDateRangeEntry();
-
         const saveNewSpotButton = document.getElementById("saveNewSpotButton");
-        if (!saveNewSpotButton) {
-            console.error("saveNewSpotButton not found in the DOM");
-            alert("無法找到保存按鈕，請檢查頁面結構！");
+        const cancelAddButton = document.getElementById("cancelAddButton");
+
+        if (!saveNewSpotButton || !cancelAddButton) {
+            console.error("saveNewSpotButton or cancelAddButton not found in the DOM");
+            alert("無法找到保存或取消按鈕，請檢查頁面結構！");
             return;
         }
-        saveNewSpotButton.addEventListener("click", async () => {
+
+        // 移除舊的事件監聽器，避免重複綁定
+        const saveButtonClone = saveNewSpotButton.cloneNode(true);
+        saveNewSpotButton.parentNode.replaceChild(saveButtonClone, saveNewSpotButton);
+        const cancelButtonClone = cancelAddButton.cloneNode(true);
+        cancelAddButton.parentNode.replaceChild(cancelButtonClone, cancelAddButton);
+
+        // 綁定新的事件監聽器
+        saveButtonClone.addEventListener("click", async () => {
             const newSpot = {
-                member_id: parseInt(memberIdInput.value),
-                location: document.getElementById("newLocation").value.trim(),
-                parking_type: document.getElementById("newParkingType").value,
-                floor_level: document.getElementById("newFloorLevel").value.trim(),
-                pricing_type: "hourly",
+                type: document.getElementById("newParkingType").value,
+                address: document.getElementById("newLocation").value.trim(),
+                hourly_rate: parseFloat(document.getElementById("newPrice").value) || 40.00,
+                total_spots: parseInt(document.getElementById("newTotalSpots").value) || 1,
+                latitude: userLatitude,
+                longitude: userLongitude
             };
 
-            if (!newSpot.member_id) {
-                alert("會員 ID 為必填項！");
-                return;
-            }
-            if (!newSpot.location) {
+            if (!newSpot.address) {
                 alert("地址為必填項！");
                 return;
             }
-            if (newSpot.location.length > 50) {
+            if (newSpot.address.length > 50) {
                 alert("地址最多 50 個字符！");
                 return;
             }
-            if (!["flat", "mechanical"].includes(newSpot.parking_type)) {
+            if (!["flat", "mechanical"].includes(newSpot.type)) {
                 alert("停車類型必須為 'flat' 或 'mechanical'！");
                 return;
             }
-            if (newSpot.floor_level && newSpot.floor_level.length > 20) {
-                alert("樓層最多 20 個字符！");
-                return;
-            }
-
-            const priceInput = document.getElementById("newPrice").value;
-            const price = priceInput ? parseFloat(priceInput) : 20.00;
-            if (isNaN(price) || price < 0) {
+            if (isNaN(newSpot.hourly_rate) || newSpot.hourly_rate < 0) {
                 alert("費用必須為正數！");
                 return;
             }
-            newSpot.price_per_half_hour = price;
-
-            const maxDailyPriceInput = document.getElementById("newMaxDailyPrice").value;
-            const maxDailyPrice = maxDailyPriceInput ? parseFloat(maxDailyPriceInput) : 300.00;
-            if (isNaN(maxDailyPrice) || maxDailyPrice < 0) {
-                alert("每日最高價格必須為正數！");
+            if (isNaN(newSpot.total_spots) || newSpot.total_spots < 1) {
+                alert("總停車位數量必須為正整數！");
                 return;
-            }
-            newSpot.daily_max_price = maxDailyPrice;
-
-            newSpot.latitude = userLatitude;
-            newSpot.longitude = userLongitude;
-
-            const dateEntries = availableDaysContainer.querySelectorAll(".date-range-entry");
-            const availableDays = [];
-            for (const entry of dateEntries) {
-                const date = entry.querySelector(".new-available-date").value;
-                if (!date) {
-                    alert("請為每個可用日期選擇日期！");
-                    return;
-                }
-                if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
-                    alert("日期格式不正確，請使用 YYYY-MM-DD 格式！");
-                    return;
-                }
-                availableDays.push({ date });
-            }
-            if (availableDays.length > 0) {
-                newSpot.available_days = availableDays;
             }
 
             try {
@@ -481,7 +401,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 
                 console.log("Sending new spot data:", JSON.stringify(newSpot, null, 2));
 
-                const response = await fetch(`${API_URL}/parking/share`, {
+                const response = await fetch(`${API_URL}/parking`, {
                     method: 'POST',
                     headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
                     body: JSON.stringify(newSpot)
@@ -506,13 +426,7 @@ document.addEventListener("DOMContentLoaded", async function () {
             }
         });
 
-        const cancelAddButton = document.getElementById("cancelAddButton");
-        if (!cancelAddButton) {
-            console.error("cancelAddButton not found in the DOM");
-            alert("無法找到取消按鈕，請檢查頁面結構！");
-            return;
-        }
-        cancelAddButton.addEventListener("click", () => {
+        cancelButtonClone.addEventListener("click", () => {
             addParkingSection.style.display = "none";
             const myParkingSpaceSection = document.getElementById("My parking space");
             if (myParkingSpaceSection) {
@@ -600,21 +514,21 @@ document.addEventListener("DOMContentLoaded", async function () {
     });
 
     // 當身份改變時，顯示或隱藏租用者專用欄位和信用卡號
-roleInput.addEventListener("change", function () {
-    if (roleInput.value.toLowerCase() === "renter" && !isLogin) {
-        renterFields.style.display = "block";
-        licensePlateInput.setAttribute("required", "true");
-        cardNumberContainer.style.display = "block";
-        cardNumberInput.setAttribute("required", "true");
-    } else {
-        renterFields.style.display = "none";
-        licensePlateInput.removeAttribute("required");
-        licensePlateInput.value = "";
-        cardNumberContainer.style.display = "none";
-        cardNumberInput.removeAttribute("required");
-        cardNumberInput.value = "";
-    }
-});
+    roleInput.addEventListener("change", function () {
+        if (roleInput.value.toLowerCase() === "renter" && !isLogin) {
+            renterFields.style.display = "block";
+            licensePlateInput.setAttribute("required", "true");
+            cardNumberContainer.style.display = "block";
+            cardNumberInput.setAttribute("required", "true");
+        } else {
+            renterFields.style.display = "none";
+            licensePlateInput.removeAttribute("required");
+            licensePlateInput.value = "";
+            cardNumberContainer.style.display = "none";
+            cardNumberInput.removeAttribute("required");
+            cardNumberInput.value = "";
+        }
+    });
 
     // 電話號碼輸入驗證（只允許數字）
     phoneInput.addEventListener("input", function () {
@@ -654,46 +568,46 @@ roleInput.addEventListener("change", function () {
 
     // 動態隱藏註冊專用欄位
     function toggleFormFields() {
-    if (isLogin) {
-        nameInput.parentElement.style.display = "none";
-        phoneInput.parentElement.style.display = "none";
-        roleInput.parentElement.style.display = "none";
-        cardNumberContainer.style.display = "none";
-        renterFields.style.display = "none";
-
-        nameInput.removeAttribute("required");
-        phoneInput.removeAttribute("required");
-        roleInput.removeAttribute("required");
-        cardNumberInput.removeAttribute("required");
-        licensePlateInput.removeAttribute("required");
-
-        emailInput.setAttribute("required", "true");
-        passwordInput.setAttribute("required", "true");
-    } else {
-        nameInput.parentElement.style.display = "block";
-        phoneInput.parentElement.style.display = "block";
-        roleInput.parentElement.style.display = "block";
-        if (roleInput.value.toLowerCase() === "renter") {
-            renterFields.style.display = "block";
-            licensePlateInput.setAttribute("required", "true");
-            cardNumberContainer.style.display = "block";
-            cardNumberInput.setAttribute("required", "true");
-        } else {
-            renterFields.style.display = "none";
-            licensePlateInput.removeAttribute("required");
-            licensePlateInput.value = "";
+        if (isLogin) {
+            nameInput.parentElement.style.display = "none";
+            phoneInput.parentElement.style.display = "none";
+            roleInput.parentElement.style.display = "none";
             cardNumberContainer.style.display = "none";
-            cardNumberInput.removeAttribute("required");
-            cardNumberInput.value = "";
-        }
+            renterFields.style.display = "none";
 
-        emailInput.setAttribute("required", "true");
-        passwordInput.setAttribute("required", "true");
-        nameInput.setAttribute("required", "true");
-        phoneInput.setAttribute("required", "true");
-        roleInput.setAttribute("required", "true");
+            nameInput.removeAttribute("required");
+            phoneInput.removeAttribute("required");
+            roleInput.removeAttribute("required");
+            cardNumberInput.removeAttribute("required");
+            licensePlateInput.removeAttribute("required");
+
+            emailInput.setAttribute("required", "true");
+            passwordInput.setAttribute("required", "true");
+        } else {
+            nameInput.parentElement.style.display = "block";
+            phoneInput.parentElement.style.display = "block";
+            roleInput.parentElement.style.display = "block";
+            if (roleInput.value.toLowerCase() === "renter") {
+                renterFields.style.display = "block";
+                licensePlateInput.setAttribute("required", "true");
+                cardNumberContainer.style.display = "block";
+                cardNumberInput.setAttribute("required", "true");
+            } else {
+                renterFields.style.display = "none";
+                licensePlateInput.removeAttribute("required");
+                licensePlateInput.value = "";
+                cardNumberContainer.style.display = "none";
+                cardNumberInput.removeAttribute("required");
+                cardNumberInput.value = "";
+            }
+
+            emailInput.setAttribute("required", "true");
+            passwordInput.setAttribute("required", "true");
+            nameInput.setAttribute("required", "true");
+            phoneInput.setAttribute("required", "true");
+            roleInput.setAttribute("required", "true");
+        }
     }
-}
 
     // 初始化表單顯示
     toggleFormFields();
