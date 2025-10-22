@@ -85,9 +85,10 @@
                         <label for="longitudeInput">緯度：</label>
                         <input type="number" id="longitudeInput" step="0.000001" readonly aria-label="緯度">
                     </div>
-                    <div>
+                    <div class="input-group">
                         <label for="newTotalSpots">總停車位數量：</label>
-                        <input type="number" id="newTotalSpots" value="1" min="1" required>
+                        <input type="number" id="newTotalSpots" placeholder="請輸入總停車位數量" value="1" min="1" required
+                            aria-label="總停車位數量">
                     </div>
                     <div id="addParkingMap" style="height: 400px; width: 100%;"></div>
                     <div style="margin-top: 10px;">
