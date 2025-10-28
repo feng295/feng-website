@@ -877,16 +877,8 @@ document.addEventListener("DOMContentLoaded", async function () {
                     </select>
                 </div>
                 <div>
-                    <label>樓層：</label>
-                    <input type="text" id="editFloorLevel" value="${spot.floor_level || ''}" maxlength="20" placeholder="例如: ground, 1F, B1">
-                </div>
-                <div>
-                    <label>每半小時價格（元）：</label>
-                    <input type="number" id="editPricePerHalfHour" value="${spot.price_per_half_hour || 0}" step="0.01" min="0" required>
-                </div>
-                <div>
-                    <label>每日最高價格（元）：</label>
-                    <input type="number" id="editDailyMaxPrice" value="${spot.daily_max_price || 0}" step="0.01" min="0" required>
+                    <label>每小時價格（元）：</label>
+                    <input type="number" id="editPricePerHour" value="${spot.price_per_hour || 0}" step="0.01" min="0" required>
                 </div>
                 <div>
                     <label>經度：</label>
@@ -936,12 +928,8 @@ document.addEventListener("DOMContentLoaded", async function () {
                     alert("樓層最多 20 個字符！");
                     return;
                 }
-                if (updatedSpot.price_per_half_hour < 0) {
-                    alert("每半小時價格必須為正數！");
-                    return;
-                }
-                if (updatedSpot.daily_max_price < 0) {
-                    alert("每日最高價格必須為正數！");
+                if (updatedSpot.price_per_hour < 0) {
+                    alert("每小時價格必須為正數！");
                     return;
                 }
 
@@ -994,7 +982,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 
                 let url;
                 if (role === "admin") {
-                    url = `${API_URL}/parking/my-spots`;
+                    url = `${API_URL}/parking/all`;
                 }
 
                 const response = await fetch(url, {
