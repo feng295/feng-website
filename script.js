@@ -817,68 +817,129 @@ document.addEventListener("DOMContentLoaded", async function () {
     });
 
     // 設置車位列表
-    function setupMyParkingSpace() {
-        const role = getRole();
-        console.log("Current role in setupMyParkingSpace:", role);
-        if (!["admin"].includes(role)) {
-            alert("您沒有權限訪問此功能！");
+async function setupMyParkingSpace() {
+    const role = getRole();
+    console.log("Current role in setupMyParkingSpace:", role);
+    if (!["admin"].includes(role)) {
+        alert("您沒有權限訪問此功能！");
+        return;
+    }
+
+    // ✅ 改成 querySelector 支援含空白 ID
+    const section = document.querySelector('[id="My parking space"]');
+    const parkingTableBody = document.querySelector('[id="My parking spaceTableBody"]');
+
+    if (!section || !parkingTableBody) {
+        console.error("❌ Required element not found for My parking space");
+        alert("無法載入「車位列表」頁面，頁面元素缺失，請聯繫管理員！");
+        return;
+    }
+
+    // 顯示載入中
+    parkingTableBody.innerHTML = '<tr><td colspan="5">載入中...</td></tr>';
+
+    try {
+        const token = getToken();
+        if (!token) throw new Error("認證令牌缺失，請重新登入！");
+
+        // ✅ 呼叫後端 API
+        const response = await fetch(`${API_URL}/parking/all`, {
+            method: "GET",
+            headers: { "Authorization": `Bearer ${token}` }
+        });
+
+        if (!response.ok) {
+            const errData = await response.json().catch(() => ({ message: "未知錯誤" }));
+            throw new Error(`HTTP ${response.status}: ${errData.message}`);
+        }
+
+        const result = await response.json();
+        if (!result.status || !Array.isArray(result.data)) {
+            throw new Error(result.message || "回傳格式錯誤");
+        }
+
+        const spots = result.data;
+        if (spots.length === 0) {
+            parkingTableBody.innerHTML = '<tr><td colspan="5">目前無車位資料</td></tr>';
             return;
         }
 
-        const parkingTableBody = document.getElementById("My parking spaceTableBody");
-        if (!parkingTableBody) {
-            console.error("Required element not found for My parking space: parkingTableBody");
-            alert("無法載入「車位列表」頁面，頁面元素缺失，請聯繫管理員！");
-            return;
+        // 顯示車位資料
+        parkingTableBody.innerHTML = "";
+        spots.forEach(spot => {
+            const row = document.createElement("tr");
+            row.innerHTML = `
+                <td>${spot.parking_lot_id}</td>
+                <td>${spot.address}</td>
+                <td>${spot.type === "flat" ? "平面" : "機械"}</td>
+                <td>${spot.hourly_rate}</td>
+                <td><button class="edit-btn" data-id="${spot.parking_lot_id}">編輯</button></td>
+            `;
+            parkingTableBody.appendChild(row);
+        });
+
+        // 綁定編輯事件
+        document.querySelectorAll(".edit-btn").forEach(btn => {
+            btn.addEventListener("click", e => {
+                const id = e.target.getAttribute("data-id");
+                const spot = spots.find(s => s.parking_lot_id == id);
+                if (spot) showEditForm(spot);
+            });
+        });
+
+    } catch (error) {
+        console.error("🚨 載入車位失敗:", error);
+        alert(`無法載入車位列表 (${error.message})`);
+        if (error.message.includes("認證")) {
+            removeToken();
+            showLoginPage(true);
+        }
+    }
+
+    // ---------- 編輯表單 ----------
+    let editFormContainer = document.getElementById("editParkingFormContainer");
+    if (!editFormContainer) {
+        editFormContainer = document.createElement("div");
+        editFormContainer.id = "editParkingFormContainer";
+        editFormContainer.style.display = "none";
+        section.appendChild(editFormContainer);
+    }
+
+    // 顯示編輯表單
+    async function showEditForm(spot) {
+        let userLatitude, userLongitude;
+        try {
+            const position = await new Promise((resolve, reject) => {
+                if (!navigator.geolocation) reject(new Error("Geolocation not supported"));
+                navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 10000, maximumAge: 0 });
+            });
+            userLatitude = position.coords.latitude;
+            userLongitude = position.coords.longitude;
+        } catch (error) {
+            console.warn("⚠️ 無法取得定位，使用預設位置:", error.message);
+            alert("無法獲取您的位置，將使用預設位置（國立澎湖科技大學）。");
+            userLatitude = 23.57461380558428;
+            userLongitude = 119.58110318336162;
         }
 
-        // 進入頁面時顯示「載入中...」
-        parkingTableBody.innerHTML = '<tr><td colspan="7">載入中...</td></tr>';
-
-        // 編輯表單容器
-        let editFormContainer = document.getElementById("editParkingFormContainer");
-        if (!editFormContainer) {
-            editFormContainer = document.createElement("div");
-            editFormContainer.id = "editParkingFormContainer";
-            editFormContainer.style.display = "none";
-            document.getElementById("My parking space").appendChild(editFormContainer);
-        }
-
-        // 顯示編輯表單
-        async function showEditForm(spot) {
-            let userLatitude, userLongitude;
-            try {
-                const position = await new Promise((resolve, reject) => {
-                    if (!navigator.geolocation) reject(new Error("Geolocation not supported by browser"));
-                    navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 10000, maximumAge: 0 });
-                });
-                userLatitude = position.coords.latitude;
-                userLongitude = position.coords.longitude;
-            } catch (error) {
-                console.warn("Unable to retrieve location, using fallback coordinates:", error.message);
-                alert("無法獲取您的位置，將使用預設位置（國立澎湖科技大學）。請確認已允許定位權限。");
-                userLatitude = 23.57461380558428;
-                userLongitude = 119.58110318336162;
-            }
-
-            editFormContainer.innerHTML = `
+        editFormContainer.innerHTML = `
             <h3>編輯車位</h3>
             <form id="editParkingForm">
-                <input type="hidden" id="editSpotId" value="${spot.spot_id || ''}">
+                <input type="hidden" id="editParkingLotId" value="${spot.parking_lot_id}">
                 <div>
                     <label>地址：</label>
-                    <input type="text" id="editLocation" value="${spot.location || ''}" maxlength="50" required>
+                    <input type="text" id="editAddress" value="${spot.address}" maxlength="50" required>
                 </div>
                 <div>
                     <label>停車類型：</label>
-                    <select id="editParkingType" required>
-                        <option value="flat" ${spot.parking_type === 'flat' ? 'selected' : ''}>平面</option>
-                        <option value="mechanical" ${spot.parking_type === 'mechanical' ? 'selected' : ''}>機械</option>
+                    <select id="editType" required>
+                        <option value="flat" ${spot.type === "flat" ? "selected" : ""}>平面</option>
+                        <option value="mechanical" ${spot.type === "mechanical" ? "selected" : ""}>機械</option>
                     </select>
                 </div>
                 <div>
                     <label>每小時價格（元）：</label>
-                    <input type="number" id="editPricePerHour" value="${spot.price_per_hour || 0}" step="0.01" min="0" required>
+                    <input type="number" id="editHourlyRate" value="${spot.hourly_rate}" step="1" min="0" required>
                 </div>
                 <div>
                     <label>經度：</label>
@@ -892,84 +953,53 @@ document.addEventListener("DOMContentLoaded", async function () {
                 <button type="button" id="cancelEditSpotButton">取消</button>
             </form>
         `;
-            editFormContainer.style.display = "block";
+        editFormContainer.style.display = "block";
 
-            // 保存編輯
-            document.getElementById("saveEditSpotButton").addEventListener("click", async () => {
-                const updatedSpot = {
-                    location: document.getElementById("editLocation").value.trim(),
-                    parking_type: document.getElementById("editParkingType").value,
-                    floor_level: document.getElementById("editFloorLevel").value.trim() || "ground",
-                    pricing_type: "hourly",
-                    price_per_half_hour: parseFloat(document.getElementById("editPricePerHalfHour").value) || 0,
-                    daily_max_price: parseFloat(document.getElementById("editDailyMaxPrice").value) || 0,
-                    longitude: userLongitude,
-                    latitude: userLatitude,
-                };
+        // 保存修改
+        document.getElementById("saveEditSpotButton").addEventListener("click", async () => {
+            const updatedSpot = {
+                address: document.getElementById("editAddress").value.trim(),
+                type: document.getElementById("editType").value,
+                hourly_rate: parseFloat(document.getElementById("editHourlyRate").value) || 0,
+                longitude: userLongitude,
+                latitude: userLatitude
+            };
 
-                if (!updatedSpot.location) {
-                    alert("位置為必填項！");
-                    return;
-                }
-                if (updatedSpot.location.length > 50) {
-                    alert("位置最多 50 個字符！");
-                    return;
-                }
-                if (!["flat", "mechanical"].includes(updatedSpot.parking_type)) {
-                    alert("停車類型必須為 'flat' 或 'mechanical'！");
-                    return;
-                }
-                const floorLevelPattern = /^(ground|([1-9][0-9]*[F])|(B[1-9][0-9]*))$/i;
-                if (updatedSpot.floor_level && !floorLevelPattern.test(updatedSpot.floor_level)) {
-                    alert("樓層格式無效！請使用 'ground', '1F', 'B1' 等格式（最多20字）。");
-                    return;
-                }
-                if (updatedSpot.floor_level && updatedSpot.floor_level.length > 20) {
-                    alert("樓層最多 20 個字符！");
-                    return;
-                }
-                if (updatedSpot.price_per_hour < 0) {
-                    alert("每小時價格必須為正數！");
-                    return;
+            if (!updatedSpot.address) return alert("地址為必填項！");
+            if (updatedSpot.address.length > 50) return alert("地址最多 50 個字！");
+            if (updatedSpot.hourly_rate < 0) return alert("價格必須為正數！");
+
+            try {
+                const token = getToken();
+                const lotId = document.getElementById("editParkingLotId").value;
+                const response = await fetch(`${API_URL}/parking/${lotId}`, {
+                    method: "PUT",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Authorization": `Bearer ${token}`
+                    },
+                    body: JSON.stringify(updatedSpot)
+                });
+
+                if (!response.ok) {
+                    const err = await response.json().catch(() => ({ message: "未知錯誤" }));
+                    throw new Error(err.message);
                 }
 
-                try {
-                    const token = getToken();
-                    if (!token) throw new Error("認證令牌缺失，請重新登入！");
-
-                    const spotId = document.getElementById("editSpotId").value;
-                    const response = await fetch(`${API_URL}/parking/${spotId}`, {
-                        method: 'PUT',
-                        headers: {
-                            "Content-Type": "application/json",
-                            "Authorization": `Bearer ${token}`
-                        },
-                        body: JSON.stringify(updatedSpot)
-                    });
-
-                    if (!response.ok) {
-                        const errorData = await response.json().catch(() => ({ error: '未知錯誤' }));
-                        throw new Error(`HTTP error! Status: ${response.status}, Message: ${errorData.error || '未知錯誤'}`);
-                    }
-
-                    alert("車位已成功更新！");
-                    editFormContainer.style.display = "none";
-                    loadAllSpots();
-                } catch (error) {
-                    console.error("Failed to update spot:", error);
-                    alert(`無法更新車位，請檢查輸入或聯繫管理員 (錯誤: ${error.message})`);
-                    if (error.message.includes("認證失敗")) {
-                        removeToken();
-                        showLoginPage(true);
-                    }
-                }
-            });
-
-            // 取消編輯
-            document.getElementById("cancelEditSpotButton").addEventListener("click", () => {
+                alert("✅ 車位已成功更新！");
                 editFormContainer.style.display = "none";
-            });
-        }
+                setupMyParkingSpace(); // 重新載入資料
+            } catch (error) {
+                console.error("更新失敗:", error);
+                alert(`無法更新車位：${error.message}`);
+            }
+        });
+
+        // 取消編輯
+        document.getElementById("cancelEditSpotButton").addEventListener("click", () => {
+            editFormContainer.style.display = "none";
+        });
+    }
 
         // 獲取並顯示所有車位
         async function loadAllSpots() {
