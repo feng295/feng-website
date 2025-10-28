@@ -39,6 +39,14 @@
             <div id="renterFields" class="input-group" style="display: none;">
                 <label for="license_plate">車牌號碼</label>
                 <input type="text" id="license_plate" name="license_plate" placeholder="格式如: AAA-1111">
+                <label for="vehicle_type">車型</label>
+                <input type="text" id="vehicle_type" name="vehicle_type" placeholder="請輸入車型">
+            </div>
+            <div class="input-group">
+                <label for="payment_method">付款方式</label>
+                <select id="payment_method" name="payment_method" required>
+                    <option value="credit_card">信用卡</option>
+                </select>
             </div>
             <div id="cardNumberContainer" class="input-group" style="display: none;">
                 <label for="card_number">信用卡號</label>
@@ -59,7 +67,11 @@
             </div>
             <div class="content-container">
                 <div id="addParking" class="content-section" style="display: none;">
-                    <h2>新增停車場</h2>
+                    <h2>車位資訊維護</h2>
+                    <div class="input-group">
+                        <label for="memberIdInput">會員 ID：</label>
+                        <input type="text" id="memberIdInput" readonly aria-label="會員 ID（唯讀）">
+                    </div>
                     <div class="input-group">
                         <label for="newLocation">地址：</label>
                         <input type="text" id="newLocation" placeholder="請輸入地址" maxlength="50" required
@@ -73,22 +85,32 @@
                         </select>
                     </div>
                     <div class="input-group">
-                        <label id="newPriceLabel" for="newPrice">小時費用（元）：</label>
-                        <input type="number" id="newPrice" step="0.01" value="40.00" min="0" required
-                            aria-label="小時費用（元）">
+                        <label for="newFloorLevel">樓層：</label>
+                        <input type="text" id="newFloorLevel" placeholder="例如 1F" maxlength="20" aria-label="樓層（例如 1F）">
+                    </div>
+                    <div class="input-group">
+                        <label id="newPriceLabel" for="newPrice">半小時費用（元）：</label>
+                        <input type="number" id="newPrice" step="0.01" value="20.00" min="0" required
+                            aria-label="每半小時費用（元）">
+                    </div>
+                    <div class="input-group">
+                        <label for="newMaxDailyPrice">每日最高價格（元）：</label>
+                        <input type="number" id="newMaxDailyPrice" step="0.01" value="300.00" min="0" required
+                            aria-label="每日最高價格（元）">
                     </div>
                     <div class="input-group">
                         <label for="latitudeInput">經度：</label>
-                        <input type="number" id="latitudeInput" step="0.000001" readonly aria-label="經度">
+                        <input type="number" id="latitudeInput" step="0.000001" value="23.57461380558428" readonly
+                            aria-label="經度">
                     </div>
                     <div class="input-group">
                         <label for="longitudeInput">緯度：</label>
-                        <input type="number" id="longitudeInput" step="0.000001" readonly aria-label="緯度">
+                        <input type="number" id="longitudeInput" step="0.000001" value="119.58110318336162" readonly
+                            aria-label="緯度">
                     </div>
-                    <div class="input-group">
-                        <label for="newTotalSpots">總停車位數量：</label>
-                        <input type="number" id="newTotalSpots" placeholder="請輸入總停車位數量" value="1" min="1" required
-                            aria-label="總停車位數量">
+                    <div id="availableDaysContainer">
+                        <label>可用日期：</label>
+                        <button type="button" id="addDateButton">添加日期</button>
                     </div>
                     <div id="addParkingMap" style="height: 400px; width: 100%;"></div>
                     <div style="margin-top: 10px;">
@@ -96,7 +118,7 @@
                         <button id="cancelAddButton" aria-label="取消新增車位">取消</button>
                     </div>
                 </div>
-                <div id="myParkingSpace" class="content-section" style="display: none;">
+                <div id="My parking space" class="content-section" style="display: none;">
                     <h2>車位列表</h2>
                     <table border="1" id="viewParkingTable">
                         <thead>
@@ -104,27 +126,18 @@
                                 <th>車位ID</th>
                                 <th>地址</th>
                                 <th>類型</th>
-                                <th>小時費用（元）</th>
+                                <th>樓層</th>
+                                <th>計價方式</th>
+                                <th>費用</th>
                                 <th>操作</th>
                             </tr>
                         </thead>
-                        <tbody id="myParkingSpaceTableBody">
+                        <tbody id="My parking spaceTableBody">
                             <tr>
-                                <td colspan="5">請選擇車位以查看詳情</td>
+                                <td colspan="7">請選擇車位以查看詳情</td>
                             </tr>
                         </tbody>
                     </table>
-                </div>
-                
-                <div id="rentParking" class="content-section" style="display: none;">
-                    <h2>租用車位(進場)</h2>
-                    <p>請選擇車位以進行進場操作</p>
-                    <!-- 進場功能表單將在此處添加 -->
-                </div>
-                <div id="settleParking" class="content-section" style="display: none;">
-                    <h2>離開結算(出場)</h2>
-                    <p>請選擇車位以進行出場結算</p>
-                    <!-- 出場結算功能表單將在此處添加 -->
                 </div>
 
                 <div id="reserveParking" class="content-section" style="display: none;">
@@ -238,6 +251,26 @@
                 </div>
                 <div id="viewAllUsers" class="content-section" style="display: none;">
                     <h2>查看所有用戶資料</h2>
+                    <h3>共享者資料</h3>
+                    <div class="parking-spaces-table">
+                        <table id="ownerTable">
+                            <thead>
+                                <tr>
+                                    <th>用戶ID</th>
+                                    <th>姓名</th>
+                                    <th>電子郵件</th>
+                                    <th>電話號碼</th>
+                                    <th>付款方式</th>
+                                    <th>付款資訊</th>
+                                </tr>
+                            </thead>
+                            <tbody id="ownerTableBody">
+                                <tr>
+                                    <td colspan="6">請點擊搜尋以查看共享者資料</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
                     <h3>租用者資料</h3>
                     <div class="parking-spaces-table">
                         <table id="renterTable">
@@ -248,6 +281,7 @@
                                     <th>電子郵件</th>
                                     <th>電話號碼</th>
                                     <th>車牌號碼</th>
+                                    <th>車型</th>
                                 </tr>
                             </thead>
                             <tbody id="renterTableBody">
@@ -280,6 +314,14 @@
                         <div id="renterEditFields" style="display: none;">
                             <label for="editLicensePlate">車牌號碼：</label>
                             <input type="text" id="editLicensePlate">
+                            <label for="editCarModel">車型：</label>
+                            <input type="text" id="editCarModel">
+                        </div>
+                        <div>
+                            <label for="editPaymentMethod">付款方式：</label>
+                            <select id="editPaymentMethod" required>
+                                <option value="credit_card">信用卡</option>
+                            </select>
                         </div>
                         <div>
                             <label for="editCardNumber">信用卡號：</label>
