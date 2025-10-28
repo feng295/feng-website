@@ -833,7 +833,7 @@ function setupMyParkingSpace() {
     }
 
     // 顯示載入提示
-    parkingTableBody.innerHTML = '<tr><td colspan="7">載入中...</td></tr>';
+    parkingTableBody.innerHTML = '<tr><td colspan="5">載入中...</td></tr>';
 
     // 建立編輯表單容器
     let editFormContainer = document.getElementById("editParkingFormContainer");
