@@ -816,7 +816,7 @@ document.addEventListener("DOMContentLoaded", async function () {
         showLoginPage();
     });
 
-    // 設置車位列表
+// 設置車位列表
 async function setupMyParkingSpace() {
     const role = getRole();
     console.log("Current role in setupMyParkingSpace:", role);
@@ -836,7 +836,8 @@ async function setupMyParkingSpace() {
     }
 
     // 顯示載入中
-    parkingTableBody.innerHTML = '<tr><td colspan="5">載入中...</td></tr>';
+    // 之前是 colspan="5"，現在是 colspan="6"
+    parkingTableBody.innerHTML = '<tr><td colspan="6">載入中...</td></tr>'; //
 
     try {
         const token = getToken();
@@ -860,41 +861,47 @@ async function setupMyParkingSpace() {
 
         const spots = result.data;
         if (spots.length === 0) {
-            parkingTableBody.innerHTML = '<tr><td colspan="5">目前無車位資料</td></tr>';
+            // 之前是 colspan="5"，現在是 colspan="6"
+            parkingTableBody.innerHTML = '<tr><td colspan="6">目前無車位資料</td></tr>'; //
             return;
         }
 
         // ✅ 顯示車位資料
         parkingTableBody.innerHTML = "";
+        const parkingFragment = document.createDocumentFragment(); // 使用 Fragment 改善性能
         spots.forEach(spot => {
+            // 轉換停車類型
+            const typeText = spot.type === "flat" ? "平面" : "機械";
+            // 組合車位狀況欄位
+            const spotStatus = `總 ${spot.total_spots} / 剩 ${spot.remaining_spots}`;
+
             const row = document.createElement("tr");
             row.innerHTML = `
                 <td>${spot.parking_lot_id}</td>
                 <td>${spot.address}</td>
-                <td>${spot.type === "flat" ? "平面" : "機械"}</td>
-                <td>${spot.hourly_rate}</td>
-                <td>
-                    總 ${spot.total_spots} / 剩 ${spot.remaining_spots}
-                </td>
+                <td>${typeText}</td>
+                <td>${spot.hourly_rate}</td> <td>${spotStatus}</td>
                 <td>
                     <button class="edit-btn" data-id="${spot.parking_lot_id}">編輯</button>
                 </td>
             `;
-            parkingTableBody.appendChild(row);
-        });
-
-        // 綁定「編輯」按鈕
-        document.querySelectorAll(".edit-btn").forEach(btn => {
-            btn.addEventListener("click", e => {
+            
+            // 綁定「編輯」按鈕 (保留原邏輯)
+            row.querySelector(".edit-btn").addEventListener("click", e => {
                 const id = e.target.getAttribute("data-id");
                 const spot = spots.find(s => s.parking_lot_id == id);
                 if (spot) showEditForm(spot);
             });
+
+            parkingFragment.appendChild(row); //
         });
+
+        parkingTableBody.appendChild(parkingFragment); //
 
     } catch (error) {
         console.error("🚨 載入車位失敗:", error);
-        alert(`無法載入車位列表 (${error.message})`);
+        // 之前是 colspan="5"，現在是 colspan="6"
+        parkingTableBody.innerHTML = `<tr><td colspan="6">載入車位資料失敗 (錯誤: ${error.message})</td></tr>`; //
         if (error.message.includes("認證")) {
             removeToken();
             showLoginPage(true);
