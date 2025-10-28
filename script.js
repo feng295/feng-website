@@ -254,7 +254,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                 const section = document.getElementById(target);
                 if (section) {
                     section.style.display = "block";
-                    if (target === "My parking space") {
+                    if (target === "myParkingSpace") {
                         setupMyParkingSpace();
                     } else if (target === "reserveParking") {
                         setupReserveParking();
