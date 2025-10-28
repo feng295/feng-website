@@ -2131,7 +2131,7 @@ function setupMyParkingSpace() {
                 const token = getToken();
                 if (!token) throw new Error("認證令牌缺失，請重新登入！");
 
-                const response = await fetch(`${API_URL}/parking/all`, {
+                const response = await fetch(`${API_URL}/members/all`, {
                     method: 'GET',
                     headers: {
                         "Content-Type": "application/json",
