@@ -1047,7 +1047,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 
                 let url;
                 if (role === "admin") {
-                    url = `${API_URL}/parking/my-spots`;
+                    url = `${API_URL}/parking/all`;
                 }
 
                 const response = await fetch(url, {
