@@ -96,26 +96,26 @@
                         <button id="cancelAddButton" aria-label="取消新增車位">取消</button>
                     </div>
                 </div>
-                <div id="My parking space" class="content-section">
-                    <h3>車位列表</h3>
-                    <div class="table-responsive">
-                        <table class="data-table">
-                            <thead>
-                                <tr>
-                                    <th>車位ID</th>
-                                    <th>地址</th>
-                                    <th>類型</th>
-                                    <th>每小時</th>
-                                    <th>車位狀況</th>
-                                    <th>操作</th>
-                                </tr>
-                            </thead>
-                            <tbody id="My parking spaceTableBody">
-                            </tbody>
-                        </table>
-                    </div>
+                <div id="My parking space" class="content-section" style="display: none;">
+                    <h2>車位列表</h2>
+                    <table border="1" id="viewParkingTable">
+                        <thead>
+                            <tr>
+                                <th>車位ID</th>
+                                <th>地址</th>
+                                <th>類型</th>
+                                <th>小時費用（元）</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="My parking spaceTableBody">
+                            <tr>
+                                <td colspan="5">請選擇車位以查看詳情</td>
+                            </tr>
+                        </tbody>
+                    </table>
                 </div>
-
+                
                 <div id="rentParking" class="content-section" style="display: none;">
                     <h2>租用車位(進場)</h2>
                     <p>請選擇車位以進行進場操作</p>
