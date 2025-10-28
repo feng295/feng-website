@@ -906,6 +906,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                     floor_level: document.getElementById("editFloorLevel").value.trim() || "ground",
                     pricing_type: "hourly",
                     price_per_hour: parseFloat(document.getElementById("editPricePerHour").value) || 0,
+                    price_per_half_hour: parseFloat(document.getElementById("editPricePerHalfHour").value) || 0,
                     daily_max_price: parseFloat(document.getElementById("editDailyMaxPrice").value) || 0,
                     longitude: userLongitude,
                     latitude: userLatitude,
