@@ -833,15 +833,15 @@ document.addEventListener("DOMContentLoaded", async function () {
         }
 
         // 進入頁面時顯示「載入中...」
-        parkingTableBody.innerHTML = '<tr><td colspan="7">載入中...</td></tr>';
+        parkingTableBody.innerHTML = '<tr><td colspan="5">載入中...</td></tr>';
 
-        // 編輯表單容器
+        // 建立編輯表單容器
         let editFormContainer = document.getElementById("editParkingFormContainer");
         if (!editFormContainer) {
             editFormContainer = document.createElement("div");
             editFormContainer.id = "editParkingFormContainer";
             editFormContainer.style.display = "none";
-            document.getElementById("My parking space").appendChild(editFormContainer);
+            document.getElementById("myParkingSpace").appendChild(editFormContainer);
         }
 
         // 顯示編輯表單
@@ -849,14 +849,14 @@ document.addEventListener("DOMContentLoaded", async function () {
             let userLatitude, userLongitude;
             try {
                 const position = await new Promise((resolve, reject) => {
-                    if (!navigator.geolocation) reject(new Error("Geolocation not supported by browser"));
+                    if (!navigator.geolocation) reject(new Error("Geolocation not supported"));
                     navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 10000, maximumAge: 0 });
                 });
                 userLatitude = position.coords.latitude;
                 userLongitude = position.coords.longitude;
             } catch (error) {
-                console.warn("Unable to retrieve location, using fallback coordinates:", error.message);
-                alert("無法獲取您的位置，將使用預設位置（國立澎湖科技大學）。請確認已允許定位權限。");
+                console.warn("Unable to retrieve location:", error.message);
+                alert("無法獲取您的位置，將使用預設位置（國立澎湖科技大學）。");
                 userLatitude = 23.57461380558428;
                 userLongitude = 119.58110318336162;
             }
@@ -877,6 +877,10 @@ document.addEventListener("DOMContentLoaded", async function () {
                     </select>
                 </div>
                 <div>
+                    <label>樓層：</label>
+                    <input type="text" id="editFloorLevel" value="${spot.floor_level || 'ground'}" maxlength="20">
+                </div>
+                <div>
                     <label>每小時價格（元）：</label>
                     <input type="number" id="editPricePerHour" value="${spot.price_per_hour || 0}" step="0.01" min="0" required>
                 </div>
@@ -894,50 +898,33 @@ document.addEventListener("DOMContentLoaded", async function () {
         `;
             editFormContainer.style.display = "block";
 
-            // 保存編輯
+            // 保存按鈕
             document.getElementById("saveEditSpotButton").addEventListener("click", async () => {
                 const updatedSpot = {
                     location: document.getElementById("editLocation").value.trim(),
                     parking_type: document.getElementById("editParkingType").value,
                     floor_level: document.getElementById("editFloorLevel").value.trim() || "ground",
                     pricing_type: "hourly",
-                    price_per_half_hour: parseFloat(document.getElementById("editPricePerHalfHour").value) || 0,
+                    price_per_hour: parseFloat(document.getElementById("editPricePerHour").value) || 0,
                     daily_max_price: parseFloat(document.getElementById("editDailyMaxPrice").value) || 0,
                     longitude: userLongitude,
                     latitude: userLatitude,
                 };
 
-                if (!updatedSpot.location) {
-                    alert("位置為必填項！");
-                    return;
-                }
-                if (updatedSpot.location.length > 50) {
-                    alert("位置最多 50 個字符！");
-                    return;
-                }
-                if (!["flat", "mechanical"].includes(updatedSpot.parking_type)) {
-                    alert("停車類型必須為 'flat' 或 'mechanical'！");
-                    return;
-                }
-                const floorLevelPattern = /^(ground|([1-9][0-9]*[F])|(B[1-9][0-9]*))$/i;
-                if (updatedSpot.floor_level && !floorLevelPattern.test(updatedSpot.floor_level)) {
-                    alert("樓層格式無效！請使用 'ground', '1F', 'B1' 等格式（最多20字）。");
-                    return;
-                }
-                if (updatedSpot.floor_level && updatedSpot.floor_level.length > 20) {
-                    alert("樓層最多 20 個字符！");
-                    return;
-                }
-                if (updatedSpot.price_per_hour < 0) {
-                    alert("每小時價格必須為正數！");
-                    return;
-                }
+                if (!updatedSpot.location) return alert("位置為必填項！");
+                if (updatedSpot.location.length > 50) return alert("位置最多 50 個字符！");
+                if (!["flat", "mechanical"].includes(updatedSpot.parking_type))
+                    return alert("停車類型必須為 'flat' 或 'mechanical'！");
+
+                const floorPattern = /^(ground|([1-9][0-9]*F)|(B[1-9][0-9]*))$/i;
+                if (updatedSpot.floor_level && !floorPattern.test(updatedSpot.floor_level))
+                    return alert("樓層格式無效！請使用 'ground', '1F', 'B1' 等格式。");
 
                 try {
                     const token = getToken();
                     if (!token) throw new Error("認證令牌缺失，請重新登入！");
-
                     const spotId = document.getElementById("editSpotId").value;
+
                     const response = await fetch(`${API_URL}/parking/${spotId}`, {
                         method: 'PUT',
                         headers: {
@@ -948,8 +935,8 @@ document.addEventListener("DOMContentLoaded", async function () {
                     });
 
                     if (!response.ok) {
-                        const errorData = await response.json().catch(() => ({ error: '未知錯誤' }));
-                        throw new Error(`HTTP error! Status: ${response.status}, Message: ${errorData.error || '未知錯誤'}`);
+                        const err = await response.json().catch(() => ({}));
+                        throw new Error(err.error || `HTTP ${response.status}`);
                     }
 
                     alert("車位已成功更新！");
@@ -957,15 +944,15 @@ document.addEventListener("DOMContentLoaded", async function () {
                     loadAllSpots();
                 } catch (error) {
                     console.error("Failed to update spot:", error);
-                    alert(`無法更新車位，請檢查輸入或聯繫管理員 (錯誤: ${error.message})`);
-                    if (error.message.includes("認證失敗")) {
+                    alert(`無法更新車位，請檢查輸入或聯繫管理員 (${error.message})`);
+                    if (error.message.includes("認證")) {
                         removeToken();
                         showLoginPage(true);
                     }
                 }
             });
 
-            // 取消編輯
+            // 取消按鈕
             document.getElementById("cancelEditSpotButton").addEventListener("click", () => {
                 editFormContainer.style.display = "none";
             });
