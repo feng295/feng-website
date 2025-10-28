@@ -825,7 +825,7 @@ async function setupMyParkingSpace() {
         return;
     }
 
-    // ✅ 改成 querySelector 支援含空白 ID
+    // ✅ 支援 HTML 含空白 ID
     const section = document.querySelector('[id="My parking space"]');
     const parkingTableBody = document.querySelector('[id="My parking spaceTableBody"]');
 
@@ -842,7 +842,7 @@ async function setupMyParkingSpace() {
         const token = getToken();
         if (!token) throw new Error("認證令牌缺失，請重新登入！");
 
-        // ✅ 呼叫後端 API
+        // ✅ 後端 API：GET /parking/all
         const response = await fetch(`${API_URL}/parking/all`, {
             method: "GET",
             headers: { "Authorization": `Bearer ${token}` }
@@ -864,7 +864,7 @@ async function setupMyParkingSpace() {
             return;
         }
 
-        // 顯示車位資料
+        // ✅ 顯示車位資料
         parkingTableBody.innerHTML = "";
         spots.forEach(spot => {
             const row = document.createElement("tr");
@@ -873,12 +873,17 @@ async function setupMyParkingSpace() {
                 <td>${spot.address}</td>
                 <td>${spot.type === "flat" ? "平面" : "機械"}</td>
                 <td>${spot.hourly_rate}</td>
-                <td><button class="edit-btn" data-id="${spot.parking_lot_id}">編輯</button></td>
+                <td>
+                    總 ${spot.total_spots} / 剩 ${spot.remaining_spots}
+                </td>
+                <td>
+                    <button class="edit-btn" data-id="${spot.parking_lot_id}">編輯</button>
+                </td>
             `;
             parkingTableBody.appendChild(row);
         });
 
-        // 綁定編輯事件
+        // 綁定「編輯」按鈕
         document.querySelectorAll(".edit-btn").forEach(btn => {
             btn.addEventListener("click", e => {
                 const id = e.target.getAttribute("data-id");
@@ -907,21 +912,22 @@ async function setupMyParkingSpace() {
 
     // 顯示編輯表單
     async function showEditForm(spot) {
-        let userLatitude, userLongitude;
+        let userLatitude = spot.latitude;
+        let userLongitude = spot.longitude;
+
+        // 嘗試取得目前定位
         try {
             const position = await new Promise((resolve, reject) => {
                 if (!navigator.geolocation) reject(new Error("Geolocation not supported"));
-                navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 10000, maximumAge: 0 });
+                navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 8000 });
             });
             userLatitude = position.coords.latitude;
             userLongitude = position.coords.longitude;
         } catch (error) {
-            console.warn("⚠️ 無法取得定位，使用預設位置:", error.message);
-            alert("無法獲取您的位置，將使用預設位置（國立澎湖科技大學）。");
-            userLatitude = 23.57461380558428;
-            userLongitude = 119.58110318336162;
+            console.warn("⚠️ 無法取得定位:", error.message);
         }
 
+        // ✅ 動態產生編輯表單
         editFormContainer.innerHTML = `
             <h3>編輯車位</h3>
             <form id="editParkingForm">
@@ -942,6 +948,14 @@ async function setupMyParkingSpace() {
                     <input type="number" id="editHourlyRate" value="${spot.hourly_rate}" step="1" min="0" required>
                 </div>
                 <div>
+                    <label>總車位數：</label>
+                    <input type="number" id="editTotalSpots" value="${spot.total_spots}" min="1" step="1" required>
+                </div>
+                <div>
+                    <label>剩餘車位：</label>
+                    <input type="number" id="editRemainingSpots" value="${spot.remaining_spots}" min="0" step="1" required>
+                </div>
+                <div>
                     <label>經度：</label>
                     <input type="number" id="editLongitude" value="${userLongitude}" step="0.000001" readonly>
                 </div>
@@ -955,19 +969,24 @@ async function setupMyParkingSpace() {
         `;
         editFormContainer.style.display = "block";
 
-        // 保存修改
+        // ✅ 保存修改
         document.getElementById("saveEditSpotButton").addEventListener("click", async () => {
             const updatedSpot = {
                 address: document.getElementById("editAddress").value.trim(),
                 type: document.getElementById("editType").value,
                 hourly_rate: parseFloat(document.getElementById("editHourlyRate").value) || 0,
-                longitude: userLongitude,
-                latitude: userLatitude
+                total_spots: parseInt(document.getElementById("editTotalSpots").value) || 0,
+                remaining_spots: parseInt(document.getElementById("editRemainingSpots").value) || 0,
+                longitude: parseFloat(document.getElementById("editLongitude").value),
+                latitude: parseFloat(document.getElementById("editLatitude").value)
             };
 
+            // 表單驗證
             if (!updatedSpot.address) return alert("地址為必填項！");
             if (updatedSpot.address.length > 50) return alert("地址最多 50 個字！");
             if (updatedSpot.hourly_rate < 0) return alert("價格必須為正數！");
+            if (updatedSpot.remaining_spots > updatedSpot.total_spots)
+                return alert("剩餘車位不可大於總車位！");
 
             try {
                 const token = getToken();
@@ -1000,6 +1019,7 @@ async function setupMyParkingSpace() {
             editFormContainer.style.display = "none";
         });
     }
+
 
         // 獲取並顯示所有車位
         async function loadAllSpots() {
