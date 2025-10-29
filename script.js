@@ -965,10 +965,6 @@ document.addEventListener("DOMContentLoaded", async function () {
             section.appendChild(container);
         }
 
-        // 經緯度使用原始資料，**不允許修改**
-        const lat = spot.latitude?.toFixed(6) || "未知";
-        const lng = spot.longitude?.toFixed(6) || "未知";
-
         container.innerHTML = `
         <h3 class="text-xl font-bold text-blue-800 mb-4">編輯車位 #${spot.parking_lot_id}</h3>
         <form id="editParkingForm" class="space-y-3">
@@ -981,7 +977,6 @@ document.addEventListener("DOMContentLoaded", async function () {
             </div>
             
             <div>
-               ...
                 <label class="block font-semibold">停車類型：</label>
                 <select id="editType" required class="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500">
                     <option value="flat" ${spot.type === "flat" ? "selected" : ""}>平面</option>
@@ -1000,23 +995,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                 <input type="number" id="editTotalSpots" value="${spot.total_spots}" min="1" required 
                        class="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500">
             </div>
-            
-            <!-- 經緯度顯示但不可編輯 -->
-            <div class="grid grid-cols-2 gap-3 text-sm">
-                <div>
-                    <label class="block font-medium text-gray-700">緯度（鎖定）：</label>
-                    <div class="p-2 bg-gray-100 border rounded text-gray-800 font-mono">
-                        ${lat}
-                    </div>
-                </div>
-                <div>
-                    <label class="block font-medium text-gray-700">經度（鎖定）：</label>
-                    <div class="p-2 bg-gray-100 border rounded text-gray-800 font-mono">
-                        ${lng}
-                    </div>
-                </div>
-            </div>
-            
+
             <div class="flex gap-2 mt-6">
                 <button type="button" id="saveEditSpotButton" 
                         class="bg-green-600 hover:bg-green-700 text-white px-5 py-2 rounded font-medium transition">
@@ -1057,10 +1036,8 @@ document.addEventListener("DOMContentLoaded", async function () {
                 address,
                 type,
                 hourly_rate: hourlyRate,
-                total_spots: totalSpots,
-                // 經緯度使用原始值，**不傳入或傳 null 也可**
-                latitude: spot.latitude,
-                longitude: spot.longitude
+                total_spots: totalSpots
+                // 已移除經緯度欄位，不會傳送 latitude / longitude
             };
 
             saveBtn.disabled = true;
