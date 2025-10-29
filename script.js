@@ -816,7 +816,6 @@ document.addEventListener("DOMContentLoaded", async function () {
         showLoginPage();
     });
 
-    // 設置車位列表
     async function setupMyParkingSpace() {
         const role = getRole();
         if (!["admin"].includes(role)) {
@@ -826,31 +825,39 @@ document.addEventListener("DOMContentLoaded", async function () {
 
         const section = document.querySelector('[id="My parking space"]');
         const parkingTableBody = document.querySelector('[id="My parking spaceTableBody"]');
+
         if (!section || !parkingTableBody) {
             alert("無法載入「車位列表」頁面，頁面元素缺失！");
             return;
         }
 
-        // 載入中（7 欄）
+        // 顯示載入中
         parkingTableBody.innerHTML = '<tr><td colspan="7" class="text-center py-4">載入中...</td></tr>';
 
         try {
             const token = getToken();
             if (!token) throw new Error("認證令牌缺失，請重新登入！");
 
-            const response = await fetch(`${API_URL}/parking/all`, {
-                method: "GET",
-                headers: { "Authorization": `Bearer ${token}` }
+            const url = `${API_URL}/parking/all`;
+            const response = await fetch(url, {
+                method: 'GET',
+                headers: {
+                    "Authorization": `Bearer ${token}`,
+                    "Accept": "application/json"  // 強制要求 JSON
+                }
             });
 
-            if (!response.ok) {
-                const errData = await response.json().catch(() => ({ message: "未知錯誤" }));
-                throw new Error(`HTTP ${response.status}: ${errData.message}`);
+            // 關鍵：先檢查 Content-Type
+            const contentType = response.headers.get("content-type");
+            if (!contentType || !contentType.includes("application/json")) {
+                const text = await response.text();
+                console.error("後端返回 HTML:", text.substring(0, 200));
+                throw new Error("後端返回登入頁，可能未登入或 token 過期");
             }
 
             const result = await response.json();
             if (!result.status || !Array.isArray(result.data)) {
-                throw new Error(result.message || "回傳格式錯誤");
+                throw new Error(result.message || "資料格式錯誤");
             }
 
             const spots = result.data;
@@ -864,12 +871,12 @@ document.addEventListener("DOMContentLoaded", async function () {
             spots.forEach(spot => {
                 const row = document.createElement("tr");
                 row.innerHTML = `
-                <td class="border border-gray-300 px-4 py-2">${spot.parking_lot_id}</td>
-                <td class="border border-gray-300 px-4 py-2">${spot.address}</td>
-                <td class="border border-gray-300 px-4 py-2">${spot.type === "flat" ? "平面" : "機械"}</td>
-                <td class="border border-gray-300 px-4 py-2">${spot.hourly_rate}</td>
-                <td class="border border-gray-300 px-4 py-2">總 ${spot.total_spots} / 剩 ${spot.remaining_spots}</td>
-                <td class="border border-gray-300 px-4 py-2 text-center space-x-1">
+                <td class="border px-4 py-2">${spot.parking_lot_id}</td>
+                <td class="border px-4 py-2">${spot.address}</td>
+                <td class="border px-4 py-2">${spot.type === "flat" ? "平面" : "機械"}</td>
+                <td class="border px-4 py-2">${spot.hourly_rate}</td>
+                <td class="border px-4 py-2">總 ${spot.total_spots} / 剩 ${spot.remaining_spots}</td>
+                <td class="border px-4 py-2 text-center space-x-1">
                     <button class="edit-btn bg-blue-600 hover:bg-blue-700 text-white text-xs px-3 py-1 rounded" 
                             data-id="${spot.parking_lot_id}">編輯</button>
                     <button class="delete-btn bg-red-600 hover:bg-red-700 text-white text-xs px-3 py-1 rounded" 
@@ -879,57 +886,22 @@ document.addEventListener("DOMContentLoaded", async function () {
                 parkingTableBody.appendChild(row);
             });
 
-            // === 綁定「編輯」按鈕 ===
-            document.querySelectorAll(".edit-btn").forEach(btn => {
-                btn.onclick = () => {
-                    const id = btn.dataset.id;
-                    const spot = spots.find(s => s.parking_lot_id == id);
-                    if (spot) showEditForm(spot, section);
-                };
-            });
-
-            // === 綁定「刪除」按鈕 ===
-            document.querySelectorAll(".delete-btn").forEach(btn => {
-                btn.onclick = async () => {
-                    const id = btn.dataset.id;
-                    const spot = spots.find(s => s.parking_lot_id == id);
-                    if (!spot) return;
-
-                    if (!confirm(`確定要刪除車位 #${spot.parking_lot_id}（${spot.address}）嗎？\n此操作無法復原！`)) {
-                        return;
-                    }
-
-                    try {
-                        const token = getToken();
-                        const response = await fetch(`${API_URL}/parking/${spot.parking_lot_id}`, {
-                            method: "DELETE",
-                            headers: { "Authorization": `Bearer ${token}` }
-                        });
-
-                        if (!response.ok) {
-                            const err = await response.json().catch(() => ({ message: "未知錯誤" }));
-                            throw new Error(err.message || "刪除失敗");
-                        }
-
-                        alert(`車位 #${spot.parking_lot_id} 已成功刪除！`);
-                        setupMyParkingSpace(); // 刷新列表
-                    } catch (error) {
-                        console.error("刪除失敗:", error);
-                        alert(`刪除失敗：${error.message}`);
-                        if (error.message.includes("認證")) {
-                            removeToken();
-                            showLoginPage(true);
-                        }
-                    }
-                };
-            });
+            // 綁定按鈕
+            bindEditButtons(spots, section);
+            bindDeleteButtons();
 
         } catch (error) {
             console.error("載入車位失敗:", error);
-            alert(`無法載入車位列表 (${error.message})`);
-            if (error.message.includes("認證")) {
+
+            // 處理 HTML 回應（未登入）
+            if (error.message.includes("HTML") || error.message.includes("未登入") || error.message.includes("登入頁")) {
+                alert("登入逾時或無權限，即將跳轉登入頁");
                 removeToken();
                 showLoginPage(true);
+            } else {
+                parkingTableBody.innerHTML = `<tr><td colspan="7" class="text-red-600 py-4 text-center">
+                載入失敗：${error.message}
+            </td></tr>`;
             }
         }
     }
@@ -1065,141 +1037,48 @@ document.addEventListener("DOMContentLoaded", async function () {
     }
 
 
-    // 獲取並顯示所有車位
-    async function loadAllSpots() {
-        try {
-            const token = getToken();
-            if (!token) throw new Error("認證令牌缺失，請重新登入！");
-
-            const memberId = getMemberId();
-            if (!memberId) throw new Error("無法獲取會員 ID，請重新登入！");
-
-            let url;
-            if (role === "admin") {
-                url = `${API_URL}/parking/all`;
-            }
-
-            const response = await fetch(url, {
-                method: 'GET',
-                headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": `Bearer ${token}`
-                }
-            });
-
-            if (!response.ok) {
-                if (response.status === 404) throw new Error("後端資源未找到 (404)，請檢查 API 端點是否正確配置！");
-                if (response.status === 401) throw new Error("認證失敗，請重新登入！");
-                const errorData = await response.text();
-                throw new Error(`HTTP 錯誤！狀態: ${response.status}, 回應: ${errorData}`);
-            }
-
-            const contentType = response.headers.get('content-type');
-            if (!contentType || !contentType.includes('application/json')) {
-                const textResponse = await response.text();
-                throw new Error("後端返回非 JSON 響應，請檢查伺服器配置 (回應內容: " + textResponse.substring(0, 100) + "...)");
-            }
-
-            const data = await response.json();
-            let spots = data.data || data.spots || data;
-            if (!Array.isArray(spots)) {
-                console.warn("後端返回的車位資料非陣列，嘗試解析:", spots);
-                spots = [];
-            }
-
-            if (spots.length === 0) {
-                parkingTableBody.innerHTML = '<tr><td colspan="7">無車位資料</td></tr>';
-                return;
-            }
-
-            parkingTableBody.innerHTML = '';
-            const parkingFragment = document.createDocumentFragment();
-
-            spots.forEach(spot => {
-                if (!spot || typeof spot !== 'object') {
-                    console.warn("Invalid spot data skipped:", spot);
-                    return;
-                }
-
-                const row = document.createElement("tr");
-                row.setAttribute("data-id", `${spot.spot_id || '未知'}`);
-
-                const priceDisplay = `${spot.price_per_half_hour || 0} 元/半小時`;
-
-                row.innerHTML = `
-                <td>${spot.spot_id || '未知'}</td>
-                <td>${spot.location || '未知'}</td>
-                <td>${spot.parking_type === "flat" ? "平面" : "機械"}</td>
-                <td>${spot.floor_level === "ground" ? "地面" : `地下${spot.floor_level?.startsWith("B") ? spot.floor_level.slice(1) : spot.floor_level || '未知'}樓`}</td>
-                <td>按小時</td>
-                <td>${priceDisplay}</td>
-                <td>
-                    <button class="edit-btn">編輯</button>
-                    <button class="delete-btn">刪除</button>
-                </td>
-            `;
-
-                row.querySelector(".edit-btn").addEventListener("click", (e) => {
-                    e.stopPropagation();
-                    showEditForm(spot);
-                });
-
-                row.querySelector(".delete-btn").addEventListener("click", async (e) => {
-                    e.stopPropagation();
-                    if (!confirm(`確定要刪除車位 ${spot.spot_id || '未知'} 嗎？此操作無法恢復！`)) return;
-
-                    try {
-                        const token = getToken();
-                        if (!token) throw new Error("認證令牌缺失，請重新登入！");
-
-                        const response = await fetch(`${API_URL}/parking/${spot.spot_id || ''}`, {
-                            method: 'DELETE',
-                            headers: {
-                                "Content-Type": "application/json",
-                                "Authorization": `Bearer ${token}`
-                            }
-                        });
-                        if (!response.ok) {
-                            if (response.status === 401) throw new Error("認證失敗，請重新登入！");
-                            const errorData = await response.json();
-                            throw new Error(`HTTP error! Status: ${response.status}, Message: ${errorData.error || '未知錯誤'}`);
-                        }
-
-                        alert(`車位 ${spot.spot_id || '未知'} 已成功刪除！`);
-                        row.remove();
-                        if (parkingTableBody.children.length === 0) {
-                            parkingTableBody.innerHTML = '<tr><td colspan="7">無車位資料</td></tr>';
-                        }
-                    } catch (error) {
-                        console.error("Failed to delete spot:", error);
-                        alert(`無法刪除車位，請檢查後端服務 (錯誤: ${error.message})`);
-                        if (error.message === "認證失敗，請重新登入！") {
-                            removeToken();
-                            showLoginPage(true);
-                        }
-                    }
-                });
-
-                parkingFragment.appendChild(row);
-            });
-
-            if (parkingFragment.children.length === 0) {
-                parkingTableBody.innerHTML = '<tr><td colspan="7">無車位資料</td></tr>';
-            } else {
-                parkingTableBody.appendChild(parkingFragment);
-            }
-        } catch (error) {
-            console.error("Failed to load spots:", error);
-            parkingTableBody.innerHTML = `<tr><td colspan="7">載入車位資料失敗 (錯誤: ${error.message})</td></tr>`;
-            if (error.message.includes("認證失敗")) {
-                removeToken();
-                showLoginPage(true);
-            }
-        }
+    function bindEditButtons(spots, section) {
+        document.querySelectorAll(".edit-btn").forEach(btn => {
+            btn.onclick = () => {
+                const id = btn.dataset.id;
+                const spot = spots.find(s => s.par32king_lot_id == id);
+                if (spot) showEditForm(spot, section);
+            };
+        });
     }
 
-    // 進入頁面時自動加載所有車位
-    loadAllSpots();
+    function bindDeleteButtons() {
+        document.querySelectorAll(".delete-btn").forEach(btn => {
+            btn.onclick = async () => {
+                const id = btn.dataset.id;
+                if (!confirm(`確定要刪除車位 #${id} 嗎？此操作無法復原！`)) return;
+
+                try {
+                    const token = getToken();
+                    const res = await fetch(`${API_URL}/parking/${id}`, {
+                        method: "DELETE",
+                        headers: { "Authorization": `Bearer ${token}` }
+                    });
+
+                    if (!res.ok) {
+                        const err = await res.json().catch(() => ({}));
+                        throw new Error(err.message || "刪除失敗");
+                    }
+
+                    alert("車位已成功刪除！");
+                    setupMyParkingSpace(); // 刷新
+                } catch (err) {
+                    alert(`刪除失敗：${err.message}`);
+                    if (err.message.includes("未登入")) {
+                        removeToken();
+                        showLoginPage(true);
+                    }
+                }
+            };
+        });
+    }
+
+
 
     // 設置個人資訊
     function setupProfile() {
