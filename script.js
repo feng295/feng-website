@@ -965,102 +965,111 @@ document.addEventListener("DOMContentLoaded", async function () {
             section.appendChild(container);
         }
 
-        let userLat = spot.latitude;
-        let userLng = spot.longitude;
-
-        // 嘗試取得目前位置
-        try {
-            const pos = await new Promise((resolve, reject) => {
-                if (!navigator.geolocation) return reject();
-                navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 8000 });
-            });
-            userLat = pos.coords.latitude;
-            userLng = pos.coords.longitude;
-        } catch (e) {
-            console.warn("無法取得定位，使用原始座標");
-        }
+        // 經緯度使用原始資料，**不允許修改**
+        const lat = spot.latitude?.toFixed(6) || "未知";
+        const lng = spot.longitude?.toFixed(6) || "未知";
 
         container.innerHTML = `
         <h3 class="text-xl font-bold text-blue-800 mb-4">編輯車位 #${spot.parking_lot_id}</h3>
         <form id="editParkingForm" class="space-y-3">
             <input type="hidden" id="editParkingLotId" value="${spot.parking_lot_id}">
             
-            <div><label class="block font-semibold">地址：</label>
+            <div>
+                <label class="block font-semibold">地址：</label>
                 <input type="text" id="editAddress" value="${spot.address}" maxlength="50" required 
-                       class="w-full p-2 border rounded">
+                       class="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500">
             </div>
             
-            <div><label class="block font-semibold">停車類型：</label>
-                <select id="editType" required class="w-full p-2 border rounded">
+            <div>
+               ...
+                <label class="block font-semibold">停車類型：</label>
+                <select id="editType" required class="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500">
                     <option value="flat" ${spot.type === "flat" ? "selected" : ""}>平面</option>
                     <option value="mechanical" ${spot.type === "mechanical" ? "selected" : ""}>機械</option>
                 </select>
             </div>
             
-            <div><label class="block font-semibold">每小時價格（元）：</label>
-                <input type="number" id="editHourlyRate" value="${spot.hourly_rate}" min="0" required 
-                       class="w-full p-2 border rounded">
+            <div>
+                <label class="block font-semibold">每小時價格（元）：</label>
+                <input type="number" id="editHourlyRate" value="${spot.hourly_rate}" min="0" step="1" required 
+                       class="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500">
             </div>
             
-            <div><label class="block font-semibold">總車位數：</label>
+            <div>
+                <label class="block font-semibold">總車位數：</label>
                 <input type="number" id="editTotalSpots" value="${spot.total_spots}" min="1" required 
-                       class="w-full p-2 border rounded">
+                       class="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500">
             </div>
             
-            <div><label class="block font-semibold">剩餘車位：</label>
-                <input type="number" id="editRemainingSpots" value="${spot.remaining_spots}" min="0" required 
-                       class="w-full p-2 border rounded">
+            <!-- 經緯度顯示但不可編輯 -->
+            <div class="grid grid-cols-2 gap-3 text-sm">
+                <div>
+                    <label class="block font-medium text-gray-700">緯度（鎖定）：</label>
+                    <div class="p-2 bg-gray-100 border rounded text-gray-800 font-mono">
+                        ${lat}
+                    </div>
+                </div>
+                <div>
+                    <label class="block font-medium text-gray-700">經度（鎖定）：</label>
+                    <div class="p-2 bg-gray-100 border rounded text-gray-800 font-mono">
+                        ${lng}
+                    </div>
+                </div>
             </div>
             
-            <div><label class="block font-semibold">經度：</label>
-                <input type="number" id="editLongitude" value="${userLng}" step="0.000001" readonly 
-                       class="w-full p-2 border bg-gray-100 rounded">
-            </div>
-            
-            <div><label class="block font-semibold">緯度：</label>
-                <input type="number" id="editLatitude" value="${userLat}" step="0.000001" readonly 
-                       class="w-full p-2 border bg-gray-100 rounded">
-            </div>
-            
-            <div class="flex gap-2 mt-4">
+            <div class="flex gap-2 mt-6">
                 <button type="button" id="saveEditSpotButton" 
-                        class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded">保存</button>
+                        class="bg-green-600 hover:bg-green-700 text-white px-5 py-2 rounded font-medium transition">
+                    保存變更
+                </button>
                 <button type="button" id="cancelEditSpotButton" 
-                        class="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded">取消</button>
+                        class="bg-gray-600 hover:bg-gray-700 text-white px-5 py-2 rounded font-medium transition">
+                    取消
+                </button>
             </div>
         </form>
     `;
 
         container.style.display = "block";
 
-        // 關鍵修正：先取得新按鈕，再綁定事件
+        // 取得按鈕並綁定事件
         const saveBtn = document.getElementById("saveEditSpotButton");
         const cancelBtn = document.getElementById("cancelEditSpotButton");
 
-        // 清除舊事件（避免重複）
-        saveBtn.onclick = null;
-        cancelBtn.onclick = null;
+        // 清除舊事件（若存在）
+        if (saveBtn) saveBtn.onclick = null;
+        if (cancelBtn) cancelBtn.onclick = null;
 
-        // 正確綁定事件
+        // 保存按鈕事件
         saveBtn.onclick = async () => {
+            const address = document.getElementById("editAddress").value.trim();
+            const type = document.getElementById("editType").value;
+            const hourlyRate = parseFloat(document.getElementById("editHourlyRate").value);
+            const totalSpots = parseInt(document.getElementById("editTotalSpots").value);
+
+            // 嚴格驗證
+            if (!address) return alert("地址為必填！");
+            if (address.length > 50) return alert("地址最多 50 字！");
+            if (isNaN(hourlyRate) || hourlyRate < 0) return alert("請輸入有效價格（≥0）！");
+            if (isNaN(totalSpots) || totalSpots < 1) return alert("總車位數至少為 1！");
+
             const updated = {
-                address: document.getElementById("editAddress").value.trim(),
-                type: document.getElementById("editType").value,
-                hourly_rate: parseFloat(document.getElementById("editHourlyRate").value) || 0,
-                total_spots: parseInt(document.getElementById("editTotalSpots").value) || 0,
-                remaining_spots: parseInt(document.getElementById("editRemainingSpots").value) || 0,
-                longitude: parseFloat(document.getElementById("editLongitude").value),
-                latitude: parseFloat(document.getElementById("editLatitude").value)
+                address,
+                type,
+                hourly_rate: hourlyRate,
+                total_spots: totalSpots,
+                // 經緯度使用原始值，**不傳入或傳 null 也可**
+                latitude: spot.latitude,
+                longitude: spot.longitude
             };
 
-            if (!updated.address) return alert("地址為必填！");
-            if (updated.address.length > 50) return alert("地址最多 50 字！");
-            if (updated.hourly_rate < 0) return alert("價格必須 ≥ 0！");
-            if (updated.remaining_spots > updated.total_spots) return alert("剩餘車位不可大於總數！");
+            saveBtn.disabled = true;
+            saveBtn.textContent = "保存中...";
 
             try {
                 const token = getToken();
                 const lotId = document.getElementById("editParkingLotId").value;
+
                 const res = await fetch(`${API_URL}/parking/${lotId}`, {
                     method: "PUT",
                     headers: {
@@ -1070,23 +1079,36 @@ document.addEventListener("DOMContentLoaded", async function () {
                     body: JSON.stringify(updated)
                 });
 
+                let errorMsg = "未知錯誤";
+                if (res.headers.get("content-type")?.includes("application/json")) {
+                    const data = await res.json();
+                    errorMsg = data.message || data.error || JSON.stringify(data);
+                } else {
+                    errorMsg = await res.text();
+                }
+
                 if (!res.ok) {
-                    const err = await res.json().catch(() => ({ message: "未知錯誤" }));
-                    throw new Error(err.message || "更新失敗");
+                    throw new Error(`後端錯誤 ${res.status}: ${errorMsg}`);
                 }
 
                 alert("車位更新成功！");
                 container.style.display = "none";
                 setupMyParkingSpace(); // 刷新列表
+
             } catch (err) {
+                console.error("更新失敗:", err);
                 alert(`更新失敗：${err.message}`);
-                if (err.message.includes("未登入")) {
+                if (err.message.includes("未登入") || err.message.includes("認證")) {
                     removeToken();
                     showLoginPage(true);
                 }
+            } finally {
+                saveBtn.disabled = false;
+                saveBtn.textContent = "保存變更";
             }
         };
 
+        // 取消按鈕
         cancelBtn.onclick = () => {
             container.style.display = "none";
         };
