@@ -984,13 +984,16 @@ document.addEventListener("DOMContentLoaded", async function () {
 
         container.style.display = "block";
 
-        // 防止重複綁定
+        // 關鍵修正：先取得新按鈕，再綁定事件
         const saveBtn = document.getElementById("saveEditSpotButton");
         const cancelBtn = document.getElementById("cancelEditSpotButton");
-        saveBtn.replaceWith(saveBtn.cloneNode(true));
-        cancelBtn.replaceWith(cancelBtn.cloneNode(true));
 
-        document.getElementById("saveEditSpotButton").onclick = async () => {
+        // 清除舊事件（避免重複）
+        saveBtn.onclick = null;
+        cancelBtn.onclick = null;
+
+        // 正確綁定事件
+        saveBtn.onclick = async () => {
             const updated = {
                 address: document.getElementById("editAddress").value.trim(),
                 type: document.getElementById("editType").value,
@@ -1020,64 +1023,25 @@ document.addEventListener("DOMContentLoaded", async function () {
 
                 if (!res.ok) {
                     const err = await res.json().catch(() => ({ message: "未知錯誤" }));
-                    throw new Error(err.message);
+                    throw new Error(err.message || "更新失敗");
                 }
 
                 alert("車位更新成功！");
                 container.style.display = "none";
-                setupMyParkingSpace();
+                setupMyParkingSpace(); // 刷新列表
             } catch (err) {
                 alert(`更新失敗：${err.message}`);
+                if (err.message.includes("未登入")) {
+                    removeToken();
+                    showLoginPage(true);
+                }
             }
         };
 
-        document.getElementById("cancelEditSpotButton").onclick = () => {
+        cancelBtn.onclick = () => {
             container.style.display = "none";
         };
     }
-
-
-    function bindEditButtons(spots, section) {
-        document.querySelectorAll(".edit-btn").forEach(btn => {
-            btn.onclick = () => {
-                const id = btn.dataset.id;
-                const spot = spots.find(s => s.par32king_lot_id == id);
-                if (spot) showEditForm(spot, section);
-            };
-        });
-    }
-
-    function bindDeleteButtons() {
-        document.querySelectorAll(".delete-btn").forEach(btn => {
-            btn.onclick = async () => {
-                const id = btn.dataset.id;
-                if (!confirm(`確定要刪除車位 #${id} 嗎？此操作無法復原！`)) return;
-
-                try {
-                    const token = getToken();
-                    const res = await fetch(`${API_URL}/parking/${id}`, {
-                        method: "DELETE",
-                        headers: { "Authorization": `Bearer ${token}` }
-                    });
-
-                    if (!res.ok) {
-                        const err = await res.json().catch(() => ({}));
-                        throw new Error(err.message || "刪除失敗");
-                    }
-
-                    alert("車位已成功刪除！");
-                    setupMyParkingSpace(); // 刷新
-                } catch (err) {
-                    alert(`刪除失敗：${err.message}`);
-                    if (err.message.includes("未登入")) {
-                        removeToken();
-                        showLoginPage(true);
-                    }
-                }
-            };
-        });
-    }
-
 
 
     // 設置個人資訊
