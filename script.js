@@ -833,7 +833,7 @@ document.addEventListener("DOMContentLoaded", async function () {
             return;
         }
 
-        parkingTableBody.innerHTML = '<tr><td colspan="6">載入中...</td></tr>';
+        parkingTableBody.innerHTML = '<tr><td colspan="7">載入中...</td></tr>';
 
         try {
             const token = getToken();
