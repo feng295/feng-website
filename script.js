@@ -887,8 +887,16 @@ document.addEventListener("DOMContentLoaded", async function () {
             });
 
             // 綁定按鈕
-            bindEditButtons(spots, section);
-            bindDeleteButtons();
+            function bindEditButtons(spots, section) {
+                document.querySelectorAll(".edit-btn").forEach(btn => {
+                    btn.onclick = () => {
+                        const id = btn.dataset.id;
+                        // 修正拼字錯誤！
+                        const spot = spots.find(s => s.parking_lot_id == id);
+                        if (spot) showEditForm(spot, section);
+                    };
+                });
+            }
 
         } catch (error) {
             console.error("載入車位失敗:", error);
