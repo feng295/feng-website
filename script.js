@@ -2053,8 +2053,8 @@ document.addEventListener("DOMContentLoaded", async function () {
                     rents.forEach(rent => {
                         const spot = spots.find(s => s.spot_id === rent.spot_id) || {};
                         const location = spot.location || '未知';
-                        const startTime = rent.start_time || 'N/A'; // 顯示完整日期時間，例如 2025-04-15 09:00:00
-                        const endTime = rent.actual_end_time || 'N/A'; // 顯示完整日期時間，例如 2025-04-15 11:00:00
+                        const startTime = rent.start_time || 'N/A';
+                        const endTime = rent.actual_end_time || 'N/A';
                         const cost = parseFloat(rent.total_cost) || 0;
 
                         const row = document.createElement("tr");
