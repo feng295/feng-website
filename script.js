@@ -288,15 +288,108 @@ document.addEventListener("DOMContentLoaded", async function () {
             alert("此功能僅限租用者使用！");
             return;
         }
+
         const rentParkingSection = document.getElementById("rentParking");
         if (!rentParkingSection) {
-            console.error("rentParking section not found");
-            alert("無法載入「租用車位(進場)」頁面，頁面元素缺失，請聯繫管理員！");
+            alert("無法載入「租用車位(進場)」頁面！");
             return;
         }
         rentParkingSection.style.display = "block";
-        // TODO: 實現進場功能邏輯（例如顯示可用車位、提交進場請求等）
-        console.log("Setup rentParking section");
+
+        // 元素
+        const iframe = document.getElementById("plateScanner");
+        const resultDiv = document.getElementById("plateResult");
+        const plateSpan = document.getElementById("detectedPlate");
+        const confirmBtn = document.getElementById("confirmEntryBtn");
+        const loadingStatus = document.getElementById("loadingStatus");
+
+        let currentPlate = null;
+        let pollInterval = null;
+
+        // 開始輪詢車牌結果
+        function startPolling() {
+            pollInterval = setInterval(async () => {
+                try {
+                    const response = await fetch('/license-plate/results');
+                    const data = await response.json();
+                    const latest = data[data.length - 1];
+
+                    if (latest && latest !== "尚未檢測到車牌" && latest !== currentPlate) {
+                        currentPlate = latest;
+                        plateSpan.textContent = currentPlate;
+                        resultDiv.style.display = "block";
+                        loadingStatus.style.display = "none";
+                        console.log("新車牌:", currentPlate);
+                    }
+                } catch (err) {
+                    console.error("輪詢失敗:", err);
+                }
+            }, 1000); // 每秒檢查一次
+        }
+
+        // 停止輪詢
+        function stopPolling() {
+            if (pollInterval) {
+                clearInterval(pollInterval);
+                pollInterval = null;
+            }
+        }
+
+        // 確認進場
+        confirmBtn.addEventListener("click", async () => {
+            if (!currentPlate) {
+                alert("請先掃描車牌！");
+                return;
+            }
+
+            confirmBtn.disabled = true;
+            confirmBtn.textContent = "進場中...";
+
+            try {
+                const response = await fetch('/rent', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + localStorage.getItem('token') // 假設有 token
+                    },
+                    body: JSON.stringify({
+                        license_plate: currentPlate,
+                        action: 'entry'
+                    })
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    alert(`進場成功！車牌: ${currentPlate}\n車位: ${result.parking_spot || '自動分配'}`);
+                    // 重置
+                    currentPlate = null;
+                    resultDiv.style.display = "none";
+                    loadingStatus.style.display = "block";
+                    confirmBtn.disabled = false;
+                    confirmBtn.textContent = "確認進場";
+                } else {
+                    alert("進場失敗: " + (result.message || "未知錯誤"));
+                    confirmBtn.disabled = false;
+                    confirmBtn.textContent = "確認進場";
+                }
+            } catch (err) {
+                alert("網路錯誤，請重試");
+                confirmBtn.disabled = false;
+                confirmBtn.textContent = "確認進場";
+            }
+        });
+
+        // iframe 載入完成後開始輪詢
+        iframe.onload = () => {
+            console.log("車牌辨識 iframe 載入完成");
+            startPolling();
+        };
+
+        // 頁面離開時停止
+        window.addEventListener('beforeunload', stopPolling);
+
+        console.log("租用車位(進場) 頁面初始化完成");
     }
 
     // 設置離開結算(出場)頁面
