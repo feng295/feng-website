@@ -280,7 +280,6 @@ document.addEventListener("DOMContentLoaded", async function () {
         });
     }
 
-    // 設置租用車位(進場)頁面
     function setupRentParking() {
         const role = getRole();
         console.log("Current role in setupRentParking:", role);
@@ -310,7 +309,23 @@ document.addEventListener("DOMContentLoaded", async function () {
         function startPolling() {
             pollInterval = setInterval(async () => {
                 try {
-                    const response = await fetch('/license-plate/results');
+                    const response = await fetch('/license-plate/results', {
+                        credentials: 'same-origin'  // 支援 cookie
+                    });
+
+                    // 關鍵：檢查 HTTP 狀態碼
+                    if (!response.ok) {
+                        console.warn(`API 錯誤: ${response.status} ${response.statusText}`);
+                        return;
+                    }
+
+                    const contentType = response.headers.get('content-type');
+                    if (!contentType || !contentType.includes('application/json')) {
+                        const text = await response.text();
+                        console.error("非 JSON 回應:", text.substring(0, 200));
+                        return;
+                    }
+
                     const data = await response.json();
                     const latest = data[data.length - 1];
 
@@ -324,7 +339,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                 } catch (err) {
                     console.error("輪詢失敗:", err);
                 }
-            }, 1000); // 每秒檢查一次
+            }, 1000);
         }
 
         // 停止輪詢
@@ -348,9 +363,10 @@ document.addEventListener("DOMContentLoaded", async function () {
             try {
                 const response = await fetch('/rent', {
                     method: 'POST',
+                    credentials: 'same-origin',
                     headers: {
                         'Content-Type': 'application/json',
-                        'Authorization': 'Bearer ' + localStorage.getItem('token') // 假設有 token
+                        'Authorization': 'Bearer ' + localStorage.getItem('token')
                     },
                     body: JSON.stringify({
                         license_plate: currentPlate,
@@ -362,19 +378,16 @@ document.addEventListener("DOMContentLoaded", async function () {
 
                 if (response.ok) {
                     alert(`進場成功！車牌: ${currentPlate}\n車位: ${result.parking_spot || '自動分配'}`);
-                    // 重置
                     currentPlate = null;
                     resultDiv.style.display = "none";
                     loadingStatus.style.display = "block";
-                    confirmBtn.disabled = false;
-                    confirmBtn.textContent = "確認進場";
                 } else {
                     alert("進場失敗: " + (result.message || "未知錯誤"));
-                    confirmBtn.disabled = false;
-                    confirmBtn.textContent = "確認進場";
                 }
             } catch (err) {
                 alert("網路錯誤，請重試");
+                console.error("進場請求失敗:", err);
+            } finally {
                 confirmBtn.disabled = false;
                 confirmBtn.textContent = "確認進場";
             }
@@ -383,7 +396,7 @@ document.addEventListener("DOMContentLoaded", async function () {
         // iframe 載入完成後開始輪詢
         iframe.onload = () => {
             console.log("車牌辨識 iframe 載入完成");
-            startPolling();
+            setTimeout(startPolling, 500);  // 延遲 0.5 秒確保 Flask 準備好
         };
 
         // 頁面離開時停止
