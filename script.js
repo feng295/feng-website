@@ -305,17 +305,29 @@ document.addEventListener("DOMContentLoaded", async function () {
         let currentPlate = null;
         let pollInterval = null;
 
-        // 開始輪詢車牌結果
+        // === 關鍵修正：iframe 使用絕對路徑 ===
+        if (iframe) {
+            iframe.src = `${window.location.origin}/license-plate/`;
+        }
+
+        // 重置 UI
+        if (plateSpan) plateSpan.textContent = "";
+        if (resultDiv) resultDiv.style.display = "none";
+        if (loadingStatus) loadingStatus.style.display = "block";
+        if (confirmBtn) confirmBtn.disabled = true;
+
+        // 開始輪詢
         function startPolling() {
+            if (pollInterval) clearInterval(pollInterval);
+
             pollInterval = setInterval(async () => {
                 try {
                     const response = await fetch(`${window.location.origin}/license-plate/results`, {
-                        credentials: 'omit'  // 改成 omit，避免 cookie 問題
+                        credentials: 'omit'
                     });
 
-                    // 關鍵：檢查 HTTP 狀態碼
                     if (!response.ok) {
-                        console.warn(`API 錯誤: ${response.status} ${response.statusText}`);
+                        console.warn(`車牌 API 錯誤: ${response.status}`);
                         return;
                     }
 
@@ -334,7 +346,11 @@ document.addEventListener("DOMContentLoaded", async function () {
                         plateSpan.textContent = currentPlate;
                         resultDiv.style.display = "block";
                         loadingStatus.style.display = "none";
-                        console.log("新車牌:", currentPlate);
+                        confirmBtn.disabled = false;
+                        console.log("檢測到車牌:", currentPlate);
+
+                        // 可選：檢測到後自動停止輪詢
+                        // stopPolling();
                     }
                 } catch (err) {
                     console.error("輪詢失敗:", err);
@@ -347,60 +363,78 @@ document.addEventListener("DOMContentLoaded", async function () {
             if (pollInterval) {
                 clearInterval(pollInterval);
                 pollInterval = null;
+                console.log("車牌輪詢已停止");
             }
         }
 
-        // 確認進場
-        confirmBtn.addEventListener("click", async () => {
-            if (!currentPlate) {
-                alert("請先掃描車牌！");
-                return;
-            }
-
-            confirmBtn.disabled = true;
-            confirmBtn.textContent = "進場中...";
-
-            try {
-                const response = await fetch('/rent', {
-                    method: 'POST',
-                    credentials: 'same-origin',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': 'Bearer ' + localStorage.getItem('token')
-                    },
-                    body: JSON.stringify({
-                        license_plate: currentPlate,
-                        action: 'entry'
-                    })
-                });
-
-                const result = await response.json();
-
-                if (response.ok) {
-                    alert(`進場成功！車牌: ${currentPlate}\n車位: ${result.parking_spot || '自動分配'}`);
-                    currentPlate = null;
-                    resultDiv.style.display = "none";
-                    loadingStatus.style.display = "block";
-                } else {
-                    alert("進場失敗: " + (result.message || "未知錯誤"));
+        // === 關鍵修正：API 路徑使用絕對路徑 ===
+        if (confirmBtn) {
+            confirmBtn.addEventListener("click", async () => {
+                if (!currentPlate) {
+                    alert("請先掃描車牌！");
+                    return;
                 }
-            } catch (err) {
-                alert("網路錯誤，請重試");
-                console.error("進場請求失敗:", err);
-            } finally {
-                confirmBtn.disabled = false;
-                confirmBtn.textContent = "確認進場";
-            }
-        });
+
+                confirmBtn.disabled = true;
+                confirmBtn.textContent = "進場中...";
+
+                try {
+                    const token = localStorage.getItem('token');
+                    const response = await fetch(`${window.location.origin}/api/v1/parking/entry`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${token}`
+                        },
+                        body: JSON.stringify({
+                            license_plate: currentPlate
+                        })
+                    });
+
+                    const result = await response.json();
+
+                    if (response.ok) {
+                        alert(`進場成功！\n車牌: ${currentPlate}\n車位: ${result.spot_id || '自動分配'}`);
+                        // 重置
+                        currentPlate = null;
+                        plateSpan.textContent = "";
+                        resultDiv.style.display = "none";
+                        loadingStatus.style.display = "block";
+                        confirmBtn.disabled = true;
+                    } else {
+                        alert("進場失敗: " + (result.error || result.message || "未知錯誤"));
+                    }
+                } catch (err) {
+                    console.error("進場請求失敗:", err);
+                    alert("網路錯誤，請檢查連線！");
+                } finally {
+                    confirmBtn.disabled = false;
+                    confirmBtn.textContent = "確認進場";
+                }
+            });
+        }
 
         // iframe 載入完成後開始輪詢
-        iframe.onload = () => {
-            console.log("車牌辨識 iframe 載入完成");
-            setTimeout(startPolling, 500);  // 延遲 0.5 秒確保 Flask 準備好
-        };
+        if (iframe) {
+            iframe.onload = () => {
+                console.log("車牌辨識 iframe 載入成功");
+                startPolling();
+            };
+            iframe.onerror = () => {
+                console.error("iframe 載入失敗");
+                alert("無法載入車牌辨識畫面！");
+            };
+        } else {
+            // 若 iframe 不存在，直接開始
+            setTimeout(startPolling, 500);
+        }
 
-        // 頁面離開時停止
-        window.addEventListener('beforeunload', stopPolling);
+        // 清理函數
+        const cleanup = () => {
+            stopPolling();
+            window.removeEventListener('beforeunload', cleanup);
+        };
+        window.addEventListener('beforeunload', cleanup);
 
         console.log("租用車位(進場) 頁面初始化完成");
     }
