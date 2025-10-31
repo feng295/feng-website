@@ -309,8 +309,8 @@ document.addEventListener("DOMContentLoaded", async function () {
         function startPolling() {
             pollInterval = setInterval(async () => {
                 try {
-                    const response = await fetch('/license-plate/results', {
-                        credentials: 'same-origin'  // 支援 cookie
+                    const response = await fetch(`${window.location.origin}/license-plate/results`, {
+                        credentials: 'omit'  // 改成 omit，避免 cookie 問題
                     });
 
                     // 關鍵：檢查 HTTP 狀態碼
