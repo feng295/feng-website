@@ -280,21 +280,6 @@ document.addEventListener("DOMContentLoaded", async function () {
         });
     }
 
-    // 在 showSection 調用中添加
-    function showSection(sectionId) {
-        document.querySelectorAll('.content-section').forEach(section => section.style.display = 'none');
-        const section = document.getElementById(sectionId);
-        if (section) {
-            section.style.display = 'block';
-            pageTitle.textContent = sectionId === 'rentParking' ? '租用車位(進場)' : sectionId === 'settleParking' ? '離開結算(出場)' : '行動停車場管理資訊系統';
-            if (sectionId === 'rentParking') setupRentParking();
-            if (sectionId === 'settleParking') setupSettleParking();
-        }
-    }
-
-    // 初始化時顯示租用車位頁面
-    showSection('rentParking');
-
     function setupRentParking() {
         const role = getRole();
         console.log("Current role in setupRentParking:", role);
@@ -715,6 +700,21 @@ document.addEventListener("DOMContentLoaded", async function () {
         // 再次請求攝影機權限並啟動
         requestCamera(type);
     }
+
+    // 在 showSection 調用中添加
+    function showSection(sectionId) {
+        document.querySelectorAll('.content-section').forEach(section => section.style.display = 'none');
+        const section = document.getElementById(sectionId);
+        if (section) {
+            section.style.display = 'block';
+            pageTitle.textContent = sectionId === 'rentParking' ? '租用車位(進場)' : sectionId === 'settleParking' ? '離開結算(出場)' : '行動停車場管理資訊系統';
+            if (sectionId === 'rentParking') setupRentParking();
+            if (sectionId === 'settleParking') setupSettleParking();
+        }
+    }
+
+    // 初始化時顯示租用車位頁面
+    showSection('rentParking');
 
     // 設置新增車位功能
     async function setupAddParking() {
