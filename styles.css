@@ -545,11 +545,11 @@ a:hover {
 }
 
 #confirmButtonSettle:hover {
-    background-color: #da190b;
+    background-color: #45a049;
 }
 
 #rescanButtonRent, #rescanButtonSettle {
-    background-color: #4CAF50;
+    background-color: #f44336;
 }
 
 #rescanButtonRent:hover, #rescanButtonSettle:hover {
