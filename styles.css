@@ -549,7 +549,7 @@ a:hover {
 }
 
 #rescanButtonRent, #rescanButtonSettle {
-    background-color: #f44336;
+    background-color: #4CAF50;
 }
 
 #rescanButtonRent:hover, #rescanButtonSettle:hover {
