@@ -471,6 +471,113 @@ a:hover {
     margin-right: 10px;
 }
 
+/* 進場和離場樣式 */
+#videoRent, #videoSettle {
+    border: 2px solid #000;
+    display: block;
+    margin: 0 auto;
+    width: 640px;
+    height: 480px;
+}
+
+#fallbackRent, #fallbackSettle {
+    border: 2px solid #000;
+    display: none;
+    margin: 0 auto;
+    width: 640px;
+    height: 480px;
+}
+
+#resultsRent, #resultsSettle {
+    padding: 10px;
+    border: 1px solid #ccc;
+    background-color: #f9fafb;
+    text-align: center;
+    margin-top: 10px;
+    overflow: hidden;
+}
+
+#plateListRent, #plateListSettle {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+#plateListRent li, #plateListSettle li {
+    display: inline-block;
+    margin: 0 10px;
+    text-align: center;
+    font-size: 24px;
+    color: #000000;
+}
+
+#buttonContainerRent, #buttonContainerSettle {
+    margin-top: 10px;
+    text-align: center;
+}
+
+#startButtonRent, #startButtonSettle {
+    background-color: #4CAF50;
+}
+
+#startButtonRent:hover, #startButtonSettle:hover {
+    background-color: #45a049;
+}
+
+#stopButtonRent, #stopButtonSettle {
+    background-color: #f44336;
+}
+
+#stopButtonRent:hover, #stopButtonSettle:hover {
+    background-color: #da190b;
+}
+
+#confirmButtonRent {
+    background-color: #4CAF50;
+}
+
+#confirmButtonRent:hover {
+    background-color: #45a049;
+}
+
+#confirmButtonSettle {
+    background-color: #f44336;
+}
+
+#confirmButtonSettle:hover {
+    background-color: #da190b;
+}
+
+#rescanButtonRent, #rescanButtonSettle {
+    background-color: #f44336;
+}
+
+#rescanButtonRent:hover, #rescanButtonSettle:hover {
+    background-color: #da190b;
+}
+
+.loading {
+    color: #666;
+    font-style: italic;
+}
+
+.error {
+    color: #dc3545;
+    font-size: 16px;
+    margin-top: 5px;
+}
+
+.format-hint {
+    font-size: 14px;
+    color: #666;
+    margin-top: 5px;
+}
+
+#settleResult {
+    margin-top: 10px;
+    font-size: 16px;
+}
+
 /* 響應式設計 */
 @media (max-width: 768px) {
     .system-container {
@@ -514,6 +621,16 @@ a:hover {
     #viewParkingMap,
     #reserveParkingMap {
         height: 300px;
+    }
+
+    #videoRent, #videoSettle {
+        width: 100%;
+        height: auto;
+    }
+
+    #fallbackRent, #fallbackSettle {
+        width: 100%;
+        height: auto;
     }
 
     #viewParkingTable th,

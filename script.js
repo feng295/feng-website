@@ -297,122 +297,185 @@ document.addEventListener("DOMContentLoaded", async function () {
 
         const video = document.getElementById("videoRent");
         const fallback = document.getElementById("fallbackRent");
-        const permissionBox = document.getElementById("permissionBoxRent");
-        const plateResult = document.getElementById("plateResultRent");
-        const detectedPlate = document.getElementById("detectedPlateRent");
-        const confirmEntryBtn = document.getElementById("confirmEntryBtnRent");
-        const rescanBtn = document.getElementById("rescanBtnRent");
-        const loadingStatus = document.getElementById("loadingStatusRent");
+        const plateList = document.getElementById("plateListRent");
+        const loading = document.getElementById("loadingRent");
+        const error = document.getElementById("errorRent");
+        const startButton = document.getElementById("startButtonRent");
+        const stopButton = document.getElementById("stopButtonRent");
+        const confirmButton = document.getElementById("confirmButtonRent");
+        const rescanButton = document.getElementById("rescanButtonRent");
+
         let stream = null;
         let intervalId = null;
         let isScanningStopped = false;
         let isStopRequested = false;
         let currentPlate = null;
 
-        async function requestCamera(type) {
-            if (type === 'rent') {
-                permissionBox.style.display = "none";
-                loadingStatus.style.display = "block";
-            }
+        async function startStream() {
             try {
-                stream = await navigator.mediaDevices.getUserMedia({ video: true });
+                stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
                 video.srcObject = stream;
                 video.style.display = "block";
-                loadingStatus.style.display = "none";
-                initializeScanning();
+                fallback.style.display = "none";
+                error.style.display = "none";
+                error.innerText = "";
+
+                video.addEventListener('loadeddata', async () => {
+                    console.log("Rent Video 數據已加載");
+                    try {
+                        const response = await fetch(`${window.location.origin}/license-plate/start-rent`, {
+                            method: 'POST'
+                        });
+                        if (!response.ok) throw new Error(`啟動請求失敗: ${response.status}`);
+                        const data = await response.json();
+                        console.log(data.message);
+                        startLicensePlateDetection();
+                    } catch (err) {
+                        console.error("啟動錯誤:", err);
+                        error.innerText = `啟動失敗: ${err.message}`;
+                        error.style.display = "block";
+                    }
+                }, { once: true });
+
+                if (video.readyState >= video.HAVE_ENOUGH_DATA) {
+                    video.dispatchEvent(new Event('loadeddata'));
+                }
             } catch (err) {
-                console.error("攝影機拒絕:", err);
+                console.error("無法訪問攝影機:", err);
+                error.innerText = `無法訪問攝影機: ${err.message}`;
+                error.style.display = "block";
+                video.style.display = "none";
                 fallback.style.display = "block";
-                loadingStatus.textContent = "攝影機存取被拒絕，請重新載入並允許權限";
             }
         }
 
-        function initializeScanning() {
-            if (intervalId) {
-                clearInterval(intervalId);
-                intervalId = null;
+        function stopStream() {
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+                stream = null;
+                video.srcObject = null;
+                error.innerText = "串流已停止";
+                error.style.display = "block";
+                video.style.display = "none";
+                fallback.style.display = "block";
             }
-            video.src = `${window.location.origin}/license-plate/video_feed?${new Date().getTime()}`;
-            fetch(`${window.location.origin}/license-plate/start`, { method: 'POST' })
+            isStopRequested = true;
+            fetch(`${window.location.origin}/license-plate/stop-rent`, {
+                method: 'POST'
+            })
                 .then(response => {
-                    if (!response.ok) throw new Error(`啟動請求失敗: ${response.status}`);
+                    if (!response.ok) throw new Error(`停止請求失敗: ${response.status}`);
                     return response.json();
                 })
                 .then(data => {
                     console.log(data.message);
-                    isScanningStopped = false;
-                    if (!intervalId) {
-                        intervalId = setInterval(updateResults, 2000);
-                    }
+                    isScanningStopped = true;
+                    isStopRequested = false;
+                    clearInterval(intervalId);
+                    intervalId = null;
                 })
                 .catch(error => {
-                    console.error('啟動錯誤:', error);
-                    loadingStatus.textContent = `啟動失敗: ${error.message}`;
+                    console.error("停止錯誤:", error);
+                    error.innerText = `停止失敗: ${error.message}`;
+                    error.style.display = "block";
+                    isStopRequested = false;
                 });
         }
 
-        function updateResults() {
-            if (isScanningStopped || isStopRequested) return;
+        function startLicensePlateDetection() {
+            if (!stream || isScanningStopped) return;
+            const canvas = document.createElement('canvas');
+            const context = canvas.getContext('2d');
 
-            loadingStatus.style.display = 'block';
-            fetch(`${window.location.origin}/license-plate/results`)
-                .then(response => {
-                    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-                    return response.json();
-                })
-                .then(data => {
-                    let currentPlates = [];
-                    if (Array.isArray(data)) {
-                        currentPlates = data.map(line => {
-                            try {
-                                const result = typeof line === 'string' ? JSON.parse(line) : line;
-                                return typeof result === 'string' && result.length > 0 && result !== '尚未檢測到車牌' ? result : null;
-                            } catch (e) {
-                                return null;
+            function captureFrame() {
+                if (!stream || isScanningStopped) return;
+
+                if (video.readyState !== video.HAVE_ENOUGH_DATA || video.videoWidth === 0 || video.videoHeight === 0) {
+                    console.warn("Rent Video 未準備好，延遲重試");
+                    intervalId = setTimeout(captureFrame, 500);
+                    return;
+                }
+
+                canvas.width = video.videoWidth;
+                canvas.height = video.videoHeight;
+                context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+                canvas.toBlob(blob => {
+                    if (!blob) {
+                        console.error("無法生成 Blob");
+                        error.innerText = '無法生成影像數據';
+                        error.style.display = "block";
+                        intervalId = setTimeout(captureFrame, 2000);
+                        return;
+                    }
+
+                    const formData = new FormData();
+                    formData.append('frame', blob, 'frame.jpg');
+                    console.log("發送請求到:", `/license-plate/process_frame-rent`);
+
+                    fetch(`${window.location.origin}/license-plate/process_frame-rent`, {
+                        method: 'POST',
+                        body: formData
+                    })
+                        .then(response => {
+                            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                            return response.json();
+                        })
+                        .then(data => {
+                            let currentPlates = data.plate && data.plate !== '尚未檢測到車牌' ? [data.plate] : [];
+                            loading.style.display = 'none';
+
+                            if (currentPlates.length > 0 && currentPlates[0] !== currentPlate) {
+                                currentPlate = currentPlates[0];
+                                plateList.innerHTML = `<li class="text-black">${currentPlate}</li>`;
+                                confirmButton.disabled = false;
+                                rescanButton.style.display = "inline-block";
+                                isScanningStopped = true;
+                                clearInterval(intervalId);
+                                intervalId = null;
+                                stopStream();
+                            } else {
+                                plateList.innerHTML = '<li class="text-gray-500">尚未檢測到車牌</li>';
+                                confirmButton.disabled = true;
+                                rescanButton.style.display = "none";
                             }
-                        }).filter(plate => plate !== null);
-                    }
-                    const uniquePlates = [...new Set(currentPlates)];
+                        })
+                        .catch(err => {
+                            console.error("處理影像失敗:", err);
+                            error.innerText = `處理影像失敗: ${err.message}`;
+                            error.style.display = "block";
+                            loading.style.display = "none";
+                        });
 
-                    if (uniquePlates.length > 0 && uniquePlates[0] !== currentPlate) {
-                        currentPlate = uniquePlates[0];
-                        detectedPlate.textContent = currentPlate;
-                        plateResult.style.display = "block";
-                        loadingStatus.style.display = "none";
-                        confirmEntryBtn.disabled = false;
-                        rescanBtn.style.display = "inline-block"; // 顯示重新掃描按鈕
-                        clearInterval(intervalId);
-                        isScanningStopped = true;
-                        isStopRequested = true;
-                        fetch(`${window.location.origin}/license-plate/stop`, { method: 'POST' })
-                            .then(response => response.json())
-                            .then(data => console.log('停止回應:', data.message))
-                            .catch(error => console.error('停止錯誤:', error));
-                    } else {
-                        loadingStatus.textContent = "等待車牌辨識...";
-                    }
-                })
-                .catch(error => {
-                    console.error('數據加載失敗:', error);
-                    loadingStatus.textContent = `數據加載失敗: ${error.message}`;
-                })
-                .finally(() => {
-                    loadingStatus.style.display = 'none';
-                });
+                    intervalId = setTimeout(captureFrame, 2000);
+                }, 'image/jpeg', 0.85);
+            }
+
+            video.addEventListener('loadeddata', () => {
+                console.log("Rent Video 數據已加載，開始捕獲");
+                loading.style.display = 'block';
+                captureFrame();
+            }, { once: true });
+
+            if (video.readyState >= video.HAVE_ENOUGH_DATA) {
+                captureFrame();
+            }
         }
 
-        confirmEntryBtn.addEventListener("click", async () => {
+        startButton.addEventListener("click", startStream);
+        stopButton.addEventListener("click", stopStream);
+        confirmButton.addEventListener("click", async () => {
             if (!currentPlate) {
                 alert("請先掃描車牌！");
                 return;
             }
 
-            confirmEntryBtn.disabled = true;
-            confirmEntryBtn.textContent = "進場中...";
+            confirmButton.disabled = true;
+            confirmButton.textContent = "進場中...";
 
             try {
-                const token = localStorage.getItem('token');
-                const response = await fetch(`${window.location.origin}/rent`, {
+                const token = getToken();
+                const response = await fetch(`${API_URL}/rent`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -423,23 +486,17 @@ document.addEventListener("DOMContentLoaded", async function () {
 
                 const result = await response.json();
                 if (response.ok) {
+                    plateList.innerHTML = `<li class="text-green-600">${currentPlate} (已進場)</li>`;
                     alert(`進場成功！\n車牌: ${currentPlate}\n車位: ${result.spot_id || '自動分配'}`);
                     currentPlate = null;
-                    detectedPlate.textContent = "";
-                    plateResult.style.display = "none";
-                    loadingStatus.style.display = "block";
-                    confirmEntryBtn.disabled = true;
-                    rescanBtn.style.display = "none";
-
-                    // 15 秒後自動重新開始辨識
+                    confirmButton.disabled = true;
+                    rescanButton.style.display = "none";
                     setTimeout(() => {
-                        loadingStatus.style.display = "block";
-                        if (video.srcObject) {
-                            video.srcObject.getTracks().forEach(track => track.stop());
-                            video.srcObject = null;
-                        }
-                        requestCamera('rent');
-                    }, 15000); // 15 秒 = 15000 毫秒
+                        plateList.innerHTML = '<li class="text-gray-500">尚未檢測到車牌</li>';
+                        confirmButton.disabled = true;
+                        rescanButton.style.display = "none";
+                        startStream();
+                    }, 15000);
                 } else {
                     alert("進場失敗: " + (result.error || result.message || "未知錯誤"));
                 }
@@ -447,12 +504,24 @@ document.addEventListener("DOMContentLoaded", async function () {
                 console.error("進場請求失敗:", err);
                 alert("網路錯誤，請檢查連線！");
             } finally {
-                confirmEntryBtn.disabled = false;
-                confirmEntryBtn.textContent = "確認進場";
+                confirmButton.disabled = false;
+                confirmButton.textContent = "確認進場";
             }
         });
 
-        requestCamera('rent');
+        rescanButton.addEventListener("click", () => {
+            plateList.innerHTML = '<li class="text-gray-500">尚未檢測到車牌</li>';
+            error.style.display = "none";
+            confirmButton.disabled = true;
+            rescanButton.style.display = "none";
+            isScanningStopped = false;
+            isStopRequested = false;
+            clearInterval(intervalId);
+            intervalId = null;
+            startStream();
+        });
+
+        startStream();
     }
 
     function setupSettleParking() {
@@ -466,130 +535,193 @@ document.addEventListener("DOMContentLoaded", async function () {
         const settleParkingSection = document.getElementById("settleParking");
         if (!settleParkingSection) {
             console.error("settleParking section not found");
-            alert("無法載入「離開結算(出場)」頁面，頁面元素缺失，請聯繫管理員！");
+            alert("無法載入「離開結算(出場)」頁面！");
             return;
         }
         settleParkingSection.style.display = "block";
 
         const video = document.getElementById("videoSettle");
         const fallback = document.getElementById("fallbackSettle");
-        const permissionBox = document.getElementById("permissionBoxSettle");
-        const plateResult = document.getElementById("plateResultSettle");
-        const detectedPlate = document.getElementById("detectedPlateSettle");
-        const confirmExitBtn = document.getElementById("confirmExitBtnSettle");
-        const rescanBtn = document.getElementById("rescanBtnSettle");
-        const loadingStatus = document.getElementById("loadingStatusSettle");
+        const plateList = document.getElementById("plateListSettle");
+        const loading = document.getElementById("loadingSettle");
+        const error = document.getElementById("errorSettle");
         const settleResult = document.getElementById("settleResult");
+        const startButton = document.getElementById("startButtonSettle");
+        const stopButton = document.getElementById("stopButtonSettle");
+        const confirmButton = document.getElementById("confirmButtonSettle");
+        const rescanButton = document.getElementById("rescanButtonSettle");
+
         let stream = null;
         let intervalId = null;
         let isScanningStopped = false;
         let isStopRequested = false;
         let currentPlate = null;
 
-        async function requestCamera(type) {
-            if (type === 'settle') {
-                permissionBox.style.display = "none";
-                loadingStatus.style.display = "block";
-            }
+        async function startStream() {
             try {
-                stream = await navigator.mediaDevices.getUserMedia({ video: true });
+                stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
                 video.srcObject = stream;
                 video.style.display = "block";
-                loadingStatus.style.display = "none";
-                initializeScanning();
+                fallback.style.display = "none";
+                error.style.display = "none";
+                error.innerText = "";
+
+                video.addEventListener('loadeddata', async () => {
+                    console.log("Settle Video 數據已加載");
+                    try {
+                        const response = await fetch(`${window.location.origin}/license-plate/start-settle`, {
+                            method: 'POST'
+                        });
+                        if (!response.ok) throw new Error(`啟動請求失敗: ${response.status}`);
+                        const data = await response.json();
+                        console.log(data.message);
+                        startLicensePlateDetection();
+                    } catch (err) {
+                        console.error("啟動錯誤:", err);
+                        error.innerText = `啟動失敗: ${err.message}`;
+                        error.style.display = "block";
+                    }
+                }, { once: true });
+
+                if (video.readyState >= video.HAVE_ENOUGH_DATA) {
+                    video.dispatchEvent(new Event('loadeddata'));
+                }
             } catch (err) {
-                console.error("攝影機拒絕:", err);
+                console.error("無法訪問攝影機:", err);
+                error.innerText = `無法訪問攝影機: ${err.message}`;
+                error.style.display = "block";
+                video.style.display = "none";
                 fallback.style.display = "block";
-                loadingStatus.textContent = "攝影機存取被拒絕，請重新載入並允許權限";
             }
         }
 
-        function initializeScanning() {
-            if (intervalId) {
-                clearInterval(intervalId);
-                intervalId = null;
+        function stopStream() {
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+                stream = null;
+                video.srcObject = null;
+                error.innerText = "串流已停止";
+                error.style.display = "block";
+                video.style.display = "none";
+                fallback.style.display = "block";
             }
-            video.src = `${window.location.origin}/license-plate/video_feed?${new Date().getTime()}`;
-            fetch(`${window.location.origin}/license-plate/start`, { method: 'POST' })
+            isStopRequested = true;
+            fetch(`${window.location.origin}/license-plate/stop-settle`, {
+                method: 'POST'
+            })
                 .then(response => {
-                    if (!response.ok) throw new Error(`啟動請求失敗: ${response.status}`);
+                    if (!response.ok) throw new Error(`停止請求失敗: ${response.status}`);
                     return response.json();
                 })
                 .then(data => {
                     console.log(data.message);
-                    isScanningStopped = false;
-                    if (!intervalId) {
-                        intervalId = setInterval(updateResults, 2000);
-                    }
+                    isScanningStopped = true;
+                    isStopRequested = false;
+                    clearInterval(intervalId);
+                    intervalId = null;
                 })
                 .catch(error => {
-                    console.error('啟動錯誤:', error);
-                    loadingStatus.textContent = `啟動失敗: ${error.message}`;
+                    console.error("停止錯誤:", error);
+                    error.innerText = `停止失敗: ${error.message}`;
+                    error.style.display = "block";
+                    isStopRequested = false;
                 });
         }
 
-        function updateResults() {
-            if (isScanningStopped || isStopRequested) return;
+        function startLicensePlateDetection() {
+            if (!stream || isScanningStopped) return;
+            const canvas = document.createElement('canvas');
+            const context = canvas.getContext('2d');
 
-            loadingStatus.style.display = 'block';
-            fetch(`${window.location.origin}/license-plate/results`)
-                .then(response => {
-                    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-                    return response.json();
-                })
-                .then(data => {
-                    let currentPlates = [];
-                    if (Array.isArray(data)) {
-                        currentPlates = data.map(line => {
-                            try {
-                                const result = typeof line === 'string' ? JSON.parse(line) : line;
-                                return typeof result === 'string' && result.length > 0 && result !== '尚未檢測到車牌' ? result : null;
-                            } catch (e) {
-                                return null;
+            function captureFrame() {
+                if (!stream || isScanningStopped) return;
+
+                if (video.readyState !== video.HAVE_ENOUGH_DATA || video.videoWidth === 0 || video.videoHeight === 0) {
+                    console.warn("Settle Video 未準備好，延遲重試");
+                    intervalId = setTimeout(captureFrame, 500);
+                    return;
+                }
+
+                canvas.width = video.videoWidth;
+                canvas.height = video.videoHeight;
+                context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+                canvas.toBlob(blob => {
+                    if (!blob) {
+                        console.error("無法生成 Blob");
+                        error.innerText = '無法生成影像數據';
+                        error.style.display = "block";
+                        intervalId = setTimeout(captureFrame, 2000);
+                        return;
+                    }
+
+                    const formData = new FormData();
+                    formData.append('frame', blob, 'frame.jpg');
+                    console.log("發送請求到:", `/license-plate/process_frame-settle`);
+
+                    fetch(`${window.location.origin}/license-plate/process_frame-settle`, {
+                        method: 'POST',
+                        body: formData
+                    })
+                        .then(response => {
+                            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                            return response.json();
+                        })
+                        .then(data => {
+                            let currentPlates = data.plate && data.plate !== '尚未檢測到車牌' ? [data.plate] : [];
+                            loading.style.display = 'none';
+
+                            if (currentPlates.length > 0 && currentPlates[0] !== currentPlate) {
+                                currentPlate = currentPlates[0];
+                                plateList.innerHTML = `<li class="text-black">${currentPlate}</li>`;
+                                confirmButton.disabled = false;
+                                rescanButton.style.display = "inline-block";
+                                isScanningStopped = true;
+                                clearInterval(intervalId);
+                                intervalId = null;
+                                stopStream();
+                            } else {
+                                plateList.innerHTML = '<li class="text-gray-500">尚未檢測到車牌</li>';
+                                confirmButton.disabled = true;
+                                rescanButton.style.display = "none";
                             }
-                        }).filter(plate => plate !== null);
-                    }
-                    const uniquePlates = [...new Set(currentPlates)];
+                        })
+                        .catch(err => {
+                            console.error("處理影像失敗:", err);
+                            error.innerText = `處理影像失敗: ${err.message}`;
+                            error.style.display = "block";
+                            loading.style.display = "none";
+                        });
 
-                    if (uniquePlates.length > 0 && uniquePlates[0] !== currentPlate) {
-                        currentPlate = uniquePlates[0];
-                        detectedPlate.textContent = currentPlate;
-                        plateResult.style.display = "block";
-                        loadingStatus.style.display = "none";
-                        confirmExitBtn.disabled = false;
-                        rescanBtn.style.display = "inline-block"; // 顯示重新掃描按鈕
-                        clearInterval(intervalId);
-                        isScanningStopped = true;
-                        isStopRequested = true;
-                        fetch(`${window.location.origin}/license-plate/stop`, { method: 'POST' })
-                            .then(response => response.json())
-                            .then(data => console.log('停止回應:', data.message))
-                            .catch(error => console.error('停止錯誤:', error));
-                    } else {
-                        loadingStatus.textContent = "等待車牌辨識...";
-                    }
-                })
-                .catch(error => {
-                    console.error('數據加載失敗:', error);
-                    loadingStatus.textContent = `數據加載失敗: ${error.message}`;
-                })
-                .finally(() => {
-                    loadingStatus.style.display = 'none';
-                });
+                    intervalId = setTimeout(captureFrame, 2000);
+                }, 'image/jpeg', 0.85);
+            }
+
+            video.addEventListener('loadeddata', () => {
+                console.log("Settle Video 數據已加載，開始捕獲");
+                loading.style.display = 'block';
+                captureFrame();
+            }, { once: true });
+
+            if (video.readyState >= video.HAVE_ENOUGH_DATA) {
+                captureFrame();
+            }
         }
 
-        confirmExitBtn.addEventListener("click", async () => {
+        startButton.addEventListener("click", startStream);
+        stopButton.addEventListener("click", stopStream);
+        confirmButton.addEventListener("click", async () => {
             if (!currentPlate) {
                 alert("請先掃描車牌！");
                 return;
             }
 
-            confirmExitBtn.disabled = true;
-            confirmExitBtn.textContent = "出場中...";
+            confirmButton.disabled = true;
+            confirmButton.textContent = "出場中...";
 
             try {
-                const token = localStorage.getItem('token');
-                const parkingIdResponse = await fetch(`${window.location.origin}/rent/${currentPlate}`, {
+                const token = getToken();
+                const parkingIdResponse = await fetch(`${API_URL}/rent/${currentPlate}`, {
                     method: 'GET',
                     headers: {
                         'Authorization': `Bearer ${token}`
@@ -598,7 +730,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                 const parkingIdData = await parkingIdResponse.json();
                 const parkingId = parkingIdData.id || currentPlate;
 
-                const response = await fetch(`${window.location.origin}/rent/${parkingId}/leave`, {
+                const response = await fetch(`${API_URL}/rent/${parkingId}/leave`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -609,44 +741,55 @@ document.addEventListener("DOMContentLoaded", async function () {
 
                 const result = await response.json();
                 if (response.ok) {
+                    plateList.innerHTML = `<li class="text-green-600">${currentPlate} (已出場)</li>`;
                     settleResult.textContent = `出場結算成功！費用: ${result.amount || 0} 元`;
                     settleResult.style.display = "block";
                     settleResult.style.color = "green";
+                    alert(`出場結算成功！費用: ${result.amount || 0} 元`);
                     currentPlate = null;
-                    detectedPlate.textContent = "";
-                    plateResult.style.display = "none";
-                    loadingStatus.style.display = "block";
-                    confirmExitBtn.disabled = true;
-                    rescanBtn.style.display = "none";
-
-                    // 15 秒後自動重新開始辨識
+                    confirmButton.disabled = true;
+                    rescanButton.style.display = "none";
                     setTimeout(() => {
-                        loadingStatus.style.display = "block";
-                        if (video.srcObject) {
-                            video.srcObject.getTracks().forEach(track => track.stop());
-                            video.srcObject = null;
-                        }
-                        requestCamera('settle');
-                    }, 15000); // 15 秒 = 15000 毫秒
+                        plateList.innerHTML = '<li class="text-gray-500">尚未檢測到車牌</li>';
+                        settleResult.style.display = "none";
+                        confirmButton.disabled = true;
+                        rescanButton.style.display = "none";
+                        startStream();
+                    }, 15000);
                 } else {
                     settleResult.textContent = `出場失敗: ${result.error || result.message || "未知錯誤"}`;
                     settleResult.style.display = "block";
                     settleResult.style.color = "red";
+                    alert(`出場失敗: ${result.error || result.message || "未知錯誤"}`);
                 }
             } catch (err) {
                 console.error("出場請求失敗:", err);
                 settleResult.textContent = "網路錯誤，請檢查連線！";
                 settleResult.style.display = "block";
                 settleResult.style.color = "red";
+                alert("網路錯誤，請檢查連線！");
             } finally {
-                confirmExitBtn.disabled = false;
-                confirmExitBtn.textContent = "確認出場";
+                confirmButton.disabled = false;
+                confirmButton.textContent = "確認出場";
             }
         });
 
-        requestCamera('settle');
-    }
+        rescanButton.addEventListener("click", () => {
+            plateList.innerHTML = '<li class="text-gray-500">尚未檢測到車牌</li>';
+            error.style.display = "none";
+            settleResult.style.display = "none";
+            confirmButton.disabled = true;
+            rescanButton.style.display = "none";
+            isScanningStopped = false;
+            isStopRequested = false;
+            clearInterval(intervalId);
+            intervalId = null;
+            startStream();
+        });
 
+        startStream();
+    }
+    
     // 攝影機請求和重新掃描函數
     async function requestCamera(type) {
         let video = type === 'rent' ? document.getElementById('videoRent') : document.getElementById('videoSettle');
