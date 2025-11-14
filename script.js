@@ -186,7 +186,7 @@ document.addEventListener("DOMContentLoaded", async function () {
         }
 
         const newPath = `/${role}`;
-        history.pushState({ role }, '', newPath);
+        history.replaceState({ role }, '', newPath);
         console.log(`URL updated to: ${window.location.pathname}`);
 
         if (role === "renter") pageTitle.textContent = "租用者";
@@ -789,7 +789,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 
         startStream();
     }
-    
+
     // 攝影機請求和重新掃描函數
     async function requestCamera(type) {
         let video = type === 'rent' ? document.getElementById('videoRent') : document.getElementById('videoSettle');
@@ -1301,6 +1301,8 @@ document.addEventListener("DOMContentLoaded", async function () {
                         return;
                     }
                     setRole(role);
+                    const newPath = `/${role}`;
+                    history.replaceState({ role }, '', newPath); // 設置 URL 路徑
                     alert("登入成功！");
                     showMainPage();
                 } else {
