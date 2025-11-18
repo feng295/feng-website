@@ -655,6 +655,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 
             try {
                 const token = getToken();
+                const end_time = new Date().toISOString();
                 const parkingIdResponse = await fetch(`${API_URL}/rent/${currentPlate}`, {
                     method: 'GET',
                     headers: {
@@ -664,13 +665,13 @@ document.addEventListener("DOMContentLoaded", async function () {
                 const parkingIdData = await parkingIdResponse.json();
                 const parkingId = parkingIdData.id || currentPlate;
 
-                const response = await fetch(`${API_URL}/rent/${parkingId}/leave`, {
+                const response = await fetch(`${API_URL}/rent/leave`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                         'Authorization': `Bearer ${token}`
                     },
-                    body: JSON.stringify({ license_plate: currentPlate })
+                    body: JSON.stringify({ license_plate: currentPlate, end_time: end_time })
                 });
 
                 const result = await response.json();
