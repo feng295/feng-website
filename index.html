@@ -119,22 +119,19 @@
 
                 <!-- 在 <div id="rentParking" class="content-section"> 之前加入這個選單容器 -->
                 <div id="parkingLotSelector" class="content-section" style="display: none;">
-                    <h2 class="text-3xl font-bold text-center my-8 text-blue-700">停車場進出場管理</h2>
-                    <div class="max-w-3xl mx-auto bg-white p-8 rounded-2xl shadow-2xl border-4 border-blue-200">
-                        <label class="block text-xl font-bold text-center mb-6 text-gray-700">
-                            請選擇停車場與動作
-                        </label>
+                    <h2 class="text-2xl font-bold text-center my-6">請選擇停車場與動作</h2>
+                    <div class="max-w-2xl mx-auto">
                         <select id="parkingLotActionSelect"
-                            class="w-full px-6 py-5 text-xl font-semibold text-center border-4 border-blue-400 rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-300 mb-6">
-                            <option value="">載入中，請稍候...</option>
+                            class="w-full px-6 py-4 text-xl border-2 border-gray-300 rounded-xl focus:outline-none focus:border-blue-500">
+                            <option value="">-- 請選擇停車場與動作 --</option>
                         </select>
-                        <div class="text-center">
+                        <div class="text-center mt-6">
                             <button id="enterSelectedLotBtn"
-                                class="px-12 py-5 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-bold rounded-xl text-2xl shadow-lg transform transition hover:scale-105">
-                                開始操作
+                                class="px-8 py-4 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl text-xl">
+                                進入操作頁面
                             </button>
                         </div>
-                        <p id="selectorStatus" class="mt-6 text-center text-lg font-medium text-gray-600"></p>
+                        <p id="selectorStatus" class="mt-4 text-center text-lg"></p>
                     </div>
                 </div>
 
