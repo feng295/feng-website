@@ -117,73 +117,46 @@
                     </table>
                 </div>
 
-                <div id="rentParking" class="content-section" style="display: none;">
-                    <h2 class="text-2xl font-bold text-center my-4">即時車牌辨識 - 進場</h2>
-                    <div
-                        class="max-w-2xl mx-auto mb-6 p-6 bg-yellow-50 border-4 border-yellow-400 rounded-2xl shadow-xl">
-                        <label class="block text-2xl font-bold text-yellow-900 mb-4 text-center">
-                            DEMO 專用：請輸入停車場 ID
-                        </label>
-                        <div class="flex gap-3 items-center justify-center">
-                            <input type="number" id="demoParkingLotId" placeholder="例如：1 或 5"
-                                class="w-48 px-6 py-4 text-2xl font-bold text-center border-4 border-yellow-500 rounded-xl focus:outline-none focus:ring-4 focus:ring-yellow-300"
-                                min="1">
-                            <button id="setLotIdBtn"
-                                class="px-6 py-4 bg-orange-500 hover:bg-orange-600 text-white font-bold rounded-xl text-xl">
-                                設定
+                <!-- 統一進出場系統（取代原本兩個 section） -->
+                <div id="unifiedParking" class="content-section" style="display: none; padding: 20px;">
+                    <h2 class="text-4xl font-bold text-center mb-10 text-blue-800">智慧停車場進出場系統</h2>
+
+                    <div class="max-w-4xl mx-auto bg-white rounded-3xl shadow-2xl p-10">
+                        <!-- 停車場與動作選擇 -->
+                        <div class="mb-10">
+                            <label class="block text-3xl font-bold text-gray-800 mb-6 text-center">
+                                請選擇停車場與動作
+                            </label>
+                            <select id="parkingActionSelect"
+                                class="w-full p-6 text-3xl rounded-2xl border-4 border-blue-600 focus:border-blue-800 outline-none w-full text-center font-bold">
+                                <option value="">-- 請選擇停車場與動作 --</option>
+                            </select>
+                        </div>
+
+                        <!-- 開始掃描按鈕 -->
+                        <div class="text-center mb-10">
+                            <button id="startUnifiedScan"
+                                class="px-20 py-8 text-4xl font-bold bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white rounded-3xl shadow-2xl transform hover:scale-105 transition disabled:bg-gray-400 disabled:cursor-not-allowed"
+                                disabled>
+                                開始掃描
                             </button>
                         </div>
-                        <p id="demoLotStatus" class="mt-4 text-center text-xl font-bold text-gray-700"></p>
-                    </div>
-                    <div class="flex justify-center">
-                        <video id="videoRent" width="640" height="480" autoplay playsinline
-                            class="border-2 border-black"></video>
-                        <img id="fallbackRent" src="/static/no-camera.jpg"
-                            style="display: none; width: 640px; height: 480px; border: 2px solid #000;" alt="無攝影機">
-                    </div>
-                    <div id="resultsRent">
-                        <h3 class="text-lg font-semibold">車牌號碼:</h3>
-                        <ul id="plateListRent">
-                            <li class="text-gray-500">尚未檢測到車牌</li>
-                        </ul>
-                        <div id="loadingRent" class="loading" style="display: none;">載入中...</div>
-                        <div id="errorRent" class="error" style="display: none;"></div>
-                        <div id="buttonContainerRent">
-                            <button id="startButtonRent">開始掃描</button>
-                            <button id="stopButtonRent">停止掃描</button>
-                            <button id="confirmButtonRent">確認進場</button>
-                            <button id="rescanButtonRent">重新掃描</button>
+
+                        <!-- 共用攝影機與結果顯示區 -->
+                        <div id="unifiedCameraSection" class="hidden text-center">
+                            <video id="unifiedVideo" autoplay playsinline
+                                class="w-full max-w-4xl mx-auto rounded-2xl border-8 border-gray-800 shadow-2xl"></video>
+
+                            <div class="mt-10">
+                                <div id="unifiedPlate" class="text-8xl font-bold text-gray-600 mb-8">
+                                    等待車輛進入感應區...
+                                </div>
+                                <div id="unifiedResult" class="text-6xl font-bold"></div>
+                            </div>
                         </div>
-                        <div class="format-hint"></div>
                     </div>
                 </div>
-
-                <div id="settleParking" class="content-section" style="display: none;">
-                    <h2 class="text-2xl font-bold text-center my-4">即時車牌辨識 - 離場</h2>
-                    <div class="flex justify-center">
-                        <video id="videoSettle" width="640" height="480" autoplay playsinline
-                            class="border-2 border-black"></video>
-                        <img id="fallbackSettle" src="/static/no-camera.jpg"
-                            style="display: none; width: 640px; height: 480px; border: 2px solid #000;" alt="無攝影機">
-                    </div>
-                    <div id="resultsSettle">
-                        <h3 class="text-lg font-semibold">車牌號碼:</h3>
-                        <ul id="plateListSettle">
-                            <li class="text-gray-500">尚未檢測到車牌</li>
-                        </ul>
-                        <div id="loadingSettle" class="loading" style="display: none;">載入中...</div>
-                        <div id="errorSettle" class="error" style="display: none;"></div>
-                        <div id="buttonContainerSettle">
-                            <button id="startButtonSettle">開始掃描</button>
-                            <button id="stopButtonSettle">停止掃描</button>
-                            <button id="confirmButtonSettle">確認出場</button>
-                            <button id="rescanButtonSettle">重新掃描</button>
-                        </div>
-                        <div class="format-hint"></div>
-                        <div id="settleResult" class="mt-4 text-center text-gray-600" style="display: none;"></div>
-                    </div>
-                </div>
-
+                
                 <div id="reserveParking" class="content-section" style="display: none;">
                     <h2>預約車位</h2>
                     <div class="search-container">
