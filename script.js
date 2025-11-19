@@ -675,8 +675,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 
                 if (response.ok) {
                     // 支援常見的金額欄位名稱
-                    const amount = result.data?.total_cost ?? result.total_cost ?? result.amount ?? 0;
-                    // 成功畫面
+                    const amount = result.data?.total_cost ?? 0;                    
                     plateList.innerHTML = `<li class="text-green-600 text-6xl font-bold">${currentPlate}</li>`;
                     settleResult.innerHTML = `
                         <div class="text-green-600 text-5xl font-bold mb-8">出場成功！</div>
