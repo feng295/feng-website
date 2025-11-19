@@ -644,7 +644,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 
         startButton.addEventListener("click", startStream);
         stopButton.addEventListener("click", stopStream);
-                confirmButton.addEventListener("click", async () => {
+        confirmButton.addEventListener("click", async () => {
             if (!currentPlate) {
                 alert("請先掃描車牌！");
                 return;
@@ -655,6 +655,8 @@ document.addEventListener("DOMContentLoaded", async function () {
 
             try {
                 const token = getToken();
+                if (!token) throw new Error("請先登入！");
+
                 const end_time = new Date().toISOString();
 
                 const response = await fetch(`${API_URL}/rent/leave`, {
@@ -672,14 +674,14 @@ document.addEventListener("DOMContentLoaded", async function () {
                 const result = await response.json();
 
                 if (response.ok) {
-                    // 後端可能回 total_cost / amount / fee，全部支援
-                    const amount = result.total_cost ?? result.amount ?? result.fee ?? 0;
+                    // 支援常見的金額欄位名稱
+                    const amount = result.total_cost || result.amount || result.fee || result.cost || 0;
 
-                    // 大字成功畫面
+                    // 成功畫面
                     plateList.innerHTML = `<li class="text-green-600 text-6xl font-bold">${currentPlate}</li>`;
                     settleResult.innerHTML = `
                         <div class="text-green-600 text-5xl font-bold mb-8">出場成功！</div>
-                        <div class="text-4xl">應收費用：<span class="text-red-600 text-6xl font-bold">${amount}</span> 元</div>
+                        <div class="text-4xl">應收費用：<span class="text-red-600 text-7xl font-bold">${amount}</span> 元</div>
                     `;
                     settleResult.style.display = "block";
 
@@ -700,13 +702,13 @@ document.addEventListener("DOMContentLoaded", async function () {
                 }
 
             } catch (err) {
-                console.error("出場結算失敗:", err);
+                console.error("出場失敗:", err);
                 settleResult.innerHTML = `
                     <div class="text-red-600 text-4xl font-bold">出場失敗</div>
                     <div class="text-2xl mt-6">${err.message}</div>
                 `;
                 settleResult.style.display = "block";
-                alert(`出場失敗：${err.message}`);
+                alert("出場失敗：" + err.message);
             } finally {
                 confirmButton.disabled = false;
                 confirmButton.textContent = "確認出場";
