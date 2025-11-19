@@ -644,7 +644,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 
         startButton.addEventListener("click", startStream);
         stopButton.addEventListener("click", stopStream);
-                        confirmButton.addEventListener("click", async () => {
+        confirmButton.addEventListener("click", async () => {
             if (!currentPlate) {
                 alert("請先掃描車牌！");
                 return;
@@ -675,8 +675,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 
                 if (response.ok) {
                     // 支援常見的金額欄位名稱
-                    const amount = result.total_cost || result.amount || result.fee || result.cost || 0;
-
+                    const amount = result.data?.total_cost ?? result.total_cost ?? result.amount ?? 0;
                     // 成功畫面
                     plateList.innerHTML = `<li class="text-green-600 text-6xl font-bold">${currentPlate}</li>`;
                     settleResult.innerHTML = `
