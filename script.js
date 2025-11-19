@@ -200,8 +200,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 
         if (role === "renter") {
             navList.innerHTML = `
-                <li><a href="#" class="nav-link" data-target="rentParking">租用車位(進場)</a></li>
-                <li><a href="#" class="nav-link" data-target="settleParking">離開結算(出場)</a></li>
+                <li><a href="#" class="nav-link" data-target="parkingLotSelector">停車場進出場管理</a></li>
                 <li><a href="#" class="nav-link" data-target="reserveParking">預約車位</a></li>
                 <li><a href="#" class="nav-link" data-target="history">租用紀錄</a></li>
                 <li><a href="#" class="nav-link" data-target="profile">個人資訊</a></li>
@@ -239,45 +238,163 @@ document.addEventListener("DOMContentLoaded", async function () {
         else if (defaultSectionId === "settleParking") setupSettleParking();
         else setupMyParkingSpace();
 
-        const navLinks = document.querySelectorAll(".nav-link");
-        // 移除舊的事件監聽器，避免重複綁定
-        navLinks.forEach(link => {
-            const newLink = link.cloneNode(true);
-            link.parentNode.replaceChild(newLink, link);
-            newLink.addEventListener("click", (e) => {
-                e.preventDefault();
-                const target = newLink.getAttribute("data-target");
-                console.log(`Nav link clicked, target: ${target}`);
-                document.querySelectorAll(".content-section").forEach(section => {
-                    section.style.display = "none";
-                });
-                const section = document.getElementById(target);
-                if (section) {
-                    section.style.display = "block";
-                    if (target === "My parking space") {
-                        setupMyParkingSpace();
-                    } else if (target === "reserveParking") {
-                        setupReserveParking();
-                    } else if (target === "history") {
-                        loadHistory();
-                    } else if (target === "incomeInquiry") {
-                        setupIncomeInquiry();
-                    } else if (target === "viewAllUsers") {
-                        setupViewAllUsers();
-                    } else if (target === "profile") {
-                        setupProfile();
-                    } else if (target === "addParking") {
-                        setupAddParking();
-                    } else if (target === "rentParking") {
-                        setupRentParking();
-                    } else if (target === "settleParking") {
-                        setupSettleParking();
-                    }
-                } else {
-                    console.error(`Section with ID "${target}" not found`);
+const navLinks = document.querySelectorAll(".nav-link");
+// 移除舊的事件監聽器，避免重複綁定
+navLinks.forEach(link => {
+    const newLink = link.cloneNode(true);
+    link.parentNode.replaceChild(newLink, link);
+    newLink.addEventListener("click", (e) => {
+        e.preventDefault();
+        const target = newLink.getAttribute("data-target");
+        console.log(`Nav link clicked, target: ${target}`);
+        document.querySelectorAll(".content-section").forEach(section => {
+            section.style.display = "none";
+        });
+        const section = document.getElementById(target);
+        if (section) {
+            section.style.display = "block";
+            if (target === "My parking space") {
+                setupMyParkingSpace();
+            } else if (target === "reserveParking") {
+                setupReserveParking();
+            } else if (target === "history") {
+                loadHistory();
+            } else if (target === "incomeInquiry") {
+                setupIncomeInquiry();
+            } else if (target === "viewAllUsers") {
+                setupViewAllUsers();
+            } else if (target === "profile") {
+                setupProfile();
+            } else if (target === "addParking") {
+                setupAddParking();
+            } else if (target === "parkingLotSelector") {
+                setupParkingLotSelector();
+            } else if (target === "rentParking") {
+                setupRentParking();
+            } else if (target === "settleParking") {
+                setupSettleParking();
+            } else {
+                // 未定義的 target，但 section 已找到，僅記錄警告
+                console.warn(`No handler for target: ${target}`);
+            }
+        } else {
+            console.error(`Section with ID "${target}" not found`);
+        }
+    });
+});
+    }
+
+    // 全域變數儲存停車場清單
+    let allParkingLots = [];
+
+    // 載入所有停車場並建立下拉選單
+    async function loadParkingLotSelector() {
+        const select = document.getElementById("parkingLotActionSelect");
+        const status = document.getElementById("selectorStatus");
+        const enterBtn = document.getElementById("enterSelectedLotBtn");
+
+        if (!select || !status || !enterBtn) return;
+
+        select.innerHTML = '<option value="">載入中...</option>';
+
+        try {
+            const token = getToken();
+            const response = await fetch(`${API_URL}/parking/all`, {
+                headers: {
+                    "Authorization": `Bearer ${token}`,
+                    "Content-Type": "application/json"
                 }
             });
-        });
+
+            if (!response.ok) {
+                throw new Error(`無法取得停車場清單 (${response.status})`);
+            }
+
+            const data = await response.json();
+            allParkingLots = data.data || data || [];
+
+            if (!Array.isArray(allParkingLots) || allParkingLots.length === 0) {
+                select.innerHTML = '<option value="">目前無可用停車場</option>';
+                return;
+            }
+
+            // 清空並重建選項
+            select.innerHTML = '<option value="">-- 請選擇停車場與動作 --</option>';
+
+            allParkingLots.forEach(lot => {
+                const lotId = lot.parking_lot_id || lot.id;
+                const lotName = lot.name || lot.location || `停車場 ${lotId}`;
+
+                // 進場選項
+                const optIn = document.createElement("option");
+                optIn.value = JSON.stringify({ id: lotId, action: "rent", name: lotName });
+                optIn.textContent = `${lotName} --- 進場`;
+                select.appendChild(optIn);
+
+                // 出場選項
+                const optOut = document.createElement("option");
+                optOut.value = JSON.stringify({ id: lotId, action: "settle", name: lotName });
+                optOut.textContent = `${lotName} --- 出場`;
+                select.appendChild(optOut);
+            });
+
+            status.textContent = `已載入 ${allParkingLots.length} 個停車場`;
+            status.style.color = "green";
+
+        } catch (err) {
+            console.error("載入停車場失敗:", err);
+            select.innerHTML = '<option value="">載入失敗</option>';
+            status.textContent = "無法載入停車場清單，請檢查網路或重新登入";
+            status.style.color = "red";
+        }
+    }
+
+    // 點擊「進入操作頁面」按鈕
+    function setupParkingLotSelector() {
+        const selectorSection = document.getElementById("parkingLotSelector");
+        const rentSection = document.getElementById("rentParking");
+        const settleSection = document.getElementById("settleParking");
+        const enterBtn = document.getElementById("enterSelectedLotBtn");
+        const select = document.getElementById("parkingLotActionSelect");
+
+        if (!selectorSection || !rentSection || !settleSection) return;
+
+        // 顯示選單頁面
+        document.querySelectorAll(".content-section").forEach(s => s.style.display = "none");
+        selectorSection.style.display = "block";
+
+        // 載入停車場清單（只載入一次）
+        if (allParkingLots.length === 0) {
+            loadParkingLotSelector();
+        }
+
+        // 按鈕點擊事件（避免重複綁定）
+        enterBtn.onclick = () => {
+            const selected = select.value;
+            if (!selected) {
+                alert("請先選擇停車場與動作！");
+                return;
+            }
+
+            const { id, action, name } = JSON.parse(selected);
+
+            // 隱藏選單，顯示對應頁面
+            selectorSection.style.display = "none";
+
+            if (action === "rent") {
+                rentSection.style.display = "block";
+                // 自動設定 DEMO 用的 parking lot id
+                const demoInput = document.getElementById("demoParkingLotId");
+                const statusText = document.getElementById("demoLotStatus");
+                if (demoInput) demoInput.value = id;
+                if (statusText) statusText.innerHTML = `<span style="color:green; font-size:1.5em;">已自動選擇：${name} (ID: ${id})</span>`;
+                setupRentParking(); // 重新初始化進場頁面
+            } else if (action === "settle") {
+                settleSection.style.display = "block";
+                setupSettleParking(); // 重新初始化出場頁面
+                // 出場頁面也可以自動填入 ID（如果你有類似輸入框的話）
+            }
+        };
     }
 
     function setupRentParking() {
@@ -675,7 +792,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 
                 if (response.ok) {
                     // 支援常見的金額欄位名稱
-                    const amount = result.data?.total_cost ?? 0;                    
+                    const amount = result.data?.total_cost ?? 0;
                     plateList.innerHTML = `<li class="text-green-600 text-6xl font-bold">${currentPlate}</li>`;
                     settleResult.innerHTML = `
                         <div class="text-green-600 text-5xl font-bold mb-8">出場成功！</div>
