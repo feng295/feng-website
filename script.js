@@ -644,7 +644,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 
         startButton.addEventListener("click", startStream);
         stopButton.addEventListener("click", stopStream);
-        confirmButton.addEventListener("click", async () => {
+                        confirmButton.addEventListener("click", async () => {
             if (!currentPlate) {
                 alert("請先掃描車牌！");
                 return;
