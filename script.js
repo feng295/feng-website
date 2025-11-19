@@ -238,50 +238,50 @@ document.addEventListener("DOMContentLoaded", async function () {
         else if (defaultSectionId === "settleParking") setupSettleParking();
         else setupMyParkingSpace();
 
-const navLinks = document.querySelectorAll(".nav-link");
-// 移除舊的事件監聽器，避免重複綁定
-navLinks.forEach(link => {
-    const newLink = link.cloneNode(true);
-    link.parentNode.replaceChild(newLink, link);
-    newLink.addEventListener("click", (e) => {
-        e.preventDefault();
-        const target = newLink.getAttribute("data-target");
-        console.log(`Nav link clicked, target: ${target}`);
-        document.querySelectorAll(".content-section").forEach(section => {
-            section.style.display = "none";
+        const navLinks = document.querySelectorAll(".nav-link");
+        // 移除舊的事件監聽器，避免重複綁定
+        navLinks.forEach(link => {
+            const newLink = link.cloneNode(true);
+            link.parentNode.replaceChild(newLink, link);
+            newLink.addEventListener("click", (e) => {
+                e.preventDefault();
+                const target = newLink.getAttribute("data-target");
+                console.log(`Nav link clicked, target: ${target}`);
+                document.querySelectorAll(".content-section").forEach(section => {
+                    section.style.display = "none";
+                });
+                const section = document.getElementById(target);
+                if (section) {
+                    section.style.display = "block";
+                    if (target === "My parking space") {
+                        setupMyParkingSpace();
+                    } else if (target === "reserveParking") {
+                        setupReserveParking();
+                    } else if (target === "history") {
+                        loadHistory();
+                    } else if (target === "incomeInquiry") {
+                        setupIncomeInquiry();
+                    } else if (target === "viewAllUsers") {
+                        setupViewAllUsers();
+                    } else if (target === "profile") {
+                        setupProfile();
+                    } else if (target === "addParking") {
+                        setupAddParking();
+                    } else if (target === "parkingLotSelector") {
+                        setupParkingLotSelector();
+                    } else if (target === "rentParking") {
+                        setupRentParking();
+                    } else if (target === "settleParking") {
+                        setupSettleParking();
+                    } else {
+                        // 未定義的 target，但 section 已找到，僅記錄警告
+                        console.warn(`No handler for target: ${target}`);
+                    }
+                } else {
+                    console.error(`Section with ID "${target}" not found`);
+                }
+            });
         });
-        const section = document.getElementById(target);
-        if (section) {
-            section.style.display = "block";
-            if (target === "My parking space") {
-                setupMyParkingSpace();
-            } else if (target === "reserveParking") {
-                setupReserveParking();
-            } else if (target === "history") {
-                loadHistory();
-            } else if (target === "incomeInquiry") {
-                setupIncomeInquiry();
-            } else if (target === "viewAllUsers") {
-                setupViewAllUsers();
-            } else if (target === "profile") {
-                setupProfile();
-            } else if (target === "addParking") {
-                setupAddParking();
-            } else if (target === "parkingLotSelector") {
-                setupParkingLotSelector();
-            } else if (target === "rentParking") {
-                setupRentParking();
-            } else if (target === "settleParking") {
-                setupSettleParking();
-            } else {
-                // 未定義的 target，但 section 已找到，僅記錄警告
-                console.warn(`No handler for target: ${target}`);
-            }
-        } else {
-            console.error(`Section with ID "${target}" not found`);
-        }
-    });
-});
     }
 
     // 全域變數儲存停車場清單
@@ -429,24 +429,6 @@ navLinks.forEach(link => {
         let intervalId = null;
         let isScanningStopped = false;
 
-        // 設定停車場 ID
-        setBtn.addEventListener("click", () => {
-            const val = demoInput.value.trim();
-            if (!val || isNaN(val) || Number(val) <= 0) {
-                statusText.innerHTML = `<span style="color:red;">請輸入有效的停車場 ID！</span>`;
-                selectedParkingLotId = null;
-            } else {
-                selectedParkingLotId = parseInt(val);
-                statusText.innerHTML = `<span style="color:green; font-size:1.5em;">已設定停車場 ID：${selectedParkingLotId}</span>`;
-                demoInput.value = val; // 保留數字
-            }
-            confirmButton.disabled = !(currentPlate && selectedParkingLotId);
-        });
-
-        // 允許按 Enter 鍵設定
-        demoInput.addEventListener("keypress", e => {
-            if (e.key === "Enter") setBtn.click();
-        });
 
         // 攝影機與辨識（你原本的邏輯，精簡保留）
         async function startStream() {
