@@ -287,65 +287,114 @@ document.addEventListener("DOMContentLoaded", async function () {
     // 全域變數儲存停車場清單
     let allParkingLots = [];
 
-    // 載入所有停車場名稱並填入下拉選單（進場/離場用）
-    async function loadParkingLotsForEntryExit() {
+    // 載入所有停車場並建立下拉選單
+    async function loadParkingLotSelector() {
         const select = document.getElementById("parkingLotActionSelect");
-        if (!select) return;
+        const status = document.getElementById("selectorStatus");
+        const enterBtn = document.getElementById("enterSelectedLotBtn");
+
+        if (!select || !status || !enterBtn) return;
 
         select.innerHTML = '<option value="">載入中...</option>';
 
         try {
             const token = getToken();
-            const response = await fetch(`${API_URL}/parking-lots`, {
-                headers: { "Authorization": `Bearer ${token}` }
-            });
-
-            if (!response.ok) throw new Error("無法取得停車場列表");
-
-            const data = await response.json();
-            const lots = data.data || data;
-
-            select.innerHTML = '<option value="">請選擇停車場與動作</option>';
-
-            lots.forEach(lot => {
-                const lotId = lot.id || lot.parking_lot_id;
-                const lotName = lot.name || `停車場${lotId}`; // 後端有 name 欄位就顯示，沒有就用 ID
-
-                // 加入「進場」選項
-                const optionIn = document.createElement("option");
-                optionIn.value = `${lotId}-in`;
-                optionIn.textContent = `${lotName} -- 進場`;
-                select.appendChild(optionIn);
-
-                // 加入「離場」選項
-                const optionOut = document.createElement("option");
-                optionOut.value = `${lotId}-out`;
-                optionOut.textContent = `${lotName} -- 離場`;
-                select.appendChild(optionOut);
-            });
-
-            // 監聽選擇事件
-            select.addEventListener("change", function () {
-                const value = this.value;
-                if (!value) return;
-
-                const [lotId, action] = value.split("-");
-
-                if (action === "in") {
-                    // 跳到進場頁面
-                    showContent("rentEntry");
-                    startEntryCamera(lotId);  // 你原本的進場函數
-                } else if (action === "out") {
-                    // 跳到離場頁面
-                    showContent("rentSettlement");
-                    startExitCamera(lotId);   // 你原本的離場函數
+            const response = await fetch(`${API_URL}/parking/all`, {
+                headers: {
+                    "Authorization": `Bearer ${token}`,
+                    "Content-Type": "application/json"
                 }
             });
 
+            if (!response.ok) {
+                throw new Error(`無法取得停車場清單 (${response.status})`);
+            }
+
+            const data = await response.json();
+            allParkingLots = data.data || data || [];
+
+            if (!Array.isArray(allParkingLots) || allParkingLots.length === 0) {
+                select.innerHTML = '<option value="">目前無可用停車場</option>';
+                return;
+            }
+
+            // 清空並重建選項
+            select.innerHTML = '<option value="">-- 請選擇停車場與動作 --</option>';
+
+            allParkingLots.forEach(lot => {
+                const lotId = lot.parking_lot_id || lot.id;
+                const lotName = lot.name || lot.location || `停車場 ${lotId}`;
+
+                // 進場選項
+                const optIn = document.createElement("option");
+                optIn.value = JSON.stringify({ id: lotId, action: "rent", name: lotName });
+                optIn.textContent = `${lotName} --- 進場`;
+                select.appendChild(optIn);
+
+                // 出場選項
+                const optOut = document.createElement("option");
+                optOut.value = JSON.stringify({ id: lotId, action: "settle", name: lotName });
+                optOut.textContent = `${lotName} --- 出場`;
+                select.appendChild(optOut);
+            });
+
+            status.textContent = `已載入 ${allParkingLots.length} 個停車場`;
+            status.style.color = "green";
+
         } catch (err) {
-            console.error(err);
+            console.error("載入停車場失敗:", err);
             select.innerHTML = '<option value="">載入失敗</option>';
+            status.textContent = "無法載入停車場清單，請檢查網路或重新登入";
+            status.style.color = "red";
         }
+    }
+
+    // 點擊「進入操作頁面」按鈕
+    function setupParkingLotSelector() {
+        const selectorSection = document.getElementById("parkingLotSelector");
+        const rentSection = document.getElementById("rentParking");
+        const settleSection = document.getElementById("settleParking");
+        const enterBtn = document.getElementById("enterSelectedLotBtn");
+        const select = document.getElementById("parkingLotActionSelect");
+
+        if (!selectorSection || !rentSection || !settleSection) return;
+
+        // 顯示選單頁面
+        document.querySelectorAll(".content-section").forEach(s => s.style.display = "none");
+        selectorSection.style.display = "block";
+
+        // 載入停車場清單（只載入一次）
+        if (allParkingLots.length === 0) {
+            loadParkingLotSelector();
+        }
+
+        // 按鈕點擊事件（避免重複綁定）
+        enterBtn.onclick = () => {
+            const selected = select.value;
+            if (!selected) {
+                alert("請先選擇停車場與動作！");
+                return;
+            }
+
+            const { id, action, name } = JSON.parse(selected);
+
+            // 隱藏選單，顯示對應頁面
+            selectorSection.style.display = "none";
+
+            if (action === "rent") {
+                rentSection.style.display = "block";
+                // 自動設定 DEMO 用的 parking lot id
+                const demoInput = document.getElementById("demoParkingLotId");
+                const statusText = document.getElementById("demoLotStatus");
+                if (demoInput) demoInput.value = id;
+                if (statusText) statusText.innerHTML = `<span style="color:green; font-size:1.5em;">已自動選擇：${name} (ID: ${id})</span>`;
+                setupRentParking(); // 重新初始化進場頁面
+            } else if (action === "settle") {
+                settleSection.style.display = "block";
+                setupSettleParking(); // 重新初始化出場頁面
+                // 出場頁面也可以自動填入 ID（如果你有類似輸入框的話）
+            }
+        };
     }
 
     function setupRentParking() {
