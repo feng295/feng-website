@@ -117,50 +117,21 @@
                     </table>
                 </div>
 
-                <!-- 停車場進出場統一選單（點左邊按鈕後顯示在右邊） -->
+                <!-- 在 <div id="rentParking" class="content-section"> 之前加入這個選單容器 -->
                 <div id="parkingLotSelector" class="content-section" style="display: none;">
-                    <!-- 大標題 -->
-                    <h2 class="text-4xl font-bold text-center my-10 text-blue-700 tracking-wide">
-                        停車場進出場管理
-                    </h2>
-
-                    <!-- 主卡片容器 -->
-                    <div
-                        class="max-w-4xl mx-auto bg-white rounded-3xl shadow-2xl overflow-hidden border-4 border-blue-200">
-                        <!-- 漸層頂部裝飾 -->
-                        <div class="bg-gradient-to-r from-blue-600 to-purple-600 h-24 flex items-center justify-center">
-                            <h3 class="text-3xl font-bold text-white drop-shadow-lg">
-                                請選擇停車場與操作項目
-                            </h3>
+                    <h2 class="text-2xl font-bold text-center my-6">請選擇停車場與動作</h2>
+                    <div class="max-w-2xl mx-auto">
+                        <select id="parkingLotActionSelect"
+                            class="w-full px-6 py-4 text-xl border-2 border-gray-300 rounded-xl focus:outline-none focus:border-blue-500">
+                            <option value="">-- 請選擇停車場與動作 --</option>
+                        </select>
+                        <div class="text-center mt-6">
+                            <button id="enterSelectedLotBtn"
+                                class="px-8 py-4 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl text-xl">
+                                進入操作頁面
+                            </button>
                         </div>
-
-                        <!-- 內容區 -->
-                        <div class="p-10">
-                            <!-- 下拉選單 -->
-                            <div class="mb-8">
-                                <select id="parkingLotActionSelect"
-                                    class="w-full px-8 py-6 text-2xl font-bold text-center bg-gray-50 border-4 border-blue-400 rounded-2xl focus:outline-none focus:ring-4 focus:ring-blue-300 focus:border-blue-600 transition-all shadow-lg">
-                                    <option value="">載入停車場中，請稍候...</option>
-                                </select>
-                            </div>
-
-                            <!-- 狀態提示 -->
-                            <p id="selectorStatus" class="text-center text-lg font-medium text-gray-600 mb-6"></p>
-
-                            <!-- 開始操作按鈕 -->
-                            <div class="text-center">
-                                <button id="enterSelectedLotBtn"
-                                    class="px-16 py-6 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-bold rounded-2xl text-3xl shadow-2xl transform transition-all hover:scale-105 hover:shadow-3xl disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
-                                    disabled>
-                                    開始操作
-                                </button>
-                            </div>
-
-                            <!-- 小提示 -->
-                            <div class="mt-8 text-center text-gray-500 text-sm">
-                                <p>提示：請先從上方選單選擇要操作的停車場與進出場項目</p>
-                            </div>
-                        </div>
+                        <p id="selectorStatus" class="mt-4 text-center text-lg"></p>
                     </div>
                 </div>
 
