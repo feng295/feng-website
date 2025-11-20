@@ -162,8 +162,6 @@ document.addEventListener("DOMContentLoaded", async function () {
 
         authContainer.style.display = "none";
         parkingContainer.style.display = "block";
-        // 這裡加入：載入停車場名稱到左邊選單
-        loadParkingLotsForEntryExit();  // ← 這一行一定要加！
         const functionList = document.querySelector(".function-list");
         const contentContainer = document.querySelector(".content-container");
         const pageTitle = document.getElementById("pageTitle");
