@@ -696,4 +696,25 @@ a:hover {
         margin-bottom: 5px;
     }
 
+    /* 專用：停車場名稱 + 進出場標題，任何地方都長一樣 */
+    .parking-title {
+        font-size: 2.5rem !important;
+        /* 字大小 */
+        font-weight: 800 !important;
+        /* 超粗體 */
+        color: #1e40af !important;
+        /* 深藍色（你可改） */
+        font-family: "Microsoft JhengHei", "Helvetica Neue", Helvetica, Arial, sans-serif !important;
+        letter-spacing: 0.1em !important;
+        text-align: center !important;
+        margin: 1.5rem 0 !important;
+        line-height: 1.2 !important;
+    }
+
+    /* 如果你想要「— 進場」這幾個字特別醒目，可以再加一個 */
+    .parking-action {
+        color: #dc2626 !important;
+        /* 紅色強調進出場 */
+        font-weight: 900 !important;
+    }
 }
