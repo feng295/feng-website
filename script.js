@@ -159,7 +159,9 @@ document.addEventListener("DOMContentLoaded", async function () {
     // 顯示主畫面，並根據角色動態調整功能清單和預設畫面
     function showMainPage() {
         console.log("Entering showMainPage function");
-
+        // 新增這兩行：恢復原本標題，隱藏動態標題
+        document.getElementById("pageTitle")?.style.removeProperty("display");
+        document.getElementById("dynamicParkingTitle")?.style.setProperty("display", "none");
         authContainer.style.display = "none";
         parkingContainer.style.display = "block";
         const functionList = document.querySelector(".function-list");
@@ -408,50 +410,63 @@ document.addEventListener("DOMContentLoaded", async function () {
         enterBtn.onclick = null; // 清除舊事件
         enterBtn.onclick = () => {
             const selectedValue = select.value.trim();
-
             if (!selectedValue) {
                 alert("請先選擇停車場與動作！");
                 return;
             }
-
             let selectedData;
             try {
                 selectedData = JSON.parse(selectedValue);
             } catch (e) {
                 alert("選項資料異常，請重新選擇");
-                console.error("JSON 解析失敗:", selectedValue);
                 return;
             }
-
             const { id, action, name } = selectedData;
 
             // 隱藏選擇器
             selectorSection.style.display = "none";
 
+            // 關鍵：動態標題 + 地址
+            const pageTitle = document.getElementById("pageTitle");
+            const dynamicTitle = document.getElementById("dynamicParkingTitle");
+
+            if (pageTitle) pageTitle.style.display = "none";
+            if (dynamicTitle) {
+                // 從 allParkingLots 找出完整資料（包含 address）
+                const fullLot = allParkingLots.find(lot => {
+                    const lotId = lot.parking_lot_id || lot.id;
+                    return lotId == id;
+                });
+
+                const address = fullLot?.address || fullLot?.location || "未知地址";
+                dynamicTitle.style.display = "block";
+                dynamicTitle.innerHTML = `
+            <div style="color:#1e40af; font-size:1.8rem;">${name}</div>
+            <div style="color:#6b7280; font-size:1.1rem; margin-top:4px;">
+                ${address}
+            </div>
+            <div style="color:#374151; font-weight:bold; margin-top:8px; font-size:1.4rem;">
+                ${action === "rent" ? "車牌辨識進場" : "結算離場"}
+            </div>
+        `;
+            }
+
             if (action === "rent") {
                 rentSection.style.display = "block";
-                document.getElementById("pageTitle").textContent = `${name} - 車牌辨識進場`;
-
-                // 自動填入 demo 用的 parking lot id（如果你的頁面有這個欄位）
                 const demoInput = document.getElementById("demoParkingLotId");
                 const statusText = document.getElementById("demoLotStatus");
                 if (demoInput) demoInput.value = id;
                 if (statusText) {
-                    statusText.innerHTML = `<strong style="color:#28a745;">已選擇：${name} (ID: ${id})</strong>`;
+                    statusText.innerHTML = `<strong style="color:#16a34a;">已選擇：${name} (${address})</strong>`;
                 }
-
-                // 重新初始化進場功能
-                if (typeof setupRentParking === "function") setupRentParking();
-
+                setupRentParking();
             } else if (action === "settle") {
                 settleSection.style.display = "block";
-                document.getElementById("pageTitle").textContent = `${name} - 結算離場`;
-
-                // 你也可以在結算頁面顯示目前選擇的停車場
                 const settleTitle = document.getElementById("settleParkingTitle");
-                if (settleTitle) settleTitle.textContent = `${name} - 出場結算`;
-
-                if (typeof setupSettleParking === "function") setupSettleParking();
+                if (settleTitle) {
+                    settleTitle.innerHTML = `${name} - ${address}<br><small>出場結算</small>`;
+                }
+                setupSettleParking();
             }
         };
     }
@@ -477,10 +492,6 @@ document.addEventListener("DOMContentLoaded", async function () {
         const confirmButton = document.getElementById("confirmButtonRent");
         const rescanButton = document.getElementById("rescanButtonRent");
 
-        // DEMO 專用輸入框
-        const demoInput = document.getElementById("demoParkingLotId");
-        const setBtn = document.getElementById("setLotIdBtn");
-        const statusText = document.getElementById("demoLotStatus");
 
         let selectedParkingLotId = null;
         let currentPlate = null;
