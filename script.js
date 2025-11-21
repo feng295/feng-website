@@ -2699,7 +2699,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                     ? new Date(record.end_time).toLocaleString("zh-TW", { hour12: false })
                     : "尚未結束";
                 const cost = record.total_cost ?? record.total_fee ?? 0;
-                listItem.innerHTML = `租用紀錄 (Rent ID: ${record.rent_id || 'N/A'}) - 開始時間: ${startTime}, 結束時間: ${endTime}, 費用: ${cost} 元`;
+                listItem.innerHTML = ` 開始時間: ${startTime}, 結束時間: ${endTime}, 費用: ${cost} 元`;
                 historyList.appendChild(listItem);
             });
         } catch (error) {
