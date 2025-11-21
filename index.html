@@ -117,17 +117,18 @@
                     </table>
                 </div>
 
-                <!-- 在 <div id="rentParking" class="content-section"> 之前加入這個選單容器 -->
+                <!-- 停車場選單容器（放在 $SELECTION_PLACEHOLDER$） -->
                 <div id="parkingLotSelector" class="content-section" style="display: none;">
                     <h2 class="text-2xl font-bold text-center my-6">請選擇停車場與動作</h2>
                     <div class="max-w-2xl mx-auto">
                         <select id="parkingLotActionSelect"
                             class="w-full px-6 py-4 text-xl border-2 border-gray-300 rounded-xl focus:outline-none focus:border-blue-500">
-                            <option value="">-- 請選擇停車場與動作 --</option>
+                            <option value="">-- 請選擇停車場 --</option>
                         </select>
                         <div class="text-center mt-6">
                             <button id="enterSelectedLotBtn"
-                                class="px-8 py-4 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl text-xl">
+                                class="px-8 py-4 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl text-xl"
+                                style="display: none;">
                                 進入操作頁面
                             </button>
                         </div>
