@@ -370,7 +370,6 @@ document.addEventListener("DOMContentLoaded", async function () {
             selectorSection.style.display = "none";
             if (action === "rent") {
                 rentSection.style.display = "block";
-                document.getElementById("pageTitle").textContent = `${name} - 車牌辨識進場`;
                 // 自動填入 demo 用的 parking lot id（如果你的頁面有這個欄位）
                 const demoInput = document.getElementById("demoParkingLotId");
                 const statusText = document.getElementById("demoLotStatus");
