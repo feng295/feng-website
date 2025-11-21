@@ -1,8 +1,29 @@
-body {
-    font-family: Arial, sans-serif;
-    margin: 0;
-    padding: 0;
-    background-color: #f4f4f4;
+/* === 強制全站中文字體統一 + 字重一致（解決你現在的問題！）=== */
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@500;600;700;900&display=swap');
+
+*,
+*::before,
+*::after {
+    font-family: 'Noto Sans TC', 'Microsoft JhengHei', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif !important;
+    font-weight: 600 !important;           /* 關鍵：強制所有文字都是 SemiBold */
+    letter-spacing: 0.8px;
+    line-height: 1.5;
+}
+
+/* 標題特別加粗（進場 / 出場 的大字） */
+#rentParkingName,
+#rentParkingAction,
+#settleParkingName,
+#settleParkingAction,
+#pageTitle,
+h1, h2, h3, h4, h5, h6 {
+    font-weight: 700 !important;           /* Bold */
+    letter-spacing: 1.2px;
+}
+
+/* 如果你還是覺得不夠粗，可以用 900（超黑） */
+.text-bold-900 {
+    font-weight: 900 !important;
 }
 
 /* 重置瀏覽器的預設樣式 */
@@ -696,25 +717,4 @@ a:hover {
         margin-bottom: 5px;
     }
 
-    /* 專用：停車場名稱 + 進出場標題，任何地方都長一樣 */
-    .parking-title {
-        font-size: 2.5rem !important;
-        /* 字大小 */
-        font-weight: 800 !important;
-        /* 超粗體 */
-        color: #1e40af !important;
-        /* 深藍色（你可改） */
-        font-family: "Microsoft JhengHei", "Helvetica Neue", Helvetica, Arial, sans-serif !important;
-        letter-spacing: 0.1em !important;
-        text-align: center !important;
-        margin: 1.5rem 0 !important;
-        line-height: 1.2 !important;
-    }
-
-    /* 如果你想要「— 進場」這幾個字特別醒目，可以再加一個 */
-    .parking-action {
-        color: #dc2626 !important;
-        /* 紅色強調進出場 */
-        font-weight: 900 !important;
-    }
 }
