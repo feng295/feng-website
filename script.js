@@ -362,31 +362,58 @@ document.addEventListener("DOMContentLoaded", async function () {
                 selectedData = JSON.parse(selectedValue);
             } catch (e) {
                 alert("選項資料異常，請重新選擇");
-                console.error("JSON 解析失敗:", selectedValue);
                 return;
             }
             const { id, action, name } = selectedData;
+
             // 隱藏選擇器
             selectorSection.style.display = "none";
+
+            // 隱藏原本的 pageTitle，顯示我們專屬的動態標題
+            const pageTitle = document.getElementById("pageTitle");
+            const dynamicTitle = document.getElementById("dynamicParkingTitle");
+
+            if (pageTitle) pageTitle.style.display = "none";
+            if (dynamicTitle) {
+                // 從 allParkingLots 找出完整資料（包含 address）
+                const fullLot = allParkingLots.find(lot => {
+                    const lotId = lot.parking_lot_id || lot.id || lot.parkingLotId;
+                    return lotId == id;
+                });
+
+                const address = fullLot?.address || fullLot?.location || "未知地址";
+
+                dynamicTitle.style.display = "block";
+                dynamicTitle.innerHTML = `
+            <div style="font-size: 2.2rem; font-weight: bold; color: #1e40af;">
+                ${name}
+            </div>
+            <div style="font-size: 1.3rem; color: #4b5563; margin-top: 8px;">
+                ${address}
+            </div>
+            <div style="font-size: 1.5rem; font-weight: bold; color: #dc2626; margin-top: 12px;">
+                ${action === "rent" ? "車牌辨識進場" : "結算離場"}
+            </div>
+        `;
+            }
+
+            // 進場或出場頁面切換
             if (action === "rent") {
                 rentSection.style.display = "block";
-                document.getElementById("pageTitle").textContent = `${name} - 車牌辨識進場`;
-                // 自動填入 demo 用的 parking lot id（如果你的頁面有這個欄位）
                 const demoInput = document.getElementById("demoParkingLotId");
                 const statusText = document.getElementById("demoLotStatus");
                 if (demoInput) demoInput.value = id;
                 if (statusText) {
-                    statusText.innerHTML = `<strong style="color:#28a745;">已選擇：${name} (ID: ${id})</strong>`;
+                    statusText.innerHTML = `<strong style="color:#16a34a;">已選擇：${name}（${address}）</strong>`;
                 }
-                // 重新初始化進場功能
-                if (typeof setupRentParking === "function") setupRentParking();
+                setupRentParking();
             } else if (action === "settle") {
                 settleSection.style.display = "block";
-                document.getElementById("pageTitle").textContent = `${name} - 結算離場`;
-                // 你也可以在結算頁面顯示目前選擇的停車場
                 const settleTitle = document.getElementById("settleParkingTitle");
-                if (settleTitle) settleTitle.textContent = `${name} - 出場結算`;
-                if (typeof setupSettleParking === "function") setupSettleParking();
+                if (settleTitle) {
+                    settleTitle.innerHTML = `${name}<br><small style="color:#6b7280;">${address}</small>`;
+                }
+                setupSettleParking();
             }
         };
     }
