@@ -200,6 +200,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 
         if (role === "renter") {
             navList.innerHTML = `
+                <li><a href="#" class="nav-link" data-target="parkingLotSelector">停車場進出場管理</a></li>
                 <li><a href="#" class="nav-link" data-target="reserveParking">預約車位</a></li>
                 <li><a href="#" class="nav-link" data-target="history">租用紀錄</a></li>
                 <li><a href="#" class="nav-link" data-target="profile">個人資訊</a></li>
@@ -292,10 +293,10 @@ document.addEventListener("DOMContentLoaded", async function () {
 
         // 先關閉所有內容頁面
         document.querySelectorAll(".content-section").forEach(el => el.style.display = "none");
-    
+
         // 展開或收合
         dropdown.style.display = isHidden ? "block" : "none";
-    
+
         // 如果是第一次點，載入停車場列表
         if (isHidden && allParkingLots.length === 0) {
             loadParkingLotsForSelector();
