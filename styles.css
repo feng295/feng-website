@@ -472,7 +472,8 @@ a:hover {
 }
 
 /* 進場和離場樣式 */
-#videoRent, #videoSettle {
+#videoRent,
+#videoSettle {
     border: 2px solid #000;
     display: block;
     margin: 0 auto;
@@ -480,7 +481,8 @@ a:hover {
     height: 480px;
 }
 
-#fallbackRent, #fallbackSettle {
+#fallbackRent,
+#fallbackSettle {
     border: 2px solid #000;
     display: none;
     margin: 0 auto;
@@ -488,7 +490,8 @@ a:hover {
     height: 480px;
 }
 
-#resultsRent, #resultsSettle {
+#resultsRent,
+#resultsSettle {
     padding: 10px;
     border: 1px solid #ccc;
     background-color: #f9fafb;
@@ -497,13 +500,15 @@ a:hover {
     overflow: hidden;
 }
 
-#plateListRent, #plateListSettle {
+#plateListRent,
+#plateListSettle {
     list-style: none;
     padding: 0;
     margin: 0;
 }
 
-#plateListRent li, #plateListSettle li {
+#plateListRent li,
+#plateListSettle li {
     display: inline-block;
     margin: 0 10px;
     text-align: center;
@@ -511,24 +516,29 @@ a:hover {
     color: #000000;
 }
 
-#buttonContainerRent, #buttonContainerSettle {
+#buttonContainerRent,
+#buttonContainerSettle {
     margin-top: 10px;
     text-align: center;
 }
 
-#startButtonRent, #startButtonSettle {
+#startButtonRent,
+#startButtonSettle {
     background-color: #4CAF50;
 }
 
-#startButtonRent:hover, #startButtonSettle:hover {
+#startButtonRent:hover,
+#startButtonSettle:hover {
     background-color: #45a049;
 }
 
-#stopButtonRent, #stopButtonSettle {
+#stopButtonRent,
+#stopButtonSettle {
     background-color: #f44336;
 }
 
-#stopButtonRent:hover, #stopButtonSettle:hover {
+#stopButtonRent:hover,
+#stopButtonSettle:hover {
     background-color: #da190b;
 }
 
@@ -548,11 +558,13 @@ a:hover {
     background-color: #45a049;
 }
 
-#rescanButtonRent, #rescanButtonSettle {
+#rescanButtonRent,
+#rescanButtonSettle {
     background-color: #f44336;
 }
 
-#rescanButtonRent:hover, #rescanButtonSettle:hover {
+#rescanButtonRent:hover,
+#rescanButtonSettle:hover {
     background-color: #da190b;
 }
 
@@ -623,12 +635,14 @@ a:hover {
         height: 300px;
     }
 
-    #videoRent, #videoSettle {
+    #videoRent,
+    #videoSettle {
         width: 100%;
         height: auto;
     }
 
-    #fallbackRent, #fallbackSettle {
+    #fallbackRent,
+    #fallbackSettle {
         width: 100%;
         height: auto;
     }
@@ -680,5 +694,34 @@ a:hover {
     #editParkingFormContainer label {
         width: 100%;
         margin-bottom: 5px;
+    }
+
+    .inline-selector {
+        background: #f8f9fa;
+        padding: 12px;
+        border-radius: 8px;
+        border: 1px solid #ddd;
+        animation: slideDown 0.3s ease;
+    }
+
+    .inline-selector select {
+        width: 100%;
+        padding: 10px;
+        font-size: 15px;
+        border: 1px solid #007bff;
+        border-radius: 6px;
+        background: white;
+    }
+
+    @keyframes slideDown {
+        from {
+            opacity: 0;
+            transform: translateY(-10px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
     }
 }
