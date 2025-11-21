@@ -399,9 +399,6 @@ document.addEventListener("DOMContentLoaded", async function () {
                 const demoInput = document.getElementById("demoParkingLotId");
                 if (demoInput) demoInput.value = id;
 
-                // 更新大標題（可選）
-                const pageTitle = document.getElementById("pageTitle");
-                if (pageTitle) pageTitle.textContent = `${name} - 出場結算`;
 
                 // 初始化出場功能
                 if (typeof setupSettleParking === "function") setupSettleParking();
