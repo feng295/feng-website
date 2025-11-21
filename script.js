@@ -369,21 +369,41 @@ document.addEventListener("DOMContentLoaded", async function () {
 
             const { id, action, name } = selectedData;
 
-            selectorSection.style.display = "none";
+            // 立刻隱藏選擇器
+            document.getElementById("parkingLotSelector").style.display = "none";
 
             if (action === "rent") {
-                rentSection.style.display = "block";
+                // === 進場模式 ===
+                document.getElementById("rentParking").style.display = "block";
+
+                // 更新標題：停車場名稱 + 進場
+                document.getElementById("rentParkingName").textContent = name;
+                document.getElementById("rentParkingAction").textContent = "進場";
+
+                // 設定隱藏的 parking lot id（給後端用）
                 const demoInput = document.getElementById("demoParkingLotId");
-                const statusText = document.getElementById("demoLotStatus");
                 if (demoInput) demoInput.value = id;
-                if (statusText) statusText.innerHTML = `<strong style="color:#28a745;">${name} (進場模式)</strong>`;
+
+                // 初始化進場功能
                 if (typeof setupRentParking === "function") setupRentParking();
 
             } else if (action === "settle") {
-                settleSection.style.display = "block";
-                document.getElementById("pageTitle").textContent = `${name} - 出場結算`;
-                const settleTitle = document.getElementById("settleParkingTitle");
-                if (settleTitle) settleTitle.textContent = `${name} - 出場結算`;
+                // === 出場模式 ===
+                document.getElementById("settleParking").style.display = "block";
+
+                // 更新標題：停車場名稱 + 出場
+                document.getElementById("settleParkingName").textContent = name;
+                document.getElementById("settleParkingAction").textContent = "出場";
+
+                // 設定隱藏的 parking lot id
+                const demoInput = document.getElementById("demoParkingLotId");
+                if (demoInput) demoInput.value = id;
+
+                // 更新大標題（可選）
+                const pageTitle = document.getElementById("pageTitle");
+                if (pageTitle) pageTitle.textContent = `${name} - 出場結算`;
+
+                // 初始化出場功能
                 if (typeof setupSettleParking === "function") setupSettleParking();
             }
         };
