@@ -696,4 +696,51 @@ a:hover {
         margin-bottom: 5px;
     }
 
+    /* ──────────────────────────────
+   進場頁面 – 標題放大 1.5 倍（精準符合你的需求）
+   ────────────────────────────── */
+    #rentParkingName {
+        font-size: 168px !important;
+        /* 原 112px → 168px */
+        line-height: 168px !important;
+        height: 168px !important;
+
+        font-weight: 900 !important;
+        /* 超黑體 */
+        letter-spacing: 8px !important;
+        text-shadow: 4px 4px 8px rgba(0, 0, 0, 0.4);
+    }
+
+    #rentParkingAction {
+        font-size: 48px !important;
+        /* 原 32px → 48px */
+        line-height: 48px !important;
+        height: 48px !important;
+
+        font-weight: 800 !important;
+        letter-spacing: 4px !important;
+    }
+
+    /* 「澎科大實驗大樓」那行文字（#text 或你原本的 class） */
+    #rentParkingName+#text,
+    /* 如果是緊跟在後面的兄弟元素 */
+    .text,
+    .parking-name-text {
+        /* 常用 class 備援 */
+        font-size: 46.67px !important;
+        /* 原 31.13px → 46.67px */
+        line-height: 46.67px !important;
+
+        font-weight: 700 !important;
+        letter-spacing: 3px !important;
+    }
+
+    /* 如果你確定那行文字的 id 或 class 是下面其中一個，直接用更精準的選擇器 */
+    #parkingNameText,
+    #subtitle,
+    .rent-subtitle {
+        font-size: 46.67px !important;
+        line-height: 46.67px !important;
+        font-weight: 700 !important;
+    }
 }
