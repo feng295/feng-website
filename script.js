@@ -336,7 +336,6 @@ document.addEventListener("DOMContentLoaded", async function () {
         const selectorSection = document.getElementById("parkingLotSelector");
         const rentSection = document.getElementById("rentParking");
         const settleSection = document.getElementById("settleParking");
-        const enterBtn = document.getElementById("enterSelectedLotBtn"); // 這顆按鈕可以留著或隱藏
         const select = document.getElementById("parkingLotActionSelect");
 
         if (!selectorSection || !rentSection || !settleSection || !select) {
@@ -344,75 +343,50 @@ document.addEventListener("DOMContentLoaded", async function () {
             return;
         }
 
-        // 隱藏所有內容區塊，只顯示選擇器
+        // 隱藏所有內容，只顯示選擇器
         document.querySelectorAll(".content-section").forEach(sec => {
             sec.style.display = "none";
         });
         selectorSection.style.display = "block";
 
-        // 載入停車場清單（只會真的發 request 一次）
+        // 載入停車場清單
         loadParkingLotSelector();
 
-        // === 關鍵修改：改用 onchange 監聽 select，直接跳轉！===
-        select.onchange = null; // 避免重複綁定
+        // 關鍵：選完立刻自動跳轉
+        select.onchange = null;
         select.onchange = function () {
             const selectedValue = this.value.trim();
-            if (!selectedValue) {
-                // 什麼都沒選，就不跳
-                return;
-            }
+            if (!selectedValue) return;
 
             let selectedData;
             try {
                 selectedData = JSON.parse(selectedValue);
             } catch (e) {
                 alert("選項資料異常，請重新選擇");
-                console.error("JSON 解析失敗:", selectedValue);
-                this.value = ""; // 重置選單
+                this.value = "";
                 return;
             }
 
             const { id, action, name } = selectedData;
 
-            // 立刻隱藏選擇器
             selectorSection.style.display = "none";
 
             if (action === "rent") {
                 rentSection.style.display = "block";
-
-                // 可選：顯示目前停車場資訊
                 const demoInput = document.getElementById("demoParkingLotId");
                 const statusText = document.getElementById("demoLotStatus");
                 if (demoInput) demoInput.value = id;
-                if (statusText) {
-                    statusText.innerHTML = `<strong style="color:#28a745;">${name} (進場模式)</strong>`;
-                }
-
-                // 重新初始化進場功能
+                if (statusText) statusText.innerHTML = `<strong style="color:#28a745;">${name} (進場模式)</strong>`;
                 if (typeof setupRentParking === "function") setupRentParking();
 
             } else if (action === "settle") {
                 settleSection.style.display = "block";
-
-                // 可選：更新頁面標題或專屬標題
                 document.getElementById("pageTitle").textContent = `${name} - 出場結算`;
-
                 const settleTitle = document.getElementById("settleParkingTitle");
                 if (settleTitle) settleTitle.textContent = `${name} - 出場結算`;
-
                 if (typeof setupSettleParking === "function") setupSettleParking();
             }
-
-            // 可選：選完後把下拉選單重置（讓使用者知道已切換）
-            // this.value = "";
         };
-
-        // 如果你還想保留「進入按鈕」當作備用，也可以留著（不會影響）
-        if (enterBtn) {
-            enterBtn.onclick = () => select.dispatchEvent(new Event('change'));
-            // 或者直接隱藏按鈕
-            // enterBtn.style.display = "none";
-        }
     }
     function setupRentParking() {
         const role = getRole();
