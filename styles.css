@@ -697,48 +697,51 @@ a:hover {
     }
 
     /* ──────────────────────────────
-   進場頁面 – 標題放大 1.5 倍（精準符合你的需求）
+   【強制統一】進場 & 出場頁面三大行文字完全一樣大
    ────────────────────────────── */
-    #rentParkingName {
+    #rentParkingName,
+    #settleParkingName {
         font-size: 168px !important;
-        /* 原 112px → 168px */
         line-height: 168px !important;
-        height: 168px !important;
-
         font-weight: 900 !important;
         /* 超黑體 */
-        letter-spacing: 8px !important;
-        text-shadow: 4px 4px 8px rgba(0, 0, 0, 0.4);
+        letter-spacing: 6px !important;
+        color: #000 !important;
+        text-shadow: 4px 4px 12px rgba(0, 0, 0, 0.4);
+        margin: 0 !important;
+        padding: 0 !important;
     }
 
-    #rentParkingAction {
+    #rentParkingAction,
+    #settleParkingAction {
         font-size: 48px !important;
-        /* 原 32px → 48px */
         line-height: 48px !important;
-        height: 48px !important;
-
         font-weight: 800 !important;
         letter-spacing: 4px !important;
+        color: #000 !important;
+        margin: 10px 0 !important;
     }
 
-    /* 「澎科大實驗大樓」那行文字（#text 或你原本的 class） */
-    #rentParkingName+#text,
-    /* 如果是緊跟在後面的兄弟元素 */
+    /* 中間那條「—」的文字（常見的幾種寫法全部抓） */
+    #rentParkingName+div,
+    #settleParkingName+div,
     .text,
+    .subtitle,
+    .rent-subtitle,
+    .settle-subtitle,
+    [class*="subtitle"],
+    #subtitle,
     .parking-name-text {
-        /* 常用 class 備援 */
         font-size: 46.67px !important;
-        /* 原 31.13px → 46.67px */
         line-height: 46.67px !important;
-
         font-weight: 700 !important;
         letter-spacing: 3px !important;
+        color: #333 !important;
+        margin: 8px 0 !important;
     }
 
-    /* 如果你確定那行文字的 id 或 class 是下面其中一個，直接用更精準的選擇器 */
-    #parkingNameText,
-    #subtitle,
-    .rent-subtitle {
+    /* 額外保險：如果你的 HTML 真的是用 <span id="text">…</span> */
+    #text {
         font-size: 46.67px !important;
         line-height: 46.67px !important;
         font-weight: 700 !important;
