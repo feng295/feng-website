@@ -44,41 +44,6 @@ document.addEventListener("DOMContentLoaded", async function () {
         errorMessage.textContent = message;
         errorMessage.classList.remove("success");
         errorMessage.style.color = "red";
-
-        // 移除或停用「預約車位」相關 UI 與功能
-        try {
-            // 移除導覽中的 reserveParking 連結
-            document.querySelectorAll('.nav-link[data-target="reserveParking"]').forEach(link => {
-                const li = link.closest('li');
-                if (li && li.parentNode) li.parentNode.removeChild(li);
-                else link.remove();
-            });
-
-            // 隱藏並移除 reserveParking 區塊
-            const reserveSection = document.getElementById("reserveParking");
-            if (reserveSection && reserveSection.parentNode) reserveSection.parentNode.removeChild(reserveSection);
-
-            // 停止任何與預約刷新有關的 interval（若存在）
-            if (typeof refreshIntervalId !== "undefined" && refreshIntervalId) {
-                clearInterval(refreshIntervalId);
-                refreshIntervalId = null;
-            }
-
-            // 取消 setupReserveParking 的實際實作（替換為提示用的空函式）
-            if (typeof setupReserveParking !== "undefined") {
-                setupReserveParking = async function () {
-                    alert("預約車位功能已被移除。");
-                };
-            }
-
-            // 如果地圖上有因預約而建立的 markers，也試著清除（寬鬆處理，避免錯誤）
-            if (window.map && Array.isArray(window.map.markers)) {
-                window.map.markers.forEach(m => { try { if (m && m.map) m.map = null; } catch (e) {} });
-                window.map.markers = [];
-            }
-        } catch (err) {
-            console.warn("移除預約車位時發生錯誤：", err);
-        }
     }
     // 顯示成功訊息
     function showSuccess(message) {
