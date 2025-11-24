@@ -404,74 +404,98 @@ document.addEventListener("DOMContentLoaded", async function () {
             }
         };
     }
-    // 終極整合版：停車場選擇 + 進場 + 出場 + 車牌辨識（一行搞定所有！）
     function setupParkingRecognition() {
-        const role = getRole();
-        if (role !== "renter") {
-            alert("此功能僅限租用者使用！");
+        // === 1. 檢查必要元素（最重要！避免「缺少必要元素」錯誤）===
+        const elements = {
+            select: document.getElementById("parkingLotSelect"),
+            container: document.getElementById("recognitionContainer"),
+            video: document.getElementById("videoRecognition"),
+            fallback: document.getElementById("fallbackImg"),
+            plateDisplay: document.getElementById("detectedPlate"),
+            loading: document.getElementById("loadingText"),
+            error: document.getElementById("errorText"),
+            startBtn: document.getElementById("startBtn"),
+            confirmBtn: document.getElementById("confirmBtn"),
+            rescanBtn: document.getElementById("rescanBtn"),
+            resultDiv: document.getElementById("settleResult"),
+            parkingName: document.getElementById("currentParkingName"),
+            actionText: document.getElementById("currentAction"),
+            actionEntry: document.getElementById("actionEntry"),
+            actionExit: document.getElementById("actionExit")
+        };
+
+        const missing = Object.entries(elements)
+            .filter(([key, el]) => !el)
+            .map(([key]) => key);
+
+        if (missing.length > 0) {
+            console.error("缺少必要元素：", missing.join(", "));
+            alert(`頁面載入失敗！缺少以下元素：${missing.join(", ")}\n請確認 HTML 已更新為最新版`);
             return;
         }
 
-        // DOM 元素（對應你新的 HTML）
-        const select = document.getElementById("parkingLotSelect");
-        const container = document.getElementById("recognitionContainer");
-        const video = document.getElementById("videoRecognition");
-        const fallback = document.getElementById("fallbackImg");
-        const plateDisplay = document.getElementById("detectedPlate");
-        const loading = document.getElementById("loadingText");
-        const error = document.getElementById("errorText");
-        const startBtn = document.getElementById("startBtn");
-        const confirmBtn = document.getElementById("confirmBtn");
-        const rescanBtn = document.getElementById("rescanBtn");
-        const resultDiv = document.getElementById("settleResult");
-        const parkingName = document.getElementById("currentParkingName");
-        const actionText = document.getElementById("currentAction");
+        const { select, container, video, fallback, plateDisplay, loading, error, startBtn, confirmBtn, rescanBtn, resultDiv, parkingName, actionText, actionEntry, actionExit } = elements;
 
+        // === 2. 狀態變數 ===
         let stream = null;
         let currentPlate = null;
-        let isExitMode = false;  // false = 進場, true = 出場
+        let isExitMode = false;  // false=進場, true=出場
         let selectedLotId = null;
 
-        // 超強版載入停車場（支援你後端的 /parking/all）
+        // === 3. 超強載入停車場（支援多種後端格式）===
         async function loadParkingLots() {
             select.innerHTML = '<option value="">載入中...</option>';
             select.disabled = true;
 
-            const urls = ['/parking/all', '/api/v1/parking-lots', '/api/parking/all', '/parking-lots'];
+            const urls = [
+                '/parking/all',
+                '/api/v1/parking-lots',
+                '/api/parking/all',
+                '/parking-lots',
+                '/api/parking/all'
+            ];
 
             for (const url of urls) {
                 try {
-                    const headers = url.includes('api') ? { "Authorization": `Bearer ${getToken()}` } : {};
+                    const headers = {};
+                    if (url.includes('api')) {
+                        const token = getToken();
+                        if (token) headers["Authorization"] = `Bearer ${token}`;
+                    }
+
                     const res = await fetch(url, { headers });
                     if (!res.ok) continue;
 
                     const data = await res.json();
-                    const lots = Array.isArray(data) ? data : (data.data || data.result || []);
+                    const lots = Array.isArray(data) ? data : (data.data || data.result || data.lots || []);
 
                     if (lots.length > 0) {
                         select.innerHTML = '<option value="">-- 請選擇停車場 --</option>';
                         lots.forEach(lot => {
-                            const id = lot.id || lot.parking_lot_id;
-                            const name = lot.name || lot.parking_lot_name || "未知停車場";
-                            select.innerHTML += `<option value="${id}">${name}</option>`;
+                            const id = lot.id ?? lot.parking_lot_id ?? lot._id;
+                            const name = lot.name ?? lot.parking_lot_name ?? lot.location ?? "未知停車場";
+                            if (id) {
+                                select.innerHTML += `<option value="${id}">${name}</option>`;
+                            }
                         });
                         select.disabled = false;
-                        console.log("停車場載入成功:", url);
+                        console.log(`停車場載入成功！共 ${lots.length} 筆（來自 ${url}）`);
                         return;
                     }
                 } catch (e) {
-                    console.log("嘗試失敗:", url, e);
+                    console.log(`嘗試 ${url} 失敗：`, e.message);
                 }
             }
 
-            select.innerHTML = '<option value="">載入失敗</option>';
-            alert("無法載入停車場清單，請確認後端 /parking/all 是否正常");
+            select.innerHTML = '<option value="">載入失敗，無可用停車場</option>';
+            alert("無法載入停車場清單\n請確認後端是否有開啟以下任一路由：\n/parking/all\n/api/v1/parking-lots");
         }
 
+        // === 4. 攝影機與辨識核心 ===
         async function startCamera() {
             try {
                 stream = await navigator.mediaDevices.getUserMedia({
-                    video: { facingMode: "environment", width: 1280, height: 720 }
+                    video: { facingMode: "environment", width: { ideal: 1280 }, height: { ideal: 720 } }
                 });
                 video.srcObject = stream;
                 video.style.display = "block";
@@ -479,6 +503,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                 error.style.display = "none";
                 startDetection();
             } catch (err) {
+                console.error("攝影機開啟失敗：", err);
                 error.textContent = "無法開啟攝影機（請使用 HTTPS 或允許權限）";
                 error.style.display = "block";
                 fallback.style.display = "block";
@@ -495,10 +520,11 @@ document.addEventListener("DOMContentLoaded", async function () {
 
                 canvas.width = video.videoWidth || 800;
                 canvas.height = video.videoHeight || 600;
-                ctx.drawImage(video, 0, 0);
+                ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
                 canvas.toBlob(blob => {
-                    if (!blob) return;
+                    if (!blob || !stream?.active) return;
+
                     const fd = new FormData();
                     fd.append('frame', blob, 'frame.jpg');
 
@@ -509,15 +535,16 @@ document.addEventListener("DOMContentLoaded", async function () {
                         .then(r => r.ok ? r.json() : Promise.reject())
                         .then(data => {
                             if (data.plate && data.plate !== '尚未檢測到車牌' && data.plate !== currentPlate) {
-                                currentPlate = data.plate;
+                                currentPlate = data.plate.trim();
                                 plateDisplay.textContent = currentPlate;
-                                plateDisplay.className = "text-8xl font-bold text-green-600";
+                                plateDisplay.className = "text-8xl font-bold text-green-600 animate-pulse";
                                 confirmBtn.disabled = false;
                                 rescanBtn.style.display = "inline-block";
+                                loading.style.display = "none";
                                 stopStream();
                             }
                         })
-                        .catch(() => { });
+                        .catch(err => console.log("辨識請求失敗（正常）", err));
 
                     if (stream?.active) setTimeout(capture, 1500);
                 }, 'image/jpeg', 0.8);
@@ -534,43 +561,50 @@ document.addEventListener("DOMContentLoaded", async function () {
             }
         }
 
+        // === 5. 確認進出場 ===
         confirmBtn.onclick = async () => {
             if (!currentPlate) return alert("請先掃描車牌！");
-
-            const token = getToken();
-            const endpoint = isExitMode ? "/rent/leave" : "/rent";
-            const body = isExitMode
-                ? { license_plate: currentPlate }
-                : { license_plate: currentPlate, parking_lot_id: selectedLotId, start_time: new Date().toISOString() };
-
             if (!isExitMode && !selectedLotId) return alert("請先選擇停車場！");
 
             confirmBtn.disabled = true;
             confirmBtn.textContent = "處理中...";
 
             try {
+                const token = getToken();
+                const endpoint = isExitMode ? "/rent/leave" : "/rent";
+                const body = isExitMode
+                    ? { license_plate: currentPlate }
+                    : { license_plate: currentPlate, parking_lot_id: selectedLotId, start_time: new Date().toISOString() };
+
                 const res = await fetch(`${API_URL}${endpoint}`, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
                     body: JSON.stringify(body)
                 });
+
                 const result = await res.json();
 
                 if (res.ok) {
                     if (isExitMode) {
-                        const amount = result.data?.total_cost || 0;
-                        resultDiv.innerHTML = `<div class="text-green-600 text-7xl">出場成功！</div><div class="text-red-600 text-9xl font-bold">${amount} 元</div>`;
+                        const amount = result.data?.total_cost ?? result.total_cost ?? 0;
+                        resultDiv.innerHTML = `
+                        <div class="text-green-600 text-7xl mb-4">出場成功！</div>
+                        <div class="text-red-600 text-9xl font-bold">${amount} 元</div>
+                    `;
                         resultDiv.style.display = "block";
                         setTimeout(resetAll, 15000);
                     } else {
-                        alert("進場成功！");
+                        alert(`進場成功！\n車牌：${currentPlate}\n停車場：${parkingName.textContent}`);
                         setTimeout(resetAll, 5000);
                     }
                 } else {
-                    alert("操作失敗：" + (result.error || "未知錯誤"));
+                    throw new Error(result.error || result.message || "操作失敗");
                 }
             } catch (e) {
-                alert("網路錯誤：" + e.message);
+                alert("操作失敗：" + e.message);
             } finally {
                 confirmBtn.disabled = false;
                 confirmBtn.textContent = isExitMode ? "確認出場" : "確認進場";
@@ -585,17 +619,18 @@ document.addEventListener("DOMContentLoaded", async function () {
             rescanBtn.style.display = "none";
             resultDiv.style.display = "none";
             loading.style.display = "none";
+            stopStream();
             startCamera();
         }
 
-        // 事件綁定
+        // === 6. 事件綁定 ===
         select.onchange = (e) => {
             selectedLotId = e.target.value;
             const name = e.target.options[e.target.selectedIndex].text;
             if (selectedLotId) {
                 container.style.display = "block";
                 parkingName.textContent = name;
-                actionText.textContent = isExitMode ? "出場" : "進場";
+                actionText.textContent = isExitMode ? "出場結算" : "進場";
                 confirmBtn.textContent = isExitMode ? "確認出場" : "確認進場";
                 resetAll();
             } else {
@@ -603,24 +638,32 @@ document.addEventListener("DOMContentLoaded", async function () {
             }
         };
 
-        document.getElementById("actionEntry").onclick = () => {
+        actionEntry.onclick = () => {
             isExitMode = false;
-            document.getElementById("actionEntry").classList.add("bg-blue-700");
-            document.getElementById("actionExit").classList.remove("bg-red-700");
-            if (selectedLotId) { actionText.textContent = "進場"; confirmBtn.textContent = "確認進場"; resetAll(); }
+            actionEntry.classList.add("bg-blue-700");
+            actionExit.classList.remove("bg-red-700");
+            if (selectedLotId) {
+                actionText.textContent = "進場";
+                confirmBtn.textContent = "確認進場";
+                resetAll();
+            }
         };
 
-        document.getElementById("actionExit").onclick = () => {
+        actionExit.onclick = () => {
             isExitMode = true;
-            document.getElementById("actionExit").classList.add("bg-red-700");
-            document.getElementById("actionEntry").classList.remove("bg-blue-700");
-            if (selectedLotId) { actionText.textContent = "出場"; confirmBtn.textContent = "確認出場"; resetAll(); }
+            actionExit.classList.add("bg-red-700");
+            actionEntry.classList.remove("bg-blue-700");
+            if (selectedLotId) {
+                actionText.textContent = "出場結算";
+                confirmBtn.textContent = "確認出場";
+                resetAll();
+            }
         };
 
         startBtn.onclick = () => { stopStream(); startCamera(); };
         rescanBtn.onclick = resetAll;
 
-        // 啟動！
+        // === 7. 啟動！===
         loadParkingLots();
     }
     // 攝影機請求和重新掃描函數
