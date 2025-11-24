@@ -235,7 +235,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                     } else if (target === "addParking") {
                         setupAddParking();
                     } else if (target === "parkingLotSelector") {
-                        setupParkingRecognition();
+                        setupParkingLotSelector();
                     } else if (target === "rentParking") {
                         setupRentParking();
                     } else if (target === "settleParking") {
@@ -253,76 +253,82 @@ document.addEventListener("DOMContentLoaded", async function () {
     // 全域變數：儲存所有停車場資料
     let allParkingLots = [];
     // 載入停車場並建立下拉選單（只呼叫一次）
-    async function loadParkingLots() {
-        const select = document.getElementById("parkingLotSelect");
+    async function loadParkingLotSelector() {
+        const select = document.getElementById("parkingLotActionSelect");
+        const status = document.getElementById("selectorStatus");
+        const enterBtn = document.getElementById("enterSelectedLotBtn");
         if (!select) {
-            console.error("找不到 #parkingLotSelect 元素");
+            console.error("找不到 parkingLotActionSelect 元素");
             return;
         }
-
-        // 顯示載入中（UX 更好）
-        select.innerHTML = '<option value="">載入停車場中...</option>';
-        select.disabled = true;
-
-        const possibleUrls = [
-            '/parking/all',
-            '/api/v1/parking-lots',
-            '/api/parking/all',
-            '/api/parking-lots',
-            '/api/v1/parking/all',
-            '/parking-lots'
-        ];
-
-        for (const url of possibleUrls) {
-            try {
-                console.log(`正在嘗試載入停車場：${url}`);
-                const headers = {};
-
-                // 只有包含 api/v1 的才加 token（避免被拒絕）
-                if (url.includes('api/v1') || url.includes('api')) {
-                    const token = getToken();
-                    if (token) headers["Authorization"] = `Bearer ${token}`;
-                }
-
-                const res = await fetch(url, { headers });
-
-                if (res.ok) {
-                    const data = await res.json();
-                    console.log(`API 成功回應 (${url}):`, data);
-
-                    // 支援各種常見回傳格式
-                    let lots = [];
-                    if (Array.isArray(data)) {
-                        lots = data;
-                    } else if (data.data && Array.isArray(data.data)) {
-                        lots = data.data;
-                    } else if (data.result && Array.isArray(data.result)) {
-                        lots = data.result;
-                    }
-
-                    if (lots.length > 0) {
-                        select.innerHTML = '<option value="">-- 請選擇停車場 --</option>';
-                        lots.forEach(lot => {
-                            const id = lot.id ?? lot.parking_lot_id ?? lot._id ?? "unknown";
-                            const name = lot.name ?? lot.parking_lot_name ?? lot.location ?? "未知停車場";
-                            select.innerHTML += `<option value="${id}">${name}</option>`;
-                        });
-                        select.disabled = false;
-                        console.log(`停車場載入成功！共 ${lots.length} 筆（來自 ${url}）`);
-                        return; // 成功就結束
-                    }
-                } else {
-                    console.warn(`API 回傳錯誤 ${res.status}: ${url}`);
-                }
-            } catch (e) {
-                console.log(`請求失敗 ${url}:`, e.message);
-            }
+        // 避免重複載入
+        if (allParkingLots.length > 0) {
+            console.log("停車場清單已載入，跳過重複請求");
+            return;
         }
-
-        // 全部都失敗
-        select.innerHTML = '<option value="">載入失敗，無可用停車場</option>';
-        select.disabled = true;
-        alert("無法載入停車場清單\n請確認後端是否有以下任一 API 正常運作：\n/parking/all\n/api/v1/parking-lots\n或其他常見路徑");
+        select.innerHTML = '<option value="">載入中...</option>';
+        if (status) status.textContent = "載入停車場中...";
+        try {
+            const token = getToken();
+            if (!token) throw new Error("無效的登入狀態");
+            const response = await fetch(`${API_URL}/parking/all`, {
+                method: 'GET',
+                headers: {
+                    "Authorization": `Bearer ${token}`,
+                    "Content-Type": "application/json"
+                }
+            });
+            if (!response.ok) {
+                if (response.status === 401) {
+                    alert("登入過期，請重新登入");
+                    removeToken();
+                    showLoginPage(true);
+                    return;
+                }
+                throw new Error(`伺服器錯誤 ${response.status}`);
+            }
+            const result = await response.json();
+            allParkingLots = result.data || result || [];
+            if (!Array.isArray(allParkingLots) || allParkingLots.length === 0) {
+                select.innerHTML = '<option value="">目前無可用停車場</option>';
+                if (status) status.textContent = "無停車場資料";
+                return;
+            }
+            // 清空並重建選單
+            select.innerHTML = '<option value="">-- 請選擇停車場與動作 --</option>';
+            allParkingLots.forEach(lot => {
+                const lotId = lot.parking_lot_id || lot.id || lot.parkingLotId;
+                const lotName = lot.name || lot.location || lot.address || `未知停車場 (${lotId})`;
+                if (!lotId) {
+                    console.warn("停車場缺少 ID，跳過:", lot);
+                    return;
+                }
+                // 進場選項
+                const optIn = document.createElement("option");
+                optIn.value = JSON.stringify({ id: lotId, action: "rent", name: lotName });
+                optIn.textContent = `${lotName} ── 進場`;
+                select.appendChild(optIn);
+                // 出場選項
+                const optOut = document.createElement("option");
+                optOut.value = JSON.stringify({ id: lotId, action: "settle", name: lotName });
+                optOut.textContent = `${lotName} ── 出場`;
+                select.appendChild(optOut);
+            });
+            if (status) {
+                status.textContent = `已載入 ${allParkingLots.length} 個停車場`;
+                status.style.color = "green";
+            }
+            // 預設啟用按鈕
+            if (enterBtn) enterBtn.disabled = false;
+        } catch (err) {
+            console.error("載入停車場清單失敗:", err);
+            select.innerHTML = '<option value="">載入失敗，請重新整理</option>';
+            if (status) {
+                status.textContent = "載入失敗：" + err.message;
+                status.style.color = "red";
+            }
+            alert("無法載入停車場清單，請檢查網路或稍後再試");
+        }
     }
     // 設定「選擇停車場」頁面
     function setupParkingLotSelector() {
@@ -398,8 +404,15 @@ document.addEventListener("DOMContentLoaded", async function () {
             }
         };
     }
-    // 終極版：停車場選擇 + 進出場 + 車牌辨識（全部整合）
+    // 終極整合版：停車場選擇 + 進場 + 出場 + 車牌辨識（一行搞定所有！）
     function setupParkingRecognition() {
+        const role = getRole();
+        if (role !== "renter") {
+            alert("此功能僅限租用者使用！");
+            return;
+        }
+
+        // DOM 元素（對應你新的 HTML）
         const select = document.getElementById("parkingLotSelect");
         const container = document.getElementById("recognitionContainer");
         const video = document.getElementById("videoRecognition");
@@ -408,7 +421,6 @@ document.addEventListener("DOMContentLoaded", async function () {
         const loading = document.getElementById("loadingText");
         const error = document.getElementById("errorText");
         const startBtn = document.getElementById("startBtn");
-        const stopBtn = document.getElementById("stopBtn");
         const confirmBtn = document.getElementById("confirmBtn");
         const rescanBtn = document.getElementById("rescanBtn");
         const resultDiv = document.getElementById("settleResult");
@@ -417,40 +429,64 @@ document.addEventListener("DOMContentLoaded", async function () {
 
         let stream = null;
         let currentPlate = null;
-        let isExitMode = false;
+        let isExitMode = false;  // false = 進場, true = 出場
         let selectedLotId = null;
 
-        // 載入停車場（使用你後端給的正確 API）
+        // 超強版載入停車場（支援你後端的 /parking/all）
         async function loadParkingLots() {
-            try {
-                const res = await fetch('/parking/all');
-                const data = await res.json();
-                select.innerHTML = '<option value="">-- 請選擇停車場 --</option>';
-                data.data.forEach(lot => {
-                    select.innerHTML += `<option value="${lot.id}">${lot.name}</option>`;
-                });
-            } catch (err) {
-                alert("無法載入停車場清單，請檢查後端 /parking/all");
+            select.innerHTML = '<option value="">載入中...</option>';
+            select.disabled = true;
+
+            const urls = ['/parking/all', '/api/v1/parking-lots', '/api/parking/all', '/parking-lots'];
+
+            for (const url of urls) {
+                try {
+                    const headers = url.includes('api') ? { "Authorization": `Bearer ${getToken()}` } : {};
+                    const res = await fetch(url, { headers });
+                    if (!res.ok) continue;
+
+                    const data = await res.json();
+                    const lots = Array.isArray(data) ? data : (data.data || data.result || []);
+
+                    if (lots.length > 0) {
+                        select.innerHTML = '<option value="">-- 請選擇停車場 --</option>';
+                        lots.forEach(lot => {
+                            const id = lot.id || lot.parking_lot_id;
+                            const name = lot.name || lot.parking_lot_name || "未知停車場";
+                            select.innerHTML += `<option value="${id}">${name}</option>`;
+                        });
+                        select.disabled = false;
+                        console.log("停車場載入成功:", url);
+                        return;
+                    }
+                } catch (e) {
+                    console.log("嘗試失敗:", url, e);
+                }
             }
+
+            select.innerHTML = '<option value="">載入失敗</option>';
+            alert("無法載入停車場清單，請確認後端 /parking/all 是否正常");
         }
 
         async function startCamera() {
             try {
-                stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
+                stream = await navigator.mediaDevices.getUserMedia({
+                    video: { facingMode: "environment", width: 1280, height: 720 }
+                });
                 video.srcObject = stream;
                 video.style.display = "block";
                 fallback.style.display = "none";
                 error.style.display = "none";
                 startDetection();
             } catch (err) {
-                error.textContent = "無法開啟攝影機（請用 HTTPS 或 localhost）";
+                error.textContent = "無法開啟攝影機（請使用 HTTPS 或允許權限）";
                 error.style.display = "block";
                 fallback.style.display = "block";
             }
         }
 
         function startDetection() {
-            if (!stream) return;
+            if (!stream?.active) return;
             const canvas = document.createElement('canvas');
             const ctx = canvas.getContext('2d');
 
@@ -507,6 +543,8 @@ document.addEventListener("DOMContentLoaded", async function () {
                 ? { license_plate: currentPlate }
                 : { license_plate: currentPlate, parking_lot_id: selectedLotId, start_time: new Date().toISOString() };
 
+            if (!isExitMode && !selectedLotId) return alert("請先選擇停車場！");
+
             confirmBtn.disabled = true;
             confirmBtn.textContent = "處理中...";
 
@@ -521,7 +559,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                 if (res.ok) {
                     if (isExitMode) {
                         const amount = result.data?.total_cost || 0;
-                        resultDiv.innerHTML = `<div class="text-green-600">出場成功！</div><div class="text-red-600 text-9xl">${amount} 元</div>`;
+                        resultDiv.innerHTML = `<div class="text-green-600 text-7xl">出場成功！</div><div class="text-red-600 text-9xl font-bold">${amount} 元</div>`;
                         resultDiv.style.display = "block";
                         setTimeout(resetAll, 15000);
                     } else {
@@ -532,7 +570,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                     alert("操作失敗：" + (result.error || "未知錯誤"));
                 }
             } catch (e) {
-                alert("網路錯誤");
+                alert("網路錯誤：" + e.message);
             } finally {
                 confirmBtn.disabled = false;
                 confirmBtn.textContent = isExitMode ? "確認出場" : "確認進場";
@@ -569,27 +607,20 @@ document.addEventListener("DOMContentLoaded", async function () {
             isExitMode = false;
             document.getElementById("actionEntry").classList.add("bg-blue-700");
             document.getElementById("actionExit").classList.remove("bg-red-700");
-            if (selectedLotId) {
-                actionText.textContent = "進場";
-                confirmBtn.textContent = "確認進場";
-                resetAll();
-            }
+            if (selectedLotId) { actionText.textContent = "進場"; confirmBtn.textContent = "確認進場"; resetAll(); }
         };
 
         document.getElementById("actionExit").onclick = () => {
             isExitMode = true;
             document.getElementById("actionExit").classList.add("bg-red-700");
             document.getElementById("actionEntry").classList.remove("bg-blue-700");
-            if (selectedLotId) {
-                actionText.textContent = "出場";
-                confirmBtn.textContent = "確認出場";
-                resetAll();
-            }
+            if (selectedLotId) { actionText.textContent = "出場"; confirmBtn.textContent = "確認出場"; resetAll(); }
         };
 
         startBtn.onclick = () => { stopStream(); startCamera(); };
         rescanBtn.onclick = resetAll;
 
+        // 啟動！
         loadParkingLots();
     }
     // 攝影機請求和重新掃描函數
