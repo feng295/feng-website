@@ -189,7 +189,7 @@ document.addEventListener("DOMContentLoaded", async function () {
         document.querySelectorAll(".content-section").forEach(section => {
             section.style.display = "none";
         });
-        const defaultSectionId = role === "renter" ? "reserveParking" :
+        const defaultSectionId = role === "renter" ? "parkingLotSelector" :
             role === "admin" ? "viewAllUsers" : "My parking space";
         const defaultSection = document.getElementById(defaultSectionId);
         if (!defaultSection) {
@@ -198,7 +198,6 @@ document.addEventListener("DOMContentLoaded", async function () {
         }
         defaultSection.style.display = "block";
         if (defaultSectionId === "My parking space") setupMyParkingSpace();
-        else if (defaultSectionId === "reserveParking") setupReserveParking();
         else if (defaultSectionId === "viewAllUsers") setupViewAllUsers();
         else if (defaultSectionId === "incomeInquiry") setupIncomeInquiry();
         else if (defaultSectionId === "addParking") setupAddParking();
