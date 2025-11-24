@@ -189,7 +189,7 @@ document.addEventListener("DOMContentLoaded", async function () {
         document.querySelectorAll(".content-section").forEach(section => {
             section.style.display = "none";
         });
-        const defaultSectionId = role === "renter" ? "parkingLotSelector" :
+        const defaultSectionId = role === "renter" ? "history" :
             role === "admin" ? "viewAllUsers" : "My parking space";
         const defaultSection = document.getElementById(defaultSectionId);
         if (!defaultSection) {
