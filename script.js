@@ -235,11 +235,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                     } else if (target === "addParking") {
                         setupAddParking();
                     } else if (target === "parkingLotSelector") {
-                        setupParkingLotSelector();
-                    } else if (target === "rentParking") {
-                        setupRentParking();
-                    } else if (target === "settleParking") {
-                        setupSettleParking();
+                        setupParkingRecognition();
                     } else {
                         // 未定義的 target，但 section 已找到，僅記錄警告
                         console.warn(`No handler for target: ${target}`);
