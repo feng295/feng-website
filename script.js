@@ -253,6 +253,7 @@ document.addEventListener("DOMContentLoaded", async function () {
     }
     // 全域變數：儲存所有停車場資料
     let allParkingLots = [];
+
     // 載入停車場並建立下拉選單（只呼叫一次）
     async function loadParkingLotSelector() {
         const select = document.getElementById("parkingLotActionSelect");
@@ -295,7 +296,6 @@ document.addEventListener("DOMContentLoaded", async function () {
                 if (status) status.textContent = "無停車場資料";
                 return;
             }
-            // 清空並重建選單
             select.innerHTML = '<option value="">-- 請選擇停車場與動作 --</option>';
             allParkingLots.forEach(lot => {
                 const lotId = lot.parking_lot_id || lot.id || lot.parkingLotId;
@@ -304,12 +304,11 @@ document.addEventListener("DOMContentLoaded", async function () {
                     console.warn("停車場缺少 ID，跳過:", lot);
                     return;
                 }
-                // 進場選項
                 const optIn = document.createElement("option");
                 optIn.value = JSON.stringify({ id: lotId, action: "rent", name: lotName });
                 optIn.textContent = `${lotName} ── 進場`;
                 select.appendChild(optIn);
-                // 出場選項
+
                 const optOut = document.createElement("option");
                 optOut.value = JSON.stringify({ id: lotId, action: "settle", name: lotName });
                 optOut.textContent = `${lotName} ── 出場`;
@@ -319,7 +318,6 @@ document.addEventListener("DOMContentLoaded", async function () {
                 status.textContent = `已載入 ${allParkingLots.length} 個停車場`;
                 status.style.color = "green";
             }
-            // 預設啟用按鈕
             if (enterBtn) enterBtn.disabled = false;
         } catch (err) {
             console.error("載入停車場清單失敗:", err);
@@ -331,6 +329,47 @@ document.addEventListener("DOMContentLoaded", async function () {
             alert("無法載入停車場清單，請檢查網路或稍後再試");
         }
     }
+
+    // 關鍵修正：統一處理標題顯示（進場 & 出場都一樣！）
+    function updateParkingTitle(containerId, name, actionText) {
+        const container = document.getElementById(containerId);
+        if (!container) return;
+
+        // 1. 主標題：停車場名稱
+        let nameEl = container.querySelector("#rentParkingName, #settleParkingName");
+        if (!nameEl) {
+            nameEl = document.createElement("div");
+            nameEl.id = containerId === "rentParking" ? "rentParkingName" : "settleParkingName";
+            nameEl.className = "parking-title-name";
+            container.prepend(nameEl);
+        }
+        nameEl.textContent = name;
+
+        // 2. 中間橫線「—」（這行是關鍵！進場以前沒有，現在強制加上）
+        let separator = nameEl.nextElementSibling;
+        if (!separator || !separator.classList.contains("parking-title-separator")) {
+            separator = document.createElement("div");
+            separator.className = "parking-title-separator";
+            separator.textContent = "—";
+            nameEl.after(separator);
+        }
+
+        // 3. 動作文字：進場 / 出場
+        let actionEl = separator.nextElementSibling;
+        if (!actionEl || !actionEl.classList.contains("parking-title-action")) {
+            actionEl = document.createElement("div");
+            actionEl.className = "parking-title-action";
+            actionEl.id = containerId === "rentParking" ? "rentParkingAction" : "settleParkingAction";
+            separator.after(actionEl);
+        }
+        actionEl.textContent = actionText;
+
+        // 強制加上 class 讓 CSS 能精準抓到
+        nameEl.classList.add("parking-title-name");
+        separator.classList.add("parking-title-separator");
+        actionEl.classList.add("parking-title-action");
+    }
+
     // 設定「選擇停車場」頁面
     function setupParkingLotSelector() {
         const selectorSection = document.getElementById("parkingLotSelector");
@@ -343,17 +382,12 @@ document.addEventListener("DOMContentLoaded", async function () {
             return;
         }
 
-        // 隱藏所有內容，只顯示選擇器
         document.querySelectorAll(".content-section").forEach(sec => {
             sec.style.display = "none";
         });
         selectorSection.style.display = "block";
-
-        // 載入停車場清單
         loadParkingLotSelector();
 
-        // 關鍵：選完立刻自動跳轉
-        select.onchange = null;
         select.onchange = function () {
             const selectedValue = this.value.trim();
             if (!selectedValue) return;
@@ -368,39 +402,20 @@ document.addEventListener("DOMContentLoaded", async function () {
             }
 
             const { id, action, name } = selectedData;
-
-            // 立刻隱藏選擇器
             document.getElementById("parkingLotSelector").style.display = "none";
 
             if (action === "rent") {
-                // === 進場模式 ===
                 document.getElementById("rentParking").style.display = "block";
-
-                // 更新標題：停車場名稱 + 進場
-                document.getElementById("rentParkingName").textContent = name;
-                document.getElementById("rentParkingAction").textContent = "進場";
-
-                // 設定隱藏的 parking lot id（給後端用）
+                updateParkingTitle("rentParking", name, "進場");  // 強制統一格式
                 const demoInput = document.getElementById("demoParkingLotId");
                 if (demoInput) demoInput.value = id;
-
-                // 初始化進場功能
                 if (typeof setupRentParking === "function") setupRentParking();
 
             } else if (action === "settle") {
-                // === 出場模式 ===
                 document.getElementById("settleParking").style.display = "block";
-
-                // 更新標題：停車場名稱 + 出場
-                document.getElementById("settleParkingName").textContent = name;
-                document.getElementById("settleParkingAction").textContent = "出場";
-
-                // 設定隱藏的 parking lot id
+                updateParkingTitle("settleParking", name, "出場");  // 強制統一格式
                 const demoInput = document.getElementById("demoParkingLotId");
                 if (demoInput) demoInput.value = id;
-
-
-                // 初始化出場功能
                 if (typeof setupSettleParking === "function") setupSettleParking();
             }
         };
@@ -411,10 +426,8 @@ document.addEventListener("DOMContentLoaded", async function () {
             alert("此功能僅限租用者使用！");
             return;
         }
-
         const rentParkingSection = document.getElementById("rentParking");
         rentParkingSection.style.display = "block";
-
         // DOM 元素
         const video = document.getElementById("videoRent");
         const fallback = document.getElementById("fallbackRent");
@@ -425,58 +438,12 @@ document.addEventListener("DOMContentLoaded", async function () {
         const stopButton = document.getElementById("stopButtonRent");
         const confirmButton = document.getElementById("confirmButtonRent");
         const rescanButton = document.getElementById("rescanButtonRent");
-
         let selectedParkingLotId = null;
         let currentPlate = null;
         let stream = null;
+        let intervalId = null;
         let isScanningStopped = false;
-
-        // 強制讓「進場」標題字體跟「出場」一模一樣（這才是關鍵！）
-        setTimeout(() => {
-            const nameEl = document.getElementById("rentParkingName");
-            const actionEl = document.getElementById("rentParkingAction");
-
-            if (nameEl) {
-                Object.assign(nameEl.style, {
-                    fontSize: "168px",
-                    lineHeight: "1.1",
-                    fontWeight: "900",
-                    letterSpacing: "8px",
-                    textAlign: "center",
-                    color: "#000",
-                    margin: "40px 0 20px 0",
-                    fontFamily: "'Noto Sans TC', 'Microsoft JhengHei', sans-serif",
-                    textShadow: "4px 4px 12px rgba(0,0,0,0.3)"
-                });
-            }
-
-            if (actionEl) {
-                Object.assign(actionEl.style, {
-                    fontSize: "48px",
-                    lineHeight: "1.2",
-                    fontWeight: "800",
-                    letterSpacing: "6px",
-                    textAlign: "center",
-                    color: "#000",
-                    margin: "20px 0 50px 0",
-                    fontFamily: "'Noto Sans TC', 'Microsoft JhengHei', sans-serif"
-                });
-            }
-
-            // 如果有中間那條「—」文字，也一起放大（保險）
-            const subtitle = document.querySelector("#rentParking + div, .subtitle, [class*='text']");
-            if (subtitle && subtitle.textContent.includes('—')) {
-                Object.assign(subtitle.style, {
-                    fontSize: "46.67px",
-                    fontWeight: "700",
-                    textAlign: "center",
-                    color: "#333",
-                    margin: "15px 0"
-                });
-            }
-        }, 100);
-
-        // 攝影機與辨識（你原本的邏輯，完全保留）
+        // 攝影機與辨識（你原本的邏輯，精簡保留）
         async function startStream() {
             try {
                 stream = await navigator.mediaDevices.getUserMedia({ video: true });
@@ -491,65 +458,51 @@ document.addEventListener("DOMContentLoaded", async function () {
                 fallback.style.display = "block";
             }
         }
-
         function stopStream() {
             if (stream) stream.getTracks().forEach(t => t.stop());
             fetch(`${window.location.origin}/license-plate/stop-rent`, { method: 'POST' });
             isScanningStopped = true;
         }
-
         function startLicensePlateDetection() {
             if (isScanningStopped) return;
             const canvas = document.createElement('canvas');
             const ctx = canvas.getContext('2d');
-
             function capture() {
                 if (!stream || isScanningStopped) return;
                 if (video.readyState < 2) return setTimeout(capture, 500);
-
                 canvas.width = video.videoWidth;
                 canvas.height = video.videoHeight;
                 ctx.drawImage(video, 0, 0);
-
                 canvas.toBlob(blob => {
                     if (!blob) return;
                     const fd = new FormData();
                     fd.append('frame', blob, 'frame.jpg');
-
-                    fetch(`${window.location.origin}/license-plate/process_frame-rent`, {
-                        method: 'POST',
-                        body: fd
-                    })
+                    fetch(`${window.location.origin}/license-plate/process_frame-rent`, { method: 'POST', body: fd })
                         .then(r => r.ok ? r.json() : Promise.reject())
                         .then(data => {
                             const plate = data.plate && data.plate !== '尚未檢測到車牌' ? data.plate : null;
                             if (plate && plate !== currentPlate) {
                                 currentPlate = plate;
                                 plateList.innerHTML = `<li class="text-green-600 text-4xl font-bold">${currentPlate}</li>`;
-                                confirmButton.disabled = false;
+                                confirmButton.disabled = !selectedParkingLotId;
                                 rescanButton.style.display = "inline-block";
                                 isScanningStopped = true;
                                 stopStream();
                             }
                         })
                         .catch(() => { });
-
                     if (!isScanningStopped) setTimeout(capture, 1800);
                 }, 'image/jpeg', 0.9);
             }
-
             loading.style.display = "block";
             capture();
         }
-
-        // 確認進場
+        // 確認進場（送出 license_plate + parking_lot_id + start_time）
         confirmButton.addEventListener("click", async () => {
             if (!currentPlate) return alert("請先掃描車牌！");
             if (!selectedParkingLotId) return alert("請先輸入停車場 ID！");
-
             confirmButton.disabled = true;
             confirmButton.textContent = "進場中...";
-
             try {
                 const token = getToken();
                 const start_time = new Date().toISOString();
@@ -565,11 +518,9 @@ document.addEventListener("DOMContentLoaded", async function () {
                         start_time: start_time
                     })
                 });
-
                 if (res.ok) {
                     plateList.innerHTML = `<li class="text-green-600 text-5xl font-bold">${currentPlate} 進場成功！</li>`;
-                    alert(`進場成功！\n車牌：${currentPlate}\n時間：${new Date().toLocaleString('zh-TW')}`);
-
+                    alert(`進場成功！\n車牌：${currentPlate}\n停車場 ID：${selectedParkingLotId}\n時間：${new Date().toLocaleString('zh-TW')}`);
                     setTimeout(() => {
                         currentPlate = null;
                         plateList.innerHTML = '<li class="text-gray-500 text-xl">尚未檢測到車牌</li>';
@@ -589,7 +540,6 @@ document.addEventListener("DOMContentLoaded", async function () {
                 confirmButton.textContent = "確認進場";
             }
         });
-
         rescanButton.addEventListener("click", () => {
             currentPlate = null;
             plateList.innerHTML = '<li class="text-gray-500 text-xl">尚未檢測到車牌</li>';
@@ -598,10 +548,8 @@ document.addEventListener("DOMContentLoaded", async function () {
             isScanningStopped = false;
             startStream();
         });
-
         startButton.addEventListener("click", startStream);
         stopButton.addEventListener("click", stopStream);
-
         // 自動啟動
         startStream();
     }
