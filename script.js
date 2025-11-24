@@ -235,7 +235,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                     } else if (target === "addParking") {
                         setupAddParking();
                     } else if (target === "parkingLotSelector") {
-                        setupParkingLotSelector();
+                        setupParkingRecognition();
                     } else if (target === "rentParking") {
                         setupRentParking();
                     } else if (target === "settleParking") {
