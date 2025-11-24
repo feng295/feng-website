@@ -152,27 +152,6 @@ document.addEventListener("DOMContentLoaded", async function () {
         functionList.style.display = "block";
         contentContainer.style.display = "block";
         logoutButton.style.display = "block";
-        // 若為租用者，預設顯示「租用紀錄」
-        // 使用微任務延遲執行，確保 showMainPage 內後續邏輯完成後再覆蓋預設區塊
-        setTimeout(() => {
-            try {
-            const role = getRole();
-            if (role === "renter") {
-                document.querySelectorAll(".content-section").forEach(section => section.style.display = "none");
-                const historySection = document.getElementById("history");
-                if (historySection) {
-                historySection.style.display = "block";
-                if (typeof loadHistory === "function") loadHistory();
-                const pageTitle = document.getElementById("pageTitle");
-                if (pageTitle) pageTitle.textContent = "租用紀錄";
-                } else {
-                console.warn('history section not found to set as default for renter');
-                }
-            }
-            } catch (err) {
-            console.error("Failed to set renter default to history:", err);
-            }
-        }, 0);
         const role = getRole();
         console.log("Current role in showMainPage:", role);
         const validRoles = ["renter", "admin"];
