@@ -198,6 +198,7 @@ document.addEventListener("DOMContentLoaded", async function () {
         }
         defaultSection.style.display = "block";
         if (defaultSectionId === "My parking space") setupMyParkingSpace();
+        else if (defaultSectionId === "history") loadHistory();
         else if (defaultSectionId === "viewAllUsers") setupViewAllUsers();
         else if (defaultSectionId === "incomeInquiry") setupIncomeInquiry();
         else if (defaultSectionId === "addParking") setupAddParking();
