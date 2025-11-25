@@ -733,27 +733,39 @@ a:hover {
         margin: 15px 0 !important;
     }
 
-    /* ======== 強制讓「行動停車場管理資訊系統」永遠完美置中 ======== */
+    /* ========= 永久解決：大標題永遠完美置中（電腦＋手機都準）========= */
     #fullScreenTitle {
-        position: fixed !important;
-        top: 50% !important;
-        left: 50% !important;
-        transform: translate(-50%, -50%) !important;
-        z-index: -10 !important;
-        pointer-events: none !important;
+        position: fixed;
+        inset: 0;
+        /* 等於 top:0; left:0; right:0; bottom:0; */
+        display: flex;
+        align-items: center;
+        /* 垂直置中 */
+        justify-content: center;
+        /* 水平置中 */
+        z-index: -10;
+        pointer-events: none;
+        /* 不擋滑鼠點擊 */
         margin: 0 !important;
-        padding: 0 !important;
-        width: auto !important;
-        text-align: center !important;
+        padding: 0 20px;
+        /* 手機左右留點邊 */
+        text-align: center;
     }
 
     #fullScreenTitle h1 {
-        font-size: clamp(2.5rem, 8vw, 7rem) !important;
-        /* 自動適應螢幕大小 */
+        font-size: clamp(3rem, 10vw, 8rem) !important;
+        /* 自動縮放，超漂亮 */
         font-weight: 900 !important;
         line-height: 1.1 !important;
         margin: 0 !important;
         padding: 0 !important;
-        /* 完全不套用你原本的 168px 規則 */
+        letter-spacing: 2px;
+    }
+
+    /* 手機也完美置中（不用再寫 media query） */
+    @media (max-width: 768px) {
+        #fullScreenTitle h1 {
+            font-size: clamp(2.5rem, 12vw, 6rem) !important;
+        }
     }
 }
