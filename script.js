@@ -1798,26 +1798,45 @@ document.addEventListener("DOMContentLoaded", async function () {
         const totalIncomeDisplay = document.getElementById("totalIncomeDisplay");
 
         if (!startDateInput || !endDateInput || !incomeSearchButton || !incomeTableBody || !totalIncomeDisplay) {
-            console.error("Required DOM elements missing for income inquiry");
-            alert("頁面元素載入失敗，請檢查 DOM 結構！");
+            console.error("Required DOM elements missing");
+            alert("頁面載入失敗，請重新整理！");
             return;
         }
 
-        // 預設結束日期為今天
+        // 預設今天
         const today = new Date().toISOString().split('T')[0];
         endDateInput.value = today;
-        endDateInput.min = "2025-01-01";
 
-        // 關鍵：從 localStorage 取得管理員的 parking_lot_id（你登入時一定有存）
-        function getCurrentParkingLotId() {
-            const userData = localStorage.getItem("user");
-            if (!userData) return null;
+        let currentParkingLotId = null; // 儲存目前選擇的停車場 ID
+
+        // 自動取得管理員擁有的停車場（通常只有一個）
+        async function loadAdminParkingLot() {
             try {
-                const user = JSON.parse(userData);
-                return user.parking_lot_id || user.parkingLotId || null;
-            } catch (e) {
-                console.error("解析 user 資料失敗", e);
-                return null;
+                const token = getToken();
+                const response = await fetch(`${API_URL}/parking/all`, {
+                    headers: { "Authorization": `Bearer ${token}` }
+                });
+
+                if (!response.ok) throw new Error("無法取得停車場列表");
+
+                const result = await response.json();
+                const lots = result.data || [];
+
+                if (lots.length === 0) {
+                    alert("你目前沒有管理任何停車場！");
+                    return;
+                }
+
+                // 預設選第一個停車場
+                currentParkingLotId = lots[0].parking_lot_id;
+                console.log("自動選取停車場 ID:", currentParkingLotId, "名稱:", lots[0].name);
+
+                // 如果你想未來想做下拉選單，這裡可以擴充
+                // 現在先直接用第一個
+
+            } catch (err) {
+                console.error("載入停車場失敗:", err);
+                alert("無法載入停車場資訊，將無法查詢收入");
             }
         }
 
@@ -1833,108 +1852,94 @@ document.addEventListener("DOMContentLoaded", async function () {
                 alert("開始日期不能晚於結束日期！");
                 return;
             }
+            if (currentParkingLotId === null) {
+                alert("尚未載入停車場資訊，請稍後再試");
+                return;
+            }
 
-            incomeTableBody.innerHTML = '<tr><td colspan="5" class="py-8">載入中...</td></tr>';
+            incomeTableBody.innerHTML = '<tr><td colspan="5">載入中...</td></tr>';
             totalIncomeDisplay.innerHTML = '';
 
-            try {
-                const token = getToken();
-                const parkingLotId = getCurrentParkingLotId();  // 這才是正確的！
-
-                if (!token) throw new Error("請重新登入（Token 遺失）");
-                if (!parkingLotId) throw new Error("無法取得您的停車場 ID，請重新登入");
-
-                console.log("查詢收入 → 停車場 ID:", parkingLotId, "日期:", startDate, "到", endDate);
-
-                const queryParams = new URLSearchParams({
-                    start_date: startDate,
-                    end_date: endDate,
-                    parking_lot_id: parkingLotId  // 後端會根據這個 ID 查
-                });
-
-                const response = await fetch(`${API_URL}/parking/income?${queryParams.toString()}`, {
-                    method: 'GET',
-                    headers: {
-                        "Authorization": `Bearer ${token}`,
-                        "Content-Type": "application/json"
+            fetch(`${API_URL}/parking/income?start_date=${startDate}&end_date=${endDate}&parking_lot_id=${currentParkingLotId}`, {
+                headers: {
+                    "Authorization": `Bearer ${getToken()}`,
+                    "Content-Type": "application/json"
+                }
+            })
+                .then(res => {
+                    if (!res.ok) {
+                        if (res.status === 401) throw new Error("認證過期，請重新登入");
+                        return res.json().then(err => { throw new Error(err.error || "伺服器錯誤") });
                     }
-                });
+                    return res.json();
+                })
+                .then(result => {
+                    const data = result.data;
 
-                if (!response.ok) {
-                    if (response.status === 401) throw new Error("認證失敗，請重新登入！");
-                    const err = await response.json().catch(() => ({}));
-                    throw new Error(err.error || `伺服器錯誤 (${response.status})`);
-                }
+                    const {
+                        parking_lot_name = "未知停車場",
+                        total_income = 0,
+                        total_hours = 0,
+                        total_records = 0,
+                        date_range = {}
+                    } = data;
 
-                const result = await response.json();
-                const data = result.data;
-
-                if (!data || typeof data !== 'object') {
-                    throw new Error("後端回傳格式錯誤");
-                }
-
-                const {
-                    parking_lot_name = "未知停車場",
-                    total_hours = 0,
-                    total_income = 0,
-                    total_records = 0,
-                    date_range
-                } = data;
-
-                totalIncomeDisplay.innerHTML = `
-                <div class="bg-gradient-to-r from-blue-600 to-purple-700 text-white p-8 rounded-xl shadow-lg text-center">
-                    <h3 class="text-2xl font-bold mb-4">${parking_lot_name}</h3>
-                    <div class="grid grid-cols-2 md:grid-cols-4 gap-6 text-lg">
+                    totalIncomeDisplay.innerHTML = `
+                <div class="bg-gradient-to-r from-blue-600 to-purple-700 text-white p-8 rounded-xl shadow-2xl">
+                    <h3 class="text-3xl font-bold mb-6">${parking_lot_name}</h3>
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
                         <div>
-                            <div class="text-4xl font-bold">${total_income.toLocaleString()}</div>
-                            <div class="opacity-90">總收入 (元)</div>
+                            <div class="text-5xl font-bold">${total_income.toLocaleString()}</div>
+                            <div class="text-xl opacity-90">總收入</div>
                         </div>
                         <div>
-                            <div class="text-4xl font-bold">${total_hours.toFixed(1)}</div>
-                            <div class="opacity-90">總停車時數 (小時)</div>
+                            <div class="text-5xl font-bold">${total_hours.toFixed(1)}</div>
+                            <div class="text-xl opacity-90">停車時數</div>
                         </div>
                         <div>
-                            <div class="text-4xl font-bold">${total_records}</div>
-                            <div class="opacity-90">總筆數</div>
+                            <div class="text-5xl font-bold">${total_records}</div>
+                            <div class="text-xl opacity-90">總筆數</div>
                         </div>
-                        <div>
-                            <div class="text-3xl font-bold">
-                                ${date_range?.start || startDate}<br>→ ${date_range?.end || endDate}
-                            </div>
-                            <div class="opacity-90">查詢區間</div>
+                        <div class="text-2xl">
+                            <div class="font-bold">${date_range.start || startDate}</div>
+                            <div class="text-4xl">→</div>
+                            <div class="font-bold">${date_range.end || endDate}</div>
                         </div>
                     </div>
                 </div>
             `;
 
-                if (total_records === 0) {
-                    incomeTableBody.innerHTML = '<tr><td colspan="5" class="text-center py-12 text-gray-500">此區間無收入紀錄</td></tr>';
-                } else {
-                    incomeTableBody.innerHTML = '<tr><td colspan="5" class="text-center py-12 text-green-600 font-bold text-2xl">收入總覽已顯示在上方卡片</td></tr>';
-                }
-
-            } catch (error) {
-                console.error("Failed to fetch income:", error);
-                alert("載入失敗：" + error.message);
-                incomeTableBody.innerHTML = '<tr><td colspan="5" class="text-red-600">載入失敗</td></tr>';
-                totalIncomeDisplay.innerHTML = '<p class="text-red-600">無法取得收入資料</p>';
-
-                if (error.message.includes("登入")) {
-                    removeToken();
-                    showLoginPage(true);
-                }
-            }
+                    if (total_records === 0) {
+                        incomeTableBody.innerHTML = '<tr><td colspan="5" class="py-12 text-gray-500">無收入紀錄</td></tr>';
+                    } else {
+                        incomeTableBody.innerHTML = '<tr><td colspan="5" class="py-12 text-green-600 text-2xl font-bold">收入總覽已顯示在上方</td></tr>';
+                    }
+                })
+                .catch(error => {
+                    console.error("收入查詢失敗:", error);
+                    alert("查詢失敗：" + error.message);
+                    incomeTableBody.innerHTML = '<tr><td colspan="5" class="text-red-600">載入失敗</td></tr>';
+                    if (error.message.includes("登入")) {
+                        removeToken();
+                        showLoginPage(true);
+                    }
+                });
         }
 
-        // 點擊導覽列時自動填今天
+        // 點擊收入查詢時先載入停車場，再觸發查詢
         const incomeLink = document.querySelector('.nav-link[data-target="incomeInquiry"]');
         if (incomeLink) {
-            incomeLink.addEventListener('click', () => {
-                endDateInput.value = new Date().toISOString().split('T')[0];
+            incomeLink.addEventListener('click', async () => {
+                endDateInput.value = today;
+                await loadAdminParkingLot(); // 關鍵：先取得停車場 ID
+                handleIncomeSearch(); // 自動幫你查今天
             });
         }
 
         incomeSearchButton.addEventListener("click", handleIncomeSearch);
+
+        // 頁面初次載入也先取得停車場 ID
+        loadAdminParkingLot();
     }
     // 添加租用紀錄
     function addToHistory(action) {
