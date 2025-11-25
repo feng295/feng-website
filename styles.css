@@ -756,12 +756,4 @@ a:hover {
         padding: 0 !important;
         /* 完全不套用你原本的 168px 規則 */
     }
-
-    /* 手機板也一樣置中（重點！） */
-    @media (max-width: 768px) {
-        #fullScreenTitle h1 {
-            font-size: clamp(2rem, 10vw, 5rem) !important;
-            /* 絕對不要 168px！！ */
-        }
-    }
 }
