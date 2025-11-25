@@ -382,11 +382,20 @@ document.addEventListener("DOMContentLoaded", async function () {
 
                 // 設定隱藏的 parking lot id（給後端用）
                 const demoInput = document.getElementById("demoParkingLotId");
-                if (demoInput) demoInput.value = id;
+                if (demoInput) {
+                    demoInput.value = id;
+                    console.log("【成功】已設定停車場 ID =", id, "| 停車場名稱 =", name);
+                } else {
+                    console.error("找不到 demoParkingLotId 輸入框！請檢查 HTML 是否有這個 hidden input");
+                }
 
-                // 初始化進場功能
-                if (typeof setupRentParking === "function") setupRentParking();
-
+                // 強制等 DOM 更新完再初始化進場功能（這行是救命關鍵！）
+                setTimeout(() => {
+                    if (typeof setupRentParking === "function") {
+                        console.log("【成功】setupRentParking 延遲執行，現在一定讀得到 ID =", demoInput?.value);
+                        setupRentParking();
+                    }
+                }, 0);
 
             } else if (action === "settle") {
                 // === 出場模式 ===
@@ -400,7 +409,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                 const demoInput = document.getElementById("demoParkingLotId");
                 if (demoInput) demoInput.value = id;
 
-                // 出場不用延遲，因為你出場沒讀這個 ID
+                // 出場不需要延遲
                 if (typeof setupSettleParking === "function") setupSettleParking();
             }
         };
@@ -600,7 +609,7 @@ document.addEventListener("DOMContentLoaded", async function () {
         // 自動啟動
         startStream();
     }
-    
+
     function setupSettleParking() {
         const role = getRole();
         console.log("Current role in setupSettleParking:", role);
