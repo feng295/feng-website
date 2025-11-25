@@ -1790,25 +1790,28 @@ document.addEventListener("DOMContentLoaded", async function () {
             alert("此功能僅限管理員使用！");
             return;
         }
+
         const startDateInput = document.getElementById("startDate");
         const endDateInput = document.getElementById("endDate");
         const incomeSearchButton = document.getElementById("incomeSearchButton");
         const incomeTableBody = document.getElementById("incomeTableBody");
         const totalIncomeDisplay = document.getElementById("totalIncomeDisplay");
+
         if (!startDateInput || !endDateInput || !incomeSearchButton || !incomeTableBody || !totalIncomeDisplay) {
             console.error("Required DOM elements missing for income inquiry");
             alert("頁面元素載入失敗，請檢查 DOM 結構！");
             return;
         }
-        // 動態設置預設結束日期
-        const today = new Date(); // 2025-05-20 20:04 CST
-        const todayStr = today.toISOString().split('T')[0]; // 2025-05-20
-        // 僅設置預設結束日期為今天，startDate 由使用者自行選擇
-        endDateInput.value = todayStr; // 2025-05-20
-        endDateInput.min = "2025-01-01"; // 設置一個合理的最小日期，例如今年1月1日
+
+        // 預設結束日期為今天
+        const today = new Date().toISOString().split('T')[0];
+        endDateInput.value = today;
+        endDateInput.min = "2025-01-01";
+
         async function handleIncomeSearch() {
-            const startDate = startDateInput.value; // 使用者選擇的日期，例如 2025-05-01
-            const endDate = endDateInput.value; // 例如 2025-05-20
+            const startDate = startDateInput.value;
+            const endDate = endDateInput.value;
+
             if (!startDate || !endDate) {
                 alert("請選擇開始和結束日期！");
                 return;
@@ -1817,88 +1820,108 @@ document.addEventListener("DOMContentLoaded", async function () {
                 alert("開始日期不能晚於結束日期！");
                 return;
             }
-            if (!/^\d{4}-\d{2}-\d{2}$/.test(startDate) || !/^\d{4}-\d{2}-\d{2}$/.test(endDate)) {
-                alert("日期格式不正確，請使用 YYYY-MM-DD 格式！");
-                return;
-            }
-            incomeTableBody.innerHTML = '<tr><td colspan="5">載入中...</td></tr>';
+
+            incomeTableBody.innerHTML = '<tr><td colspan="5" class="py-8 text-gray-500">載入中...</td></tr>';
+
             try {
                 const token = getToken();
-                if (!token) throw new Error("認證令牌缺失，請重新登入！");
-                const memberId = getMemberId();
-                if (!memberId) throw new Error("無法獲取會員 ID，請重新登入！");
+                if (!token) throw new Error("請先登入！");
+
                 const queryParams = new URLSearchParams({
-                    start_date: startDate, // 傳遞 YYYY-MM-DD 格式
-                    end_date: endDate, // 傳遞 YYYY-MM-DD 格式
-                    member_id: memberId // 根據會員 ID 查詢
+                    start_date: startDate,
+                    end_date: endDate
                 });
+
                 const response = await fetch(`${API_URL}/parking/income?${queryParams.toString()}`, {
                     method: 'GET',
                     headers: {
-                        "Content-Type": "application/json",
-                        "Authorization": `Bearer ${token}`
+                        "Authorization": `Bearer ${token}`,
+                        "Content-Type": "application/json"
                     }
                 });
+
                 if (!response.ok) {
-                    if (response.status === 401) throw new Error("認證失敗，請重新登入！");
-                    const errorData = await response.json().catch(() => ({ error: '未知錯誤' }));
-                    throw new Error(`HTTP error! Status: ${response.status}, Message: ${errorData.error || '未知錯誤'}`);
+                    if (response.status === 401) throw new Error("登入過期，請重新登入");
+                    const err = await response.json().catch(() => ({}));
+                    throw new Error(err.message || "伺服器錯誤");
                 }
-                const data = await response.json();
-                const incomeData = data.data || {};
-                if (!incomeData || typeof incomeData !== 'object') {
-                    throw new Error("後端返回的收入資料格式錯誤");
+
+                const result = await response.json();
+                const data = result.data;
+
+                if (!data || typeof data !== 'object') {
+                    throw new Error("資料格式錯誤");
                 }
-                incomeTableBody.innerHTML = '';
-                const fragment = document.createDocumentFragment();
-                const rents = incomeData.rents || [];
-                const spots = incomeData.spots || [];
-                const totalIncome = incomeData.total_income || 0;
-                if (rents.length === 0) {
-                    const row = document.createElement("tr");
-                    row.innerHTML = `
-                    <td colspan="5">無收入記錄</td>
-                `;
-                    fragment.appendChild(row);
-                } else {
-                    rents.forEach(rent => {
-                        const spot = spots.find(s => s.spot_id === rent.spot_id) || {};
-                        const location = spot.location || '未知';
-                        const startTime = rent.start_time || 'N/A';
-                        const endTime = rent.actual_end_time || 'N/A';
-                        const cost = parseFloat(rent.total_cost) || 0;
-                        const row = document.createElement("tr");
-                        row.innerHTML = `
-                        <td>${rent.spot_id}</td>
-                        <td>${location}</td>
-                        <td>${startTime}</td>
-                        <td>${endTime}</td>
-                        <td>${cost} 元</td>
-                    `;
-                        fragment.appendChild(row);
-                    });
-                }
-                incomeTableBody.appendChild(fragment);
-                totalIncomeDisplay.innerHTML = `<p>總收入：${totalIncome} 元</p>`;
+
+                // 清空表格與總計
+                incomeTableBody.innerHTML = "";
+                totalIncomeDisplay.innerHTML = "";
+
+                // 顯示彙總結果（大字美觀版）
+                const summaryHTML = `
+                <tr class="bg-blue-50 text-lg font-semibold">
+                    <td colspan="5" class="py-6 text-center">
+                        <div class="text-2xl text-blue-800 mb-3">
+                            ${data.parking_lot_name || '所有停車場'} 收入統計
+                        </div>
+                        <div class="text-gray-700">
+                            查詢區間：${data.date_range.start} 至 ${data.date_range.end}
+                        </div>
+                    </td>
+                </tr>
+                <tr class="text-2xl font-bold text-green-600 bg-green-50">
+                    <td colspan="5" class="py-8 text-center">
+                        總收入：${data.total_income?.toLocaleString() || 0} 元
+                    </td>
+                </tr>
+                <tr class="text-lg">
+                    <td class="py-4 px-6 border">停車場 ID</td>
+                    <td class="py-4 px-6 border">${data.parking_lot_id || '全部'}</td>
+                </tr>
+                <tr class="text-lg">
+                    <td class="py-4 px-6 border">總停車時數</td>
+                    <td class="py-4 px-6 border">${data.total_hours || 0} 小時</td>
+                </tr>
+                <tr class="text-lg">
+                    <td class="py-4 px-6 border">總筆數</td>
+                    <td class="py-4 px-6 border">${data.total_records || 0} 筆</td>
+                </tr>
+            `;
+
+                incomeTableBody.innerHTML = summaryHTML;
+
+                // 底部再秀一次總收入（你原本的 totalIncomeDisplay）
+                totalIncomeDisplay.innerHTML = `
+                <div class="text-3xl font-bold text-green-600 text-center mt-8 p-6 bg-green-50 rounded-lg">
+                    期間總收入：${data.total_income?.toLocaleString() || 0} 元
+                </div>
+            `;
+
             } catch (error) {
-                console.error("Failed to fetch income data:", error);
-                alert("無法載入收入資料，請稍後再試或聯繫管理員。錯誤訊息：" + error.message);
-                incomeTableBody.innerHTML = '<tr><td colspan="5">無法載入收入資料</td></tr>';
-                totalIncomeDisplay.innerHTML = '<p>總收入：0 元</p>';
-                if (error.message === "認證失敗，請重新登入！") {
+                console.error("收入查詢失敗:", error);
+                incomeTableBody.innerHTML = `
+                <tr><td colspan="5" class="py-8 text-red-600 text-center">
+                    載入失敗：${error.message}
+                </td></tr>
+            `;
+                totalIncomeDisplay.innerHTML = "<p class='text-red-600'>無法取得總收入</p>";
+
+                if (error.message.includes("登入")) {
                     removeToken();
                     showLoginPage(true);
                 }
             }
         }
-        // 當用戶點選「收入查詢」時，動態更新 endDate 為當天日期
+
+        // 點選「收入查詢」時自動填今天
         const incomeInquiryLink = document.querySelector('.nav-link[data-target="incomeInquiry"]');
         if (incomeInquiryLink) {
             incomeInquiryLink.addEventListener('click', () => {
-                const currentDate = new Date().toISOString().split('T')[0]; // 當前日期：2025-05-20
-                endDateInput.value = currentDate; // 更新結束日期為今天
+                endDateInput.value = new Date().toISOString().split('T')[0];
             });
         }
+
+        // 綁定查詢按鈕
         incomeSearchButton.addEventListener("click", handleIncomeSearch);
     }
     // 添加租用紀錄
