@@ -382,18 +382,11 @@ document.addEventListener("DOMContentLoaded", async function () {
 
                 // 設定隱藏的 parking lot id（給後端用）
                 const demoInput = document.getElementById("demoParkingLotId");
-                if (demoInput) {
-                    demoInput.value = id;
-                    console.log("【選擇停車場】已成功設定進場 ID =", id); // 關鍵 log！
-                }
+                if (demoInput) demoInput.value = id;
 
-                // 強制等 DOM 更新完再初始化（這才是真正的救命關鍵！）
-                setTimeout(() => {
-                    if (typeof setupRentParking === "function") {
-                        setupRentParking();
-                        console.log("【進場】setupRentParking 已強制延遲執行，現在一定讀得到 ID =", demoInput?.value);
-                    }
-                }, 0);
+                // 初始化進場功能
+                if (typeof setupRentParking === "function") setupRentParking();
+
 
             } else if (action === "settle") {
                 // === 出場模式 ===
