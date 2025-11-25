@@ -250,6 +250,7 @@ document.addEventListener("DOMContentLoaded", async function () {
             });
         });
     }
+    
     // 全域變數：儲存所有停車場資料
     let allParkingLots = [];
     // 載入停車場並建立下拉選單（只呼叫一次）
