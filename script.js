@@ -413,83 +413,37 @@ document.addEventListener("DOMContentLoaded", async function () {
         };
     }
 
-    function setupRentParking() {
+  function setupRentParking() {
         const role = getRole();
         if (role !== "renter") {
             alert("此功能僅限租用者使用！");
             return;
         }
-
         const rentParkingSection = document.getElementById("rentParking");
-        if (!rentParkingSection) return;
-
         rentParkingSection.style.display = "block";
-
-        // === 新版：安全清事件 handler ===
-        const cleanListeners = (id) => {
-            const oldEl = document.getElementById(id);
-            if (!oldEl) return null;
-
-            const newEl = oldEl.cloneNode(true);
-            oldEl.replaceWith(newEl);
-            return newEl;
-        };
-
-        // 清除後重新取得按鈕元素
-        const btnConfirm = cleanListeners("confirmButtonRent");
-        const btnRescan = cleanListeners("rescanButtonRent");
-        const btnStart = cleanListeners("startButtonRent");
-        const btnStop = cleanListeners("stopButtonRent");
-
+        // DOM 元素
         const video = document.getElementById("videoRent");
         const fallback = document.getElementById("fallbackRent");
         const plateList = document.getElementById("plateListRent");
         const loading = document.getElementById("loadingRent");
         const error = document.getElementById("errorRent");
-        const demoInput = document.getElementById("demoParkingLotId");
-
-        // === 變數 ===
+        const startButton = document.getElementById("startButtonRent");
+        const stopButton = document.getElementById("stopButtonRent");
+        const confirmButton = document.getElementById("confirmButtonRent");
+        const rescanButton = document.getElementById("rescanButtonRent");
         let selectedParkingLotId = null;
         let currentPlate = null;
         let stream = null;
+        let intervalId = null;
         let isScanningStopped = false;
-
-        // === 健全、安全的讀取 parking_lot_id ===
-        function updateParkingLotId() {
-            const val = demoInput?.value ? parseInt(demoInput.value, 10) : null;
-            selectedParkingLotId = (val > 0) ? val : null;
-
-            const canClick = !!(selectedParkingLotId && currentPlate);
-            btnConfirm.disabled = !canClick;
-
-            console.log("%c【進場】ParkingLotId 更新 →",
-                "color:green;font-weight:bold;",
-                selectedParkingLotId,
-                " | Plate:", currentPlate,
-                " | ButtonEnabled:", canClick
-            );
-        }
-
-        updateParkingLotId();
-
-        // 監聽 hidden input
-        if (demoInput) {
-            const observer = new MutationObserver(updateParkingLotId);
-            observer.observe(demoInput, { attributes: true, attributeFilter: ["value"] });
-            demoInput.addEventListener("change", updateParkingLotId);
-            demoInput.addEventListener("input", updateParkingLotId);
-        }
-
-        // === 開啟攝影機 ===
+        // 攝影機與辨識（你原本的邏輯，精簡保留）
         async function startStream() {
             try {
                 stream = await navigator.mediaDevices.getUserMedia({ video: true });
                 video.srcObject = stream;
                 video.style.display = "block";
                 fallback.style.display = "none";
-
                 await fetch(`${window.location.origin}/license-plate/start-rent`, { method: 'POST' });
-                isScanningStopped = false;
                 startLicensePlateDetection();
             } catch (err) {
                 error.innerText = "無法開啟攝影機";
@@ -497,80 +451,54 @@ document.addEventListener("DOMContentLoaded", async function () {
                 fallback.style.display = "block";
             }
         }
-
         function stopStream() {
             if (stream) stream.getTracks().forEach(t => t.stop());
-            stream = null;
-            fetch(`${window.location.origin}/license-plate/stop-rent`, { method: 'POST' })
-                .catch(() => { });
+            fetch(`${window.location.origin}/license-plate/stop-rent`, { method: 'POST' });
             isScanningStopped = true;
         }
-
-        // === 車牌辨識 ===
         function startLicensePlateDetection() {
             if (isScanningStopped) return;
-
             const canvas = document.createElement('canvas');
             const ctx = canvas.getContext('2d');
-
             function capture() {
-                if (isScanningStopped || !stream || video.readyState < 2) {
-                    if (!isScanningStopped) setTimeout(capture, 500);
-                    return;
-                }
-
+                if (!stream || isScanningStopped) return;
+                if (video.readyState < 2) return setTimeout(capture, 500);
                 canvas.width = video.videoWidth;
                 canvas.height = video.videoHeight;
                 ctx.drawImage(video, 0, 0);
-
                 canvas.toBlob(blob => {
-                    if (!blob || isScanningStopped) return;
-
+                    if (!blob) return;
                     const fd = new FormData();
                     fd.append('frame', blob, 'frame.jpg');
-
-                    fetch(`${window.location.origin}/license-plate/process_frame-rent`, {
-                        method: 'POST',
-                        body: fd
-                    })
+                    fetch(`${window.location.origin}/license-plate/process_frame-rent`, { method: 'POST', body: fd })
                         .then(r => r.ok ? r.json() : Promise.reject())
                         .then(data => {
-                            const plate = data.plate && data.plate !== '尚未檢測到車牌'
-                                ? data.plate
-                                : null;
-
+                            const plate = data.plate && data.plate !== '尚未檢測到車牌' ? data.plate : null;
                             if (plate && plate !== currentPlate) {
                                 currentPlate = plate;
-                                plateList.innerHTML = `<li class="text-green-600 text-6xl font-bold">${plate}</li>`;
-                                updateParkingLotId();
-                                btnRescan.style.display = "inline-block";
-
+                                plateList.innerHTML = `<li class="text-green-600 text-4xl font-bold">${currentPlate}</li>`;
+                                confirmButton.disabled = !selectedParkingLotId;
+                                rescanButton.style.display = "inline-block";
                                 isScanningStopped = true;
                                 stopStream();
                             }
                         })
-                        .catch(() => { })
-                        .finally(() => {
-                            if (!isScanningStopped) setTimeout(capture, 1800);
-                        });
+                        .catch(() => { });
+                    if (!isScanningStopped) setTimeout(capture, 1800);
                 }, 'image/jpeg', 0.9);
             }
-
             loading.style.display = "block";
             capture();
         }
-
         // 確認進場（送出 license_plate + parking_lot_id + start_time）
         confirmButton.addEventListener("click", async () => {
             if (!currentPlate) return alert("請先掃描車牌！");
-
+            if (!selectedParkingLotId) return alert("請先輸入停車場 ID！");
             confirmButton.disabled = true;
             confirmButton.textContent = "進場中...";
-
             try {
                 const token = getToken();
                 const start_time = new Date().toISOString();
-
                 const res = await fetch(`${API_URL}/rent`, {
                     method: 'POST',
                     headers: {
@@ -583,11 +511,9 @@ document.addEventListener("DOMContentLoaded", async function () {
                         start_time: start_time
                     })
                 });
-
                 if (res.ok) {
                     plateList.innerHTML = `<li class="text-green-600 text-5xl font-bold">${currentPlate} 進場成功！</li>`;
                     alert(`進場成功！\n車牌：${currentPlate}\n停車場 ID：${selectedParkingLotId}\n時間：${new Date().toLocaleString('zh-TW')}`);
-
                     setTimeout(() => {
                         currentPlate = null;
                         plateList.innerHTML = '<li class="text-gray-500 text-xl">尚未檢測到車牌</li>';
@@ -607,7 +533,6 @@ document.addEventListener("DOMContentLoaded", async function () {
                 confirmButton.textContent = "確認進場";
             }
         });
-
         rescanButton.addEventListener("click", () => {
             currentPlate = null;
             plateList.innerHTML = '<li class="text-gray-500 text-xl">尚未檢測到車牌</li>';
@@ -616,14 +541,11 @@ document.addEventListener("DOMContentLoaded", async function () {
             isScanningStopped = false;
             startStream();
         });
-
         startButton.addEventListener("click", startStream);
         stopButton.addEventListener("click", stopStream);
-
         // 自動啟動
         startStream();
     }
-
     function setupSettleParking() {
         const role = getRole();
         console.log("Current role in setupSettleParking:", role);
