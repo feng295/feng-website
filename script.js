@@ -405,6 +405,7 @@ document.addEventListener("DOMContentLoaded", async function () {
             }
         };
     }
+
     function setupRentParking() {
         const role = getRole();
         if (role !== "renter") {
@@ -417,49 +418,48 @@ document.addEventListener("DOMContentLoaded", async function () {
 
         rentParkingSection.style.display = "block";
 
-        // ====== 關鍵改這裡：先移除舊的事件，再綁定新的！======
+        // 強制清除舊事件（防止重複綁定或失效）
         const confirmButton = document.getElementById("confirmButtonRent");
         const rescanButton = document.getElementById("rescanButtonRent");
         const startButton = document.getElementById("startButtonRent");
         const stopButton = document.getElementById("stopButtonRent");
 
-        // 強制移除舊的事件監聽器（這才是真正的防重複綁定！）
         confirmButton.replaceWith(confirmButton.cloneNode(true));
         rescanButton.replaceWith(rescanButton.cloneNode(true));
         startButton.replaceWith(startButton.cloneNode(true));
         stopButton.replaceWith(stopButton.cloneNode(true));
 
-        // 重新抓一次（因為上面 clone 過了）
-        const newConfirmButton = document.getElementById("confirmButtonRent");
-        const newRescanButton = document.getElementById("rescanButtonRent");
-        const newStartButton = document.getElementById("startButtonRent");
-        const newStopButton = document.getElementById("stopButtonRent");
+        // 重新取得乾淨的按鈕
+        const btnConfirm = document.getElementById("confirmButtonRent");
+        const btnRescan = document.getElementById("rescanButtonRent");
+        const btnStart = document.getElementById("startButtonRent");
+        const btnStop = document.getElementById("stopButtonRent");
 
-        // ====== 下面所有程式碼不變，只是用 newConfirmButton 取代 confirmButton ======
+        // 關鍵元素
         const video = document.getElementById("videoRent");
         const fallback = document.getElementById("fallbackRent");
         const plateList = document.getElementById("plateListRent");
         const loading = document.getElementById("loadingRent");
         const error = document.getElementById("errorRent");
-        const demoInput = document.getElementById("demoParkingLotId");
+        const demoInput = document.getElementById("demoParkingLotId"); // 這就是關鍵！
 
         let selectedParkingLotId = null;
         let currentPlate = null;
         let stream = null;
         let isScanningStopped = false;
 
+        // 強制讀取停車場 ID（這才是重點！）
         function updateParkingLotId() {
-            if (demoInput?.value) {
-                const val = parseInt(demoInput.value, 10);
-                selectedParkingLotId = (val > 0) ? val : null;
-            } else {
-                selectedParkingLotId = null;
-            }
-            newConfirmButton.disabled = !(selectedParkingLotId && currentPlate);
-            console.log("當前停車場 ID:", selectedParkingLotId, "按鈕是否禁用:", newConfirmButton.disabled);
+            const val = demoInput?.value ? parseInt(demoInput.value, 10) : null;
+            selectedParkingLotId = (val > 0) ? val : null;
+            btnConfirm.disabled = !(selectedParkingLotId && currentPlate);
+            console.log("【進場】停車場 ID 更新 →", selectedParkingLotId, "按鈕可點？", !btnConfirm.disabled);
         }
 
+        // 每次進入都強制讀一次
         updateParkingLotId();
+
+        // 監聽 hidden input 變化（保險）
         if (demoInput) {
             demoInput.addEventListener("change", updateParkingLotId);
             demoInput.addEventListener("input", updateParkingLotId);
@@ -475,7 +475,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                 isScanningStopped = false;
                 startLicensePlateDetection();
             } catch (err) {
-                error.innerText = "無法開啟攝影機";
+                error.innerText = "無法開啟攝影機：" + err.message;
                 error.style.display = "block";
                 fallback.style.display = "block";
             }
@@ -518,9 +518,9 @@ document.addEventListener("DOMContentLoaded", async function () {
                             const plate = data.plate && data.plate !== '尚未檢測到車牌' ? data.plate : null;
                             if (plate && plate !== currentPlate) {
                                 currentPlate = plate;
-                                plateList.innerHTML = `<li class="text-green-600 text-5xl font-bold">${currentPlate}</li>`;
-                                updateParkingLotId();
-                                newRescanButton.style.display = "inline-block";
+                                plateList.innerHTML = `<li class="text-green-600 text-6xl font-bold">${plate}</li>`;
+                                updateParkingLotId(); // 關鍵：更新按鈕狀態
+                                btnRescan.style.display = "inline-block";
                                 isScanningStopped = true;
                                 stopStream();
                             }
@@ -536,15 +536,16 @@ document.addEventListener("DOMContentLoaded", async function () {
             capture();
         }
 
-        // 這次真的一定會觸發！
-        newConfirmButton.addEventListener("click", async () => {
-            console.log("確認進場按鈕被點了！"); // 這行一定要看到！
+        // 這次真的 100% 會觸發！
+        btnConfirm.addEventListener("click", async () => {
+            console.log("確認進場按鈕被點擊了！！！"); // 你一定會看到這行！
             updateParkingLotId();
-            if (!currentPlate) return alert("請先掃描車牌！");
-            if (!selectedParkingLotId) return alert("停車場 ID 無效！");
 
-            newConfirmButton.disabled = true;
-            newConfirmButton.textContent = "進場中...";
+            if (!currentPlate) return alert("請先掃描車牌！");
+            if (!selectedParkingLotId) return alert("停車場 ID 無效！請重新選擇停車場");
+
+            btnConfirm.disabled = true;
+            btnConfirm.textContent = "進場中...";
 
             try {
                 const token = getToken();
@@ -564,13 +565,13 @@ document.addEventListener("DOMContentLoaded", async function () {
                 });
 
                 if (res.ok) {
-                    plateList.innerHTML = `<li class="text-green-600 text-6xl font-bold">${currentPlate} 進場成功！</li>`;
+                    plateList.innerHTML = `<li class="text-green-600 text-7xl font-bold">${currentPlate}<br>進場成功！</li>`;
                     alert(`進場成功！車牌：${currentPlate}`);
                     setTimeout(() => {
                         currentPlate = null;
                         plateList.innerHTML = '<li class="text-gray-500">等待掃描車牌...</li>';
-                        newConfirmButton.disabled = true;
-                        newRescanButton.style.display = "none";
+                        btnConfirm.disabled = true;
+                        btnRescan.style.display = "none";
                         isScanningStopped = false;
                         startStream();
                     }, 8000);
@@ -580,31 +581,31 @@ document.addEventListener("DOMContentLoaded", async function () {
                 }
             } catch (e) {
                 console.error(e);
-                alert("網路錯誤");
+                alert("網路錯誤，請檢查連線");
             } finally {
-                newConfirmButton.disabled = false;
-                newConfirmButton.textContent = "確認進場";
+                btnConfirm.disabled = false;
+                btnConfirm.textContent = "確認進場";
             }
         });
 
-        newRescanButton.addEventListener("click", () => {
+        btnRescan.addEventListener("click", () => {
             currentPlate = null;
             plateList.innerHTML = '<li class="text-gray-500">尚未檢測到車牌</li>';
-            newConfirmButton.disabled = true;
-            newRescanButton.style.display = "none";
+            btnConfirm.disabled = true;
+            btnRescan.style.display = "none";
             isScanningStopped = false;
             startStream();
         });
 
-        newStartButton.addEventListener("click", startStream);
-        newStopButton.addEventListener("click", stopStream);
+        btnStart.addEventListener("click", startStream);
+        btnStop.addEventListener("click", stopStream);
 
         // 初始化 UI
         plateList.innerHTML = '<li class="text-gray-500">等待掃描車牌...</li>';
-        newRescanButton.style.display = "none";
-        newConfirmButton.disabled = true;
+        btnRescan.style.display = "none";
+        btnConfirm.disabled = true;
 
-        // 自動啟動
+        // 自動啟動攝影機
         startStream();
     }
     function setupSettleParking() {
