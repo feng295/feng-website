@@ -560,18 +560,13 @@ document.addEventListener("DOMContentLoaded", async function () {
             capture();
         }
 
-        // === 100% 會觸發的「確認進場」事件 ===
-        btnConfirm.addEventListener("click", async () => {
-            console.log("%c[按鈕觸發] 確認進場 CLICK！",
-                "font-size:18px;color:#FF5733;font-weight:bold;");
-
-            updateParkingLotId();
-
+        // 確認進場（送出 license_plate + parking_lot_id + start_time）
+        confirmButton.addEventListener("click", async () => {
             if (!currentPlate) return alert("請先掃描車牌！");
-            if (!selectedParkingLotId) return alert("停車場 ID 無效！請重新選擇停車場");
+            if (!selectedParkingLotId) return alert("請先輸入停車場 ID！");
 
-            btnConfirm.disabled = true;
-            btnConfirm.textContent = "進場中...";
+            confirmButton.disabled = true;
+            confirmButton.textContent = "進場中...";
 
             try {
                 const token = getToken();
@@ -586,57 +581,47 @@ document.addEventListener("DOMContentLoaded", async function () {
                     body: JSON.stringify({
                         license_plate: currentPlate,
                         parking_lot_id: selectedParkingLotId,
-                        start_time
+                        start_time: start_time
                     })
                 });
 
                 if (res.ok) {
-                    plateList.innerHTML =
-                        `<li class="text-green-600 text-7xl font-bold">${currentPlate}<br>進場成功！</li>`;
-                    alert(`進場成功！車牌：${currentPlate}`);
+                    plateList.innerHTML = `<li class="text-green-600 text-5xl font-bold">${currentPlate} 進場成功！</li>`;
+                    alert(`進場成功！\n車牌：${currentPlate}\n停車場 ID：${selectedParkingLotId}\n時間：${new Date().toLocaleString('zh-TW')}`);
 
                     setTimeout(() => {
                         currentPlate = null;
-                        plateList.innerHTML = '<li class="text-gray-500">等待掃描車牌...</li>';
-                        btnConfirm.disabled = true;
-                        btnRescan.style.display = "none";
+                        plateList.innerHTML = '<li class="text-gray-500 text-xl">尚未檢測到車牌</li>';
+                        confirmButton.disabled = true;
+                        rescanButton.style.display = "none";
                         isScanningStopped = false;
                         startStream();
                     }, 8000);
-
                 } else {
-                    const err = await res.json().catch(() => ({}));
+                    const err = await res.json();
                     alert("進場失敗：" + (err.error || err.message || "未知錯誤"));
                 }
-
             } catch (e) {
-                console.error(e);
                 alert("網路錯誤");
             } finally {
-                btnConfirm.disabled = false;
-                btnConfirm.textContent = "確認進場";
+                confirmButton.disabled = false;
+                confirmButton.textContent = "確認進場";
             }
         });
 
-        // === 其他按鈕 ===
-        btnRescan.addEventListener("click", () => {
+        rescanButton.addEventListener("click", () => {
             currentPlate = null;
-            plateList.innerHTML = '<li class="text-gray-500">尚未檢測到車牌</li>';
-            btnConfirm.disabled = true;
-            btnRescan.style.display = "none";
+            plateList.innerHTML = '<li class="text-gray-500 text-xl">尚未檢測到車牌</li>';
+            confirmButton.disabled = true;
+            rescanButton.style.display = "none";
             isScanningStopped = false;
             startStream();
         });
 
-        btnStart.addEventListener("click", startStream);
-        btnStop.addEventListener("click", stopStream);
+        startButton.addEventListener("click", startStream);
+        stopButton.addEventListener("click", stopStream);
 
-        // === 初始化 ===
-        plateList.innerHTML = '<li class="text-gray-500">等待掃描車牌...</li>';
-        btnRescan.style.display = "none";
-        btnConfirm.disabled = true;
-
-        // === 自動啟動 ===
+        // 自動啟動
         startStream();
     }
 
