@@ -735,4 +735,36 @@ a:hover {
         text-align: center !important;
         margin: 15px 0 !important;
     }
+
+    /* ======== 強制讓「行動停車場管理資訊系統」永遠完美置中 ======== */
+    #fullScreenTitle {
+        position: fixed !important;
+        top: 50% !important;
+        left: 50% !important;
+        transform: translate(-50%, -50%) !important;
+        z-index: -10 !important;
+        pointer-events: none !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        width: auto !important;
+        text-align: center !important;
+    }
+
+    #fullScreenTitle h1 {
+        font-size: clamp(2.5rem, 8vw, 7rem) !important;
+        /* 自動適應螢幕大小 */
+        font-weight: 900 !important;
+        line-height: 1.1 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        /* 完全不套用你原本的 168px 規則 */
+    }
+
+    /* 手機板也一樣置中（重點！） */
+    @media (max-width: 768px) {
+        #fullScreenTitle h1 {
+            font-size: clamp(2rem, 10vw, 5rem) !important;
+            /* 絕對不要 168px！！ */
+        }
+    }
 }
