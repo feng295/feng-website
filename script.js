@@ -423,9 +423,7 @@ document.addEventListener("DOMContentLoaded", async function () {
         const stopButton = document.getElementById("stopButtonRent");
         const confirmButton = document.getElementById("confirmButtonRent");
         const rescanButton = document.getElementById("rescanButtonRent");
-        // 正確讀取你存在 hidden input 的停車場 ID
-        const demoInput = document.getElementById("demoParkingLotId");
-        let selectedParkingLotId = demoInput ? demoInput.value : null;
+        let selectedParkingLotId = document.getElementById("demoParkingLotId")?.value || null;
         let currentPlate = null;
         let stream = null;
         let intervalId = null;
