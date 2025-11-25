@@ -563,7 +563,6 @@ document.addEventListener("DOMContentLoaded", async function () {
         // 確認進場（送出 license_plate + parking_lot_id + start_time）
         confirmButton.addEventListener("click", async () => {
             if (!currentPlate) return alert("請先掃描車牌！");
-            if (!selectedParkingLotId) return alert("請先輸入停車場 ID！");
 
             confirmButton.disabled = true;
             confirmButton.textContent = "進場中...";
