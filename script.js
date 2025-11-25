@@ -1808,6 +1808,19 @@ document.addEventListener("DOMContentLoaded", async function () {
         endDateInput.value = today;
         endDateInput.min = "2025-01-01";
 
+        // 關鍵：從 localStorage 取得管理員的 parking_lot_id（你登入時一定有存）
+        function getCurrentParkingLotId() {
+            const userData = localStorage.getItem("user");
+            if (!userData) return null;
+            try {
+                const user = JSON.parse(userData);
+                return user.parking_lot_id || user.parkingLotId || null;
+            } catch (e) {
+                console.error("解析 user 資料失敗", e);
+                return null;
+            }
+        }
+
         async function handleIncomeSearch() {
             const startDate = startDateInput.value;
             const endDate = endDateInput.value;
@@ -1826,13 +1839,17 @@ document.addEventListener("DOMContentLoaded", async function () {
 
             try {
                 const token = getToken();
-                const parkinglotid = getparkinglotid();
-                if (!token || !parkinglotid) throw new Error("認證失敗，請重新登入！");
+                const parkingLotId = getCurrentParkingLotId();  // 這才是正確的！
+
+                if (!token) throw new Error("請重新登入（Token 遺失）");
+                if (!parkingLotId) throw new Error("無法取得您的停車場 ID，請重新登入");
+
+                console.log("查詢收入 → 停車場 ID:", parkingLotId, "日期:", startDate, "到", endDate);
 
                 const queryParams = new URLSearchParams({
                     start_date: startDate,
                     end_date: endDate,
-                    parking_lot_id: parkinglotid
+                    parking_lot_id: parkingLotId  // 後端會根據這個 ID 查
                 });
 
                 const response = await fetch(`${API_URL}/parking/income?${queryParams.toString()}`, {
@@ -1846,36 +1863,30 @@ document.addEventListener("DOMContentLoaded", async function () {
                 if (!response.ok) {
                     if (response.status === 401) throw new Error("認證失敗，請重新登入！");
                     const err = await response.json().catch(() => ({}));
-                    throw new Error(err.error || "伺服器錯誤");
+                    throw new Error(err.error || `伺服器錯誤 (${response.status})`);
                 }
 
                 const result = await response.json();
                 const data = result.data;
 
                 if (!data || typeof data !== 'object') {
-                    throw new Error("收入資料格式錯誤");
+                    throw new Error("後端回傳格式錯誤");
                 }
 
-                // 清空表格，顯示總結資訊
-                incomeTableBody.innerHTML = '';
-                totalIncomeDisplay.innerHTML = '';
-
                 const {
-                    parking_lot_id,
-                    parking_lot_name,
+                    parking_lot_name = "未知停車場",
                     total_hours = 0,
                     total_income = 0,
                     total_records = 0,
                     date_range
                 } = data;
 
-                // 顯示總結卡片（超漂亮！）
                 totalIncomeDisplay.innerHTML = `
                 <div class="bg-gradient-to-r from-blue-600 to-purple-700 text-white p-8 rounded-xl shadow-lg text-center">
-                    <h3 class="text-2xl font-bold mb-4">${parking_lot_name || '全部停車場'}</h3>
+                    <h3 class="text-2xl font-bold mb-4">${parking_lot_name}</h3>
                     <div class="grid grid-cols-2 md:grid-cols-4 gap-6 text-lg">
                         <div>
-                            <div class="text-4xl font-bold">${total_income}</div>
+                            <div class="text-4xl font-bold">${total_income.toLocaleString()}</div>
                             <div class="opacity-90">總收入 (元)</div>
                         </div>
                         <div>
@@ -1887,14 +1898,15 @@ document.addEventListener("DOMContentLoaded", async function () {
                             <div class="opacity-90">總筆數</div>
                         </div>
                         <div>
-                            <div class="text-3xl font-bold">${date_range?.start} <br> → ${date_range?.end}</div>
+                            <div class="text-3xl font-bold">
+                                ${date_range?.start || startDate}<br>→ ${date_range?.end || endDate}
+                            </div>
                             <div class="opacity-90">查詢區間</div>
                         </div>
                     </div>
                 </div>
             `;
 
-                // 如果你未來後端有明細，再加回表格
                 if (total_records === 0) {
                     incomeTableBody.innerHTML = '<tr><td colspan="5" class="text-center py-12 text-gray-500">此區間無收入紀錄</td></tr>';
                 } else {
@@ -1907,7 +1919,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                 incomeTableBody.innerHTML = '<tr><td colspan="5" class="text-red-600">載入失敗</td></tr>';
                 totalIncomeDisplay.innerHTML = '<p class="text-red-600">無法取得收入資料</p>';
 
-                if (error.message.includes("認證")) {
+                if (error.message.includes("登入")) {
                     removeToken();
                     showLoginPage(true);
                 }
