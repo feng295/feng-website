@@ -1821,15 +1821,18 @@ document.addEventListener("DOMContentLoaded", async function () {
                 return;
             }
 
-            incomeTableBody.innerHTML = '<tr><td colspan="5" class="py-8 text-gray-500">載入中...</td></tr>';
+            incomeTableBody.innerHTML = '<tr><td colspan="5" class="py-8">載入中...</td></tr>';
+            totalIncomeDisplay.innerHTML = '';
 
             try {
                 const token = getToken();
-                if (!token) throw new Error("請先登入！");
+                const memberId = getMemberId();
+                if (!token || !memberId) throw new Error("認證失敗，請重新登入！");
 
                 const queryParams = new URLSearchParams({
                     start_date: startDate,
-                    end_date: endDate
+                    end_date: endDate,
+                    member_id: memberId
                 });
 
                 const response = await fetch(`${API_URL}/parking/income?${queryParams.toString()}`, {
@@ -1841,87 +1844,84 @@ document.addEventListener("DOMContentLoaded", async function () {
                 });
 
                 if (!response.ok) {
-                    if (response.status === 401) throw new Error("登入過期，請重新登入");
+                    if (response.status === 401) throw new Error("認證失敗，請重新登入！");
                     const err = await response.json().catch(() => ({}));
-                    throw new Error(err.message || "伺服器錯誤");
+                    throw new Error(err.error || "伺服器錯誤");
                 }
 
                 const result = await response.json();
                 const data = result.data;
 
                 if (!data || typeof data !== 'object') {
-                    throw new Error("資料格式錯誤");
+                    throw new Error("收入資料格式錯誤");
                 }
 
-                // 清空表格與總計
-                incomeTableBody.innerHTML = "";
-                totalIncomeDisplay.innerHTML = "";
+                // 清空表格，顯示總結資訊
+                incomeTableBody.innerHTML = '';
+                totalIncomeDisplay.innerHTML = '';
 
-                // 顯示彙總結果（大字美觀版）
-                const summaryHTML = `
-                <tr class="bg-blue-50 text-lg font-semibold">
-                    <td colspan="5" class="py-6 text-center">
-                        <div class="text-2xl text-blue-800 mb-3">
-                            ${data.parking_lot_name || '所有停車場'} 收入統計
-                        </div>
-                        <div class="text-gray-700">
-                            查詢區間：${data.date_range.start} 至 ${data.date_range.end}
-                        </div>
-                    </td>
-                </tr>
-                <tr class="text-2xl font-bold text-green-600 bg-green-50">
-                    <td colspan="5" class="py-8 text-center">
-                        總收入：${data.total_income?.toLocaleString() || 0} 元
-                    </td>
-                </tr>
-                <tr class="text-lg">
-                    <td class="py-4 px-6 border">停車場 ID</td>
-                    <td class="py-4 px-6 border">${data.parking_lot_id || '全部'}</td>
-                </tr>
-                <tr class="text-lg">
-                    <td class="py-4 px-6 border">總停車時數</td>
-                    <td class="py-4 px-6 border">${data.total_hours || 0} 小時</td>
-                </tr>
-                <tr class="text-lg">
-                    <td class="py-4 px-6 border">總筆數</td>
-                    <td class="py-4 px-6 border">${data.total_records || 0} 筆</td>
-                </tr>
-            `;
+                const {
+                    parking_lot_id,
+                    parking_lot_name,
+                    total_hours = 0,
+                    total_income = 0,
+                    total_records = 0,
+                    date_range
+                } = data;
 
-                incomeTableBody.innerHTML = summaryHTML;
-
-                // 底部再秀一次總收入（你原本的 totalIncomeDisplay）
+                // 顯示總結卡片（超漂亮！）
                 totalIncomeDisplay.innerHTML = `
-                <div class="text-3xl font-bold text-green-600 text-center mt-8 p-6 bg-green-50 rounded-lg">
-                    期間總收入：${data.total_income?.toLocaleString() || 0} 元
+                <div class="bg-gradient-to-r from-blue-600 to-purple-700 text-white p-8 rounded-xl shadow-lg text-center">
+                    <h3 class="text-2xl font-bold mb-4">${parking_lot_name || '全部停車場'}</h3>
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-6 text-lg">
+                        <div>
+                            <div class="text-4xl font-bold">${total_income}</div>
+                            <div class="opacity-90">總收入 (元)</div>
+                        </div>
+                        <div>
+                            <div class="text-4xl font-bold">${total_hours.toFixed(1)}</div>
+                            <div class="opacity-90">總停車時數 (小時)</div>
+                        </div>
+                        <div>
+                            <div class="text-4xl font-bold">${total_records}</div>
+                            <div class="opacity-90">總筆數</div>
+                        </div>
+                        <div>
+                            <div class="text-3xl font-bold">${date_range?.start} <br> → ${date_range?.end}</div>
+                            <div class="opacity-90">查詢區間</div>
+                        </div>
+                    </div>
                 </div>
             `;
 
-            } catch (error) {
-                console.error("收入查詢失敗:", error);
-                incomeTableBody.innerHTML = `
-                <tr><td colspan="5" class="py-8 text-red-600 text-center">
-                    載入失敗：${error.message}
-                </td></tr>
-            `;
-                totalIncomeDisplay.innerHTML = "<p class='text-red-600'>無法取得總收入</p>";
+                // 如果你未來後端有明細，再加回表格
+                if (total_records === 0) {
+                    incomeTableBody.innerHTML = '<tr><td colspan="5" class="text-center py-12 text-gray-500">此區間無收入紀錄</td></tr>';
+                } else {
+                    incomeTableBody.innerHTML = '<tr><td colspan="5" class="text-center py-12 text-green-600 font-bold text-2xl">收入總覽已顯示在上方卡片</td></tr>';
+                }
 
-                if (error.message.includes("登入")) {
+            } catch (error) {
+                console.error("Failed to fetch income:", error);
+                alert("載入失敗：" + error.message);
+                incomeTableBody.innerHTML = '<tr><td colspan="5" class="text-red-600">載入失敗</td></tr>';
+                totalIncomeDisplay.innerHTML = '<p class="text-red-600">無法取得收入資料</p>';
+
+                if (error.message.includes("認證")) {
                     removeToken();
                     showLoginPage(true);
                 }
             }
         }
 
-        // 點選「收入查詢」時自動填今天
-        const incomeInquiryLink = document.querySelector('.nav-link[data-target="incomeInquiry"]');
-        if (incomeInquiryLink) {
-            incomeInquiryLink.addEventListener('click', () => {
+        // 點擊導覽列時自動填今天
+        const incomeLink = document.querySelector('.nav-link[data-target="incomeInquiry"]');
+        if (incomeLink) {
+            incomeLink.addEventListener('click', () => {
                 endDateInput.value = new Date().toISOString().split('T')[0];
             });
         }
 
-        // 綁定查詢按鈕
         incomeSearchButton.addEventListener("click", handleIncomeSearch);
     }
     // 添加租用紀錄
