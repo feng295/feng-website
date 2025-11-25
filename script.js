@@ -1808,6 +1808,29 @@ document.addEventListener("DOMContentLoaded", async function () {
         endDateInput.value = today;
         endDateInput.min = "2025-01-01";
 
+        // 從 localStorage 或其他方式取得目前管理員正在查看的停車場 ID
+        function getCurrentParkingLotId() {
+            // 方式1：你之前有存 selectedParkingSpotId（推薦）
+            const saved = localStorage.getItem("selectedParkingSpotId");
+            if (saved) return parseInt(saved, 10);
+
+            // 方式2：從 URL 參數抓（備用）
+            const urlParams = new URLSearchParams(window.location.search);
+            return parseInt(urlParams.get("lot_id"), 10) || null;
+        }
+
+        let currentParkingLotId = getCurrentParkingLotId();
+
+        // 如果還沒選停車場，提示使用者先選一個（可選）
+        if (!currentParkingLotId) {
+            totalIncomeDisplay.innerHTML = `
+            <div class="bg-yellow-100 border border-yellow-400 text-yellow-800 p-6 rounded-lg text-center">
+                <p class="text-lg font-semibold">請先在「車位列表」中選擇一個停車場</p>
+                <p class="mt-2">或點擊 <a href="#My parking space" class="text-blue-600 underline nav-link" data-target="My parking space">這裡</a> 前往選擇</p>
+            </div>
+        `;
+        }
+
         async function handleIncomeSearch() {
             const startDate = startDateInput.value;
             const endDate = endDateInput.value;
@@ -1821,18 +1844,24 @@ document.addEventListener("DOMContentLoaded", async function () {
                 return;
             }
 
+            // 強制重新取得最新的 parking_lot_id（避免切換停車場後沒更新）
+            currentParkingLotId = getCurrentParkingLotId();
+            if (!currentParkingLotId) {
+                alert("請先選擇一個停車場！");
+                return;
+            }
+
             incomeTableBody.innerHTML = '<tr><td colspan="5" class="py-8">載入中...</td></tr>';
             totalIncomeDisplay.innerHTML = '';
 
             try {
                 const token = getToken();
-                const memberId = getMemberId();
-                if (!token || !memberId) throw new Error("認證失敗，請重新登入！");
+                if (!token) throw new Error("認證失敗，請重新登入！");
 
                 const queryParams = new URLSearchParams({
                     start_date: startDate,
                     end_date: endDate,
-                    member_id: memberId
+                    parking_lot_id: currentParkingLotId  // 改這裡！用 parking_lot_id
                 });
 
                 const response = await fetch(`${API_URL}/parking/income?${queryParams.toString()}`, {
@@ -1856,49 +1885,45 @@ document.addEventListener("DOMContentLoaded", async function () {
                     throw new Error("收入資料格式錯誤");
                 }
 
-                // 清空表格，顯示總結資訊
-                incomeTableBody.innerHTML = '';
-                totalIncomeDisplay.innerHTML = '';
-
                 const {
-                    parking_lot_id,
-                    parking_lot_name,
+                    parking_lot_name = "未知停車場",
                     total_hours = 0,
                     total_income = 0,
                     total_records = 0,
                     date_range
                 } = data;
 
-                // 顯示總結卡片（超漂亮！）
+                // 超美總結卡片
                 totalIncomeDisplay.innerHTML = `
-                <div class="bg-gradient-to-r from-blue-600 to-purple-700 text-white p-8 rounded-xl shadow-lg text-center">
-                    <h3 class="text-2xl font-bold mb-4">${parking_lot_name || '全部停車場'}</h3>
-                    <div class="grid grid-cols-2 md:grid-cols-4 gap-6 text-lg">
+                <div class="bg-gradient-to-r from-indigo-600 to-pink-600 text-white p-8 rounded-xl shadow-2xl text-center">
+                    <h3 class="text-3xl font-bold mb-6">${parking_lot_name}</h3>
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-8 text-lg">
                         <div>
-                            <div class="text-4xl font-bold">${total_income}</div>
-                            <div class="opacity-90">總收入 (元)</div>
+                            <div class="text-5xl font-bold">${total_income.toLocaleString()}</div>
+                            <div class="opacity-90 mt-2">總收入 (元)</div>
                         </div>
                         <div>
-                            <div class="text-4xl font-bold">${total_hours.toFixed(1)}</div>
-                            <div class="opacity-90">總停車時數 (小時)</div>
+                            <div class="text-5xl font-bold">${total_hours.toFixed(1)}</div>
+                            <div class="opacity-90 mt-2">總停車時數</div>
                         </div>
                         <div>
-                            <div class="text-4xl font-bold">${total_records}</div>
-                            <div class="opacity-90">總筆數</div>
+                            <div class="text-5xl font-bold">${total_records}</div>
+                            <div class="opacity-90 mt-2">總筆數</div>
                         </div>
                         <div>
-                            <div class="text-3xl font-bold">${date_range?.start} <br> → ${date_range?.end}</div>
-                            <div class="opacity-90">查詢區間</div>
+                            <div class="text-2xl font-bold">
+                                ${date_range?.start || startDate}<br>→<br>${date_range?.end || endDate}
+                            </div>
+                            <div class="opacity-90 mt-2">查詢區間</div>
                         </div>
                     </div>
                 </div>
             `;
 
-                // 如果你未來後端有明細，再加回表格
                 if (total_records === 0) {
                     incomeTableBody.innerHTML = '<tr><td colspan="5" class="text-center py-12 text-gray-500">此區間無收入紀錄</td></tr>';
                 } else {
-                    incomeTableBody.innerHTML = '<tr><td colspan="5" class="text-center py-12 text-green-600 font-bold text-2xl">收入總覽已顯示在上方卡片</td></tr>';
+                    incomeTableBody.innerHTML = '<tr><td colspan="5" class="text-center py-12 text-green-600 font-bold text-2xl">收入總覽已顯示在上方</td></tr>';
                 }
 
             } catch (error) {
@@ -1923,6 +1948,9 @@ document.addEventListener("DOMContentLoaded", async function () {
         }
 
         incomeSearchButton.addEventListener("click", handleIncomeSearch);
+
+        // 頁面載入時自動查一次（可選）
+        // handleIncomeSearch();
     }
     // 添加租用紀錄
     function addToHistory(action) {
