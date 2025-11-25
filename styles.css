@@ -696,14 +696,11 @@ a:hover {
         margin-bottom: 5px;
     }
 
-    /* ═══ 強制進場 & 出場字體完全一致（澎科大實驗大樓 168px + 動作 48px）═══ */
+    /* 只針對進場離場頁面的大字，不再影響所有 h1 */
     #rentParkingName,
     #settleParkingName,
-    div[class*="parking"],
-    span[class*="parking"],
-    h1,
-    h2,
-    h3 {
+    .parking-title,
+    .big-parking-name {
         font-size: 168px !important;
         line-height: 1.1 !important;
         font-weight: 900 !important;
