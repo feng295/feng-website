@@ -733,39 +733,21 @@ a:hover {
         margin: 15px 0 !important;
     }
 
-    /* ========= 永久解決：大標題永遠完美置中（電腦＋手機都準）========= */
     #fullScreenTitle {
         position: fixed;
         inset: 0;
-        /* 等於 top:0; left:0; right:0; bottom:0; */
         display: flex;
         align-items: center;
-        /* 垂直置中 */
         justify-content: center;
-        /* 水平置中 */
         z-index: -10;
         pointer-events: none;
-        /* 不擋滑鼠點擊 */
-        margin: 0 !important;
         padding: 0 20px;
-        /* 手機左右留點邊 */
         text-align: center;
     }
 
-    #fullScreenTitle h1 {
-        font-size: clamp(3rem, 10vw, 8rem) !important;
-        /* 自動縮放，超漂亮 */
-        font-weight: 900 !important;
-        line-height: 1.1 !important;
-        margin: 0 !important;
-        padding: 0 !important;
-        letter-spacing: 2px;
-    }
-
-    /* 手機也完美置中（不用再寫 media query） */
-    @media (max-width: 768px) {
-        #fullScreenTitle h1 {
-            font-size: clamp(2.5rem, 12vw, 6rem) !important;
-        }
+    #fullScreenTitle>div {
+        font-size: clamp(3.5rem, 11vw, 9rem) !important;
+        line-height: 1.1;
+        font-weight: 900;
     }
 }
