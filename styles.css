@@ -177,8 +177,8 @@ button[data-action="cancel"] {
     font-weight: 900 !important;
     text-align: center !important;
     color: white !important;
-    text-shadow: 
-        0 2px 10px rgba(0,0,0,0.4),
+    text-shadow:
+        0 2px 10px rgba(0, 0, 0, 0.4),
         0 0 30px rgba(102, 126, 234, 0.6);
     letter-spacing: 3px;
     margin: 0 0 40px 0 !important;
@@ -236,7 +236,7 @@ button:not(#logoutButton),
 }
 
 .edit-btn {
-    background: #48bb78;
+    background: #4b48bb;
 }
 
 .delete-btn {
@@ -421,6 +421,7 @@ button:not(#logoutButton),
         box-shadow: 0 0 0 0 rgba(72, 187, 120, 0);
     }
 }
+
 /* ====================== 編輯車位表單 美化 ====================== */
 
 /* 整個編輯區塊（最外層容器） */
@@ -429,12 +430,13 @@ button:not(#logoutButton),
     padding: 35px 40px;
     background: linear-gradient(145deg, #ffffff, #f0f2f5);
     border-radius: 20px;
-    box-shadow: 
+    box-shadow:
         0 15px 35px rgba(0, 0, 0, 0.1),
         0 5px 15px rgba(0, 0, 0, 0.05),
         inset 0 1px 0 rgba(255, 255, 255, 0.6);
     border: 1px solid rgba(102, 126, 234, 0.2);
-    display: none;                 /* 原來就隱藏，保留 */
+    display: none;
+    /* 原來就隱藏，保留 */
 }
 
 /* 編輯表單標題 */
@@ -452,7 +454,7 @@ button:not(#logoutButton),
 }
 
 /* 每一列輸入框 */
-#editParkingFormContainer > div {
+#editParkingFormContainer>div {
     margin-bottom: 22px;
     display: flex;
     align-items: center;
@@ -530,15 +532,91 @@ button:not(#logoutButton),
 
 /* 響應式（如果螢幕太小） */
 @media (max-width: 768px) {
-    #editParkingFormContainer > div {
+    #editParkingFormContainer>div {
         flex-direction: column;
         align-items: stretch;
     }
+
     #editParkingFormContainer label {
         width: 100%;
     }
+
     #editParkingFormContainer input,
     #editParkingFormContainer select {
         min-width: auto;
     }
+}
+
+/* ====================== 讓內容區標題與左側功能清單完美對齊 + 加實線 ====================== */
+
+/* 讓整個內容區的上方留出與左側功能清單相同的高度 */
+.content-container {
+    position: relative;
+    padding-top: 20px !important;
+    /* 關鍵：與功能清單的頂部對齊 */
+}
+
+/* 主要標題（收入查詢、車位列表、查看所有用戶資料…等） */
+.content-section h2,
+.content-section .section-title,
+#incomeInquiry h2,
+#My\\ parking\\ space h2,
+#viewAllUsers h2,
+#history h2,
+#profile h2 {
+    position: relative;
+    font-size: 32px !important;
+    font-weight: 900 !important;
+    color: white !important;
+    text-align: left !important;
+    margin: 0 0 30px 0 !important;
+    padding: 18px 0 18px 40px !important;
+    /* 左邊留空間對齊功能清單 */
+    background: linear-gradient(to right, #667eea, #764ba2);
+    border-radius: 16px;
+    box-shadow: 0 10px 30px rgba(102, 126, 234, 0.35);
+    letter-spacing: 2px;
+    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+/* 在標題正下方加一條漂亮的實線（與左側功能清單的底線對齊） */
+.content-section h2::after,
+.content-section .section-title::after,
+#incomeInquiry h2::after,
+#My\\ parking\\ space h2::after,
+#viewAllUsers h2::after,
+#history h2::after,
+#profile h2::after {
+    content: '';
+    position: absolute;
+    left: 40px;
+    right: 40px;
+    bottom: 0;
+    height: 4px;
+    background: linear-gradient(to right, #667eea, #764ba2);
+    border-radius: 2px;
+    box-shadow: 0 4px 10px rgba(102, 126, 234, 0.4);
+}
+
+/* 特殊處理：收入查詢的日期區塊也跟著對齊 */
+.search-container {
+    margin-left: 40px;
+    margin-right: 40px;
+    padding: 25px;
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 16px;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+}
+
+/* 讓表格也跟著左側對齊（避免太貼邊） */
+.parking-spaces-table,
+.income-result,
+#incomeTable,
+#viewParkingTable,
+#My\\ parking\\ spaceTable,
+#renterTable {
+    margin: 30px 40px 40px 40px !important;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
 }

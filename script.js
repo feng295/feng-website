@@ -1903,8 +1903,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                 // 顯示總收入（上方）
                 totalIncomeDisplay.innerHTML = `
                 <div class="bg-gradient-to-r from-emerald-500 to-teal-600 text-white p-8 rounded-2xl shadow-2xl text-center mb-8">
-                    <h3 class="text-3xl font-bold mb-4">${address}</h3>
-                    <p class="text-5xl font-extrabold">${summary.total_income?.toLocaleString() || 0} 元</p>
+                    <p class="text-5xl font-extrabold">總共 ${summary.total_income?.toLocaleString() || 0} 元</p>
                     <p class="text-xl opacity-90 mt-2">
                         共 ${summary.total_records || 0} 筆 ⋅ 
                         總計 ${summary.total_hours?.toFixed(1) || 0} 小時
