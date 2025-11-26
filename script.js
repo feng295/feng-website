@@ -180,7 +180,7 @@ document.addEventListener("DOMContentLoaded", async function () {
         } else if (role === "admin") {
             navList.innerHTML = `
                 <li><a href="#" class="nav-link" data-target="addParking">新增停車場</a></li>
-                <li><a href="#" class="nav-link" data-target="My parking space">車位列表</a></li>
+                <li><a href="#" class="nav-link" data-target="My parking space">停車場列表</a></li>
                 <li><a href="#" class="nav-link" data-target="incomeInquiry">收入查詢</a></li>
                 <li><a href="#" class="nav-link" data-target="profile">個人資訊</a></li>
             `;
