@@ -1209,6 +1209,33 @@ document.addEventListener("DOMContentLoaded", async function () {
             roleInput.setAttribute("required", "true");
         }
     }
+    // ====================== 全螢幕成功動畫共用函式 ======================
+    function triggerSuccessAnimation(mainText, subText, callback, duration = 2000) {
+        const overlay = document.getElementById("successOverlay");
+        if (!overlay) {
+            // 如果忘記加 HTML 就直接執行 callback（保險）
+            setTimeout(callback, 600);
+            return;
+        }
+
+        // 更新文字
+        overlay.querySelector(".success-text").textContent = mainText;
+        overlay.querySelector(".success-subtext").textContent = subText || "請稍候...";
+
+        // 顯示並觸發動畫
+        overlay.style.display = "flex";
+        void overlay.offsetWidth;               // 強制重繪
+        overlay.classList.add("show");
+
+        // 指定時間後淡出 → 執行回乎
+        setTimeout(() => {
+            overlay.classList.remove("show");
+            setTimeout(() => {
+                overlay.style.display = "none";
+                if (typeof callback === "function") callback();
+            }, 600); // 等待淡出動畫結束
+        }, duration);
+    }
     // 初始化表單顯示
     toggleFormFields();
     // 切換登入/註冊
@@ -1226,15 +1253,18 @@ document.addEventListener("DOMContentLoaded", async function () {
     // 處理登入/註冊
     authForm.addEventListener("submit", async function (event) {
         event.preventDefault();
+
         const email = emailInput.value.trim();
         const password = passwordInput.value.trim();
         const errors = [];
+
         if (!email) errors.push("電子郵件不能為空");
         if (!password) errors.push("密碼不能為空");
         const passwordRegex = /^(?=.*[a-zA-Z])(?=.*[0-9]).{8,}$/;
         if (!passwordRegex.test(password)) {
             errors.push("密碼必須至少 8 個字符，包含字母和數字");
         }
+
         if (!isLogin) {
             const name = nameInput.value.trim();
             const phone = phoneInput.value.trim();
@@ -1245,10 +1275,13 @@ document.addEventListener("DOMContentLoaded", async function () {
             if (!role) errors.push("請選擇身份");
             if (role === "renter" && !license_plate) errors.push("車牌號碼不能為空");
         }
+
         if (errors.length > 0) {
             showError(errors.join("；"));
             return;
         }
+
+        // ====================== 登入 ======================
         if (isLogin) {
             try {
                 const response = await fetch(`${API_URL}/members/login`, {
@@ -1256,100 +1289,104 @@ document.addEventListener("DOMContentLoaded", async function () {
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ email, password })
                 });
-                console.log(`Login response status: ${response.status}`);
+
                 if (!response.headers.get('content-type')?.includes('application/json')) {
                     throw new Error("後端返回非 JSON 響應，請檢查伺服器配置");
                 }
+
                 const result = await response.json();
-                console.log("Login response data:", JSON.stringify(result, null, 2));
+
                 if (response.ok) {
+                    // ---------- 登入成功：儲存資料 ----------
                     if (!result.data || !result.data.token) {
                         showError("後端未返回 token，請檢查後端服務！");
                         return;
                     }
+
                     setToken(result.data.token);
-                    let memberId = null;
-                    if (result.data.member && result.data.member.member_id) {
-                        memberId = result.data.member.member_id;
-                    } else if (result.data.member_id) {
-                        memberId = result.data.member_id;
-                    } else if (result.data.id) {
-                        memberId = result.data.id;
-                    } else if (result.data.user_id) {
-                        memberId = result.data.user_id;
-                    } else if (result.data.member && result.data.member.id) {
-                        memberId = result.data.member.id;
-                    } else {
+
+                    // 取出 member_id（多種可能格式都支援）
+                    let memberId = result.data.member?.member_id ||
+                        result.data.member_id ||
+                        result.data.id ||
+                        result.data.user_id ||
+                        result.data.member?.id;
+
+                    if (!memberId) {
                         showError("後端未返回會員 ID，請聯繫管理員！");
                         return;
                     }
                     localStorage.setItem("member_id", memberId.toString());
-                    let role = "";
-                    if (result.data.member && typeof result.data.member.role === "string") {
-                        role = result.data.member.role.toLowerCase().trim();
-                    } else if (typeof result.data.role === "string") {
-                        role = result.data.role.toLowerCase().trim();
-                    } else if (result.data.user && typeof result.data.user.role === "string") {
-                        role = result.data.user.role.toLowerCase().trim();
-                    } else if (result.data.roles && Array.isArray(result.data.roles) && result.data.roles.length > 0) {
-                        role = result.data.roles[0].toLowerCase().trim();
-                    } else if (typeof result.data.user_role === "string") {
-                        role = result.data.user_role.toLowerCase().trim();
-                    } else if (typeof result.role === "string") {
-                        role = result.role.toLowerCase().trim();
-                    } else {
-                        showError("後端未返回有效的角色資訊，請聯繫管理員！");
-                        return;
-                    }
-                    const validRoles = ["renter", "admin"];
-                    if (!validRoles.includes(role)) {
-                        showError(`後端返回的角色 "${role}" 無效，應為 ${validRoles.join(", ")} 之一！`);
+
+                    // 取出 role（多種可能格式都支援）
+                    let role = (result.data.member?.role ||
+                        result.data.role ||
+                        result.data.user?.role ||
+                        result.data.user_role ||
+                        result.role || "").toString().toLowerCase().trim();
+
+                    if (!["renter", "admin"].includes(role)) {
+                        showError("角色資訊錯誤，請聯繫管理員！");
                         return;
                     }
                     setRole(role);
-                    const newPath = `/${role}`;
-                    history.replaceState({ role }, '', newPath); // 設置 URL 路徑
-                    alert("登入成功！");
-                    showMainPage();
+
+                    // ---------- 顯示全螢幕成功動畫 ----------
+                    triggerSuccessAnimation("登入成功！", "即將進入系統...", () => {
+                        const newPath = `/${role}`;
+                        history.replaceState({ role }, '', newPath);
+                        showMainPage();                     // 真正進入主畫面
+                    });
+
                 } else {
-                    console.error("Login failed:", result);
                     showError(result.error || "電子郵件或密碼錯誤！");
                 }
             } catch (error) {
-                console.error("Login failed:", error.message);
-                showError(error.message || "無法連接到伺服器，請檢查網路或後端服務！");
+                console.error("Login failed:", error);
+                showError(error.message || "無法連接到伺服器");
             }
+
+            // ====================== 註冊 ======================
         } else {
             const name = nameInput.value.trim();
             const phone = phoneInput.value.trim();
             const role = roleInput.value.toLowerCase().trim();
             let payment_info = cardNumberInput.value.trim();
             const license_plate = licensePlateInput.value.trim();
+
             try {
                 const response = await fetch(`${API_URL}/members/register`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ name, email, password, phone, role, payment_info, license_plate })
                 });
-                console.log(`Register response status: ${response.status}`);
+
                 if (!response.headers.get('content-type')?.includes('application/json')) {
                     throw new Error("後端返回非 JSON 響應，請檢查伺服器配置");
                 }
+
                 const result = await response.json();
+
                 if (response.ok) {
-                    alert("註冊成功！請使用此帳號登入。");
-                    isLogin = true;
-                    formTitle.textContent = "登入";
-                    submitButton.textContent = "登入";
-                    toggleMessage.innerHTML = '還沒有帳號？<a href="#" id="toggleLink">註冊</a>';
-                    toggleFormFields();
+                    // ---------- 註冊成功動畫 ----------
+                    triggerSuccessAnimation("註冊成功！", "即將切換至登入畫面", () => {
+                        // 自動切回登入模式
+                        isLogin = true;
+                        formTitle.textContent = "行動停車場管理資訊系統 登入";
+                        submitButton.textContent = "登入";
+                        toggleMessage.innerHTML = '還沒有帳號？<a href="#" id="toggleLink">註冊</a>';
+                        toggleFormFields();
+                        // 清空密碼欄位（安全考量）
+                        passwordInput.value = "";
+                        showSuccess("請使用剛剛註冊的帳號登入");
+                    }, 1800); // 註冊稍微短一點
+
                 } else {
-                    console.error("Register failed:", response.status, result);
                     showError(result.error || `註冊失敗！（錯誤碼：${response.status}）`);
                 }
             } catch (error) {
-                console.error("Register failed:", error.message);
-                showError(error.message || "無法連接到伺服器，請檢查網路或後端服務！");
+                console.error("Register failed:", error);
+                showError(error.message || "無法連接到伺服器");
             }
         }
     });
