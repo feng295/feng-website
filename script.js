@@ -182,15 +182,14 @@ document.addEventListener("DOMContentLoaded", async function () {
                 <li><a href="#" class="nav-link" data-target="addParking">新增停車場</a></li>
                 <li><a href="#" class="nav-link" data-target="My parking space">車位列表</a></li>
                 <li><a href="#" class="nav-link" data-target="incomeInquiry">收入查詢</a></li>
-                <li><a href="#" class="nav-link" data-target="viewAllUsers">查看所有用戶資料</a></li>
                 <li><a href="#" class="nav-link" data-target="profile">個人資訊</a></li>
             `;
         }
         document.querySelectorAll(".content-section").forEach(section => {
             section.style.display = "none";
         });
-        const defaultSectionId = role === "renter" ? "history" :
-            role === "admin" ? "viewAllUsers" : "My parking space";
+        // role 已在上方驗證為 "renter" 或 "admin"，使用簡單的三元運算子確保有預設值
+        const defaultSectionId = role === "renter" ? "history" : "My parking space";
         const defaultSection = document.getElementById(defaultSectionId);
         if (!defaultSection) {
             console.error(`Default section "${defaultSectionId}" not found`);
