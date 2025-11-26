@@ -421,3 +421,124 @@ button:not(#logoutButton),
         box-shadow: 0 0 0 0 rgba(72, 187, 120, 0);
     }
 }
+/* ====================== 編輯車位表單 美化 ====================== */
+
+/* 整個編輯區塊（最外層容器） */
+#editParkingFormContainer {
+    margin: 30px 0;
+    padding: 35px 40px;
+    background: linear-gradient(145deg, #ffffff, #f0f2f5);
+    border-radius: 20px;
+    box-shadow: 
+        0 15px 35px rgba(0, 0, 0, 0.1),
+        0 5px 15px rgba(0, 0, 0, 0.05),
+        inset 0 1px 0 rgba(255, 255, 255, 0.6);
+    border: 1px solid rgba(102, 126, 234, 0.2);
+    display: none;                 /* 原來就隱藏，保留 */
+}
+
+/* 編輯表單標題 */
+#editParkingFormContainer h3 {
+    font-size: 28px;
+    font-weight: 900;
+    color: #667eea;
+    text-align: center;
+    margin-bottom: 30px;
+    letter-spacing: 1px;
+    background: linear-gradient(to right, #667eea, #764ba2);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+/* 每一列輸入框 */
+#editParkingFormContainer > div {
+    margin-bottom: 22px;
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 15px;
+}
+
+/* 標籤 */
+#editParkingFormContainer label {
+    font-weight: 600;
+    color: #4a5568;
+    width: 160px;
+    font-size: 16px;
+}
+
+/* 輸入框 & 下拉選單 */
+#editParkingFormContainer input,
+#editParkingFormContainer select {
+    flex: 1;
+    min-width: 280px;
+    padding: 14px 18px;
+    font-size: 16px;
+    border: 2px solid #e2e8f0;
+    border-radius: 14px;
+    background: #ffffff;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+}
+
+#editParkingFormContainer input:focus,
+#editParkingFormContainer select:focus {
+    outline: none;
+    border-color: #667eea;
+    box-shadow: 0 0 0 5px rgba(102, 126, 234, 0.15);
+    transform: translateY(-2px);
+}
+
+/* 按鈕區（儲存、取消） */
+#editParkingFormContainer button {
+    padding: 12px 28px;
+    font-size: 16px;
+    font-weight: 600;
+    border-radius: 12px;
+    min-width: 120px;
+    margin-right: 15px;
+    margin-top: 10px;
+    transition: all 0.3s ease;
+}
+
+/* 儲存按鈕（藍紫漸層） */
+#editParkingFormContainer button:first-of-type,
+#saveEditSpotButton {
+    background: linear-gradient(to right, #667eea, #764ba2);
+    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+}
+
+#editParkingFormContainer button:first-of-type:hover,
+#saveEditSpotButton:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 15px 35px rgba(102, 126, 234, 0.5);
+}
+
+/* 取消按鈕（紅色） */
+#editParkingFormContainer button:last-of-type,
+#cancelEditSpotButton {
+    background: linear-gradient(to right, #f56565, #e53e3e);
+    box-shadow: 0 8px 25px rgba(245, 101, 101, 0.4);
+}
+
+#editParkingFormContainer button:last-of-type:hover,
+#cancelEditSpotButton:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 15px 35px rgba(245, 101, 101, 0.6);
+}
+
+/* 響應式（如果螢幕太小） */
+@media (max-width: 768px) {
+    #editParkingFormContainer > div {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    #editParkingFormContainer label {
+        width: 100%;
+    }
+    #editParkingFormContainer input,
+    #editParkingFormContainer select {
+        min-width: auto;
+    }
+}
