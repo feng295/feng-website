@@ -546,3 +546,38 @@ button:not(#logoutButton),
         min-width: auto;
     }
 }
+/* 強烈推薦：改用 Grid 讓內容區永遠跟功能欄完美對齊（取代上面的 margin-left） */
+.system-container {
+    display: grid;
+    grid-template-columns: 280px 1fr;   /* 左邊固定 280px，右邊自動填滿 */
+    gap: 30px;
+    padding: 0 20px;
+    max-width: 1600px;
+    margin: 40px auto;
+}
+
+/* 原本的 flex 相關設定全部刪掉或註解掉 */
+.function-list {
+    width: auto !important;     /* 不再需要固定寬度 */
+    margin: 0 !important;
+}
+
+/* 內容區 */
+.content-container {
+    width: auto !important;
+}
+
+/* 現在 h2 只要左邊留點間距就永遠對齊了 */
+.content-section h2 {
+    font-size: 28px !important;
+    font-weight: 800 !important;
+    color: #2d3748 !important;
+    margin: 0 0 25px 10px !important;   /* 只留一點內縮，不用算像素 */
+    padding-bottom: 12px !important;
+    
+    border-bottom: 4px solid transparent !important;
+    border-image: linear-gradient(to right, #667eea, #764ba2) 1 !important;
+    border-image-slice: 1 !important;
+    display: inline-block;
+    width: fit-content;
+}
