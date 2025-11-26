@@ -605,3 +605,19 @@ button:not(#logoutButton),
     border-left-color: #fff !important;
     box-shadow: 0 10px 30px rgba(102, 126, 234, 0.35) !important;
 }
+/* 讓左上角「功能清單」四個字，跟右邊的 <h2>（例如「車位列表」）完全一樣大、一樣粗、一樣有質感 */
+.function-list h1 {
+    font-size: 28px !important;        /* 跟所有 <h2> 一樣大 */
+    font-weight: 800 !important;       /* 跟 <h2> 一樣粗 */
+    color: #2d3748 !important;         /* 跟 <h2> 同色 */
+    margin: 0 0 30px 0 !important;
+    padding-bottom: 12px !important;
+    letter-spacing: 0.5px !important;
+    
+    /* 加上跟 <h2> 一樣的紫藍漸層底線（超統一！） */
+    border-bottom: 4px solid transparent !important;
+    border-image: linear-gradient(to right, #667eea, #764ba2) 1 !important;
+    border-image-slice: 1 !important;
+    display: inline-block;
+    width: fit-content;
+}
