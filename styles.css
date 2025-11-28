@@ -978,3 +978,120 @@ button:not(#logoutButton),
     border-radius: 14px !important;
     border: 2px solid #cbd5e1 !important;
 }
+/* ====================== 編輯個人資料表單 - 終極美化版 ====================== */
+#editProfileForm {
+    background: linear-gradient(145deg, #ffffff, #f8fafc) !important;
+    padding: 40px 50px !important;
+    border-radius: 24px !important;
+    box-shadow: 
+        0 20px 50px rgba(0,0,0,0.12),
+        0 10px 20px rgba(102,126,234,0.15) !important;
+    border: 2px solid rgba(102,126,234,0.2) !important;
+    max-width: 800px !important;
+    margin: 40px auto !important;
+    animation: slideDown 0.5s ease-out;
+}
+
+#editProfileForm h3 {
+    font-size: 32px !important;
+    font-weight: 900 !important;
+    text-align: center !important;
+    background: linear-gradient(to right, #667eea, #764ba2);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 40px !important;
+    letter-spacing: 1px;
+}
+
+/* 輸入框美化 */
+#editProfileForm input,
+#editProfileForm select {
+    padding: 16px 20px !important;
+    font-size: 20px !important;
+    border: 2px solid #e2e8f0 !important;
+    border-radius: 16px !important;
+    transition: all 0.3s ease !important;
+    background: white !important;
+}
+
+#editProfileForm input:focus,
+#editProfileForm select:focus {
+    outline: none !important;
+    border-color: #667eea !important;
+    box-shadow: 0 0 0 5px rgba(102,126,234,0.2) !important;
+    transform: translateY(-2px);
+}
+
+/* 標籤文字加大 */
+#editProfileForm label {
+    font-size: 20px !important;
+    font-weight: 700 !important;
+    color: #2d3748 !important;
+    margin-bottom: 10px !important;
+}
+
+/* 三大按鈕：三種顏色 + 超大 + 置中 + 懸浮特效 */
+#editProfileForm .button-group {
+    display: flex;
+    justify-content: center;
+    gap: 30px;
+    margin-top: 50px;
+    flex-wrap: wrap;
+}
+
+#saveProfileButton {
+    background: linear-gradient(135deg, #10b981, #059669) !important; /* 綠色 - 保存 */
+    color: white !important;
+    padding: 18px 50px !important;
+    font-size: 22px !important;
+    font-weight: 800 !important;
+    border-radius: 18px !important;
+    border: none !important;
+    box-shadow: 0 10px 30px rgba(16,185,129,0.4) !important;
+    min-width: 220px;
+}
+
+#editProfileButton {
+    background: linear-gradient(135deg, #3b82f6, #2563eb) !important; /* 藍色 - 編輯（雖然現在隱藏，但保留） */
+    color: white !important;
+    padding: 18px 50px !important;
+    font-size: 22px !important;
+    font-weight: 800 !important;
+    border-radius: 18px !important;
+    border: none !important;
+    box-shadow: 0 10px 30px rgba(59,130,246,0.4) !important;
+    min-width: 220px;
+}
+
+#cancelEditProfileButton {
+    background: linear-gradient(135deg, #ef4444, #dc2626) !important; /* 紅色 - 取消 */
+    color: white !important;
+    padding: 18px 50px !important;
+    font-size: 22px !important;
+    font-weight: 800 !important;
+    border-radius: 18px !important;
+    border: none !important;
+    box-shadow: 0 10px 30px rgba(239,68,68,0.4) !important;
+    min-width: 220px;
+}
+
+/* 懸浮特效 */
+#saveProfileButton:hover,
+#editProfileButton:hover,
+#cancelEditProfileButton:hover {
+    transform: translateY(-6px) scale(1.05) !important;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.25) !important;
+}
+
+#saveProfileButton:active,
+#editProfileButton:active,
+#cancelEditProfileButton:active {
+    transform: translateY(-2px) !important;
+}
+
+/* 進入動畫 */
+@keyframes slideDown {
+    from { opacity: 0; transform: translateY(-30px); }
+    to { opacity: 1; transform: translateY(0); }
+}
