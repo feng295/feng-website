@@ -1095,3 +1095,32 @@ button:not(#logoutButton),
     from { opacity: 0; transform: translateY(-30px); }
     to { opacity: 1; transform: translateY(0); }
 }
+/* 方法1：用 ID（優先級最高，推薦） */
+#logoutButton {
+    padding: 16px 32px !important;     /* 內距變大 → 按鈕變高變寬 */
+    font-size: 20px !important;        /* 字變大 */
+    font-weight: bold !important;      /* 字加粗 */
+    background-color: #ef4444 !important;  /* 紅色背景（登出就是要顯眼） */
+    color: white !important;
+    border: none !important;
+    border-radius: 12px !important;    /* 圓角 */
+    cursor: pointer !important;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2) !important; /* 立體陰影 */
+    transition: all 0.3s ease !important;
+    min-width: 120px;                  /* 至少要這麼寬 */
+}
+
+/* 滑鼠移上去更帥 */
+#logoutButton:hover {
+    background-color: #dc2626 !important;
+    transform: translateY(-2px) !important;   /* 微微浮起 */
+    box-shadow: 0 8px 20px rgba(0,0,0,0.3) !important;
+}
+
+/* 手機上也一樣大 */
+@media (max-width: 768px) {
+    #logoutButton {
+        padding: 18px 40px !important;
+        font-size: 22px !important;
+    }
+}
