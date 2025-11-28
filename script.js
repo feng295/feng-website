@@ -608,6 +608,7 @@ document.addEventListener("DOMContentLoaded", async function () {
         // 自動啟動
         startStream();
     }
+
     function setupSettleParking() {
         const role = getRole();
         console.log("Current role in setupSettleParking:", role);
@@ -615,7 +616,6 @@ document.addEventListener("DOMContentLoaded", async function () {
             alert("此功能僅限租用者使用！");
             return;
         }
-
         const settleParkingSection = document.getElementById("settleParking");
         if (!settleParkingSection) {
             console.error("settleParking section not found");
@@ -623,7 +623,6 @@ document.addEventListener("DOMContentLoaded", async function () {
             return;
         }
         settleParkingSection.style.display = "block";
-
         const video = document.getElementById("videoSettle");
         const fallback = document.getElementById("fallbackSettle");
         const plateList = document.getElementById("plateListSettle");
@@ -634,48 +633,11 @@ document.addEventListener("DOMContentLoaded", async function () {
         const stopButton = document.getElementById("stopButtonSettle");
         const confirmButton = document.getElementById("confirmButtonSettle");
         const rescanButton = document.getElementById("rescanButtonSettle");
-        const cameraContainer = document.querySelector("#settleParking .flex.justify-center");
-
         let stream = null;
         let intervalId = null;
         let isScanningStopped = false;
+        let isStopRequested = false;
         let currentPlate = null;
-
-        // 正解：關閉鏡頭 → 畫面變黑，不顯示 no-camera.jpg
-        function stopCameraCleanly() {
-            if (stream) {
-                stream.getTracks().forEach(track => track.stop());
-                stream = null;
-            }
-            video.srcObject = null;
-            video.style.display = "none";
-            fallback.style.display = "none";  // 關鍵！不要顯示 no-camera.jpg
-
-            // 專業提示：顯示「攝影機已關閉」
-            if (cameraContainer && !cameraContainer.querySelector('.camera-off-hint')) {
-                const hint = document.createElement('div');
-                hint.className = 'camera-off-hint';
-                hint.textContent = '攝影機已關閉';
-                hint.style.cssText = `
-                position: absolute;
-                top: 50%; left: 50%;
-                transform: translate(-50%, -50%);
-                background: rgba(0,0,0,0.85);
-                color: #10b981;
-                padding: 20px 50px;
-                border-radius: 50px;
-                font-size: 32px;
-                font-weight: bold;
-                z-index: 20;
-                border: 3px solid #10b981;
-                box-shadow: 0 0 30px rgba(16, 185, 129, 0.6);
-            `;
-                cameraContainer.style.position = "relative";
-                cameraContainer.appendChild(hint);
-                setTimeout(() => hint.remove(), 4000);
-            }
-        }
-
         async function startStream() {
             try {
                 stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
@@ -684,115 +646,147 @@ document.addEventListener("DOMContentLoaded", async function () {
                 fallback.style.display = "none";
                 error.style.display = "none";
                 error.innerText = "";
-
-                // 清除舊提示
-                const oldHint = cameraContainer.querySelector('.camera-off-hint');
-                if (oldHint) oldHint.remove();
-
                 video.addEventListener('loadeddata', async () => {
-                    console.log("出場攝影機已開啟");
+                    console.log("Settle Video 數據已加載");
                     try {
-                        const response = await fetch(`${window.location.origin}/license-plate/start-settle`, { method: 'POST' });
-                        if (!response.ok) throw new Error(`啟動失敗: ${response.status}`);
+                        const response = await fetch(`${window.location.origin}/license-plate/start-settle`, {
+                            method: 'POST'
+                        });
+                        if (!response.ok) throw new Error(`啟動請求失敗: ${response.status}`);
                         const data = await response.json();
                         console.log(data.message);
                         startLicensePlateDetection();
                     } catch (err) {
+                        console.error("啟動錯誤:", err);
                         error.innerText = `啟動失敗: ${err.message}`;
                         error.style.display = "block";
                     }
                 }, { once: true });
-
                 if (video.readyState >= video.HAVE_ENOUGH_DATA) {
                     video.dispatchEvent(new Event('loadeddata'));
                 }
             } catch (err) {
-                console.error("無法開啟攝影機:", err);
-                error.innerText = `無法開啟攝影機，請檢查權限或硬體`;
+                console.error("無法訪問攝影機:", err);
+                error.innerText = `無法訪問攝影機: ${err.message}`;
                 error.style.display = "block";
                 video.style.display = "none";
-                fallback.style.display = "block";  // 只有這裡才顯示 no-camera.jpg（正確！）
+                fallback.style.display = "block";
             }
         }
-
         function stopStream() {
-            stopCameraCleanly();
-            fetch(`${window.location.origin}/license-plate/stop-settle`, { method: 'POST' })
-                .then(r => r.ok ? r.json() : Promise.reject(r.status))
-                .then(data => console.log(data.message))
-                .catch(err => console.error("停止後端辨識失敗:", err));
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+                stream = null;
+                video.srcObject = null;
+                error.innerText = "串流已停止";
+                error.style.display = "block";
+                video.style.display = "none";
+                fallback.style.display = "block";
+            }
+            isStopRequested = true;
+            fetch(`${window.location.origin}/license-plate/stop-settle`, {
+                method: 'POST'
+            })
+                .then(response => {
+                    if (!response.ok) throw new Error(`停止請求失敗: ${response.status}`);
+                    return response.json();
+                })
+                .then(data => {
+                    console.log(data.message);
+                    isScanningStopped = true;
+                    isStopRequested = false;
+                    clearInterval(intervalId);
+                    intervalId = null;
+                })
+                .catch(error => {
+                    console.error("停止錯誤:", error);
+                    error.innerText = `停止失敗: ${error.message}`;
+                    error.style.display = "block";
+                    isStopRequested = false;
+                });
         }
-
         function startLicensePlateDetection() {
             if (!stream || isScanningStopped) return;
-
             const canvas = document.createElement('canvas');
             const context = canvas.getContext('2d');
-
             function captureFrame() {
                 if (!stream || isScanningStopped) return;
-
-                if (video.readyState !== video.HAVE_ENOUGH_DATA) {
+                if (video.readyState !== video.HAVE_ENOUGH_DATA || video.videoWidth === 0 || video.videoHeight === 0) {
+                    console.warn("Settle Video 未準備好，延遲重試");
                     intervalId = setTimeout(captureFrame, 500);
                     return;
                 }
-
                 canvas.width = video.videoWidth;
                 canvas.height = video.videoHeight;
-                context.drawImage(video, 0, 0);
-
+                context.drawImage(video, 0, 0, canvas.width, canvas.height);
                 canvas.toBlob(blob => {
-                    if (!blob) return;
-
+                    if (!blob) {
+                        console.error("無法生成 Blob");
+                        error.innerText = '無法生成影像數據';
+                        error.style.display = "block";
+                        intervalId = setTimeout(captureFrame, 2000);
+                        return;
+                    }
+                    const formData = new FormData();
+                    formData.append('frame', blob, 'frame.jpg');
+                    console.log("發送請求到:", `/license-plate/process_frame-settle`);
                     fetch(`${window.location.origin}/license-plate/process_frame-settle`, {
                         method: 'POST',
-                        body: new FormData(Object.assign(new FormData(), { append: (k, v) => formData.append(k, v), formData: { append: () => { } } })).append('frame', blob, 'frame.jpg')
+                        body: formData
                     })
-                        .then(r => r.ok ? r.json() : Promise.reject(r.status))
+                        .then(response => {
+                            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                            return response.json();
+                        })
                         .then(data => {
-                            const plate = data.plate && data.plate !== '尚未檢測到車牌' ? data.plate : null;
-
-                            if (plate && plate !== currentPlate) {
-                                currentPlate = plate;
-                                plateList.innerHTML = `<li class="text-green-600 text-6xl font-bold">${plate}</li>`;
-                                loading.style.display = 'none';
+                            let currentPlates = data.plate && data.plate !== '尚未檢測到車牌' ? [data.plate] : [];
+                            loading.style.display = 'none';
+                            if (currentPlates.length > 0 && currentPlates[0] !== currentPlate) {
+                                currentPlate = currentPlates[0];
+                                plateList.innerHTML = `<li class="text-black">${currentPlate}</li>`;
                                 confirmButton.disabled = false;
                                 rescanButton.style.display = "inline-block";
-
-                                // 成功辨識 → 立即關閉鏡頭（專業感爆棚！）
                                 isScanningStopped = true;
                                 clearInterval(intervalId);
-                                stopCameraCleanly();  // 這裡改用新函數
-                            } else if (!plate) {
-                                plateList.innerHTML = '<li class="text-gray-500 text-3xl">搜尋車牌中...</li>';
+                                intervalId = null;
+                                stopStream();
+                            } else {
+                                plateList.innerHTML = '<li class="text-gray-500">尚未檢測到車牌</li>';
+                                confirmButton.disabled = true;
+                                rescanButton.style.display = "none";
                             }
                         })
                         .catch(err => {
-                            console.error("辨識失敗:", err);
+                            console.error("處理影像失敗:", err);
+                            error.innerText = `處理影像失敗: ${err.message}`;
+                            error.style.display = "block";
+                            loading.style.display = "none";
                         });
-
-                    if (!isScanningStopped) {
-                        intervalId = setTimeout(captureFrame, 1800);
-                    }
-                }, 'image/jpeg', 0.9);
+                    intervalId = setTimeout(captureFrame, 2000);
+                }, 'image/jpeg', 0.85);
             }
-
-            loading.style.display = 'block';
-            captureFrame();
+            video.addEventListener('loadeddata', () => {
+                console.log("Settle Video 數據已加載，開始捕獲");
+                loading.style.display = 'block';
+                captureFrame();
+            }, { once: true });
+            if (video.readyState >= video.HAVE_ENOUGH_DATA) {
+                captureFrame();
+            }
         }
-
-        // 其餘事件監聽器（confirm、rescan）保持不變
         startButton.addEventListener("click", startStream);
         stopButton.addEventListener("click", stopStream);
-
         confirmButton.addEventListener("click", async () => {
-            if (!currentPlate) return alert("請先掃描車牌！");
-
+            if (!currentPlate) {
+                alert("請先掃描車牌！");
+                return;
+            }
             confirmButton.disabled = true;
             confirmButton.textContent = "結算中...";
-
             try {
                 const token = getToken();
+                if (!token) throw new Error("請先登入！");
+                const end_time = new Date().toISOString();
                 const response = await fetch(`${API_URL}/rent/leave`, {
                     method: 'POST',
                     headers: {
@@ -801,55 +795,59 @@ document.addEventListener("DOMContentLoaded", async function () {
                     },
                     body: JSON.stringify({
                         license_plate: currentPlate,
-                        end_time: new Date().toISOString()
+                        end_time: end_time
                     })
                 });
-
                 const result = await response.json();
-                if (!response.ok) throw new Error(result.error || "結算失敗");
-
-                const amount = result.data?.total_cost ?? 0;
-                plateList.innerHTML = `<li class="text-green-600 text-7xl font-bold">${currentPlate}</li>`;
-                settleResult.innerHTML = `
-                <div class="text-green-600 text-6xl font-bold mb-8 animate-pulse">出場成功！</div>
-                <div class="text-5xl">應收費用：<span class="text-red-600 text-8xl font-bold">${amount}</span> 元</div>
-            `;
-                settleResult.style.display = "block";
-
-                // 15 秒後自動準備下一台車
-                setTimeout(() => {
-                    plateList.innerHTML = '<li class="text-gray-500 text-3xl">等待車輛進入感應區...</li>';
-                    settleResult.style.display = "none";
-                    currentPlate = null;
-                    confirmButton.disabled = true;
-                    rescanButton.style.display = "none";
-                    isScanningStopped = false;
-                    startStream();
-                }, 15000);
-
+                if (response.ok) {
+                    // 支援常見的金額欄位名稱
+                    const amount = result.data?.total_cost ?? 0;
+                    plateList.innerHTML = `<li class="text-green-600 text-6xl font-bold">${currentPlate}</li>`;
+                    settleResult.innerHTML = `
+                        <div class="text-green-600 text-5xl font-bold mb-8">出場成功！</div>
+                        <div class="text-4xl">應收費用：<span class="text-red-600 text-7xl font-bold">${amount}</span> 元</div>
+                    `;
+                    settleResult.style.display = "block";
+                    alert(`出場結算成功！費用：${amount} 元`);
+                    // 15 秒後自動準備下一台車
+                    setTimeout(() => {
+                        plateList.innerHTML = '<li class="text-gray-500 text-3xl">等待車輛進入感應區...</li>';
+                        settleResult.style.display = "none";
+                        currentPlate = null;
+                        confirmButton.disabled = true;
+                        rescanButton.style.display = "none";
+                        startStream();
+                    }, 15000);
+                } else {
+                    throw new Error(result.error || result.message || "結算失敗");
+                }
             } catch (err) {
+                console.error("出場失敗:", err);
+                settleResult.innerHTML = `
+                    <div class="text-red-600 text-4xl font-bold">出場失敗</div>
+                    <div class="text-2xl mt-6">${err.message}</div>
+                `;
+                settleResult.style.display = "block";
                 alert("出場失敗：" + err.message);
             } finally {
                 confirmButton.disabled = false;
                 confirmButton.textContent = "確認出場";
             }
         });
-
         rescanButton.addEventListener("click", () => {
-            plateList.innerHTML = '<li class="text-gray-500 text-3xl">搜尋車牌中...</li>';
+            plateList.innerHTML = '<li class="text-gray-500">尚未檢測到車牌</li>';
+            error.style.display = "none";
             settleResult.style.display = "none";
             confirmButton.disabled = true;
             rescanButton.style.display = "none";
-            currentPlate = null;
             isScanningStopped = false;
+            isStopRequested = false;
             clearInterval(intervalId);
+            intervalId = null;
             startStream();
         });
-
-        // 自動啟動
         startStream();
     }
-
     // 攝影機請求和重新掃描函數
     async function requestCamera(type) {
         let video = type === 'rent' ? document.getElementById('videoRent') : document.getElementById('videoSettle');
