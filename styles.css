@@ -889,7 +889,7 @@ button:not(#logoutButton),
 #historyList p,
 #historyList span,
 #historyList div {
-    font-size: 22px !important;       /* 直接放大到 22px（超大超清楚） */
+    font-size: 20px !important;       /* 直接放大到 20px（超大超清楚） */
     font-weight: 700 !important;      /* 變粗，閱讀超舒服 */
     line-height: 2.2 !important;      /* 行距拉高，避免擠在一起 */
     color: #1e293b !important;        /* 深色高對比，一眼就看清楚 */
