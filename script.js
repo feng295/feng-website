@@ -414,7 +414,7 @@ document.addEventListener("DOMContentLoaded", async function () {
         };
     }
 
-    // ===================== 進場掃描（手動控制版）=====================
+    // ===================== 進場掃描（完全手動版）=====================
     function setupRentParking() {
         const role = getRole();
         if (role !== "renter") {
@@ -457,6 +457,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 
         async function startStream() {
             if (isScanning) return;
+
             try {
                 stream = await navigator.mediaDevices.getUserMedia({ video: true });
                 video.srcObject = stream;
@@ -520,12 +521,11 @@ document.addEventListener("DOMContentLoaded", async function () {
                             const plate = data.plate && data.plate !== '尚未檢測到車牌' ? data.plate : null;
                             if (plate && plate !== currentPlate) {
                                 currentPlate = plate;
-                                plateList.innerHTML = `<li class="text-green-600 text-7xl font-bold">${plate}</li>`;
+                                plateList.innerHTML = `<li class="text-green-600 text-8xl font-bold">${plate}</li>`;
                                 updateParkingLotId();
                                 rescanButton.style.display = "inline-block";
-                                confirmButton.disabled = !selectedParkingLotId;
                                 loading.style.display = "none";
-                                // 不自動停止！讓使用者決定要不要按「確認進場」
+                                // 不自動停止！讓使用者決定
                             }
                         })
                         .catch(() => { })
@@ -557,7 +557,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                 });
 
                 if (res.ok) {
-                    plateList.innerHTML = `<li class="text-green-600 text-8xl font-bold">${currentPlate}<br>進場成功！</li>`;
+                    plateList.innerHTML = `<li class="text-green-600 text-9xl font-bold">${currentPlate}<br><span class="text-6xl">進場成功！</span></li>`;
                     alert("進場成功！");
                     stopStream();
                     currentPlate = null;
@@ -577,7 +577,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 
         rescanButton.onclick = () => {
             currentPlate = null;
-            plateList.innerHTML = '<li class="text-gray-500">等待掃描車牌...</li>';
+            plateList.innerHTML = '<li class="text-gray-500 text-3xl">請點「開始掃描」</li>';
             confirmButton.disabled = true;
             rescanButton.style.display = "none";
         };
@@ -586,13 +586,13 @@ document.addEventListener("DOMContentLoaded", async function () {
         stopButton.onclick = stopStream;
 
         // 初始化
-        plateList.innerHTML = '<li class="text-gray-500 text-2xl">請點「開始掃描」</li>';
+        plateList.innerHTML = '<li class="text-gray-500 text-3xl">請點「開始掃描」</li>';
         rescanButton.style.display = "none";
         confirmButton.disabled = true;
         stopButton.disabled = true;
     }
 
-    // ===================== 出場掃描（手動控制版）=====================
+    // ===================== 出場掃描（完全手動版）=====================
     function setupSettleParking() {
         const role = getRole();
         if (role !== "renter") {
@@ -604,6 +604,7 @@ document.addEventListener("DOMContentLoaded", async function () {
         if (!settleParkingSection) return;
         settleParkingSection.style.display = "block";
 
+        // 共用 videoRent
         const video = document.getElementById("videoRent");
         const fallback = document.getElementById("fallbackRent");
         const plateList = document.getElementById("plateListSettle");
@@ -611,19 +612,18 @@ document.addEventListener("DOMContentLoaded", async function () {
         const error = document.getElementById("errorSettle");
         const settleResult = document.getElementById("settleResult");
 
-        // 超重要：出場頁也用 Rent 的按鈕，但我們要「重新綁定」事件
+        // 使用進場的按鈕，但先清除舊事件
         const startButton = document.getElementById("startButtonRent");
         const stopButton = document.getElementById("stopButtonRent");
         const confirmButton = document.getElementById("confirmButtonRent");
         const rescanButton = document.getElementById("rescanButtonRent");
 
-        // 先移除舊的事件（避免被進場頁綁定過）
+        // 清除舊事件（關鍵！）
         startButton.replaceWith(startButton.cloneNode(true));
         stopButton.replaceWith(stopButton.cloneNode(true));
         confirmButton.replaceWith(confirmButton.cloneNode(true));
         rescanButton.replaceWith(rescanButton.cloneNode(true));
 
-        // 重新抓取元素（因為 clone 後 ID 不變）
         const newStartButton = document.getElementById("startButtonRent");
         const newStopButton = document.getElementById("stopButtonRent");
         const newConfirmButton = document.getElementById("confirmButtonRent");
@@ -638,7 +638,7 @@ document.addEventListener("DOMContentLoaded", async function () {
         async function startStream() {
             if (isScanning) return;
 
-            // 先停止進場的 stream（如果有）
+            // 強制關閉舊 stream
             if (video.srcObject) {
                 video.srcObject.getTracks().forEach(t => t.stop());
                 video.srcObject = null;
@@ -650,19 +650,14 @@ document.addEventListener("DOMContentLoaded", async function () {
                 video.style.display = "block";
                 fallback.style.display = "none";
                 loading.style.display = "block";
-                error.style.style.display = "none";
-
-                // 通知後端：現在是出場模式
+                error.style.display = "none";
                 await fetch(`${window.location.origin}/license-plate/start-settle`, { method: 'POST' });
-
                 isScanning = true;
                 newStartButton.disabled = true;
                 newStopButton.disabled = false;
-
                 startLicensePlateDetection();
             } catch (err) {
-                console.error("出場開攝影機失敗:", err);
-                error.innerText = "無法開啟攝影機（可能被其他頁面佔用）";
+                error.innerText = "無法開啟攝影機：" + err.message;
                 error.style.display = "block";
                 fallback.style.display = "block";
                 newStartButton.disabled = false;
@@ -712,10 +707,11 @@ document.addEventListener("DOMContentLoaded", async function () {
                             const plate = data.plate && data.plate !== '尚未檢測到車牌' ? data.plate : null;
                             if (plate && plate !== currentPlate) {
                                 currentPlate = plate;
-                                plateList.innerHTML = `<li class="text-green-600 text-7xl font-bold">${plate}</li>`;
+                                plateList.innerHTML = `<li class="text-green-600 text-8xl font-bold">${plate}</li>`;
                                 newConfirmButton.disabled = false;
                                 newRescanButton.style.display = "inline-block";
                                 loading.style.display = "none";
+                                // 不自動停止！
                             }
                         })
                         .catch(() => { })
@@ -726,10 +722,6 @@ document.addEventListener("DOMContentLoaded", async function () {
             }
             capture();
         }
-
-        // 事件綁定（全新乾淨的）
-        newStartButton.onclick = startStream;
-        newStopButton.onclick = stopStream;
 
         newConfirmButton.onclick = async () => {
             if (!currentPlate) return alert("請先掃描車牌！");
@@ -753,8 +745,8 @@ document.addEventListener("DOMContentLoaded", async function () {
                 if (res.ok) {
                     const amount = result.data?.total_cost ?? 0;
                     settleResult.innerHTML = `
-                    <div class="text-green-600 text-6xl font-bold mb-8">出場成功！</div>
-                    <div class="text-5xl">應收費用：<span class="text-red-600 text-8xl font-bold">${amount}</span> 元</div>
+                    <div class="text-green-600 text-7xl font-bold mb-8">出場成功！</div>
+                    <div class="text-5xl">應收費用：<span class="text-red-600 text-9xl font-bold">${amount}</span> 元</div>
                 `;
                     settleResult.style.display = "block";
                     alert(`出場成功！費用：${amount} 元`);
@@ -766,7 +758,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                     throw new Error(result.error || "結算失敗");
                 }
             } catch (err) {
-                settleResult.innerHTML = `<div class="text-red-600 text-5xl">出場失敗<br>${err.message}</div>`;
+                settleResult.innerHTML = `<div class="text-red-600 text-6xl font-bold">出場失敗<br><span class="text-4xl">${err.message}</span></div>`;
                 settleResult.style.display = "block";
             } finally {
                 newConfirmButton.disabled = false;
@@ -776,14 +768,17 @@ document.addEventListener("DOMContentLoaded", async function () {
 
         newRescanButton.onclick = () => {
             currentPlate = null;
-            plateList.innerHTML = '<li class="text-gray-500">等待掃描車牌...</li>';
+            plateList.innerHTML = '<li class="text-gray-500 text-3xl">請點「開始掃描」</li>';
             newConfirmButton.disabled = true;
             newRescanButton.style.display = "none";
             settleResult.style.display = "none";
         };
 
+        newStartButton.onclick = startStream;
+        newStopButton.onclick = stopStream;
+
         // 初始化
-        plateList.innerHTML = '<li class="text-gray-500 text-2xl">請點「開始掃描」</li>';
+        plateList.innerHTML = '<li class="text-gray-500 text-3xl">請點「開始掃描」</li>';
         settleResult.style.display = "none";
         newConfirmButton.disabled = true;
         newRescanButton.style.display = "none";
