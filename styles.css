@@ -262,7 +262,7 @@ button:not(#logoutButton),
 
 #rentParkingName,
 #settleParkingName {
-    font-size: 120px !important;
+    font-size: 80px !important;
     font-weight: 900 !important;
     letter-spacing: 8px;
     text-align: center;
@@ -778,4 +778,62 @@ button:not(#logoutButton),
 #buttonContainerRent button:active,
 #buttonContainerSettle button:active {
     transform: translateY(0);
+}
+/* ====================== 進出場鏡頭畫面完美置中 ====================== */
+#rentParking,
+#settleParking {
+    display: flex;
+    flex-direction: column;
+    align-items: center;        /* 水平置中 */
+    justify-content: flex-start; /* 從上往下排，但整體內容區會被推到視覺中央 */
+    min-height: 100vh;          /* 讓整個頁面高度撐滿，達到真正上下置中 */
+    padding: 40px 20px;
+    background: linear-gradient(to bottom, #f8fafc, #e2e8f0);
+}
+
+/* 鏡頭容器（<div> 或 <canvas>、<video>、<img> 都適用） */
+#cameraContainerRent,
+#cameraContainerSettle,
+#videoRent,
+#videoSettle,
+#canvasRent,
+#canvasSettle {
+    margin: 0 auto 40px auto !important;   /* 上下間距 + 水平置中 */
+    display: block !important;
+    border: 8px solid #1e293b !important;
+    border-radius: 20px !important;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.25) !important;
+    max-width: 640px;
+    width: 100%;
+    background: #cbd5e1;
+    overflow: hidden;
+}
+
+/* 640×480 固定比例 + 響應式（小螢幕自動縮小） */
+#cameraContainerRent,
+#cameraContainerSettle {
+    aspect-ratio: 640 / 480;
+    background: #94a3b8;
+    position: relative;
+}
+
+/* 裡面的 video 或 canvas 100% 填滿容器 */
+#cameraContainerRent video,
+#cameraContainerRent canvas,
+#cameraContainerSettle video,
+#cameraContainerSettle canvas {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: cover;
+    border-radius: 12px;
+}
+
+/* 原本的「車牌號碼：等待掃描車牌...」也會自動跟著置中（之前已經寫過了） */
+#licensePlateResultRent,
+#licensePlateResultSettle {
+    margin: 0 auto 50px auto !important;
+    max-width: 680px;
+    width: 90%;
 }
