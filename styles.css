@@ -889,7 +889,7 @@ button:not(#logoutButton),
 #historyList p,
 #historyList span,
 #historyList div {
-    font-size: 24px !important;       /* 直接放大到 24px（超大超清楚） */
+    font-size: 22px !important;       /* 直接放大到 22px（超大超清楚） */
     font-weight: 700 !important;      /* 變粗，閱讀超舒服 */
     line-height: 2.2 !important;      /* 行距拉高，避免擠在一起 */
     color: #1e293b !important;        /* 深色高對比，一眼就看清楚 */
@@ -921,4 +921,60 @@ button:not(#logoutButton),
 #historyList th {
     font-size: 22px !important;
     padding: 18px !important;
+}
+/* ====================== 個人資訊頁面 - 字體放大終極美化 ====================== */
+#profile .profileData,
+#profileData,
+.profileData td,
+.profileData th,
+.profileData p,
+.profileData span,
+.profileData div,
+.profileData label,
+.profileData input,
+.profileData select {
+    font-size: 24px !important;        /* 直接放大到 24px（超大超舒服） */
+    font-weight: 700 !important;       /* 加粗，一眼就看清楚 */
+    line-height: 2.2 !important;       /* 行距拉高，不會擠 */
+    color: #1e293b !important;
+    letter-spacing: 0.8px !important;
+}
+
+/* 讓每筆資料變成漂亮的卡片式顯示（不管你是用 table 還是 div） */
+.profileData tr,
+.profileData > div,
+.profileData .info-row {
+    background: white;
+    padding: 22px 35px !important;
+    margin: 18px auto !important;
+    border-radius: 18px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+    border-left: 7px solid #667eea;
+    max-width: 850px;
+    transition: all 0.3s ease;
+}
+
+.profileData tr:hover,
+.profileData > div:hover,
+.profileData .info-row:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 18px 40px rgba(102,126,234,0.22);
+    border-left-color: #764ba2;
+}
+
+/* 如果你是用 table 顯示，加這段讓表頭更霸氣 */
+.profileData th {
+    font-size: 26px !important;
+    background: linear-gradient(135deg, #667eea, #764ba2) !important;
+    color: white !important;
+    padding: 20px !important;
+    border-radius: 18px 18px 0 0 !important;
+}
+
+/* 輸入框也一起放大（如果有編輯功能） */
+.profileData input,
+.profileData select {
+    padding: 14px 18px !important;
+    border-radius: 14px !important;
+    border: 2px solid #cbd5e1 !important;
 }
