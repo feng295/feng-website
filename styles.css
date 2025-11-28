@@ -779,95 +779,108 @@ button:not(#logoutButton),
 #buttonContainerSettle button:active {
     transform: translateY(0);
 }
-/* ====================== 進出場頁面所有元件完美置中（2025最新版）====================== */
+/* ====================== 進出場頁面所有元素完美置中（2025最新版） ====================== */
 
-/* 整個進出場頁面變成垂直＋水平置中佈局 */
+/* 整個進場 & 出場頁面採垂直水平全置中佈局 */
 #rentParking,
 #settleParking {
-    min-height: 100vh;
     display: flex;
     flex-direction: column;
-    align-items: center;          /* 水平置中 */
-    justify-content: center;      /* 垂直置中（整個頁面） */
+    align-items: center;           /* 水平置中 */
+    justify-content: flex-start;   /* 從上往下排，但整體會視覺居中 */
+    min-height: 100vh;
     padding: 30px 20px;
-    gap: 35px;                    /* 每個區塊之間的間距 */
-    background: linear-gradient(to bottom, #f8fafc, #e2e8f0);
+    background: linear-gradient(to bottom, #f1f5f9, #e2e8f0);
+    gap: 30px;                     /* 每個區塊之間的間距 */
 }
 
-/* 鏡頭畫面（video + canvas）強制置中 + 美化 */
+/* 1. 鏡頭畫面置中 + 美化 */
+#videoRent,
+#videoSettle,
 #cameraContainerRent,
-#cameraContainerSettle,
-#videoRent, #videoSettle,
-#canvasRent, #canvasSettle {
+#cameraContainerSettle {
     margin: 0 auto !important;
     display: block !important;
-    max-width: 640px;
-    width: 100%;
-    border: 8px solid #1e293b;
-    border-radius: 20px;
-    box-shadow: 0 20px 50px rgba(0,0,0,0.25);
-    aspect-ratio: 640 / 480;
-    background: #94a3b8;
-    overflow: hidden;
-}
-
-/* video 100% 填滿容器 */
-#videoRent, #videoSettle {
-    width: 100% !important;
-    height: 100% !important;
-    object-fit: cover;
-    border-radius: 12px;
-}
-
-/* 所有文字訊息（包含 Tailwind 的 text-lg、text-gray-500 等）強制置中 */
-#licensePlateResultRent,
-#licensePlateResultSettle,
-.loadingRent, .loadingSettle,
-.errorRent,   .errorSettle,
-.text-lg, .font-semibold, .text-gray-500,
-#loadingRent, #loadingSettle,
-#errorRent,   #errorSettle {
-    text-align: center !important;
-    width: 90%;
     max-width: 680px;
-    margin: 0 auto !important;
-    font-size: 28px !important;
-    line-height: 1.4;
+    width: 100%;
+    border-radius: 20px;
+    border: 8px solid #1e293b;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.25);
+    overflow: hidden;
+    aspect-ratio: 640 / 480;
 }
 
-/* 特別加強 loading 跟 error 的字體大小與顏色 */
-.loadingRent, .loadingSettle,
-#loadingRent, #loadingSettle {
-    color: #6366f1 !important;
+/* 2. 所有文字說明（text-lg font-semibold）置中 */
+.text-lg.font-semibold,
+#rentParking h3,
+#settleParking h3,
+#rentParking .text-lg,
+#settleParking .text-lg {
+    text-align: center !important;
+    width: 100%;
+    max-width: 680px;
+    margin: 0 auto 15px auto !important;
+    font-size: 22px !important;
     font-weight: 700 !important;
+    color: #1e293b;
 }
 
-.errorRent, .errorSettle,
-#errorRent, #errorSettle {
-    color: #ef4444 !important;
-    font-weight: 700 !important;
-}
-
-/* 車牌號碼顯示區（你之前已經有寫過，再加強一次確保覆蓋 Tailwind） */
+/* 3. 車牌顯示區（大字）置中 */
 #licensePlateResultRent,
 #licensePlateResultSettle {
+    text-align: center !important;
     font-size: 52px !important;
     font-weight: 900 !important;
     letter-spacing: 5px;
-    padding: 30px !important;
+    padding: 35px;
     background: white;
     border-radius: 20px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.12);
+    max-width: 680px;
+    width: 90%;
+    margin: 0 auto 40px auto !important;
     border: 4px dashed #94a3b8;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
 }
 
-/* 按鈕區也自動置中（你之前四色按鈕） */
+/* 4. 車牌列表（plateListRent / plateListSettle）置中 */
+#plateListRent,
+#plateListSettle {
+    width: 90%;
+    max-width: 680px;
+    margin: 0 auto !important;
+    text-align: center;
+}
+
+/* 5. 載入中… 與 錯誤訊息 完全置中 */
+#loadingRent,
+#loadingSettle,
+#errorRent,
+#errorSettle {
+    text-align: center !important;
+    font-size: 24px !important;
+    font-weight: 600;
+    padding: 20px;
+    border-radius: 16px;
+    margin: 20px auto;
+    min-height: 60px;
+    max-width: 680px;
+    width: 90%;
+}
+
+#loadingRent,
+#loadingSettle {
+    color: #6366f1;
+    background: rgba(99, 102, 241, 0.08);
+}
+
+#errorRent,
+#errorSettle {
+    color: #dc2626;
+    background: rgba(220, 38, 38, 0.1);
+}
+
+/* 6. 按鈕區也自動置中（你之前已經有） */
 #buttonContainerRent,
 #buttonContainerSettle {
-    display: flex !important;
-    justify-content: center !important;
-    flex-wrap: wrap;
-    gap: 20px;
-    width: 100%;
-    max-width: 1000px;
+    margin: 20px auto;
 }
