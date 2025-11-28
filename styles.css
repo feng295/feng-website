@@ -682,3 +682,100 @@ button:not(#logoutButton),
 #incomeSearchButton:active {
     transform: translateY(-1px);
 }
+/* ====================== 進出場頁面專用美化 ====================== */
+
+/* 1. h2 標題改成 26px + 置中 */
+#rentParking h2,
+#settleParking h2 {
+    font-size: 26px !important;
+    text-align: center !important;
+    color: #2d3748 !important;
+    margin: 0 0 35px 0 !important;
+    font-weight: 800 !important;
+}
+
+/* 2. 車牌顯示區完全置中 + 更大更清楚 */
+#licensePlateResultRent,
+#licensePlateResultSettle {
+    font-size: 48px !important;
+    font-weight: 900 !important;
+    text-align: center !important;
+    min-height: 80px;
+    padding: 30px !important;
+    background: linear-gradient(145deg, #ffffff, #f1f5f9);
+    border-radius: 20px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    margin: 30px auto;
+    max-width: 600px;
+    letter-spacing: 4px;
+    color: #1e293b;
+    border: 3px dashed #cbd5e1;
+    transition: all 0.4s ease;
+}
+
+/* 等待中、載入中也完美置中 */
+#licensePlateResultRent:empty::before,
+#licensePlateResultSettle:empty::before {
+    content: "等待掃描車牌...";
+    color: #94a3b8;
+    font-size: 32px;
+}
+#licensePlateResultRent[data-loading="true"]::before,
+#licensePlateResultSettle[data-loading="true"]::before {
+    content: "載入中...";
+    color: #6366f1;
+}
+
+/* 3. 四顆按鈕變成四大色彩 + 置中 + 更大更好按 */
+#buttonContainerRent,
+#buttonContainerSettle {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 20px;
+    margin: 40px auto;
+    max-width: 900px;
+}
+
+#buttonContainerRent button,
+#buttonContainerSettle button {
+    padding: 18px 36px !important;
+    font-size: 20px !important;
+    font-weight: 700 !important;
+    min-width: 180px;
+    border: none !important;
+    border-radius: 16px !important;
+    color: white !important;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+}
+
+/* 四種超帥顏色（照你原本按鈕順序） */
+#startButtonRent,
+#startButtonSettle {
+    background: linear-gradient(135deg, #10b981, #059669) !important; /* 綠色 - 開始掃描 */
+}
+#stopButtonRent,
+#stopButtonSettle {
+    background: linear-gradient(135deg, #f59e0b, #d97706) !important; /* 黃色 - 停止掃描 */
+}
+#confirmButtonRent,
+#confirmButtonSettle {
+    background: linear-gradient(135deg, #3b82f6, #2563eb) !important; /* 藍色 - 確認進場/結算 */
+}
+#rescanButtonRent,
+#rescanButtonSettle {
+    background: linear-gradient(135deg, #8b5cf6, #7c3aed) !important; /* 紫色 - 重新掃描 */
+}
+
+/* 按下去 + 滑鼠移入特效 */
+#buttonContainerRent button:hover,
+#buttonContainerSettle button:hover {
+    transform: translateY(-5px) scale(1.05);
+    box-shadow: 0 15px 35px rgba(0,0,0,0.3);
+}
+#buttonContainerRent button:active,
+#buttonContainerSettle button:active {
+    transform: translateY(0);
+}
