@@ -681,7 +681,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                 error.innerText = "串流已停止";
                 error.style.display = "block";
                 video.style.display = "none";
-                fallback.style.display = "block";
+                fallback.style.display = "none";
             }
             isStopRequested = true;
             fetch(`${window.location.origin}/license-plate/stop-settle`, {
