@@ -612,7 +612,7 @@ button:not(#logoutButton),
     color: #2d3748 !important;         /* 跟 <h2> 同色 */
     margin: 0 0 30px 0 !important;
     padding-bottom: 12px !important;
-    letter-spacing: 0.5px !important;
+
     
     /* 加上跟 <h2> 一樣的紫藍漸層底線（超統一！） */
     border-bottom: 4px solid transparent !important;
