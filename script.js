@@ -1669,7 +1669,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                 if (!token) throw new Error("認證令牌缺失，請重新登入！");
                 const memberId = getMemberId();
                 if (!memberId) throw new Error("無法獲取會員 ID，請重新登入！");
-                const response = await fetch(`${API_URL}/members/profile`, {
+                const response = await fetch(`${API_URL}/members/id`, {
                     method: 'GET',
                     headers: {
                         "Content-Type": "application/json",
