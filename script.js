@@ -1645,33 +1645,29 @@ document.addEventListener("DOMContentLoaded", async function () {
 
         profileSection.style.display = "block";
 
-        // DOM 元素
+        // DOM 元素（已移除車牌相關）
         const profileData = document.getElementById("profileData");
         const editProfileForm = document.getElementById("editProfileForm");
         const editName = document.getElementById("editName");
         const editPhone = document.getElementById("editPhone");
         const editEmail = document.getElementById("editEmail");
-        const editLicensePlate = document.getElementById("editLicensePlate");
-        const renterEditFields = document.getElementById("renterEditFields");
         const editCardNumber = document.getElementById("editCardNumber");
         const saveProfileButton = document.getElementById("saveProfileButton");
         const editProfileButton = document.getElementById("editProfileButton");
         const cancelEditProfileButton = document.getElementById("cancelEditProfileButton");
 
-        // 關鍵！宣告在外面，所有函數都能用
+        // 移除：renterEditFields、editLicensePlate 完全不需要了
+
         let memberId = null;
 
-        // 載入個人資料
         async function loadProfile() {
             try {
                 const token = getToken();
-                memberId = getMemberId();  // 抓到 ID！
+                memberId = getMemberId();
 
-                if (!token || !memberId) {
-                    throw new Error("請重新登入！");
-                }
+                if (!token || !memberId) throw new Error("請重新登入！");
 
-                // 改這裡！用 memberId
+                // GET 正確路徑（你還沒改這行！記得改！）
                 const response = await fetch(`${API_URL}/members/profile`, {
                     method: 'GET',
                     headers: {
@@ -1694,30 +1690,23 @@ document.addEventListener("DOMContentLoaded", async function () {
                         : profile.payment_info;
                 }
 
-                // 顯示資料
-                let html = `
+                // 完全不顯示車牌欄位
+                profileData.innerHTML = `
                 <p><strong>姓名：</strong> ${profile.name || '未提供'}</p>
                 <p><strong>電話：</strong> ${profile.phone || '未提供'}</p>
                 <p><strong>電子郵件：</strong> ${profile.email || '未提供'}</p>
                 <p><strong>信用卡號：</strong> ${maskedCard}</p>
             `;
-                if (role === "renter") {
-                    html += `<p><strong>車牌號碼：</strong> ${profile.license_plate || '未提供'}</p>`;
-                }
-                profileData.innerHTML = html;
 
-                // 填入編輯欄位
+                // 填入編輯表單（無車牌）
                 editName.value = profile.name || '';
                 editPhone.value = profile.phone || '';
                 editEmail.value = profile.email || '';
-                editLicensePlate.value = profile.license_plate || '';
 
                 const cleanCard = profile.payment_info ? profile.payment_info.toString().replace(/\D/g, '') : '';
                 editCardNumber.value = cleanCard.length === 16
                     ? cleanCard.replace(/(\d{4})(?=\d)/g, '$1-')
                     : cleanCard;
-
-                renterEditFields.style.display = role === "renter" ? "block" : "none";
 
             } catch (error) {
                 profileData.innerHTML = `<p class="text-red-600">載入失敗：${error.message}</p>`;
@@ -1728,7 +1717,6 @@ document.addEventListener("DOMContentLoaded", async function () {
             }
         }
 
-        // 儲存按鈕 → 關鍵修改！
         saveProfileButton.addEventListener("click", async () => {
             if (!memberId) {
                 alert("會員資料遺失，請重新登入！");
@@ -1737,21 +1725,17 @@ document.addEventListener("DOMContentLoaded", async function () {
                 return;
             }
 
-            // 自動處理信用卡（支援任意格式）
             const cleanCard = editCardNumber.value.replace(/\D/g, '');
 
             const updatedProfile = {
                 name: editName.value.trim(),
                 phone: editPhone.value.trim(),
                 email: editEmail.value.trim(),
-                payment_info: cleanCard  // 傳純數字
+                payment_info: cleanCard
             };
 
-            if (role === "renter") {
-                updatedProfile.license_plate = editLicensePlate.value.trim().toUpperCase();
-            }
+            // 完全不傳 license_plate
 
-            // 簡單驗證
             if (!updatedProfile.name || !updatedProfile.phone || !updatedProfile.email) {
                 return alert("請填寫完整！");
             }
@@ -1762,7 +1746,6 @@ document.addEventListener("DOMContentLoaded", async function () {
             try {
                 const token = getToken();
 
-                // 改這裡！用 memberId
                 const response = await fetch(`${API_URL}/members/${memberId}`, {
                     method: 'PUT',
                     headers: {
@@ -1777,7 +1760,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                     throw new Error(err.error || "更新失敗");
                 }
 
-                alert("更新成功！");
+                alert("個人資料更新成功！");
                 editProfileForm.style.display = "none";
                 profileData.style.display = "block";
                 loadProfile();
@@ -1787,7 +1770,6 @@ document.addEventListener("DOMContentLoaded", async function () {
             }
         });
 
-        // 其他按鈕
         editProfileButton.onclick = () => {
             editProfileForm.style.display = "block";
             profileData.style.display = "none";
