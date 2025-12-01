@@ -1759,8 +1759,8 @@ document.addEventListener("DOMContentLoaded", async function () {
                 alert("請提供有效的電子郵件地址！");
                 return;
             }
-            if (!updatedProfile.payment_info || !/^[0-9]{16}$/.test(updatedProfile.payment_info)) {
-                alert("請提供有效的信用卡號（16 位數字）！");
+            if (!updatedProfile.payment_info || !/^\d{4}-\d{4}-\d{4}-\d{4}$/.test(updatedProfile.payment_info)) {
+                alert("請輸入正確格式：1111-1111-1111-1111（16 位數字）");
                 return;
             }
             try {
