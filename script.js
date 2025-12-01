@@ -1672,7 +1672,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                 }
 
                 // 改這裡！用 memberId
-                const response = await fetch(`${API_URL}/members/${memberId}`, {
+                const response = await fetch(`${API_URL}/members/profile`, {
                     method: 'GET',
                     headers: {
                         "Content-Type": "application/json",
