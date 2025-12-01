@@ -1640,13 +1640,12 @@ document.addEventListener("DOMContentLoaded", async function () {
             alert("您沒有權限訪問此功能！");
             return;
         }
+
         const profileSection = document.getElementById("profile");
-        if (!profileSection) {
-            console.error("profile section not found");
-            alert("無法載入「個人資訊」頁面，頁面元素缺失，請聯繫管理員！");
-            return;
-        }
+        if (!profileSection) return alert("頁面載入失敗，請聯繫管理員！");
+
         profileSection.style.display = "block";
+
         const profileData = document.getElementById("profileData");
         const editProfileForm = document.getElementById("editProfileForm");
         const editName = document.getElementById("editName");
@@ -1658,22 +1657,19 @@ document.addEventListener("DOMContentLoaded", async function () {
         const saveProfileButton = document.getElementById("saveProfileButton");
         const editProfileButton = document.getElementById("editProfileButton");
         const cancelEditProfileButton = document.getElementById("cancelEditProfileButton");
-        if (!profileData || !editProfileForm || !editName || !editPhone || !editEmail || !editLicensePlate || !renterEditFields || !editCardNumber || !saveProfileButton || !editProfileButton || !cancelEditProfileButton) {
-            console.error("Required elements for profile section are missing");
-            alert("個人資訊頁面元素缺失，請聯繫管理員！");
-            return;
-        }
-        // 在 setupProfile() 裡面，所有變數定義完之後，加入這行（關鍵！）
-        let memberId = null;  // 先宣告在外面，讓兩個函數都能用
 
+        // 關鍵！宣告在外面，讓所有函數都能用
+        let memberId = null;
+
+        // 載入個人資料（使用正確的 /members/{id}）
         async function loadProfile() {
             try {
                 const token = getToken();
-                if (!token) throw new Error("認證令牌缺失，請重新登入！");
+                memberId = getMemberId();  // 抓到 ID 並存起來！
 
-                // 先抓 ID（這一步很重要！）
-                memberId = getMemberId();  // ← 這裡賦值給外層變數
-                if (!memberId) throw new Error("無法獲取會員 ID，請重新登入！");
+                if (!token || !memberId) {
+                    throw new Error("登入逾時，請重新登入！");
+                }
 
                 const response = await fetch(`${API_URL}/members/${memberId}`, {
                     method: 'GET',
@@ -1685,41 +1681,43 @@ document.addEventListener("DOMContentLoaded", async function () {
 
                 if (!response.ok) {
                     if (response.status === 401) throw new Error("認證失敗，請重新登入！");
-                    const errorData = await response.json();
-                    throw new Error(`HTTP 錯誤！狀態: ${response.status}, 訊息: ${errorData.error || '未知錯誤'}`);
+                    const err = await response.json();
+                    throw new Error(err.error || "載入失敗");
                 }
 
                 const data = await response.json();
-                const profile = data.data || data.profile || data;
+                const profile = data.data || data;
 
-                // 顯示資料（信用卡遮罩）
-                let maskedCardNumber = '未提供';
+                // 信用卡遮罩顯示
+                let maskedCard = '未提供';
                 if (profile.payment_info) {
-                    const card = profile.payment_info.toString().replace(/\D/g, "");
+                    const card = profile.payment_info.toString().replace(/\D/g, '');
                     if (card.length === 16) {
-                        maskedCardNumber = `${card.slice(0, 4)}-****-****-${card.slice(-4)}`;
+                        maskedCard = `${card.slice(0, 4)}-****-****-${card.slice(-4)}`;
                     } else {
-                        maskedCardNumber = profile.payment_info;
+                        maskedCard = profile.payment_info;
                     }
                 }
 
-                let profileHTML = `
-            <p><strong>姓名：</strong> ${profile.name || '未提供'}</p>
-            <p><strong>電話：</strong> ${profile.phone || '未提供'}</p>
-            <p><strong>電子郵件：</strong> ${profile.email || '未提供'}</p>
-            <p><strong>信用卡號：</strong> ${maskedCardNumber}</p>
-        `;
+                // 顯示資料
+                let html = `
+                <p><strong>姓名：</strong> ${profile.name || '未提供'}</p>
+                <p><strong>電話：</strong> ${profile.phone || '未提供'}</p>
+                <p><strong>電子郵件：</strong> ${profile.email || '未提供'}</p>
+                <p><strong>信用卡號：</strong> ${maskedCard}</p>
+            `;
                 if (role === "renter") {
-                    profileHTML += `<p><strong>車牌號碼：</strong> ${profile.license_plate || '未提供'}</p>`;
+                    html += `<p><strong>車牌號碼：</strong> ${profile.license_plate || '未提供'}</p>`;
                 }
-                profileData.innerHTML = profileHTML;
+                profileData.innerHTML = html;
 
-                // 填入編輯表單（信用卡顯示格式化）
+                // 填入編輯表單（信用卡自動格式化）
                 editName.value = profile.name || '';
                 editPhone.value = profile.phone || '';
                 editEmail.value = profile.email || '';
                 editLicensePlate.value = profile.license_plate || '';
-                const cleanCard = profile.payment_info ? profile.payment_info.toString().replace(/\D/g, "") : "";
+
+                const cleanCard = profile.payment_info ? profile.payment_info.toString().replace(/\D/g, '') : '';
                 editCardNumber.value = cleanCard.length === 16
                     ? cleanCard.replace(/(\d{4})(?=\d)/g, '$1-')
                     : cleanCard;
@@ -1727,8 +1725,8 @@ document.addEventListener("DOMContentLoaded", async function () {
                 renterEditFields.style.display = role === "renter" ? "block" : "none";
 
             } catch (error) {
-                console.error("Failed to load profile:", error);
                 profileData.innerHTML = `<p class="text-red-600">載入失敗：${error.message}</p>`;
+                console.error("Load profile error:", error);
                 if (error.message.includes("登入")) {
                     removeToken();
                     showLoginPage(true);
@@ -1736,37 +1734,43 @@ document.addEventListener("DOMContentLoaded", async function () {
             }
         }
 
-        // 儲存按鈕 → 現在 memberId 已經有了！
+        // 編輯按鈕
+        editProfileButton.addEventListener("click", () => {
+            editProfileForm.style.display = "block";
+            profileData.style.display = "none";
+        });
+
+        // 儲存按鈕（關鍵！使用 memberId + 支援信用卡格式）
         saveProfileButton.addEventListener("click", async () => {
             if (!memberId) {
-                alert("會員 ID 遺失，請重新登入！");
+                alert("會員資料遺失，請重新登入！");
                 removeToken();
                 showLoginPage(true);
                 return;
             }
 
-            // 自動處理信用卡格式（支援 1111-1111... 或純數字）
+            // 自動處理信用卡（支援 1111-1111-1111-1111 或純數字）
             const rawCard = editCardNumber.value.trim();
-            const cleanCard = rawCard.replace(/\D/g, ''); // 移除非數字
+            const cleanCard = rawCard.replace(/\D/g, ''); // 只留數字
 
             const updatedProfile = {
                 name: editName.value.trim(),
                 phone: editPhone.value.trim(),
                 email: editEmail.value.trim(),
-                payment_info: cleanCard
+                payment_info: cleanCard  // 傳純數字給後端
             };
 
             if (role === "renter") {
                 updatedProfile.license_plate = editLicensePlate.value.trim().toUpperCase();
                 if (updatedProfile.license_plate && !/^[A-Z]{2,4}-[0-9]{3,4}$/.test(updatedProfile.license_plate)) {
-                    alert("車牌格式錯誤！範例：ABC-1234 或 AB-123");
+                    alert("車牌格式錯誤！範例：ABC-1234");
                     return;
                 }
             }
 
             // 必填驗證
             if (!updatedProfile.name || !updatedProfile.phone || !updatedProfile.email) {
-                alert("姓名、電話、信箱不能為空！");
+                alert("請填寫完整姓名、電話、信箱！");
                 return;
             }
             if (cleanCard.length !== 16) {
@@ -1794,18 +1798,22 @@ document.addEventListener("DOMContentLoaded", async function () {
                 alert("個人資料更新成功！");
                 editProfileForm.style.display = "none";
                 profileData.style.display = "block";
-                loadProfile(); // 重新整理顯示
+                loadProfile(); // 重新載入
 
             } catch (error) {
                 alert("更新失敗：" + error.message);
                 console.error(error);
             }
         });
+
+        // 取消按鈕
         cancelEditProfileButton.addEventListener("click", () => {
             editProfileForm.style.display = "none";
             profileData.style.display = "block";
             loadProfile();
         });
+
+        // 啟動！
         loadProfile();
     }
     async function waitForGoogleMaps() {
