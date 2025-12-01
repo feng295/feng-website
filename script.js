@@ -1742,21 +1742,19 @@ document.addEventListener("DOMContentLoaded", async function () {
         // 2. 渲染表格版車輛清單（全新！完美對應你的 HTML）
         function renderVehicleTable() {
             const tbody = document.getElementById("vehicleTableBody");
-            const noVehicleRow = document.getElementById("noVehicleRow");
 
-            if (!tbody || !noVehicleRow) return;
+            if (!tbody) return;
 
             // 清空表格
             tbody.innerHTML = '';
 
+            // 如果完全沒車，就什麼都不顯示（超乾淨！）
             if (vehicles.length === 0) {
-                noVehicleRow.classList.remove("hidden");
-                return;
+                return; // 直接結束，不顯示任何訊息
             }
 
-            noVehicleRow.classList.add("hidden");
-
-            vehicles.forEach((vehicle, index) => {
+            // 有車才顯示
+            vehicles.forEach((vehicle) => {
                 const row = document.createElement("tr");
                 row.className = "hover:bg-indigo-50 transition-all duration-200 border-b border-gray-100";
 
