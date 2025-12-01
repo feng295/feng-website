@@ -1711,70 +1711,97 @@ document.addEventListener("DOMContentLoaded", async function () {
         async function loadVehicles() {
             try {
                 const token = getToken();
+                if (!token) throw new Error("請重新登入");
+
                 const res = await fetch(`${API_URL}/vehicles/vehicle`, {
                     headers: { "Authorization": `Bearer ${token}` }
                 });
 
-                if (!res.ok) throw new Error("無法取得車輛資料");
+                if (!res.ok) {
+                    const err = await res.json().catch(() => ({}));
+                    throw new Error(err.error || "無法取得車輛資料");
+                }
 
                 const data = await res.json();
-                vehicles = Array.isArray(data) ? data : data.data || data.vehicles || [];
+                vehicles = Array.isArray(data)
+                    ? data
+                    : data.data || data.vehicles || data.vehicle_list || [];
 
-                renderVehicleList();
+                renderVehicleTable(); // 改用表格渲染
+
             } catch (err) {
-                vehicleList.innerHTML = `<p class="text-red-600">載入車輛失敗：${err.message}</p>`;
+                const tbody = document.getElementById("vehicleTableBody");
+                if (tbody) {
+                    tbody.innerHTML = `<tr><td colspan="2" class="text-center py-12 text-red-600 text-lg">載入失敗：${err.message}</td></tr>`;
+                }
+                console.error("載入車輛失敗:", err);
             }
         }
 
-        // 渲染車輛清單
-        function renderVehicleList() {
+        // ──────────────────────────────────────
+        // 2. 渲染表格版車輛清單（全新！完美對應你的 HTML）
+        function renderVehicleTable() {
+            const tbody = document.getElementById("vehicleTableBody");
+            const noVehicleRow = document.getElementById("noVehicleRow");
+
+            if (!tbody || !noVehicleRow) return;
+
+            // 清空表格
+            tbody.innerHTML = '';
+
             if (vehicles.length === 0) {
-                vehicleList.innerHTML = `
-                <div class="bg-gray-50 p-8 rounded-2xl text-center">
-                    <p class="text-gray-500 text-lg">尚未登記任何車輛</p>
-                    <p class="text-sm text-gray-400 mt-2">點擊下方新增您的愛車</p>
-                </div>
-            `;
+                noVehicleRow.classList.remove("hidden");
                 return;
             }
 
-            vehicleList.innerHTML = `
-            <h3 class="text-2xl font-bold text-indigo-700 mb-6 flex items-center gap-3">
-                我的車輛 (${vehicles.length} 台)
-            </h3>
-            <div class="space-y-4">
-                ${vehicles.map((v, i) => `
-                    <div class="bg-white p-5 rounded-2xl border-2 border-indigo-100 shadow-md hover:shadow-lg transition">
-                        <div class="flex justify-between items-center">
-                            <div>
-                                <div class="text-2xl font-mono font-black text-indigo-800">${v.license_plate}</div>
-                                ${v.nickname ? `<div class="text-gray-600 mt-1">暱稱：${v.nickname}</div>` : ''}
-                            </div>
-                            <button onclick="deleteVehicle('${v.license_plate}')" 
-                                    class="bg-red-500 hover:bg-red-600 text-white px-5 py-2 rounded-xl text-sm font-bold transition">
-                                刪除
-                            </button>
-                        </div>
-                    </div>
-                `).join('')}
-            </div>
+            noVehicleRow.classList.add("hidden");
+
+            vehicles.forEach((vehicle, index) => {
+                const row = document.createElement("tr");
+                row.className = "hover:bg-indigo-50 transition-all duration-200 border-b border-gray-100";
+
+                row.innerHTML = `
+            <td class="px-8 py-7">
+                <div class="text-2xl font-mono font-black text-indigo-700 tracking-widest">
+                    ${vehicle.license_plate || '未知車牌'}
+                </div>
+            </td>
+            <td class="px-8 py-7 text-center">
+                <button onclick="deleteVehicle('${vehicle.license_plate}')" 
+                        class="bg-red-500 hover:bg-red-600 text-white font-bold py-3 px-9 rounded-xl 
+                               shadow-md hover:shadow-xl transform hover:scale-105 transition-all duration-200 
+                               focus:outline-none focus:ring-4 focus:ring-red-300">
+                    刪除
+                </button>
+            </td>
         `;
+
+                tbody.appendChild(row);
+            });
         }
 
-        // 新增車輛
+        // ──────────────────────────────────────
+        // 3. 新增車輛（保持原邏輯，但重新載入表格）
         window.addVehicle = async () => {
-            let plate = newPlateInput.value.trim().toUpperCase().replace(/[^A-Z0-9-]/g, '');
-            if (!plate) return alert("請輸入車牌號碼！");
+            const input = document.getElementById("newPlateInput");
+            let raw = input.value.trim().toUpperCase();
 
-            // 自動格式化：ABC1234 → ABC-1234
-            plate = plate.replace(/([A-Z]+)(\d+)/, '$1-$2');
+            if (!raw) return alert("請輸入車牌號碼！");
 
+            // 移除所有非英數字符
+            let clean = raw.replace(/[^A-Z0-9]/g, '');
+
+            // 自動加上橫線：ABC1234 → ABC-1234
+            let plate = clean.replace(/([A-Z]+)(\d+)/, '$1-$2');
+
+            // 嚴格驗證台灣車牌格式
             if (!/^[A-Z]{2,4}-[0-9]{3,4}$/.test(plate)) {
-                return alert("車牌格式錯誤！正確範例：ABC-1234 或 AB-123");
+                return alert("車牌格式錯誤！\n\n正確範例：\n• ABC-1234\n• AB-123\n• KLM-5678");
             }
 
+            // 檢查重複
             if (vehicles.some(v => v.license_plate === plate)) {
-                return alert("此車牌已登記！");
+                return alert("此車牌已經登記過了！");
             }
 
             try {
@@ -1793,18 +1820,21 @@ document.addEventListener("DOMContentLoaded", async function () {
                     throw new Error(err.error || "新增失敗");
                 }
 
-                alert("車輛新增成功！");
-                newPlateInput.value = '';
-                await loadVehicles(); // 重新整理清單
+                alert(`車輛新增成功！\n${plate}`);
+                input.value = '';
+                await loadVehicles(); // 重新載入表格
 
             } catch (err) {
                 alert("新增失敗：" + err.message);
             }
         };
 
-        // 刪除車輛
+        // ──────────────────────────────────────
+        // 4. 刪除車輛（二次確認 + 重新載入）
         window.deleteVehicle = async (plate) => {
-            if (!confirm(`確定要刪除車牌 ${plate}？`)) return;
+            if (!confirm(`確定要刪除這台車？\n\n車牌：${plate}\n\n刪除後將無法自動進出停車場`)) {
+                return;
+            }
 
             try {
                 const token = getToken();
@@ -1819,7 +1849,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 
                 if (!res.ok) throw new Error("刪除失敗");
 
-                alert("車輛已移除");
+                alert("車輛已成功移除");
                 await loadVehicles();
 
             } catch (err) {
