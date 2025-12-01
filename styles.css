@@ -1126,3 +1126,99 @@ button:not(#logoutButton),
 #logoutButton:active {
     transform: translateY(-2px) !important;
 }
+/* ====================== 功能清單 h1 與內容區 h2 完美對齊 - 2025終極統一版 ====================== */
+
+.system-container {
+    display: grid !important;
+    grid-template-columns: 300px 1fr !important;   /* 左邊固定寬度，右邊自動填滿 */
+    gap: 40px !important;
+    max-width: 1700px !important;
+    margin: 40px auto !important;
+    padding: 0 20px !important;
+    align-items: start !important;                 /* 關鍵：頂部對齊 */
+}
+
+/* 左邊功能清單標題 h1 */
+.function-list h1 {
+    font-size: 32px !important;
+    font-weight: 900 !important;
+    color: #1e293b !important;
+    margin: 0 0 35px 0 !important;
+    padding: 0 0 16px 12px !important;
+    letter-spacing: 1.5px !important;
+    text-align: left !important;
+    background: linear-gradient(to right, #667eea, #764ba2);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    position: relative !important;
+}
+
+/* 加上超帥紫藍漸層底線 */
+.function-list h1::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 12px;
+    width: 120px;
+    height: 6px;
+    background: linear-gradient(to right, #667eea, #764ba2);
+    border-radius: 3px;
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.5);
+}
+
+/* 右邊所有內容區的 h2 完全跟左邊對齊 */
+.content-section h2,
+.content-section .section-title {
+    font-size: 32px !important;
+    font-weight: 900 !important;
+    color: #1e293b !important;
+    margin: 0 0 35px 0 !important;
+    padding: 0 0 16px 12px !important;
+    letter-spacing: 1.5px !important;
+    text-align: left !important;
+    background: linear-gradient(to right, #667eea, #764ba2);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    position: relative !important;
+    border-bottom: none !important;   /* 移除原本任何底線，避免重複 */
+}
+
+.content-section h2::after,
+.content-section .section-title::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 12px;
+    width: 120px;
+    height: 6px;
+    background: linear-gradient(to right, #667eea, #764ba2);
+    border-radius: 3px;
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.5);
+}
+
+/* 左邊功能欄背景升級（更高端） */
+.function-list {
+    background: linear-gradient(145deg, #ffffff, #f8fafc) !important;
+    border-radius: 24px !important;
+    padding: 40px 28px !important;
+    box-shadow: 
+        0 20px 50px rgba(0,0,0,0.12),
+        0 10px 20px rgba(102,126,234,0.1) !important;
+    border: 1px solid rgba(102,126,234,0.18) !important;
+    height: fit-content;
+    position: sticky;
+    top: 30px;
+}
+
+/* 內容區也微調一下，讓整體更協調 */
+.content-container {
+    background: linear-gradient(145deg, #ffffff, #f8fafc) !important;
+    border-radius: 24px !important;
+    padding: 40px !important;
+    box-shadow: 
+        0 20px 50px rgba(0,0,0,0.1),
+        0 10px 20px rgba(102,126,234,0.08) !important;
+    border: 1px solid rgba(102,126,234,0.15) !important;
+}
