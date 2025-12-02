@@ -1633,7 +1633,7 @@ document.addEventListener("DOMContentLoaded", async function () {
         };
     }
     // 設置個人資訊
-    function setupProfile() {
+    async function setupProfile() {
         const role = getRole();
         if (!["renter", "admin"].includes(role)) {
             alert("您沒有權限訪問此功能！");
@@ -1641,9 +1641,19 @@ document.addEventListener("DOMContentLoaded", async function () {
         }
 
         const profileSection = document.getElementById("profile");
+        const vehicleSection = document.getElementById("vehicleSection");
+
         if (!profileSection) return alert("頁面載入失敗！");
 
         profileSection.style.display = "block";
+
+        // 關鍵！只有 renter 才顯示車輛管理區
+        if (role === "renter") {
+            vehicleSection.style.display = "block";
+            await loadVehicles(); // 只有 renter 才載入車輛
+        } else {
+            vehicleSection.style.display = "none"; // admin 完全不顯示
+        }
 
         // 基本資料元素
         const profileData = document.getElementById("profileData");
