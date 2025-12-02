@@ -1793,7 +1793,7 @@ document.addEventListener("DOMContentLoaded", async function () {
             //let plate = clean.replace(/([A-Z]+)(\d+)/, '$1-$2');
 
             // 嚴格驗證台灣車牌格式
-            if (!/^[A-Z]{2,4}-[0-9]{3,4}$/.test(plate)) {
+            if (!/^[A-Z]{2,4}[0-9]{3,4}$/.test(plate)) {
                 return alert("車牌格式錯誤！\n\n正確範例：\n• ABC-1234\n• AB-123\n• KLM-5678");
             }
 
