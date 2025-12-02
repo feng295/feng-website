@@ -164,8 +164,8 @@ document.addEventListener("DOMContentLoaded", async function () {
         const newPath = `/${role}`;
         history.replaceState({ role }, '', newPath);
         console.log(`URL updated to: ${window.location.pathname}`);
-        if (role === "renter") pageTitle.textContent = "租用者";
-        else if (role === "admin") pageTitle.textContent = "管理員";
+        if (role === "renter") pageTitle.textContent = "停車位租用者";
+        else if (role === "admin") pageTitle.textContent = "停車場管理員";
         const navList = document.querySelector(".function-list ul");
         if (!navList) {
             console.error("Navigation list (.function-list ul) not found");
@@ -1790,7 +1790,7 @@ document.addEventListener("DOMContentLoaded", async function () {
             let clean = raw.replace(/[^A-Z0-9]/g, '');
 
             // 自動加上橫線：ABC1234 → ABC-1234
-            let plate = clean.replace(/([A-Z]+)(\d+)/, '$1-$2');
+            //let plate = clean.replace(/([A-Z]+)(\d+)/, '$1-$2');
 
             // 嚴格驗證台灣車牌格式
             if (!/^[A-Z]{2,4}-[0-9]{3,4}$/.test(plate)) {
