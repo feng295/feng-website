@@ -1784,20 +1784,19 @@ document.addEventListener("DOMContentLoaded", async function () {
             const input = document.getElementById("newPlateInput");
             let raw = input.value.trim().toUpperCase();
 
-            if (!raw) return alert("請輸入車牌號碼！");
-
-            // 移除所有非英數字符
-            let clean = raw.replace(/[^A-Z0-9]/g, '');
-
-            // 自動加上橫線：ABC1234 → ABC-1234
-            //let plate = clean.replace(/([A-Z]+)(\d+)/, '$1-$2');
-
-            // 嚴格驗證台灣車牌格式
-            if (!/^[A-Z]{2,4}[0-9]{3,4}$/.test(plate)) {
-                return alert("車牌格式錯誤！\n\n正確範例：\n• ABC-1234\n• AB-123\n• KLM-5678");
+            if (!raw) {
+                return alert("請輸入車牌號碼！");
             }
 
-            // 檢查重複
+            // 移除所有非英數字符（包含橫線、空格等）
+            let plate = raw.replace(/[^A-Z0-9]/g, '');
+
+            // 嚴格驗證：前面2~4個字母 + 後面3~4個數字（不允許橫線）
+            if (!/^[A-Z]{2,4}[0-9]{3,4}$/.test(plate)) {
+                return alert("車牌格式錯誤！\n\n正確格式（不需輸入橫線）：\n• ABC1234\n• AB123\n• KLM5678\n• XYZ9999");
+            }
+
+            // 檢查是否重複（比對純字母數字）
             if (vehicles.some(v => v.license_plate === plate)) {
                 return alert("此車牌已經登記過了！");
             }
@@ -1810,7 +1809,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                         "Content-Type": "application/json",
                         "Authorization": `Bearer ${token}`
                     },
-                    body: JSON.stringify({ license_plate: plate })
+                    body: JSON.stringify({ license_plate: plate })  // 傳純 ABC1234
                 });
 
                 if (!res.ok) {
