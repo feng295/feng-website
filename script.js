@@ -180,7 +180,7 @@ document.addEventListener("DOMContentLoaded", async function () {
         } else if (role === "admin") {
             navList.innerHTML = `
                 <li><a href="#" class="nav-link" data-target="addParking">新增停車場</a></li>
-                <li><a href="#" class="nav-link" data-target="My parking space">停車場列表</a></li>
+                <li><a href="#" class="nav-link" data-target="My parking space">停車場資訊清單</a></li>
                 <li><a href="#" class="nav-link" data-target="incomeInquiry">收入查詢</a></li>
                 <li><a href="#" class="nav-link" data-target="profile">個人資訊</a></li>
             `;
@@ -1394,7 +1394,7 @@ document.addEventListener("DOMContentLoaded", async function () {
         removeToken();
         showLoginPage();
     });
-    // 設置車位列表（唯一版本）
+    // 停車場資訊清單
     async function setupMyParkingSpace() {
         const role = getRole();
         console.log("Current role in setupMyParkingSpace:", role);
@@ -1447,7 +1447,6 @@ document.addEventListener("DOMContentLoaded", async function () {
             spots.forEach(spot => {
                 const row = document.createElement("tr");
                 row.innerHTML = `
-                <td class="border px-4 py-2">${spot.parking_lot_id}</td>
                 <td class="border px-4 py-2">${spot.address}</td>
                 <td class="border px-4 py-2">${spot.type === "flat" ? "平面" : "機械"}</td>
                 <td class="border px-4 py-2">${spot.hourly_rate}</td>
