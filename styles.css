@@ -1189,7 +1189,6 @@ button:not(#logoutButton),
     border-color: #86efac !important;
     color: #166534 !important;
     font-family: 'Courier New', monospace;
-    text-align: center;
     animation: glowPulse 3s infinite alternate;
 }
 
