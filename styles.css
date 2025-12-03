@@ -221,7 +221,7 @@ tbody tr:hover {
 td {
     padding: 20px;
     text-align: center;
-    font-size: 20px;
+    font-size: 15px;
 }
 
 /* 按鈕群組美化 */
@@ -1204,4 +1204,68 @@ button:not(#logoutButton),
     background-position: right 2rem center;
     background-size: 20px;
     appearance: none;
+}
+/* ===== 我的車輛表格 - 字體全面加大 + 霸氣升級 ===== */
+
+/* 表格整體更大氣 */
+#vehicleSection table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0 16px;   /* 行間距拉開，更有呼吸感 */
+}
+
+/* 表格頭（車牌號碼 / 操作） */
+#vehicleSection thead th {
+    font-size: 1.8rem !important;     /* 原來大概 0.875rem → 直接翻倍 */
+    font-weight: 900 !important;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: #4f46e5 !important;
+    padding: 20px 8px !important;
+}
+
+/* 表格內容行 */
+#vehicleSection tbody tr {
+    background: white !important;
+    box-shadow: 0 15px 40px rgba(79, 70, 229, 0.15) !important;
+    border-radius: 2rem !important;
+    transition: all 0.4s ease !important;
+}
+
+#vehicleSection tbody tr:hover {
+    transform: translateY(-8px) scale(1.02) !important;
+    box-shadow: 0 25px 60px rgba(124, 58, 237, 0.3) !important;
+}
+
+/* 車牌號碼 - 最大重點！ */
+#vehicleSection tbody td:first-child {
+    padding: 32px 40px !important;
+}
+
+#vehicleSection tbody td:first-child .text-2xl {
+    font-size: 3.8rem !important;        /* 原 1.5rem → 爆增到超大！ */
+    font-weight: 900 !important;
+    letter-spacing: 8px !important;     /* 車牌數字拉開，更有高級感 */
+    color: #4f46e5 !important;
+    text-shadow: 0 4px 10px rgba(79, 70, 229, 0.3);
+}
+
+/* 刪除按鈕 - 也加大 + 更兇 */
+#vehicleSection tbody td:last-child {
+    padding: 32px 40px !important;
+    text-align: center;
+}
+
+#vehicleSection tbody td:last-child button {
+    font-size: 1.8rem !important;        /* 字更大 */
+    font-weight: 900 !important;
+    padding: 20px 50px !important;      /* 按鈕變超大 */
+    border-radius: 2rem !important;
+    min-width: 180px;
+    box-shadow: 0 15px 35px rgba(239, 68, 68, 0.4) !important;
+}
+
+#vehicleSection tbody td:last-child button:hover {
+    transform: translateY(-6px) scale(1.15) !important;
+    box-shadow: 0 25px 50px rgba(239, 68, 68, 0.6) !important;
 }
