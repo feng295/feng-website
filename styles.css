@@ -1246,7 +1246,6 @@ button:not(#logoutButton),
     font-size: 3.8rem !important;        /* 原 1.5rem → 爆增到超大！ */
     font-weight: 900 !important;
     letter-spacing: 8px !important;     /* 車牌數字拉開，更有高級感 */
-    color: #4f46e5 !important;
     text-shadow: 0 4px 10px rgba(79, 70, 229, 0.3);
 }
 
