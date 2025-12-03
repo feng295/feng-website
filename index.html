@@ -67,117 +67,42 @@
                 <ul></ul>
             </div>
             <div class="content-container">
-                <!-- 新增停車場 - 頂級美學完整版 -->
                 <div id="addParking" class="content-section" style="display: none;">
-                    <div class="max-w-6xl mx-auto">
-                        <!-- 標題卡片 -->
-                        <div class="text-center mb-12">
-                            <h2
-                                class="text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-purple-700 mb-4">
-                                新增停車場
-                            </h2>
-                            <p class="text-xl text-indigo-600 font-medium">點擊地圖選擇位置，系統將自動填入經緯度</p>
-                        </div>
-
-                        <form id="addParkingForm" class="space-y-10">
-
-                            <!-- 地址 + 停車類型 -->
-                            <div class="grid grid-cols-1 lg:grid-cols-2 gap-10">
-                                <div class="group">
-                                    <label for="newLocation" class="block text-2xl font-black text-indigo-800 mb-4">
-                                        停車場地址 <span class="text-red-500">*</span>
-                                    </label>
-                                    <input type="text" id="newLocation" placeholder="例如：台北市信義區忠孝東路五段100號" maxlength="50"
-                                        required class="w-full px-8 py-7 text-xl bg-white border-4 border-indigo-300 rounded-3xl 
-                                  focus:border-purple-600 outline-none shadow-2xl transition-all duration-500
-                                  hover:border-indigo-500 focus:scale-105 focus:ring-8 focus:ring-purple-300/30
-                                  placeholder-gray-400 font-medium">
-                                </div>
-
-                                <div class="group">
-                                    <label for="newParkingType" class="block text-2xl font-black text-indigo-800 mb-4">
-                                        停車類型 <span class="text-red-500">*</span>
-                                    </label>
-                                    <select id="newParkingType" required class="w-full px-8 py-7 text-xl bg-white border-4 border-indigo-300 rounded-3xl 
-                                   focus:border-purple-600 outline-none shadow-2xl transition-all duration-500
-                                   hover:border-indigo-500 focus:scale-105 cursor-pointer appearance-none
-                                   bg-[url('data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 fill=%22none%22 viewBox=%220 0 20 20%22%3E%3Cpath stroke=%22%236b7280%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22 stroke-width=%222%22 d=%22M6 8l4 4 4-4%22/%3E%3C/svg%3E')] 
-                                   bg-no-repeat bg-right-8">
-                                        <option value="flat">平面停車場</option>
-                                        <option value="mechanical">機械停車塔</option>
-                                    </select>
-                                </div>
-                            </div>
-
-                            <!-- 費用 + 總車位 -->
-                            <div class="grid grid-cols-1 lg:grid-cols-2 gap-10">
-                                <div class="group">
-                                    <label for="newPrice" class="block text-2xl font-black text-indigo-800 mb-4">
-                                        每小時費用 <span class="text-red-500">*</span>
-                                    </label>
-                                    <div class="relative">
-                                        <span
-                                            class="absolute left-8 top-1/2 -translate-y-1/2 text-3xl font-black text-purple-600">NT$</span>
-                                        <input type="number" id="newPrice" step="1" value="40" min="0" required class="w-full pl-28 pr-8 py-7 text-3xl font-bold text-indigo-900 bg-white border-4 border-indigo-300 rounded-3xl 
-                                      focus:border-purple-600 outline-none shadow-2xl transition-all duration-500
-                                      hover:border-indigo-500 focus:scale-105">
-                                    </div>
-                                </div>
-
-                                <div class="group">
-                                    <label for="newTotalSpots" class="block text-2xl font-black text-indigo-800 mb-4">
-                                        總停車位數量 <span class="text-red-500">*</span>
-                                    </label>
-                                    <input type="number" id="newTotalSpots" placeholder="例如：280" value="1" min="1"
-                                        required class="w-full px-8 py-7 text-3xl font-black text-center text-indigo-900 bg-white border-4 border-indigo-300 rounded-3xl 
-                                  focus:border-purple-600 outline-none shadow-2xl transition-all duration-500
-                                  hover:border-indigo-500 focus:scale-105">
-                                </div>
-                            </div>
-
-                            <!-- 經緯度唯讀顯示 -->
-                            <div class="grid grid-cols-1 lg:grid-cols-2 gap-10">
-                                <div class="group">
-                                    <label class="block text-2xl font-black text-green-700 mb-4">
-                                        經度（Longitude）
-                                    </label>
-                                    <input type="text" id="longitudeInput" readonly placeholder="點擊地圖自動填入" class="w-full px-8 py-7 text-xl bg-gradient-to-r from-emerald-50 to-green-50 border-4 border-emerald-400 
-                                  rounded-3xl shadow-2xl cursor-not-allowed text-emerald-800 font-mono font-bold text-center
-                                  animate-pulse">
-                                </div>
-                                <div class="group">
-                                    <label class="block text-2xl font-black text-green-700 mb-4">
-                                        緯度（Latitude）
-                                    </label>
-                                    <input type="text" id="latitudeInput" readonly placeholder="點擊地圖自動填入" class="w-full px-8 py-7 text-xl bg-gradient-to-r from-emerald-50 to-green-50 border-4 border-emerald-400 
-                                  rounded-3xl shadow-2xl cursor-not-allowed text-emerald-800 font-mono font-bold text-center
-                                  animate-pulse">
-                                </div>
-                            </div>
-
-                            <!-- Google 地圖 -->
-                            <div class="mt-12">
-                                <label class="block text-2xl font-black text-indigo-800 mb-6 text-center">
-                                    點擊地圖選擇停車場位置
-                                </label>
-                                <div id="addParkingMap" class="w-full h-96 lg:h-96 rounded-3xl shadow-2xl border-4 border-indigo-200 overflow-hidden
-                            transform hover:scale-105 transition-all duration-700">
-                                </div>
-                            </div>
-
-                            <!-- 按鈕區 -->
-                            <div class="flex flex-col sm:flex-row justify-center gap-8 mt-16">
-                                <button type="button" id="saveNewSpotButton" class="px-20 py-8 bg-gradient-to-r from-emerald-500 to-teal-600 text-white text-3xl font-black 
-                               rounded-full shadow-2xl hover:shadow-3xl transform hover:scale-110 
-                               transition-all duration-500 flex items-center justify-center gap-4">
-                                    立即新增停車場
-                                </button>
-                                <button type="button" id="cancelAddButton" class="px-16 py-8 bg-gradient-to-r from-gray-500 to-gray-600 text-white text-2xl font-bold 
-                               rounded-full shadow-xl hover:shadow-2xl transition-all duration-300">
-                                    取消
-                                </button>
-                            </div>
-                        </form>
+                    <h2>新增停車場</h2>
+                    <div class="input-group">
+                        <label for="newLocation">地址：</label>
+                        <input type="text" id="newLocation" placeholder="請輸入地址" maxlength="50" required
+                            aria-label="車位地址">
+                    </div>
+                    <div class="input-group">
+                        <label for="newParkingType">停車類型：</label>
+                        <select id="newParkingType" required aria-label="選擇停車類型">
+                            <option value="flat">平面</option>
+                            <option value="mechanical">機械</option>
+                        </select>
+                    </div>
+                    <div class="input-group">
+                        <label id="newPriceLabel" for="newPrice">小時費用（元）：</label>
+                        <input type="number" id="newPrice" step="0.01" value="40.00" min="0" required
+                            aria-label="小時費用（元）">
+                    </div>
+                    <div class="input-group">
+                        <label for="latitudeInput">經度：</label>
+                        <input type="number" id="latitudeInput" step="0.000001" readonly aria-label="經度">
+                    </div>
+                    <div class="input-group">
+                        <label for="longitudeInput">緯度：</label>
+                        <input type="number" id="longitudeInput" step="0.000001" readonly aria-label="緯度">
+                    </div>
+                    <div class="input-group">
+                        <label for="newTotalSpots">總停車位數量：</label>
+                        <input type="number" id="newTotalSpots" placeholder="請輸入總停車位數量" value="1" min="1" required
+                            aria-label="總停車位數量">
+                    </div>
+                    <div id="addParkingMap" style="height: 400px; width: 100%;"></div>
+                    <div style="margin-top: 10px;">
+                        <button id="saveNewSpotButton" aria-label="保存新車位">新增車位</button>
+                        <button id="cancelAddButton" aria-label="取消新增車位">取消</button>
                     </div>
                 </div>
                 <div id="My parking space" class="content-section" style="display: none;">

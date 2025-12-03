@@ -1450,7 +1450,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                 <td class="border px-4 py-2">${spot.address}</td>
                 <td class="border px-4 py-2">${spot.type === "flat" ? "平面" : "機械"}</td>
                 <td class="border px-4 py-2">${spot.hourly_rate}</td>
-                <td class="border px-4 py-2">總 ${spot.total_spots} / 剩 ${spot.remaining_spots}</td>
+                <td class="border px-4 py-2">總車位 ${spot.total_spots} / 剩餘車位 ${spot.remaining_spots}</td>
                 <td class="border px-4 py-2 text-center space-x-1">
                     <button class="edit-btn bg-blue-600 hover:bg-blue-700 text-white text-xs px-3 py-1 rounded"
                             data-id="${spot.parking_lot_id}">編輯</button>
