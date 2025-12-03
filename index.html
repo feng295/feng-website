@@ -69,35 +69,48 @@
             <div class="content-container">
                 <div id="addParking" class="content-section" style="display: none;">
                     <h2>新增停車場</h2>
-                    <div class="input-group">
-                        <label for="newLocation">地址：</label>
-                        <input type="text" id="newLocation" placeholder="請輸入地址" maxlength="50" required
-                            aria-label="車位地址">
+                    <div class="parking-input-group">
+                        <label for="newLocation" class="parking-label">停車場地址 <span class="text-red-500">*</span></label>
+                        <input type="text" id="newLocation" class="parking-input" placeholder="例如：台北市信義區忠孝東路五段100號"
+                            maxlength="50" required>
                     </div>
-                    <div class="input-group">
-                        <label for="newParkingType">停車類型：</label>
-                        <select id="newParkingType" required aria-label="選擇停車類型">
-                            <option value="flat">平面</option>
-                            <option value="mechanical">機械</option>
+
+                    <div class="parking-input-group">
+                        <label for="newParkingType" class="parking-label">停車類型 <span
+                                class="text-red-500">*</span></label>
+                        <select id="newParkingType" class="parking-select" required>
+                            <option value="flat">平面停車場</option>
+                            <option value="mechanical">機械停車塔</option>
                         </select>
                     </div>
-                    <div class="input-group">
-                        <label id="newPriceLabel" for="newPrice">小時費用（元）：</label>
-                        <input type="number" id="newPrice" step="0.01" value="40.00" min="0" required
-                            aria-label="小時費用（元）">
+
+                    <div class="parking-input-group">
+                        <label id="newPriceLabel" for="newPrice" class="parking-label">每小時費用 <span
+                                class="text-red-500">*</span></label>
+                        <div style="position: relative;">
+                            <span class="price-prefix">NT$</span>
+                            <input type="number" id="newPrice" class="parking-input" style="padding-left: 6rem;"
+                                step="1" value="40" min="0" required placeholder="40">
+                        </div>
                     </div>
-                    <div class="input-group">
-                        <label for="latitudeInput">經度：</label>
-                        <input type="number" id="latitudeInput" step="0.000001" readonly aria-label="經度">
+
+                    <div class="parking-input-group">
+                        <label for="longitudeInput" class="parking-label text-green-700">經度（Longitude）</label>
+                        <input type="text" id="longitudeInput" class="parking-input readonly-coord" readonly
+                            placeholder="點擊地圖自動填入">
                     </div>
-                    <div class="input-group">
-                        <label for="longitudeInput">緯度：</label>
-                        <input type="number" id="longitudeInput" step="0.000001" readonly aria-label="緯度">
+
+                    <div class="parking-input-group">
+                        <label for="latitudeInput" class="parking-label text-green-700">緯度（Latitude）</label>
+                        <input type="text" id="latitudeInput" class="parking-input readonly-coord" readonly
+                            placeholder="點擊地圖自動填入">
                     </div>
-                    <div class="input-group">
-                        <label for="newTotalSpots">總停車位數量：</label>
-                        <input type="number" id="newTotalSpots" placeholder="請輸入總停車位數量" value="1" min="1" required
-                            aria-label="總停車位數量">
+
+                    <div class="parking-input-group">
+                        <label for="newTotalSpots" class="parking-label">總停車位數量 <span
+                                class="text-red-500">*</span></label>
+                        <input type="number" id="newTotalSpots" class="parking-input" placeholder="例如：280" value="1"
+                            min="1" required style="text-align: center; font-size: 2rem;">
                     </div>
                     <div id="addParkingMap" style="height: 400px; width: 100%;"></div>
                     <div style="margin-top: 10px;">
