@@ -414,7 +414,7 @@ document.addEventListener("DOMContentLoaded", async function () {
         };
     }
 
-    // ==================== 完全修正版：進場功能（雲端版）====================
+    // ==================== 完美進場功能（鏡頭辨識成功後自動關閉）====================
     function setupRentParking() {
         const role = getRole();
         if (role !== "renter") {
@@ -438,7 +438,6 @@ document.addEventListener("DOMContentLoaded", async function () {
         let isScanning = false;
         let stream = null;
 
-        // 讀取停車場 ID
         const demoInput = document.getElementById("demoParkingLotId");
         const parkingLotId = demoInput?.value ? parseInt(demoInput.value, 10) : null;
         if (!parkingLotId) {
@@ -448,12 +447,12 @@ document.addEventListener("DOMContentLoaded", async function () {
 
         async function startCamera() {
             try {
-                stream = await navigator.mediaDevices.getUserMedia({ video: true });
+                stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
                 video.srcObject = stream;
                 video.style.display = "block";
                 fallback.style.display = "none";
                 loading.style.display = "block";
-                plateList.innerHTML = '<li class="text-gray-500">掃描中...</li>';
+                plateList.innerHTML = '<li class="text-gray-500 text-5xl">請將車牌對準鏡頭...</li>';
                 confirmButton.disabled = true;
                 rescanButton.style.display = "none";
 
@@ -471,12 +470,14 @@ document.addEventListener("DOMContentLoaded", async function () {
             if (stream) {
                 stream.getTracks().forEach(t => t.stop());
                 stream = null;
+                video.srcObject = null;
+                video.style.display = "none";
             }
             isScanning = false;
         }
 
         function scanPlate() {
-            if (!isScanning) return;
+            if (!isScanning || !stream) return;
 
             const canvas = document.createElement('canvas');
             const ctx = canvas.getContext('2d');
@@ -499,12 +500,29 @@ document.addEventListener("DOMContentLoaded", async function () {
                     if (res.ok) {
                         const data = await res.json();
                         if (data.plate && data.plate !== currentPlate) {
-                            currentPlate = data.plate;
-                            plateList.innerHTML = `<li class="text-green-600 text-7xl font-bold">${data.plate}</li>`;
+                            const cleanPlate = data.plate.replace(/[^A-Z0-9]/g, '').toUpperCase();
+                            currentPlate = cleanPlate;
+
+                            // 成功！立刻關閉鏡頭 + 顯示超讚畫面
+                            stopCamera();
+                            loading.style.display = "none";
+
+                            plateList.innerHTML = `
+                            <div class="text-center animate-bounce">
+                                <div class="text-green-600 text-9xl font-black mb-8 tracking-widest">
+                                    ${cleanPlate}
+                                </div>
+                                <div class="bg-green-600 text-white text-6xl font-bold px-16 py-8 rounded-3xl shadow-2xl inline-block">
+                                    辨識成功！
+                                </div>
+                            </div>
+                        `;
+
                             confirmButton.disabled = false;
+                            confirmButton.textContent = "確認進場";
                             rescanButton.style.display = "inline-block";
-                            isScanning = false; // 成功就停止掃描
-                            console.log("進場辨識成功：", data.plate);
+
+                            console.log("進場辨識成功，鏡頭已關閉：", cleanPlate);
                         }
                     }
                 } catch (err) {
@@ -512,12 +530,11 @@ document.addEventListener("DOMContentLoaded", async function () {
                 }
 
                 if (isScanning) {
-                    setTimeout(scanPlate, 800); // 每 0.8 秒掃一次
+                    setTimeout(scanPlate, 800);
                 }
             }, 'image/jpeg', 0.8);
         }
 
-        // 確認進場
         confirmButton.onclick = async () => {
             if (!currentPlate) return alert("請先掃描車牌！");
 
@@ -540,14 +557,22 @@ document.addEventListener("DOMContentLoaded", async function () {
                 });
 
                 if (res.ok) {
-                    plateList.innerHTML = `<li class="text-green-600 text-8xl font-bold">${currentPlate}<br>進場成功！</li>`;
+                    plateList.innerHTML = `
+                    <div class="text-center">
+                        <div class="text-green-600 text-9xl font-black mb-8">${currentPlate}</div>
+                        <div class="text-white bg-gradient-to-r from-green-500 to-emerald-600 text-7xl font-bold px-20 py-12 rounded-3xl shadow-2xl">
+                            進場成功！
+                        </div>
+                    </div>
+                `;
                     alert(`進場成功！車牌：${currentPlate}`);
                     setTimeout(() => location.reload(), 5000);
                 } else {
-                    throw new Error("進場失敗");
+                    const err = await res.json().catch(() => ({}));
+                    alert("進場失敗：" + (err.error || "請稍後再試"));
                 }
             } catch (e) {
-                alert("進場失敗，請稍後再試");
+                alert("網路錯誤");
             } finally {
                 confirmButton.disabled = false;
                 confirmButton.textContent = "確認進場";
@@ -556,18 +581,13 @@ document.addEventListener("DOMContentLoaded", async function () {
 
         rescanButton.onclick = () => {
             currentPlate = null;
-            plateList.innerHTML = '<li class="text-gray-500">掃描中...</li>';
-            confirmButton.disabled = true;
-            rescanButton.style.display = "none";
-            isScanning = true;
-            scanPlate();
+            startCamera(); // 重新開鏡頭
         };
 
-        // 啟動
         startCamera();
     }
 
-    // ==================== 完全修正版：出場功能（雲端版）====================
+    // ==================== 完美出場功能（鏡頭辨識成功後自動關閉）====================
     function setupSettleParking() {
         const role = getRole();
         if (role !== "renter") {
@@ -594,12 +614,12 @@ document.addEventListener("DOMContentLoaded", async function () {
 
         async function startCamera() {
             try {
-                stream = await navigator.mediaDevices.getUserMedia({ video: true });
+                stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
                 video.srcObject = stream;
                 video.style.display = "block";
                 fallback.style.display = "none";
                 loading.style.display = "block";
-                plateList.innerHTML = '<li class="text-gray-500">掃描中...</li>';
+                plateList.innerHTML = '<li class="text-gray-500 text-5xl">請將車牌對準鏡頭...</li>';
                 confirmButton.disabled = true;
                 rescanButton.style.display = "none";
                 settleResult.style.display = "none";
@@ -618,12 +638,14 @@ document.addEventListener("DOMContentLoaded", async function () {
             if (stream) {
                 stream.getTracks().forEach(t => t.stop());
                 stream = null;
+                video.srcObject = null;
+                video.style.display = "none";
             }
             isScanning = false;
         }
 
         function scanPlate() {
-            if (!isScanning) return;
+            if (!isScanning || !stream) return;
 
             const canvas = document.createElement('canvas');
             const ctx = canvas.getContext('2d');
@@ -646,12 +668,28 @@ document.addEventListener("DOMContentLoaded", async function () {
                     if (res.ok) {
                         const data = await res.json();
                         if (data.plate && data.plate !== currentPlate) {
-                            currentPlate = data.plate;
-                            plateList.innerHTML = `<li class="text-green-600 text-7xl font-bold">${data.plate}</li>`;
+                            const cleanPlate = data.plate.replace(/[^A-Z0-9]/g, '').toUpperCase();
+                            currentPlate = cleanPlate;
+
+                            stopCamera();
+                            loading.style.display = "none";
+
+                            plateList.innerHTML = `
+                            <div class="text-center animate-bounce">
+                                <div class="text-green-600 text-9xl font-black mb-8 tracking-widest">
+                                    ${cleanPlate}
+                                </div>
+                                <div class="bg-green-600 text-white text-6xl font-bold px-16 py-8 rounded-3xl shadow-2xl inline-block">
+                                    辨識成功！
+                                </div>
+                            </div>
+                        `;
+
                             confirmButton.disabled = false;
+                            confirmButton.textContent = "確認出場";
                             rescanButton.style.display = "inline-block";
-                            isScanning = false;
-                            console.log("出場辨識成功：", data.plate);
+
+                            console.log("出場辨識成功，鏡頭已關閉：", cleanPlate);
                         }
                     }
                 } catch (err) {
@@ -689,17 +727,21 @@ document.addEventListener("DOMContentLoaded", async function () {
                 if (res.ok) {
                     const amount = result.data?.total_cost || 0;
                     settleResult.innerHTML = `
-                    <div class="text-green-600 text-6xl font-bold mb-8">出場成功！</div>
-                    <div class="text-5xl">應收費用：<span class="text-red-600 text-8xl font-bold">${amount}</span> 元</div>
+                    <div class="text-center">
+                        <div class="text-green-600 text-8xl font-black mb-8">${currentPlate}</div>
+                        <div class="bg-gradient-to-r from-green-500 to-emerald-600 text-white text-7xl font-bold px-20 py-12 rounded-3xl shadow-2xl">
+                            出場成功！<br>應收 ${amount} 元
+                        </div>
+                    </div>
                 `;
                     settleResult.style.display = "block";
                     alert(`出場成功！費用：${amount} 元`);
                     setTimeout(() => location.reload(), 10000);
                 } else {
-                    throw new Error(result.error || "結算失敗");
+                    alert("出場失敗：" + (result.error || "請稍後再試"));
                 }
             } catch (e) {
-                alert("出場失敗：" + e.message);
+                alert("網路錯誤");
             } finally {
                 confirmButton.disabled = false;
                 confirmButton.textContent = "確認出場";
@@ -708,12 +750,8 @@ document.addEventListener("DOMContentLoaded", async function () {
 
         rescanButton.onclick = () => {
             currentPlate = null;
-            plateList.innerHTML = '<li class="text-gray-500">掃描中...</li>';
             settleResult.style.display = "none";
-            confirmButton.disabled = true;
-            rescanButton.style.display = "none";
-            isScanning = true;
-            scanPlate();
+            startCamera();
         };
 
         startCamera();
