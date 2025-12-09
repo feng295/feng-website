@@ -1129,7 +1129,7 @@ button:not(#logoutButton),
 /* ===== 專屬於新增停車場的頂級美學 CSS ===== */
 .parking-input-group {
     position: relative;
-    margin-bottom: 2.5rem;
+    margin-bottom: 1.5rem;
 }
 
 .parking-label {
@@ -1144,7 +1144,7 @@ button:not(#logoutButton),
 
 .parking-input, .parking-select {
     width: 100%;
-    padding: 1.8rem 2.5rem;
+    padding: 0.8rem 2.5rem;
     font-size: 1.4rem;
     font-weight: 700;
     border: 4px solid #c7d2fe;
