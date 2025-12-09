@@ -32,35 +32,6 @@ document.addEventListener("DOMContentLoaded", async function () {
     const cardNumberInput = document.getElementById("card_number");
     const renterFields = document.getElementById("renterFields");
     const licensePlateInput = document.getElementById("license_plate");
-
-setTimeout(() => {
-        const buttons = [
-            { id: "confirmButtonRent", text: "確認進場" },
-            { id: "confirmButtonSettle", text: "確認出場" },
-            { id: "startButtonRent", display: "inline-block" },
-            { id: "stopButtonRent", display: "none" },
-            { id: "rescanButtonRent", display: "none" },
-            { id: "startButtonSettle", display: "inline-block" },
-            { id: "stopButtonSettle", display: "none" },
-            { id: "rescanButtonSettle", display: "none" }
-        ];
-
-        buttons.forEach(btn => {
-            const el = document.getElementById(btn.id);
-            if (el) {
-                if (btn.text !== undefined) {
-                    el.textContent = btn.text;
-                    el.disabled = true;
-                }
-                if (btn.display !== undefined) {
-                    el.style.display = btn.display;
-                }
-            }
-        });
-
-        console.log("所有按鈕已強制重置為初始狀態");
-    }, 100); // 稍微延遲一點，確保瀏覽器記憶被蓋掉
-
     // 檢查必要的 DOM 元素是否存在
     if (!emailInput || !passwordInput || !authForm || !logoutButton || !historyList) {
         console.error("Required DOM elements are missing: emailInput, passwordInput, authForm, logoutButton, or historyList");
@@ -455,6 +426,20 @@ setTimeout(() => {
         if (!section) return;
         section.style.display = "block";
 
+        // 強制重置所有按鈍狀態（關鍵！解決重新整理殭屍問題）
+        const confirmButton = document.getElementById("confirmButtonRent");
+        const startButton = document.getElementById("startButtonRent");
+        const stopButton = document.getElementById("stopButtonRent");
+        const rescanButton = document.getElementById("rescanButtonRent");
+
+        if (confirmButton) {
+            confirmButton.textContent = "確認進場";
+            confirmButton.disabled = true;
+            confirmButton.style.display = "inline-block";
+        }
+        if (startButton) startButton.style.display = "inline-block";
+        if (stopButton) stopButton.style.display = "none";
+        if (rescanButton) rescanButton.style.display = "none";
 
         // 以下是你原本的程式碼
         const video = document.getElementById("videoRent");
@@ -643,6 +628,21 @@ setTimeout(() => {
         const section = document.getElementById("settleParking");
         if (!section) return;
         section.style.display = "block";
+
+        // 強制重置所有按鈕狀態（關鍵！）
+        const confirmButton = document.getElementById("confirmButtonSettle");
+        const startButton = document.getElementById("startButtonSettle");
+        const stopButton = document.getElementById("stopButtonSettle");
+        const rescanButton = document.getElementById("rescanButtonSettle");
+
+        if (confirmButton) {
+            confirmButton.textContent = "確認出場";
+            confirmButton.disabled = true;
+            confirmButton.style.display = "inline-block";
+        }
+        if (startButton) startButton.style.display = "inline-block";
+        if (stopButton) stopButton.style.display = "none";
+        if (rescanButton) rescanButton.style.display = "none";
 
         // 以下是你原本的程式碼
         const video = document.getElementById("videoSettle");
