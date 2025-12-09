@@ -414,7 +414,7 @@ document.addEventListener("DOMContentLoaded", async function () {
         };
     }
 
-    // ==================== 終極進場功能（成功後仍可再次掃描）====================
+    // ==================== 終極進場功能（永遠不會殭屍按鈕）====================
     function setupRentParking() {
         const role = getRole();
         if (role !== "renter") {
@@ -426,15 +426,27 @@ document.addEventListener("DOMContentLoaded", async function () {
         if (!section) return;
         section.style.display = "block";
 
+        // 強制重置所有按鈍狀態（關鍵！解決重新整理殭屍問題）
+        const confirmButton = document.getElementById("confirmButtonRent");
+        const startButton = document.getElementById("startButtonRent");
+        const stopButton = document.getElementById("stopButtonRent");
+        const rescanButton = document.getElementById("rescanButtonRent");
+
+        if (confirmButton) {
+            confirmButton.textContent = "確認進場";
+            confirmButton.disabled = true;
+            confirmButton.style.display = "inline-block";
+        }
+        if (startButton) startButton.style.display = "inline-block";
+        if (stopButton) stopButton.style.display = "none";
+        if (rescanButton) rescanButton.style.display = "none";
+
+        // 以下是你原本的程式碼
         const video = document.getElementById("videoRent");
         const fallback = document.getElementById("fallbackRent");
         const plateList = document.getElementById("plateListRent");
         const loading = document.getElementById("loadingRent");
         const error = document.getElementById("errorRent");
-        const confirmButton = document.getElementById("confirmButtonRent");
-        const rescanButton = document.getElementById("rescanButtonRent");
-        const startButton = document.getElementById("startButtonRent");
-        const stopButton = document.getElementById("stopButtonRent");
 
         let currentPlate = null;
         let isScanning = false;
@@ -545,7 +557,7 @@ document.addEventListener("DOMContentLoaded", async function () {
             }, 'image/jpeg', 0.8);
         }
 
-        // 確認進場 → 永久成功畫面
+        // 確認進場
         confirmButton.onclick = async () => {
             if (!currentPlate) return;
 
@@ -575,7 +587,6 @@ document.addEventListener("DOMContentLoaded", async function () {
                 `;
                     confirmButton.style.display = "none";
                     rescanButton.style.display = "none";
-                    // 成功後仍顯示開始/停止按鈕，可掃下一台
                     startButton.style.display = "inline-block";
                     stopButton.style.display = "none";
                 } else {
@@ -592,7 +603,6 @@ document.addEventListener("DOMContentLoaded", async function () {
             }
         };
 
-        // 重新掃描或開始掃描 → 重置狀態
         const restartScanning = () => {
             currentPlate = null;
             resetToScanningState();
@@ -603,12 +613,11 @@ document.addEventListener("DOMContentLoaded", async function () {
         rescanButton.onclick = restartScanning;
         stopButton.onclick = stopCamera;
 
-        // 初始狀態
         resetToScanningState();
         startCamera();
     }
 
-    // ==================== 終極出場功能（成功後仍可再次掃描）====================
+    // ==================== 終極出場功能（永遠不會殭屍按鈕）====================
     function setupSettleParking() {
         const role = getRole();
         if (role !== "renter") {
@@ -620,16 +629,28 @@ document.addEventListener("DOMContentLoaded", async function () {
         if (!section) return;
         section.style.display = "block";
 
+        // 強制重置所有按鈕狀態（關鍵！）
+        const confirmButton = document.getElementById("confirmButtonSettle");
+        const startButton = document.getElementById("startButtonSettle");
+        const stopButton = document.getElementById("stopButtonSettle");
+        const rescanButton = document.getElementById("rescanButtonSettle");
+
+        if (confirmButton) {
+            confirmButton.textContent = "確認出場";
+            confirmButton.disabled = true;
+            confirmButton.style.display = "inline-block";
+        }
+        if (startButton) startButton.style.display = "inline-block";
+        if (stopButton) stopButton.style.display = "none";
+        if (rescanButton) rescanButton.style.display = "none";
+
+        // 以下是你原本的程式碼
         const video = document.getElementById("videoSettle");
         const fallback = document.getElementById("fallbackSettle");
         const plateList = document.getElementById("plateListSettle");
         const loading = document.getElementById("loadingSettle");
         const error = document.getElementById("errorSettle");
         const settleResult = document.getElementById("settleResult");
-        const confirmButton = document.getElementById("confirmButtonSettle");
-        const rescanButton = document.getElementById("rescanButtonSettle");
-        const startButton = document.getElementById("startButtonSettle");
-        const stopButton = document.getElementById("stopButtonSettle");
 
         let currentPlate = null;
         let isScanning = false;
@@ -771,7 +792,6 @@ document.addEventListener("DOMContentLoaded", async function () {
                     settleResult.style.display = "block";
                     confirmButton.style.display = "none";
                     rescanButton.style.display = "none";
-                    // 成功後仍可掃下一台
                     startButton.style.display = "inline-block";
                     stopButton.style.display = "none";
                 } else {
