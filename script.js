@@ -414,7 +414,7 @@ document.addEventListener("DOMContentLoaded", async function () {
         };
     }
 
-    // ==================== 終極進場功能（開始/停止掃描按鈕 100% 有效）====================
+    // ==================== 終極進場功能（使用你原本的 startButtonRent / stopButtonRent）====================
     function setupRentParking() {
         const role = getRole();
         if (role !== "renter") {
@@ -434,9 +434,9 @@ document.addEventListener("DOMContentLoaded", async function () {
         const confirmButton = document.getElementById("confirmButtonRent");
         const rescanButton = document.getElementById("rescanButtonRent");
 
-        // 重要！這兩個按鈕一定要抓到
-        const startScanBtn = document.getElementById("startScanRent");
-        const stopScanBtn = document.getElementById("stopScanRent");
+        // 關鍵：直接使用你原本的這兩個按鈕！
+        const startButton = document.getElementById("startButtonRent");
+        const stopButton = document.getElementById("stopButtonRent");
 
         let currentPlate = null;
         let isScanning = false;
@@ -467,8 +467,8 @@ document.addEventListener("DOMContentLoaded", async function () {
                 scanPlate();
 
                 // 按鈕切換
-                if (startScanBtn) startScanBtn.style.display = "none";
-                if (stopScanBtn) stopScanBtn.style.display = "inline-block";
+                startButton.style.display = "none";
+                stopButton.style.display = "inline-block";
 
             } catch (err) {
                 error.textContent = "無法開啟攝影機：" + err.message;
@@ -487,9 +487,8 @@ document.addEventListener("DOMContentLoaded", async function () {
             isScanning = false;
             loading.style.display = "none";
 
-            // 按鈕切換回來
-            if (startScanBtn) startScanBtn.style.display = "inline-block";
-            if (stopScanBtn) stopScanBtn.style.display = "none";
+            startButton.style.display = "inline-block";
+            stopButton.style.display = "none";
 
             plateList.innerHTML = '<div class="text-gray-600 text-5xl">掃描已停止</div>';
             confirmButton.disabled = true;
@@ -571,13 +570,12 @@ document.addEventListener("DOMContentLoaded", async function () {
                         <div class="bg-gradient-to-r from-green-600 to-emerald-700 text-white text-8xl font-extrabold px-32 py-20 rounded-3xl shadow-2xl">
                             進場成功！
                         </div>
-                        <div class="mt-12 text-gray-600 text-4xl">已為您開啟閘門，請緩慢前行</div>
                     </div>
                 `;
                     confirmButton.style.display = "none";
                     rescanButton.style.display = "none";
-                    if (startScanBtn) startScanBtn.style.display = "none";
-                    if (stopScanBtn) stopScanBtn.style.display = "none";
+                    startButton.style.display = "none";
+                    stopButton.style.display = "none";
                 } else {
                     const err = await res.json().catch(() => ({}));
                     alert("進場失敗：" + (err.error || "請稍後再試"));
@@ -592,19 +590,15 @@ document.addEventListener("DOMContentLoaded", async function () {
             }
         };
 
-        // 重要！綁定按鈕事件
-        if (startScanBtn) {
-            startScanBtn.onclick = () => {
-                if (hasCompleted) return;
-                currentPlate = null;
-                hasCompleted = false;
-                startCamera();
-            };
-        }
+        // 綁定你原本的按鈕！
+        startButton.onclick = () => {
+            if (hasCompleted) return;
+            currentPlate = null;
+            hasCompleted = false;
+            startCamera();
+        };
 
-        if (stopScanBtn) {
-            stopScanBtn.onclick = stopCamera;
-        }
+        stopButton.onclick = stopCamera;
 
         rescanButton.onclick = () => {
             if (hasCompleted) return;
@@ -614,14 +608,14 @@ document.addEventListener("DOMContentLoaded", async function () {
         };
 
         // 初始狀態
-        if (startScanBtn) startScanBtn.style.display = "inline-block";
-        if (stopScanBtn) stopScanBtn.style.display = "none";
+        startButton.style.display = "inline-block";
+        stopButton.style.display = "none";
 
         // 自動開始
         startCamera();
     }
 
-    // ==================== 終極出場功能（同上）====================
+    // ==================== 終極出場功能（使用你原本的 startButtonSettle / stopButtonSettle）====================
     function setupSettleParking() {
         const role = getRole();
         if (role !== "renter") {
@@ -641,8 +635,10 @@ document.addEventListener("DOMContentLoaded", async function () {
         const settleResult = document.getElementById("settleResult");
         const confirmButton = document.getElementById("confirmButtonSettle");
         const rescanButton = document.getElementById("rescanButtonSettle");
-        const startScanBtn = document.getElementById("startScanSettle");
-        const stopScanBtn = document.getElementById("stopScanSettle");
+
+        // 使用你原本的按鈕！
+        const startButton = document.getElementById("startButtonSettle");
+        const stopButton = document.getElementById("stopButtonSettle");
 
         let currentPlate = null;
         let isScanning = false;
@@ -666,8 +662,8 @@ document.addEventListener("DOMContentLoaded", async function () {
                 isScanning = true;
                 scanPlate();
 
-                if (startScanBtn) startScanBtn.style.display = "none";
-                if (stopScanBtn) stopScanBtn.style.display = "inline-block";
+                startButton.style.display = "none";
+                stopButton.style.display = "inline-block";
 
             } catch (err) {
                 error.textContent = "無法開啟攝影機：" + err.message;
@@ -686,8 +682,8 @@ document.addEventListener("DOMContentLoaded", async function () {
             isScanning = false;
             loading.style.display = "none";
 
-            if (startScanBtn) startScanBtn.style.display = "inline-block";
-            if (stopScanBtn) stopScanBtn.style.display = "none";
+            startButton.style.display = "inline-block";
+            stopButton.style.display = "none";
 
             plateList.innerHTML = '<div class="text-gray-600 text-5xl">掃描已停止</div>';
             confirmButton.disabled = true;
@@ -773,15 +769,14 @@ document.addEventListener("DOMContentLoaded", async function () {
                                 出場成功！<br><br>
                                 應收 <span class="text-yellow-300 text-9xl">${amount}</span> 元
                             </div>
-                            <div class="mt-12 text-gray-600 text-4xl">已為您開啟閘門，祝您一路順風</div>
                         </div>
                     </div>
                 `;
                     settleResult.style.display = "block";
                     confirmButton.style.display = "none";
                     rescanButton.style.display = "none";
-                    if (startScanBtn) startScanBtn.style.display = "none";
-                    if (stopScanBtn) stopScanBtn.style.display = "none";
+                    startButton.style.display = "none";
+                    stopButton.style.display = "none";
                 } else {
                     alert("出場失敗：" + (result.error || "請稍後再試"));
                 }
@@ -795,7 +790,7 @@ document.addEventListener("DOMContentLoaded", async function () {
             }
         };
 
-        if (startScanBtn) startScanBtn.onclick = () => {
+        startButton.onclick = () => {
             if (hasCompleted) return;
             currentPlate = null;
             hasCompleted = false;
@@ -803,7 +798,7 @@ document.addEventListener("DOMContentLoaded", async function () {
             startCamera();
         };
 
-        if (stopScanBtn) stopScanBtn.onclick = stopCamera;
+        stopButton.onclick = stopCamera;
 
         rescanButton.onclick = () => {
             if (hasCompleted) return;
@@ -813,8 +808,8 @@ document.addEventListener("DOMContentLoaded", async function () {
             startCamera();
         };
 
-        if (startScanBtn) startScanBtn.style.display = "inline-block";
-        if (stopScanBtn) stopScanBtn.style.display = "none";
+        startButton.style.display = "inline-block";
+        stopButton.style.display = "none";
 
         startCamera();
     }
