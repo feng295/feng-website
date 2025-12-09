@@ -561,9 +561,6 @@ document.addEventListener("DOMContentLoaded", async function () {
                         <div class="bg-gradient-to-r from-green-600 to-emerald-700 text-white text-8xl font-extrabold px-32 py-20 rounded-3xl shadow-2xl">
                             進場成功！
                         </div>
-                        <div class="mt-12 text-gray-600 text-4xl">
-                            已為您開啟閘門，請緩慢前行
-                        </div>
                     </div>
                 `;
                     confirmButton.style.display = "none";
@@ -730,16 +727,15 @@ document.addEventListener("DOMContentLoaded", async function () {
                     const amount = result.data?.total_cost || 0;
 
                     settleResult.innerHTML = `
-                    <div class="text-center">
-                        <div class="text-green-600 text-9xl font-black mb-12 tracking-widest">
-                            ${currentPlate}
-                        </div>
-                        <div class="bg-gradient-to-r from-green-600 to-emerald-700 text-white text-8xl font-extrabold px-32 py-20 rounded-3xl shadow-2xl">
-                            出場成功！<br><br>
-                            應收 <span class="text-yellow-300 text-9xl">${amount}</span> 元
-                        </div>
-                        <div class="mt-12 text-gray-600 text-4xl">
-                            已為您開啟閘門，祝您一路順風
+                    <div class="min-h-screen flex items-center justify-center bg-gray-50">
+                        <div class="text-center">
+                            <div class="text-green-600 text-9xl font-black mb-12 tracking-widest">
+                                ${currentPlate}
+                            </div>
+                            <div class="bg-gradient-to-r from-green-600 to-emerald-700 text-white text-8xl font-extrabold px-32 py-20 rounded-3xl shadow-2xl">
+                                出場成功！<br><br>
+                                應收 <span class="text-yellow-300 text-9xl">${amount}</span> 元
+                            </div>
                         </div>
                     </div>
                 `;
