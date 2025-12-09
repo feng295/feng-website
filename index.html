@@ -86,8 +86,8 @@
                     <div class="parking-input-group">
                         <label id="newPriceLabel" for="newPrice" class="parking-label">小時費用（元）: </label>
                         <div style="position: relative;">
-                            <input type="number" id="newPrice" class="parking-input" step="1" value="40" min="0"
-                                required placeholder="40">
+                            <input type="number" id="newPrice" class="parking-input" 
+                                step="1" value="40" min="0" required placeholder="40">
                         </div>
                     </div>
 
@@ -106,7 +106,7 @@
                     <div class="parking-input-group">
                         <label for="newTotalSpots" class="parking-label">總停車位數量: </label>
                         <input type="number" id="newTotalSpots" class="parking-input" placeholder="例如：280" value="1"
-                            min="1">
+                            min="1" >
                     </div>
                     <div id="addParkingMap" style="height: 400px; width: 100%;"></div>
                     <div style="margin-top: 10px;">
@@ -147,229 +147,227 @@
                 </div>
 
                 <div id="rentParking" class="content-section" style="display: none;">
-                    <!-- 進場攝影機預覽（必須的！） -->
-                    <div class="camera-container my-8 text-center">
-                        <video id="cameraPreview" autoplay playsinline muted
-                            class="rounded-2xl shadow-2xl max-w-full mx-auto"
-                            style="width: 90%; max-height: 60vh;"></video>
-                        <canvas id="canvasPreview" style="display: none;"></canvas>
+                    <input type="hidden" id="demoParkingLotId" value="">
+                    <h2 class="section-title" aria-live="polite">
+                        <span id="rentParkingName">尚未選擇停車場</span> — <span id="rentParkingAction">進場</span>
+                    </h2>
+                    <div class="flex justify-center">
+                        <video id="videoRent" width="640" height="480" autoplay playsinline
+                            class="border-2 border-black"></video>
+                        <img id="fallbackRent" src="/static/no-camera.jpg"
+                            style="display: none; width: 640px; height: 480px; border: 2px solid #000;" alt="無攝影機">
+                    </div>
+                    <div id="resultsRent">
+                        <h3 class="text-lg font-semibold">車牌號碼:</h3>
+                        <ul id="plateListRent">
+                            <li class="text-gray-500">尚未檢測到車牌</li>
+                        </ul>
+                        <div id="loadingRent" class="loading" style="display: none;">載入中...</div>
+                        <div id="errorRent" class="error" style="display: none;"></div>
+                        <div id="buttonContainerRent">
+                            <button id="startButtonRent">開始掃描</button>
+                            <button id="stopButtonRent">停止掃描</button>
+                            <button id="confirmButtonRent">確認進場</button>
+                            <button id="rescanButtonRent">重新掃描</button>
+                        </div>
+                        <div class="format-hint"></div>
+                    </div>
+                </div>
 
-                        <div id="detectedPlateList"
-                            class="mt-8 text-5xl font-black min-h-32 flex items-center justify-center">
-                            <span class="text-gray-500">辨識中，請將車牌對準畫面…</span>
+                <div id="settleParking" class="content-section" style="display: none;">
+                    <input type="hidden" id="demoParkingLotId" value="">
+                    <h2 class="section-title" aria-live="polite">
+                        <span id="settleParkingName">尚未選擇停車場</span> — <span id="settleParkingAction">出場</span>
+                    </h2>
+                    <div class="flex justify-center">
+                        <video id="videoSettle" width="640" height="480" autoplay playsinline
+                            class="border-2 border-black"></video>
+                        <img id="fallbackSettle" src="/static/no-camera.jpg"
+                            style="display: none; width: 640px; height: 480px; border: 2px solid #000;" alt="無攝影機">
+                    </div>
+                    <div id="resultsSettle">
+                        <h3 class="text-lg font-semibold">車牌號碼:</h3>
+                        <ul id="plateListSettle">
+                            <li class="text-gray-500">尚未檢測到車牌</li>
+                        </ul>
+                        <div id="loadingSettle" class="loading" style="display: none;">載入中...</div>
+                        <div id="errorSettle" class="error" style="display: none;"></div>
+                        <div id="buttonContainerSettle">
+                            <button id="startButtonSettle">開始掃描</button>
+                            <button id="stopButtonSettle">停止掃描</button>
+                            <button id="confirmButtonSettle">確認出場</button>
+                            <button id="rescanButtonSettle">重新掃描</button>
+                        </div>
+                        <div class="format-hint"></div>
+                        <div id="settleResult" class="mt-4 text-center text-gray-600" style="display: none;"></div>
+                    </div>
+                </div>
+
+                <div id="history" class="content-section" style="display: none;">
+                    <h2>租用紀錄</h2>
+                    <ul id="historyList"></ul>
+                </div>
+                <div id="incomeInquiry" class="content-section" style="display: none;">
+                    <h2>收入查詢</h2>
+                    <div class="search-container">
+                        <label for="startDate">開始日期</label>
+                        <input type="date" id="startDate" required>
+
+                        <label for="endDate">結束日期</label>
+                        <input type="date" id="endDate" required>
+
+                        <button id="incomeSearchButton">查詢</button>
+                    </div>
+                    <div class="parking-spaces-table">
+                        <table id="incomeTable">
+                            <thead>
+                                <tr>
+                                    <th>地址</th>
+                                    <th>開始日期與時間</th>
+                                    <th>結束日期與時間</th>
+                                    <th>費用</th>
+                                </tr>
+                            </thead>
+                            <tbody id="incomeTableBody">
+                                <tr>
+                                    <td colspan="4">請選擇日期以查看收入明細</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div id="totalIncomeDisplay" class="total-income">
+                        <p>總收入：0 元</p>
+                    </div>
+                </div>
+
+                <div id="profile" class="content-section" style="display: none;">
+                    <h2>個人資訊</h2>
+
+                    <!-- 基本資料顯示區 -->
+                    <div id="profileData" class="bg-white rounded-2xl p-8 shadow-lg border border-indigo-100">
+                        <p class="text-gray-500">載入中...</p>
+                    </div>
+
+                    <!-- 編輯基本資料按鈕 -->
+                    <div class="text-center mt-8">
+                        <button id="editProfileButton"
+                            class="px-10 py-5 bg-gradient-to-r from-indigo-600 to-purple-600 text-white text-xl font-bold rounded-2xl shadow-xl hover:shadow-2xl transform hover:-translate-y-1 transition-all duration-300">
+                            編輯個人資料
+                        </button>
+                    </div>
+
+                    <!-- 編輯基本資料表單 -->
+                    <div id="editProfileForm" class="mt-8 bg-white rounded-2xl p-8 shadow-lg border border-indigo-100"
+                        style="display: none;">
+                        <h3 class="text-2xl font-bold text-indigo-700 mb-6">編輯個人資料</h3>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label for="editName" class="block text-lg font-semibold text-gray-700 mb-2">姓名 <span
+                                        class="text-red-500">*</span></label>
+                                <input type="text" id="editName"
+                                    class="w-full px-5 py-4 border-2 border-gray-300 rounded-xl focus:border-indigo-600 outline-none text-lg"
+                                    required>
+                            </div>
+                            <div>
+                                <label for="editPhone" class="block text-lg font-semibold text-gray-700 mb-2">電話 <span
+                                        class="text-red-500">*</span></label>
+                                <input type="text" id="editPhone" placeholder="0912345678"
+                                    class="w-full px-5 py-4 border-2 border-gray-300 rounded-xl focus:border-indigo-600 outline-none text-lg"
+                                    required>
+                            </div>
+                            <div class="md:col-span-2">
+                                <label for="editEmail" class="block text-lg font-semibold text-gray-700 mb-2">電子郵件 <span
+                                        class="text-red-500">*</span></label>
+                                <input type="email" id="editEmail"
+                                    class="w-full px-5 py-4 border-2 border-gray-300 rounded-xl focus:border-indigo-600 outline-none text-lg"
+                                    required>
+                            </div>
+                            <div class="md:col-span-2">
+                                <label for="editCardNumber" class="block text-lg font-semibold text-gray-700 mb-2">信用卡號
+                                    <span class="text-red-500">*</span></label>
+                                <input type="text" id="editCardNumber" placeholder="1111-1111-1111-1111" maxlength="19"
+                                    class="w-full px-5 py-4 border-2 border-gray-300 rounded-xl focus:border-indigo-600 outline-none text-lg font-mono"
+                                    required>
+                            </div>
                         </div>
 
-                        <div class="mt-8 space-x-6">
-                            <button id="rescanButton"
-                                class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-4 px-12 rounded-xl shadow-lg"
-                                style="display: none;">
-                                重新辨識
+                        <div class="flex gap-4 mt-8 justify-center">
+                            <button id="saveProfileButton"
+                                class="px-10 py-5 bg-gradient-to-r from-green-500 to-emerald-600 text-white text-xl font-bold rounded-xl shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all">
+                                保存變更
                             </button>
-                            <button id="confirmRentButton"
-                                class="bg-green-600 hover:bg-green-700 text-white font-bold py-4 px-20 rounded-xl shadow-lg"
-                                disabled>
-                                確認進場
+                            <button id="cancelEditProfileButton"
+                                class="px-10 py-5 bg-gray-500 hover:bg-gray-600 text-white text-xl font-bold rounded-xl shadow-lg transition-all">
+                                取消
                             </button>
                         </div>
                     </div>
 
-                    <div id="settleParking" class="content-section" style="display: none;">
-                        <!-- 出場攝影機預覽 -->
-                        <div class="camera-container my-8 text-center">
-                            <video id="settleCameraPreview" autoplay playsinline muted
-                                class="rounded-2xl shadow-2xl max-w-full mx-auto"
-                                style="width: 90%; max-height: 60vh;"></video>
-                            <canvas id="settleCanvasPreview" style="display: none;"></canvas>
+                    <!-- 租用者專屬：我的車輛管理區（僅 renter 看得到） -->
+                    <div id="vehicleSection" style="display: none;" data-role="renter">
 
-                            <div id="settleDetectedPlateList"
-                                class="mt-8 text-5xl font-black min-h-32 flex items-center justify-center">
-                                <span class="text-gray-500">辨識中，請將車牌對準畫面…</span>
+                        <div class="mt-12 bg-white rounded-3xl shadow-2xl overflow-hidden border border-indigo-200">
+                            <div class="bg-gradient-to-r from-indigo-600 to-purple-700 text-white px-8 py-6">
+                                <h3 class="text-3xl font-black">我的車輛</h3>
                             </div>
 
-                            <div class="mt-8 space-x-6">
-                                <button id="settleRescanButton"
-                                    class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-4 px-12 rounded-xl shadow-lg"
-                                    style="display: none;">
-                                    重新辨識
-                                </button>
-                                <button id="confirmSettleButton"
-                                    class="bg-green-600 hover:bg-green-700 text-white font-bold py-4 px-20 rounded-xl shadow-lg"
-                                    disabled>
-                                    確認出場
-                                </button>
-                            </div>
-                        </div>
-
-                        <div id="history" class="content-section" style="display: none;">
-                            <h2>租用紀錄</h2>
-                            <ul id="historyList"></ul>
-                        </div>
-                        <div id="incomeInquiry" class="content-section" style="display: none;">
-                            <h2>收入查詢</h2>
-                            <div class="search-container">
-                                <label for="startDate">開始日期</label>
-                                <input type="date" id="startDate" required>
-
-                                <label for="endDate">結束日期</label>
-                                <input type="date" id="endDate" required>
-
-                                <button id="incomeSearchButton">查詢</button>
-                            </div>
-                            <div class="parking-spaces-table">
-                                <table id="incomeTable">
-                                    <thead>
+                            <!-- 表格容器 -->
+                            <div class="overflow-x-auto">
+                                <table class="w-full">
+                                    <thead class="bg-gray-50 border-b-2 border-gray-200">
                                         <tr>
-                                            <th>地址</th>
-                                            <th>開始日期與時間</th>
-                                            <th>結束日期與時間</th>
-                                            <th>費用</th>
+                                            <th
+                                                class="px-8 py-5 text-left text-sm font-bold text-gray-700 uppercase tracking-wider">
+                                                車牌號碼
+                                            </th>
+                                            <th
+                                                class="px-8 py-5 text-center text-sm font-bold text-red-600 uppercase tracking-wider">
+                                                操作
+                                            </th>
                                         </tr>
                                     </thead>
-                                    <tbody id="incomeTableBody">
-                                        <tr>
-                                            <td colspan="4">請選擇日期以查看收入明細</td>
-                                        </tr>
+                                    <tbody id="vehicleTableBody" class="bg-white divide-y divide-gray-200">
+                                        <!-- JS 會動態填入 -->
                                     </tbody>
                                 </table>
                             </div>
-                            <div id="totalIncomeDisplay" class="total-income">
-                                <p>總收入：0 元</p>
-                            </div>
-                        </div>
 
-                        <div id="profile" class="content-section" style="display: none;">
-                            <h2>個人資訊</h2>
-
-                            <!-- 基本資料顯示區 -->
-                            <div id="profileData" class="bg-white rounded-2xl p-8 shadow-lg border border-indigo-100">
-                                <p class="text-gray-500">載入中...</p>
-                            </div>
-
-                            <!-- 編輯基本資料按鈕 -->
-                            <div class="text-center mt-8">
-                                <button id="editProfileButton"
-                                    class="px-10 py-5 bg-gradient-to-r from-indigo-600 to-purple-600 text-white text-xl font-bold rounded-2xl shadow-xl hover:shadow-2xl transform hover:-translate-y-1 transition-all duration-300">
-                                    編輯個人資料
-                                </button>
-                            </div>
-
-                            <!-- 編輯基本資料表單 -->
-                            <div id="editProfileForm"
-                                class="mt-8 bg-white rounded-2xl p-8 shadow-lg border border-indigo-100"
-                                style="display: none;">
-                                <h3 class="text-2xl font-bold text-indigo-700 mb-6">編輯個人資料</h3>
-
-                                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    <div>
-                                        <label for="editName" class="block text-lg font-semibold text-gray-700 mb-2">姓名
-                                            <span class="text-red-500">*</span></label>
-                                        <input type="text" id="editName"
-                                            class="w-full px-5 py-4 border-2 border-gray-300 rounded-xl focus:border-indigo-600 outline-none text-lg"
-                                            required>
-                                    </div>
-                                    <div>
-                                        <label for="editPhone" class="block text-lg font-semibold text-gray-700 mb-2">電話
-                                            <span class="text-red-500">*</span></label>
-                                        <input type="text" id="editPhone" placeholder="0912345678"
-                                            class="w-full px-5 py-4 border-2 border-gray-300 rounded-xl focus:border-indigo-600 outline-none text-lg"
-                                            required>
-                                    </div>
-                                    <div class="md:col-span-2">
-                                        <label for="editEmail"
-                                            class="block text-lg font-semibold text-gray-700 mb-2">電子郵件
-                                            <span class="text-red-500">*</span></label>
-                                        <input type="email" id="editEmail"
-                                            class="w-full px-5 py-4 border-2 border-gray-300 rounded-xl focus:border-indigo-600 outline-none text-lg"
-                                            required>
-                                    </div>
-                                    <div class="md:col-span-2">
-                                        <label for="editCardNumber"
-                                            class="block text-lg font-semibold text-gray-700 mb-2">信用卡號
-                                            <span class="text-red-500">*</span></label>
-                                        <input type="text" id="editCardNumber" placeholder="1111-1111-1111-1111"
-                                            maxlength="19"
-                                            class="w-full px-5 py-4 border-2 border-gray-300 rounded-xl focus:border-indigo-600 outline-none text-lg font-mono"
-                                            required>
-                                    </div>
-                                </div>
-
-                                <div class="flex gap-4 mt-8 justify-center">
-                                    <button id="saveProfileButton"
-                                        class="px-10 py-5 bg-gradient-to-r from-green-500 to-emerald-600 text-white text-xl font-bold rounded-xl shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all">
-                                        保存變更
-                                    </button>
-                                    <button id="cancelEditProfileButton"
-                                        class="px-10 py-5 bg-gray-500 hover:bg-gray-600 text-white text-xl font-bold rounded-xl shadow-lg transition-all">
-                                        取消
-                                    </button>
-                                </div>
-                            </div>
-
-                            <!-- 租用者專屬：我的車輛管理區（僅 renter 看得到） -->
-                            <div id="vehicleSection" style="display: none;" data-role="renter">
-
-                                <div
-                                    class="mt-12 bg-white rounded-3xl shadow-2xl overflow-hidden border border-indigo-200">
-                                    <div class="bg-gradient-to-r from-indigo-600 to-purple-700 text-white px-8 py-6">
-                                        <h3 class="text-3xl font-black">我的車輛</h3>
-                                    </div>
-
-                                    <!-- 表格容器 -->
-                                    <div class="overflow-x-auto">
-                                        <table class="w-full">
-                                            <thead class="bg-gray-50 border-b-2 border-gray-200">
-                                                <tr>
-                                                    <th
-                                                        class="px-8 py-5 text-left text-sm font-bold text-gray-700 uppercase tracking-wider">
-                                                        車牌號碼
-                                                    </th>
-                                                    <th
-                                                        class="px-8 py-5 text-center text-sm font-bold text-red-600 uppercase tracking-wider">
-                                                        操作
-                                                    </th>
-                                                </tr>
-                                            </thead>
-                                            <tbody id="vehicleTableBody" class="bg-white divide-y divide-gray-200">
-                                                <!-- JS 會動態填入 -->
-                                            </tbody>
-                                        </table>
-                                    </div>
-
-                                    <!-- 新增車輛區域 -->
-                                    <div
-                                        class="bg-gradient-to-r from-indigo-50 to-purple-50 px-8 py-10 border-t-4 border-indigo-200">
-                                        <div class="flex flex-col lg:flex-row gap-8 items-center max-w-5xl mx-auto">
-                                            <div class="flex-1 w-full">
-                                                <label class="block text-2xl font-black text-indigo-800 mb-4">
-                                                    新增車輛
-                                                    <span class="text-lg font-normal text-indigo-600 ml-3"></span>
-                                                </label>
-                                                <input type="text" id="newPlateInput" placeholder="例如：ABC1234 或 KLM5678"
-                                                    maxlength="8" class="w-full px-8 py-7 text-4xl font-mono font-black text-indigo-900 
+                            <!-- 新增車輛區域 -->
+                            <div
+                                class="bg-gradient-to-r from-indigo-50 to-purple-50 px-8 py-10 border-t-4 border-indigo-200">
+                                <div class="flex flex-col lg:flex-row gap-8 items-center max-w-5xl mx-auto">
+                                    <div class="flex-1 w-full">
+                                        <label class="block text-2xl font-black text-indigo-800 mb-4">
+                                            新增車輛
+                                            <span class="text-lg font-normal text-indigo-600 ml-3"></span>
+                                        </label>
+                                        <input type="text" id="newPlateInput" placeholder="例如：ABC1234 或 KLM5678"
+                                            maxlength="8" class="w-full px-8 py-7 text-4xl font-mono font-black text-indigo-900 
                                   placeholder-gray-400 bg-white border-4 border-indigo-400 
                                   rounded-3xl focus:border-purple-600 outline-none shadow-2xl
                                   tracking-widest uppercase text-center">
-                                            </div>
-                                            <div>
-                                                <button id="addVehicleBtn" class="px-16 py-7 bg-gradient-to-r from-purple-600 via-pink-600 to-rose-600 
+                                    </div>
+                                    <div>
+                                        <button id="addVehicleBtn" class="px-16 py-7 bg-gradient-to-r from-purple-600 via-pink-600 to-rose-600 
                                    text-white text-2xl font-black rounded-3xl shadow-2xl 
                                    hover:shadow-3xl transform hover:scale-110 transition-all duration-500">
-                                                    新增車輛
-                                                </button>
-                                            </div>
-                                        </div>
-                                        <div class="text-center mt-4 text-indigo-700 font-medium">
-                                        </div>
+                                            新增車輛
+                                        </button>
                                     </div>
+                                </div>
+                                <div class="text-center mt-4 text-indigo-700 font-medium">
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
-                <button id="logoutButton">登出</button>
             </div>
+        </div>
+        <button id="logoutButton">登出</button>
+    </div>
 
-            <script src="./script.js"></script>
+    <script src="./script.js"></script>
 </body>
 
 </html>
