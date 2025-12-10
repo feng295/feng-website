@@ -566,7 +566,6 @@ document.addEventListener("DOMContentLoaded", async function () {
             if (!currentPlate) return;
 
             confirmButton.disabled = true;
-            confirmButton.textContent = "進場中...";
 
             try {
                 const token = getToken();
@@ -778,7 +777,7 @@ document.addEventListener("DOMContentLoaded", async function () {
             if (!currentPlate) return;
 
             confirmButton.disabled = true;
-            confirmButton.textContent = "結算中...";
+
 
             try {
                 const token = getToken();
