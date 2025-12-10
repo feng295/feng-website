@@ -1276,3 +1276,20 @@ button:not(#logoutButton),
     line-height: 1.4;            /* 行距更舒服 */
     font-weight: bold;           /* 加粗更顯眼 */
 }
+/* 讓 h3 跟 #pageTitle 一模一樣 + 加上上方間距（最推薦） */
+#pageTitle,
+h3 {
+    font-size: 42px !important;
+    font-weight: 900 !important;
+    text-align: center !important;
+    color: white !important;
+    text-shadow:
+        0 2px 10px rgba(0, 0, 0, 0.4),
+        0 0 30px rgba(102, 126, 234, 0.6) !important;
+    letter-spacing: 3px !important;
+    margin: 40px 0 40px 0 !important;        /* 上下各 40px，左右 0 */
+    padding: 20px 0 !important;
+    background: linear-gradient(to right, #667eea, #764ba2) !important;
+    border-radius: 20px !important;
+    box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4) !important;
+}
