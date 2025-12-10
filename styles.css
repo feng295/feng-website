@@ -1320,3 +1320,52 @@ button:not(#logoutButton),
     pointer-events: none;
     z-index: -1;
 }
+/* ====================== 新增車輛輸入框 - 超大、超帥、完全置中 ====================== */
+
+/* 標籤（新增車輛） */
+label.block.text-2xl.font-black.text-indigo-800.mb-4 {
+    font-size: 2.5rem !important;           /* 比原本更大 */
+    font-weight: 900 !important;
+    color: #3730a3 !important;              /* 深靛藍 */
+    text-align: center !important;          /* 完全置中 */
+    margin-bottom: 1.5rem !important;
+    letter-spacing: 2px;
+    text-shadow: 0 2px 8px rgba(67, 56, 202, 0.2);
+}
+
+/* 輸入框本體 */
+input#newPlateInput {
+    /* 字體超大 + 完全置中 */
+    font-size: 3.5rem !important;           /* 比原本 text-4xl 更大 */
+    font-weight: 900 !important;
+    font-family: 'Courier New', monospace !important;
+    text-align: center !important;          /* 文字完全置中 */
+    letter-spacing: 0.5em !important;       /* 車牌間距拉開 */
+    text-transform: uppercase !important;
+    
+    /* 外觀強化 */
+    width: 100%;
+    max-width: 420px !important;            /* 限制最大寬度，更好看 */
+    margin: 0 auto !important;              /* 水平置中 */
+    padding: 1.5rem 2rem !important;
+    background: white;
+    border: 5px solid #6366f1 !important;   /* 更粗的靛藍邊框 */
+    border-radius: 2rem !important;
+    box-shadow: 0 20px 50px rgba(99, 102, 241, 0.3) !important;
+    
+    /* 焦點效果 */
+    transition: all 0.4s ease;
+}
+
+input#newPlateInput:focus {
+    border-color: #7c3aed !important;       /* 更亮的紫色 */
+    box-shadow: 0 0 0 8px rgba(124, 58, 237, 0.3) !important;
+    transform: translateY(-4px) scale(1.02);
+    outline: none;
+}
+
+input#newPlateInput::placeholder {
+    color: #a5b4fc;
+    font-weight: 600;
+    opacity: 0.8;
+}
