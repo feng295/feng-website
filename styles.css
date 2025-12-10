@@ -1296,6 +1296,7 @@ button:not(#logoutButton),
     width: 100%;
     background: white;
     border-radius: 20px;
+    text-align: center !important;
     box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
     border: 4px solid #c7d2fe;
     padding: 40px;
@@ -1326,7 +1327,7 @@ button:not(#logoutButton),
 label.block.text-2xl.font-black.text-indigo-800.mb-4 {
     font-size: 2.5rem !important;           /* 比原本更大 */
     font-weight: 900 !important;
-    color: #3730a3 !important;              /* 深靛藍 */
+    color: #1e293b !important;              
     text-align: center !important;          /* 完全置中 */
     margin-bottom: 1.5rem !important;
     letter-spacing: 2px;
@@ -1336,11 +1337,10 @@ label.block.text-2xl.font-black.text-indigo-800.mb-4 {
 /* 輸入框本體 */
 input#newPlateInput {
     /* 字體超大 + 完全置中 */
-    font-size: 3.5rem !important;           /* 比原本 text-4xl 更大 */
-    font-weight: 900 !important;
+    font-size: 1.5rem !important;           /* 比原本 text-4xl 更大 */
+    font-weight: 800 !important;
     font-family: 'Courier New', monospace !important;
     text-align: center !important;          /* 文字完全置中 */
-    letter-spacing: 0.5em !important;       /* 車牌間距拉開 */
     text-transform: uppercase !important;
     
     /* 外觀強化 */
