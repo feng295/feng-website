@@ -414,7 +414,7 @@ document.addEventListener("DOMContentLoaded", async function () {
         };
     }
 
-    // ==================== 終極進場功能（永遠不會殭屍按鈕）====================
+    // ==================== 終極進場功能（成功後仍可重新掃描下一台）====================
     function setupRentParking() {
         const role = getRole();
         if (role !== "renter") {
@@ -426,7 +426,7 @@ document.addEventListener("DOMContentLoaded", async function () {
         if (!section) return;
         section.style.display = "block";
 
-        // 強制重置所有按鈍狀態（關鍵！解決重新整理殭屍問題）
+        // 強制重置按鈕狀態（防止瀏覽器記憶殭屍狀態）
         const confirmButton = document.getElementById("confirmButtonRent");
         const startButton = document.getElementById("startButtonRent");
         const stopButton = document.getElementById("stopButtonRent");
@@ -441,7 +441,6 @@ document.addEventListener("DOMContentLoaded", async function () {
         if (stopButton) stopButton.style.display = "none";
         if (rescanButton) rescanButton.style.display = "none";
 
-        // 以下是你原本的程式碼
         const video = document.getElementById("videoRent");
         const fallback = document.getElementById("fallbackRent");
         const plateList = document.getElementById("plateListRent");
@@ -557,7 +556,7 @@ document.addEventListener("DOMContentLoaded", async function () {
             }, 'image/jpeg', 0.8);
         }
 
-        // 確認進場
+        // 確認進場 → 永久成功畫面（成功後仍可重新掃描）
         confirmButton.onclick = async () => {
             if (!currentPlate) return;
 
@@ -583,6 +582,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                         <div class="bg-gradient-to-r from-green-600 to-emerald-700 text-white text-8xl font-extrabold px-32 py-20 rounded-3xl shadow-2xl">
                             進場成功！
                         </div>
+                        <div class="mt-12 text-gray-600 text-4xl">已為您開啟閘門，請緩慢前行</div>
                     </div>
                 `;
                     confirmButton.style.display = "none";
@@ -603,6 +603,7 @@ document.addEventListener("DOMContentLoaded", async function () {
             }
         };
 
+        // 重新掃描 / 開始掃描 / 停止掃描
         const restartScanning = () => {
             currentPlate = null;
             resetToScanningState();
@@ -613,11 +614,12 @@ document.addEventListener("DOMContentLoaded", async function () {
         rescanButton.onclick = restartScanning;
         stopButton.onclick = stopCamera;
 
+        // 初始狀態
         resetToScanningState();
         startCamera();
     }
 
-    // ==================== 終極出場功能（永遠不會殭屍按鈕）====================
+    // ==================== 終極出場功能（成功後仍可重新掃描）====================
     function setupSettleParking() {
         const role = getRole();
         if (role !== "renter") {
@@ -629,7 +631,7 @@ document.addEventListener("DOMContentLoaded", async function () {
         if (!section) return;
         section.style.display = "block";
 
-        // 強制重置所有按鈕狀態（關鍵！）
+        // 強制重置所有按鈕狀態
         const confirmButton = document.getElementById("confirmButtonSettle");
         const startButton = document.getElementById("startButtonSettle");
         const stopButton = document.getElementById("stopButtonSettle");
@@ -644,7 +646,6 @@ document.addEventListener("DOMContentLoaded", async function () {
         if (stopButton) stopButton.style.display = "none";
         if (rescanButton) rescanButton.style.display = "none";
 
-        // 以下是你原本的程式碼
         const video = document.getElementById("videoSettle");
         const fallback = document.getElementById("fallbackSettle");
         const plateList = document.getElementById("plateListSettle");
