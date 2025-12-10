@@ -1277,8 +1277,8 @@ button:not(#logoutButton),
     font-weight: bold;           /* 加粗更顯眼 */
 }
 .content-section h3 {
-    font-size: 2rem !important;          /* text-3xl */
-    font-weight: 900 !important;         /* font-black */
+    font-size: 28px !important;          /* text-3xl */
+    font-weight: 800 !important;         /* font-black */
     color: #2d3748 !important;
     
     margin: 40px 0 25px 10px !important;  /* 上方 40px（與上面內容拉開距離） */
