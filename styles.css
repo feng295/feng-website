@@ -1290,32 +1290,48 @@ button:not(#logoutButton),
     display: inline-block;
     width: fit-content;
 }
-/* flex-1 w-full 的美化版（超有質感） */
+/* flex-1 w-full 的終極美化版（內容置中 + 漂亮邊框） */
 .flex-1.w-full {
-    flex: 1 1 0%;                    /* 保持 flex-1 原意 */
+    flex: 1 1 0%;
     width: 100%;
+    
+    /* 核心美化 */
     background: white;
-    border-radius: 20px;
+    border-radius: 24px;
     box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
-    padding: 40px;
+    
+    /* 加上優雅邊框（漸層 + 微透） */
+    border: 2px solid transparent;
+    border-image: linear-gradient(to right, #667eea, #764ba2) 1;
+    
+    padding: 48px;
     transition: all 0.4s ease;
     overflow: hidden;
     position: relative;
+    
+    /* 內容置中（垂直 + 水平） */
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    min-height: 400px; /* 確保高度足夠置中 */
 }
 
-/* 滑鼠懸停時更有層次感 */
+/* 滑鼠懸停時更立體 */
 .flex-1.w-full:hover {
-    transform: translateY(-8px);
-    box-shadow: 0 25px 60px rgba(0, 0, 0, 0.15);
+    transform: translateY(-10px);
+    box-shadow: 0 30px 70px rgba(0, 0, 0, 0.15);
+    border-image: linear-gradient(to right, #4f46e5, #7c3aed) 1;
 }
 
-/* 如果你想要加一點內部漸層或邊框 */
+/* 內部微漸層（可選，增加質感） */
 .flex-1.w-full::before {
     content: '';
     position: absolute;
     inset: 0;
-    border-radius: 20px;
-    background: linear-gradient(135deg, rgba(102, 126, 234, 0.05), rgba(118, 75, 162, 0.05));
+    border-radius: 24px;
+    background: linear-gradient(135deg, rgba(102, 126, 234, 0.04), rgba(118, 75, 162, 0.04));
     pointer-events: none;
     z-index: -1;
 }
