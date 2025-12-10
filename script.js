@@ -180,7 +180,7 @@ document.addEventListener("DOMContentLoaded", async function () {
         } else if (role === "admin") {
             navList.innerHTML = `
                 <li><a href="#" class="nav-link" data-target="addParking">新增停車場</a></li>
-                <li><a href="#" class="nav-link" data-target="My parking space">停車場資訊清單</a></li>
+                <li><a href="#" class="nav-link" data-target="My parking space">停車場資訊</a></li>
                 <li><a href="#" class="nav-link" data-target="incomeInquiry">收入查詢</a></li>
                 <li><a href="#" class="nav-link" data-target="profile">個人資訊</a></li>
             `;
@@ -549,8 +549,8 @@ document.addEventListener("DOMContentLoaded", async function () {
                         confirmButton.textContent = "確認進場";
                         rescanButton.style.display = "inline-block";
 
-                        // 成功後把開始按鈕改成「重新掃描」
-                        startButton.textContent = "重新掃描";
+                        
+                        startButton.textContent = "開始掃描";
                         startButton.style.display = "inline-block";
                     }
                 } catch (err) {
@@ -810,8 +810,8 @@ document.addEventListener("DOMContentLoaded", async function () {
                     settleResult.style.display = "block";
                     confirmButton.style.display = "none";
                     rescanButton.style.display = "none";
-                    // 成功後把開始按鈕改成「重新掃描」
-                    startButton.textContent = "重新掃描";
+                   
+                    startButton.textContent = "開始掃描";
                     startButton.style.display = "inline-block";
                     stopButton.style.display = "none";
                 } else {
@@ -1394,7 +1394,7 @@ document.addEventListener("DOMContentLoaded", async function () {
         removeToken();
         showLoginPage();
     });
-    // 停車場資訊清單
+    // 停車場資訊
     async function setupMyParkingSpace() {
         const role = getRole();
         console.log("Current role in setupMyParkingSpace:", role);
@@ -1541,7 +1541,7 @@ document.addEventListener("DOMContentLoaded", async function () {
             </div>
            
             <div>
-                <label class="block font-semibold">每小時價格（元）：</label>
+                <label class="block font-semibold">每小時費用（元）：</label>
                 <input type="number" id="editHourlyRate" value="${spot.hourly_rate}" min="0" step="1" required
                        class="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500">
             </div>
@@ -1974,10 +1974,12 @@ document.addEventListener("DOMContentLoaded", async function () {
                 // 顯示總收入（上方）
                 totalIncomeDisplay.innerHTML = `
                 <div class="bg-gradient-to-r from-emerald-500 to-teal-600 text-white p-8 rounded-2xl shadow-2xl text-center mb-8">
-                    <p class="text-5xl font-extrabold">總共 ${summary.total_income?.toLocaleString() || 0} 元</p>
-                    <p class="text-xl opacity-90 mt-2">
-                        共 ${summary.total_records || 0} 筆 ⋅ 
-                        總計 ${summary.total_hours?.toFixed(1) || 0} 小時
+                    <p class="text-5xl font-extrabold">總金額 ${summary.total_income?.toLocaleString() || 0} 元</p>
+                    <p class="text-2xl opacity-95">
+                        總停車紀錄共 ${summary.total_records || 0} 筆 
+                    </p>
+                    <p class="text-xl opacity-80 mt-2">
+                        停車時數總計 ${summary.total_hours?.toFixed(1) || 0} 小時
                     </p>
                 </div>
             `;
