@@ -566,6 +566,7 @@ document.addEventListener("DOMContentLoaded", async function () {
             if (!currentPlate) return;
 
             confirmButton.disabled = true;
+            confirmButton.textContent = "進場中...";
 
             try {
                 const token = getToken();
@@ -590,8 +591,8 @@ document.addEventListener("DOMContentLoaded", async function () {
                 `;
                     confirmButton.style.display = "none";
                     rescanButton.style.display = "none";
-                    // 成功後仍顯示「重新掃描」按鈕
-                    startButton.textContent = "重新掃描";
+                  
+                    startButton.textContent = "開始掃描";
                     startButton.style.display = "inline-block";
                     stopButton.style.display = "none";
                 } else {
@@ -761,8 +762,8 @@ document.addEventListener("DOMContentLoaded", async function () {
                         confirmButton.textContent = "確認出場";
                         rescanButton.style.display = "inline-block";
 
-                        // 成功後把開始按鈕改成「重新掃描」
-                        startButton.textContent = "重新掃描";
+                        
+                        startButton.textContent = "開始掃描";
                         startButton.style.display = "inline-block";
                     }
                 } catch (err) {
@@ -777,7 +778,7 @@ document.addEventListener("DOMContentLoaded", async function () {
             if (!currentPlate) return;
 
             confirmButton.disabled = true;
-
+            confirmButton.textContent = "出場中...";
 
             try {
                 const token = getToken();
