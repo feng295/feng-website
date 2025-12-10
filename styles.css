@@ -1276,3 +1276,16 @@ button:not(#logoutButton),
     line-height: 1.4;            /* 行距更舒服 */
     font-weight: bold;           /* 加粗更顯眼 */
 }
+.content-section h3 {
+    font-size: 2rem !important;          /* text-3xl ≈ 2rem */
+    font-weight: 900 !important;         /* font-black */
+    color: #2d3748 !important;
+    margin: 0 0 25px 10px !important;    /* 左邊留一點間距 */
+    padding-bottom: 12px !important;
+    
+    border-bottom: 4px solid transparent !important;
+    border-image: linear-gradient(to right, #667eea, #764ba2) 1 !important;
+    border-image-slice: 1 !important;
+    display: inline-block;
+    width: fit-content;
+}
