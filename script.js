@@ -414,6 +414,49 @@ document.addEventListener("DOMContentLoaded", async function () {
         };
     }
 
+    // 載入停車場列表（讓共享者看到即時剩餘車位）
+    async function setupParkingList() {
+        const parkingListTableBody = document.getElementById("parkingListTableBody");
+        if (!parkingListTableBody) return;
+
+        parkingListTableBody.innerHTML = '<tr><td colspan="7" class="text-center py-10">載入中...</td></tr>';
+
+        try {
+            const token = getToken();
+            const response = await fetch(`${API_URL}/parking_lots`, {
+                headers: { "Authorization": `Bearer ${token}` }
+            });
+            if (!response.ok) throw new Error("無法載入停車場列表");
+            const data = await response.json();
+
+            parkingListTableBody.innerHTML = "";
+            if (data.length === 0) {
+                parkingListTableBody.innerHTML = "<tr><td colspan='7' class='text-center py-10 text-red-600'>目前沒有停車場</td></tr>";
+            } else {
+                data.forEach(spot => {
+                    const row = document.createElement("tr");
+                    row.className = "hover:bg-gray-50 transition-colors";
+                    row.innerHTML = `
+                    <td class="py-6 px-8 font-bold text-gray-800">${spot.name}</td>
+                    <td class="py-6 px-8">${spot.address}</td>
+                    <td class="py-6 px-8">${spot.total_spots}</td>
+                    <td class="py-6 px-8">${spot.hourly_rate}</td>
+                    <td class="py-6 px-8">${spot.latitude.toFixed(6)}</td>
+                    <td class="py-6 px-8">${spot.longitude.toFixed(6)}</td>
+                    <td class="py-6 px-8 space-x-3">
+                        <button class="edit-btn bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-bold text-lg" data-id="${spot.parking_lot_id}">編輯 ✏️</button>
+                        <button class="delete-btn bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-xl font-bold text-lg" data-id="${spot.parking_lot_id}">刪除 🗑️</button>
+                    </td>
+                `;
+                    parkingListTableBody.appendChild(row);
+                });
+            }
+        } catch (error) {
+            console.error("Failed to load parking list:", error);
+            parkingListTableBody.innerHTML = "<tr><td colspan='7' class='text-center py-10 text-red-600'>載入失敗</td></tr>";
+        }
+    }
+
     // ==================== 終極進場功能（startButton 開鏡頭、rescanButton 重新掃描）====================
     function setupRentParking() {
         const role = getRole();
@@ -580,20 +623,22 @@ document.addEventListener("DOMContentLoaded", async function () {
 
                 if (res.ok) {
                     plateList.innerHTML = `
-                    <div class="text-center min-h-screen flex flex-col items-center justify-center bg-gray-50">
-                        <div class="text-green-600 text-9xl font-black mb-12 tracking-widest">${currentPlate}</div>
-                        <div class="bg-gradient-to-r from-green-600 to-emerald-700 text-white text-8xl font-extrabold px-32 py-20 rounded-3xl shadow-2xl">
-                            進場成功！
-                        </div>
+                <div class="text-center min-h-screen flex flex-col items-center justify-center bg-gray-50">
+                    <div class="text-green-600 text-9xl font-black mb-12 tracking-widest">${currentPlate}</div>
+                    <div class="bg-gradient-to-r from-green-600 to-emerald-700 text-white text-8xl font-extrabold px-32 py-20 rounded-3xl shadow-2xl">
+                        進場成功！
                     </div>
-                `;
+                    <div class="mt-12 text-gray-600 text-4xl">已為您開啟閘門，請緩慢前行</div>
+                </div>
+            `;
                     confirmButton.style.display = "none";
-
-
                     rescanButton.textContent = "重新掃描";
                     rescanButton.style.display = "inline-block";
                     startButton.style.display = "none";
                     stopButton.style.display = "none";
+
+                    // 關鍵：進場成功後重新載入停車場列表（共享者就能看到剩餘車位減少）
+                    setupParkingList();
                 } else {
                     const err = await res.json().catch(() => ({}));
                     alert("進場失敗：" + (err.error || "請稍後再試"));
@@ -800,16 +845,16 @@ document.addEventListener("DOMContentLoaded", async function () {
                     const amount = result.data?.total_cost || 0;
 
                     settleResult.innerHTML = `
-                    <div class="min-h-screen flex flex-col items-center justify-center bg-gray-50">
-                        <div class="text-center">
-                            <div class="text-green-600 text-9xl font-black mb-12 tracking-widest">${currentPlate}</div>
-                            <div class="bg-gradient-to-r from-green-600 to-emerald-700 text-white text-8xl font-extrabold px-32 py-20 rounded-3xl shadow-2xl">
-                                出場成功！<br><br>
-                                應收 <span class="text-yellow-300 text-9xl">${amount}</span> 元
-                            </div>
+                <div class="min-h-screen flex flex-col items-center justify-center bg-gray-50">
+                    <div class="text-center">
+                        <div class="text-green-600 text-9xl font-black mb-12 tracking-widest">${currentPlate}</div>
+                        <div class="bg-gradient-to-r from-green-600 to-emerald-700 text-white text-8xl font-extrabold px-32 py-20 rounded-3xl shadow-2xl">
+                            出場成功！<br><br>
+                            應收 <span class="text-yellow-300 text-9xl">${amount}</span> 元
                         </div>
                     </div>
-                `;
+                </div>
+            `;
                     settleResult.style.display = "block";
                     confirmButton.style.display = "none";
 
@@ -817,6 +862,9 @@ document.addEventListener("DOMContentLoaded", async function () {
                     rescanButton.style.display = "inline-block";
                     startButton.style.display = "none";
                     stopButton.style.display = "none";
+
+                    // 關鍵：出場成功後重新載入停車場列表（共享者就能看到剩餘車位增加）
+                    setupParkingList();
                 } else {
                     alert("出場失敗：" + (result.error || "請稍後再試"));
                 }
