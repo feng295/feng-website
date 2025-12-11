@@ -592,9 +592,8 @@ document.addEventListener("DOMContentLoaded", async function () {
                     confirmButton.style.display = "none";
                     rescanButton.style.display = "none";
                   
-                    startButton.textContent = "開始掃描";
-                    startButton.style.display = "inline-block";
-                    stopButton.style.display = "none";
+                    rescanButton.textContent = "重新掃描";
+                    rescanButton.style.display = "inline-block";
                 } else {
                     const err = await res.json().catch(() => ({}));
                     alert("進場失敗：" + (err.error || "請稍後再試"));
@@ -609,7 +608,7 @@ document.addEventListener("DOMContentLoaded", async function () {
             }
         };
 
-        // 重新掃描 / 開始掃描
+        // 重新掃描 
         const restartScanning = () => {
             currentPlate = null;
             plateList.innerHTML = '<div class="text-gray-500 text-5xl">請將車牌對準鏡頭...</div>';
@@ -763,8 +762,8 @@ document.addEventListener("DOMContentLoaded", async function () {
                         rescanButton.style.display = "inline-block";
 
                         
-                        startButton.textContent = "開始掃描";
-                        startButton.style.display = "inline-block";
+                        rescanButton.textContent = "重新掃描";
+                        rescanButton.style.display = "inline-block";
                     }
                 } catch (err) {
                     console.warn("辨識失敗：", err.message);
