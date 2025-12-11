@@ -628,7 +628,6 @@ document.addEventListener("DOMContentLoaded", async function () {
                     <div class="bg-gradient-to-r from-green-600 to-emerald-700 text-white text-8xl font-extrabold px-32 py-20 rounded-3xl shadow-2xl">
                         進場成功！
                     </div>
-                    <div class="mt-12 text-gray-600 text-4xl">已為您開啟閘門，請緩慢前行</div>
                 </div>
             `;
                     confirmButton.style.display = "none";
