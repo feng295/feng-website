@@ -580,20 +580,23 @@ document.addEventListener("DOMContentLoaded", async function () {
 
                 if (res.ok) {
                     plateList.innerHTML = `
-                    <div class="text-center min-h-screen flex flex-col items-center justify-center bg-gray-50">
-                        <div class="text-green-600 text-9xl font-black mb-12 tracking-widest">${currentPlate}</div>
-                        <div class="bg-gradient-to-r from-green-600 to-emerald-700 text-white text-8xl font-extrabold px-32 py-20 rounded-3xl shadow-2xl">
-                            進場成功！
-                        </div>
+                <div class="text-center min-h-screen flex flex-col items-center justify-center bg-gray-50">
+                    <div class="text-green-600 text-9xl font-black mb-12 tracking-widest">${currentPlate}</div>
+                    <div class="bg-gradient-to-r from-green-600 to-emerald-700 text-white text-8xl font-extrabold px-32 py-20 rounded-3xl shadow-2xl">
+                        進場成功！
                     </div>
-                `;
+                </div>
+            `;
                     confirmButton.style.display = "none";
 
-                  
-                    rescanButton.textContent = "重新掃描";
-                    rescanButton.style.display = "inline-block";
-                    startButton.style.display = "none";
-                    stopButton.style.display = "none";
+                    // 關鍵：進場成功後，重新載入停車場列表（讓共享者看到剩餘車位減少）
+                    if (document.querySelector('.nav-link[data-target="parkingList"]')) {
+                        document.querySelector('.nav-link[data-target="parkingList"]').click(); // 自動跳到停車場列表頁面
+                    } else {
+                        // 如果不在列表頁面，也呼叫重新載入
+                        setupParkingList();
+                    }
+
                 } else {
                     const err = await res.json().catch(() => ({}));
                     alert("進場失敗：" + (err.error || "請稍後再試"));
@@ -633,7 +636,7 @@ document.addEventListener("DOMContentLoaded", async function () {
         startCamera();
     }
 
-    // ==================== 終極出場功能（同理，成功後「開始掃描」變「重新掃描」）====================
+    // ==================== 終極出場功能（startButton 開鏡頭、rescanButton 重新掃描）====================
     function setupSettleParking() {
         const role = getRole();
         if (role !== "renter") {
@@ -660,14 +663,16 @@ document.addEventListener("DOMContentLoaded", async function () {
         let isScanning = false;
         let stream = null;
 
-        // 強制重置按鈕
+        // 強制重置按鈕（防止重新整理殭屍狀態）
         if (confirmButton) {
             confirmButton.textContent = "確認出場";
             confirmButton.disabled = true;
             confirmButton.style.display = "inline-block";
         }
-        if (startButton) startButton.textContent = "開始掃描";
-        if (startButton) startButton.style.display = "inline-block";
+        if (startButton) {
+            startButton.textContent = "開始掃描";
+            startButton.style.display = "inline-block";
+        }
         if (stopButton) stopButton.style.display = "none";
         if (rescanButton) rescanButton.style.display = "none";
 
@@ -762,11 +767,9 @@ document.addEventListener("DOMContentLoaded", async function () {
 
                         confirmButton.disabled = false;
                         confirmButton.textContent = "確認出場";
+
+                        rescanButton.textContent = "重新掃描";
                         rescanButton.style.display = "inline-block";
-
-
-                        startButton.textContent = "開始掃描";
-                        startButton.style.display = "inline-block";
                     }
                 } catch (err) {
                     console.warn("辨識失敗：", err.message);
@@ -776,11 +779,12 @@ document.addEventListener("DOMContentLoaded", async function () {
             }, 'image/jpeg', 0.8);
         }
 
+        // 確認出場 → 永久成功畫面
         confirmButton.onclick = async () => {
             if (!currentPlate) return;
 
             confirmButton.disabled = true;
-            confirmButton.textContent = "出場中...";
+            confirmButton.textContent = "結算中...";
 
             try {
                 const token = getToken();
@@ -799,23 +803,26 @@ document.addEventListener("DOMContentLoaded", async function () {
                     const amount = result.data?.total_cost || 0;
 
                     settleResult.innerHTML = `
-                    <div class="min-h-screen flex flex-col items-center justify-center bg-gray-50">
-                        <div class="text-center">
-                            <div class="text-green-600 text-9xl font-black mb-12 tracking-widest">${currentPlate}</div>
-                            <div class="bg-gradient-to-r from-green-600 to-emerald-700 text-white text-8xl font-extrabold px-32 py-20 rounded-3xl shadow-2xl">
-                                出場成功！<br><br>
-                                應收 <span class="text-yellow-300 text-9xl">${amount}</span> 元
-                            </div>
+                <div class="min-h-screen flex flex-col items-center justify-center bg-gray-50">
+                    <div class="text-center">
+                        <div class="text-green-600 text-9xl font-black mb-12 tracking-widest">${currentPlate}</div>
+                        <div class="bg-gradient-to-r from-green-600 to-emerald-700 text-white text-8xl font-extrabold px-32 py-20 rounded-3xl shadow-2xl">
+                            出場成功！<br><br>
+                            應收 <span class="text-yellow-300 text-9xl">${amount}</span> 元
                         </div>
                     </div>
-                `;
+                </div>
+            `;
                     settleResult.style.display = "block";
                     confirmButton.style.display = "none";
-                    rescanButton.style.display = "none";
 
-                    startButton.textContent = "開始掃描";
-                    startButton.style.display = "inline-block";
-                    stopButton.style.display = "none";
+                    // 關鍵：出場成功後，重新載入停車場列表（讓共享者看到剩餘車位增加）
+                    if (document.querySelector('.nav-link[data-target="parkingList"]')) {
+                        document.querySelector('.nav-link[data-target="parkingList"]').click(); // 自動跳到停車場列表
+                    } else {
+                        setupParkingList();
+                    }
+
                 } else {
                     alert("出場失敗：" + (result.error || "請稍後再試"));
                 }
@@ -829,21 +836,25 @@ document.addEventListener("DOMContentLoaded", async function () {
             }
         };
 
-        const restartScanning = () => {
+        // 開始掃描（用 startButton）
+        startButton.onclick = () => {
+            startCamera();
+        };
+
+        // 重新掃描（用 rescanButton）
+        rescanButton.onclick = () => {
             currentPlate = null;
             plateList.innerHTML = '<div class="text-gray-500 text-5xl">請將車牌對準鏡頭...</div>';
             confirmButton.disabled = true;
             confirmButton.style.display = "inline-block";
-            rescanButton.style.display = "none";
             settleResult.style.display = "none";
-            startButton.textContent = "開始掃描";
-            startButton.style.display = "inline-block";
+            rescanButton.textContent = "重新掃描";
+            rescanButton.style.display = "inline-block";
+            startButton.style.display = "none";
             stopButton.style.display = "none";
             startCamera();
         };
 
-        startButton.onclick = restartScanning;
-        rescanButton.onclick = restartScanning;
         stopButton.onclick = stopCamera;
 
         resetToScanningState();
