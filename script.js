@@ -447,6 +447,17 @@ document.addEventListener("DOMContentLoaded", async function () {
             return;
         }
 
+        // 強制重置按鈕（防止重新整理殭屍狀態）
+        if (confirmButton) {
+            confirmButton.textContent = "確認進場";
+            confirmButton.disabled = true;
+            confirmButton.style.display = "inline-block";
+        }
+        if (startButton) startButton.textContent = "開始掃描";
+        if (startButton) startButton.style.display = "inline-block";
+        if (stopButton) stopButton.style.display = "none";
+        if (rescanButton) rescanButton.style.display = "none";
+
         async function startCamera() {
             if (isScanning) return;
 
@@ -538,6 +549,9 @@ document.addEventListener("DOMContentLoaded", async function () {
                         confirmButton.textContent = "確認進場";
                         rescanButton.style.display = "inline-block";
 
+                        
+                        startButton.textContent = "開始掃描";
+                        startButton.style.display = "inline-block";
                     }
                 } catch (err) {
                     console.warn("辨識失敗：", err.message);
@@ -578,8 +592,9 @@ document.addEventListener("DOMContentLoaded", async function () {
                     confirmButton.style.display = "none";
                     rescanButton.style.display = "none";
                   
-                    rescanButton.textContent = "重新掃描";
-                    rescanButton.style.display = "inline-block";
+                    startButton.textContent = "開始掃描";
+                    startButton.style.display = "inline-block";
+                    stopButton.style.display = "none";
                 } else {
                     const err = await res.json().catch(() => ({}));
                     alert("進場失敗：" + (err.error || "請稍後再試"));
@@ -594,7 +609,7 @@ document.addEventListener("DOMContentLoaded", async function () {
             }
         };
 
-        // 重新掃描 
+        // 重新掃描 / 開始掃描
         const restartScanning = () => {
             currentPlate = null;
             plateList.innerHTML = '<div class="text-gray-500 text-5xl">請將車牌對準鏡頭...</div>';
@@ -642,6 +657,17 @@ document.addEventListener("DOMContentLoaded", async function () {
         let currentPlate = null;
         let isScanning = false;
         let stream = null;
+
+        // 強制重置按鈕
+        if (confirmButton) {
+            confirmButton.textContent = "確認出場";
+            confirmButton.disabled = true;
+            confirmButton.style.display = "inline-block";
+        }
+        if (startButton) startButton.textContent = "開始掃描";
+        if (startButton) startButton.style.display = "inline-block";
+        if (stopButton) stopButton.style.display = "none";
+        if (rescanButton) rescanButton.style.display = "none";
 
         async function startCamera() {
             if (isScanning) return;
@@ -736,6 +762,9 @@ document.addEventListener("DOMContentLoaded", async function () {
                         confirmButton.textContent = "確認出場";
                         rescanButton.style.display = "inline-block";
 
+                        
+                        startButton.textContent = "開始掃描";
+                        startButton.style.display = "inline-block";
                     }
                 } catch (err) {
                     console.warn("辨識失敗：", err.message);
