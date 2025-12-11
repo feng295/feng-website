@@ -842,6 +842,12 @@ button:not(#logoutButton),
     color: #1e293b;
     line-height: 1.5;
 }
+.text-lg.font-semibold {
+    text-align: center !important;      /* 文字水平置中 */
+    display: block !important;          /* 確保是區塊元素 */
+    width: 100% !important;             /* 佔滿寬度 */
+    margin: 0 auto 1rem auto !important; /* 上下留一點間距 */
+}
 
 /* 3. 車牌顯示區（大字）置中 */
 #licensePlateResultRent,
