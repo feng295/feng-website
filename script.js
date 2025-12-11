@@ -538,9 +538,6 @@ document.addEventListener("DOMContentLoaded", async function () {
                         confirmButton.textContent = "確認進場";
                         rescanButton.style.display = "inline-block";
 
-                        
-                        startButton.textContent = "開始掃描";
-                        startButton.style.display = "inline-block";
                     }
                 } catch (err) {
                     console.warn("辨識失敗：", err.message);
@@ -739,9 +736,6 @@ document.addEventListener("DOMContentLoaded", async function () {
                         confirmButton.textContent = "確認出場";
                         rescanButton.style.display = "inline-block";
 
-                        
-                        rescanButton.textContent = "重新掃描";
-                        rescanButton.style.display = "inline-block";
                     }
                 } catch (err) {
                     console.warn("辨識失敗：", err.message);
