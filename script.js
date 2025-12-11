@@ -580,23 +580,20 @@ document.addEventListener("DOMContentLoaded", async function () {
 
                 if (res.ok) {
                     plateList.innerHTML = `
-                <div class="text-center min-h-screen flex flex-col items-center justify-center bg-gray-50">
-                    <div class="text-green-600 text-9xl font-black mb-12 tracking-widest">${currentPlate}</div>
-                    <div class="bg-gradient-to-r from-green-600 to-emerald-700 text-white text-8xl font-extrabold px-32 py-20 rounded-3xl shadow-2xl">
-                        進場成功！
+                    <div class="text-center min-h-screen flex flex-col items-center justify-center bg-gray-50">
+                        <div class="text-green-600 text-9xl font-black mb-12 tracking-widest">${currentPlate}</div>
+                        <div class="bg-gradient-to-r from-green-600 to-emerald-700 text-white text-8xl font-extrabold px-32 py-20 rounded-3xl shadow-2xl">
+                            進場成功！
+                        </div>
                     </div>
-                </div>
-            `;
+                `;
                     confirmButton.style.display = "none";
 
-                    // 關鍵：進場成功後，重新載入停車場列表（讓共享者看到剩餘車位減少）
-                    if (document.querySelector('.nav-link[data-target="parkingList"]')) {
-                        document.querySelector('.nav-link[data-target="parkingList"]').click(); // 自動跳到停車場列表頁面
-                    } else {
-                        // 如果不在列表頁面，也呼叫重新載入
-                        setupParkingList();
-                    }
 
+                    rescanButton.textContent = "重新掃描";
+                    rescanButton.style.display = "inline-block";
+                    startButton.style.display = "none";
+                    stopButton.style.display = "none";
                 } else {
                     const err = await res.json().catch(() => ({}));
                     alert("進場失敗：" + (err.error || "請稍後再試"));
@@ -803,26 +800,23 @@ document.addEventListener("DOMContentLoaded", async function () {
                     const amount = result.data?.total_cost || 0;
 
                     settleResult.innerHTML = `
-                <div class="min-h-screen flex flex-col items-center justify-center bg-gray-50">
-                    <div class="text-center">
-                        <div class="text-green-600 text-9xl font-black mb-12 tracking-widest">${currentPlate}</div>
-                        <div class="bg-gradient-to-r from-green-600 to-emerald-700 text-white text-8xl font-extrabold px-32 py-20 rounded-3xl shadow-2xl">
-                            出場成功！<br><br>
-                            應收 <span class="text-yellow-300 text-9xl">${amount}</span> 元
+                    <div class="min-h-screen flex flex-col items-center justify-center bg-gray-50">
+                        <div class="text-center">
+                            <div class="text-green-600 text-9xl font-black mb-12 tracking-widest">${currentPlate}</div>
+                            <div class="bg-gradient-to-r from-green-600 to-emerald-700 text-white text-8xl font-extrabold px-32 py-20 rounded-3xl shadow-2xl">
+                                出場成功！<br><br>
+                                應收 <span class="text-yellow-300 text-9xl">${amount}</span> 元
+                            </div>
                         </div>
                     </div>
-                </div>
-            `;
+                `;
                     settleResult.style.display = "block";
                     confirmButton.style.display = "none";
 
-                    // 關鍵：出場成功後，重新載入停車場列表（讓共享者看到剩餘車位增加）
-                    if (document.querySelector('.nav-link[data-target="parkingList"]')) {
-                        document.querySelector('.nav-link[data-target="parkingList"]').click(); // 自動跳到停車場列表
-                    } else {
-                        setupParkingList();
-                    }
-
+                    rescanButton.textContent = "重新掃描";
+                    rescanButton.style.display = "inline-block";
+                    startButton.style.display = "none";
+                    stopButton.style.display = "none";
                 } else {
                     alert("出場失敗：" + (result.error || "請稍後再試"));
                 }
