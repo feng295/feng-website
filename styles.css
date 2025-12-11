@@ -816,10 +816,18 @@ button:not(#logoutButton),
     text-align: center !important;
     width: 100%;
     max-width: 680px;
-    margin: 0 auto 15px auto !important;
+    margin: 0 auto 20px auto !important;   /* 上方留一點間距，下方 20px 更舒服 */
     font-size: 22px !important;
     font-weight: 700 !important;
     color: #1e293b;
+    
+    /* 移除任何底線（萬一原本有） */
+    border-bottom: none !important;
+    padding-bottom: 0 !important;
+    background: none !important;
+    
+    /* 可選：加一點呼吸感 */
+    line-height: 1.5;
 }
 
 /* 3. 車牌顯示區（大字）置中 */
