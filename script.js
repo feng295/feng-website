@@ -414,7 +414,7 @@ document.addEventListener("DOMContentLoaded", async function () {
         };
     }
 
-    // ==================== 終極進場功能（成功後「開始掃描」變成「重新掃描」）====================
+    // ==================== 終極進場功能（startButton 開鏡頭、rescanButton 重新掃描）====================
     function setupRentParking() {
         const role = getRole();
         if (role !== "renter") {
@@ -504,9 +504,9 @@ document.addEventListener("DOMContentLoaded", async function () {
             confirmButton.disabled = true;
             confirmButton.style.display = "inline-block";
             rescanButton.style.display = "none";
+            startButton.textContent = "開始掃描";
             startButton.style.display = "inline-block";
             stopButton.style.display = "none";
-            startButton.textContent = "開始掃描"; // 強制顯示「開始掃描」
         }
 
         function scanPlate() {
@@ -547,11 +547,9 @@ document.addEventListener("DOMContentLoaded", async function () {
 
                         confirmButton.disabled = false;
                         confirmButton.textContent = "確認進場";
-                        rescanButton.style.display = "inline-block";
 
-                        
-                        startButton.textContent = "開始掃描";
-                        startButton.style.display = "inline-block";
+                        rescanButton.textContent = "重新掃描";
+                        rescanButton.style.display = "inline-block";
                     }
                 } catch (err) {
                     console.warn("辨識失敗：", err.message);
@@ -590,10 +588,11 @@ document.addEventListener("DOMContentLoaded", async function () {
                     </div>
                 `;
                     confirmButton.style.display = "none";
-                    rescanButton.style.display = "none";
+
                   
-                    startButton.textContent = "開始掃描";
-                    startButton.style.display = "inline-block";
+                    rescanButton.textContent = "重新掃描";
+                    rescanButton.style.display = "inline-block";
+                    startButton.style.display = "none";
                     stopButton.style.display = "none";
                 } else {
                     const err = await res.json().catch(() => ({}));
@@ -609,21 +608,24 @@ document.addEventListener("DOMContentLoaded", async function () {
             }
         };
 
-        // 重新掃描 / 開始掃描
-        const restartScanning = () => {
+        // 開始掃描（用 startButton）
+        startButton.onclick = () => {
+            startCamera();
+        };
+
+        // 重新掃描（用 rescanButton）
+        rescanButton.onclick = () => {
             currentPlate = null;
             plateList.innerHTML = '<div class="text-gray-500 text-5xl">請將車牌對準鏡頭...</div>';
             confirmButton.disabled = true;
             confirmButton.style.display = "inline-block";
-            rescanButton.style.display = "none";
-            startButton.textContent = "開始掃描";
-            startButton.style.display = "inline-block";
+            rescanButton.textContent = "重新掃描";
+            rescanButton.style.display = "inline-block";
+            startButton.style.display = "none";
             stopButton.style.display = "none";
             startCamera();
         };
 
-        startButton.onclick = restartScanning;
-        rescanButton.onclick = restartScanning;
         stopButton.onclick = stopCamera;
 
         // 初始狀態
@@ -762,7 +764,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                         confirmButton.textContent = "確認出場";
                         rescanButton.style.display = "inline-block";
 
-                        
+
                         startButton.textContent = "開始掃描";
                         startButton.style.display = "inline-block";
                     }
@@ -810,7 +812,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                     settleResult.style.display = "block";
                     confirmButton.style.display = "none";
                     rescanButton.style.display = "none";
-                   
+
                     startButton.textContent = "開始掃描";
                     startButton.style.display = "inline-block";
                     stopButton.style.display = "none";
