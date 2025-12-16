@@ -115,7 +115,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                 console.warn("Attempted to set empty role, skipping.");
                 return;
             }
-            const validRoles = ["renter", "shared_owner"];
+            const validRoles = ["renter", "admin"];
             const normalizedRole = role.toLowerCase().trim();
             if (!validRoles.includes(normalizedRole)) {
                 console.warn(`Invalid role "${normalizedRole}" ignored. Expected: ${validRoles.join(", ")}`);
@@ -154,7 +154,7 @@ document.addEventListener("DOMContentLoaded", async function () {
         logoutButton.style.display = "block";
         const role = getRole();
         console.log("Current role in showMainPage:", role);
-        const validRoles = ["renter", "shared_owner"];
+        const validRoles = ["renter", "admin"];
         if (!role || !validRoles.includes(role)) {
             console.error(`Unrecognized role: "${role}". Expected one of: ${validRoles.join(", ")}. Redirecting to login.`);
             removeToken();
@@ -165,7 +165,7 @@ document.addEventListener("DOMContentLoaded", async function () {
         history.replaceState({ role }, '', newPath);
         console.log(`URL updated to: ${window.location.pathname}`);
         if (role === "renter") pageTitle.textContent = "停車位租用者";
-        else if (role === "shared_owner") pageTitle.textContent = "停車場共享者";
+        else if (role === "admin") pageTitle.textContent = "停車場共享者";
         const navList = document.querySelector(".function-list ul");
         if (!navList) {
             console.error("Navigation list (.function-list ul) not found");
@@ -177,7 +177,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                 <li><a href="#" class="nav-link" data-target="history">租用紀錄</a></li>
                 <li><a href="#" class="nav-link" data-target="profile">個人資訊</a></li>
             `;
-        } else if (role === "shared_owner") {
+        } else if (role === "admin") {
             navList.innerHTML = `
                 <li><a href="#" class="nav-link" data-target="addParking">新增停車場</a></li>
                 <li><a href="#" class="nav-link" data-target="My parking space">停車場資訊</a></li>
@@ -188,7 +188,7 @@ document.addEventListener("DOMContentLoaded", async function () {
         document.querySelectorAll(".content-section").forEach(section => {
             section.style.display = "none";
         });
-        // role 已在上方驗證為 "renter" 或 "shared_owner"，使用簡單的三元運算子確保有預設值
+        // role 已在上方驗證為 "renter" 或 "admin"，使用簡單的三元運算子確保有預設值
         const defaultSectionId = role === "renter" ? "history" : "My parking space";
         const defaultSection = document.getElementById(defaultSectionId);
         if (!defaultSection) {
@@ -964,7 +964,7 @@ document.addEventListener("DOMContentLoaded", async function () {
     async function setupAddParking() {
         const role = getRole();
         console.log("Current role in setupAddParking:", role);
-        if (!["shared_owner"].includes(role)) {
+        if (!["admin"].includes(role)) {
             alert("此功能僅限管理員使用！");
             return;
         }
@@ -1147,7 +1147,7 @@ document.addEventListener("DOMContentLoaded", async function () {
         if (isAuthenticated) {
             const role = getRole();
             console.log("Current role during initialization:", role);
-            const validRoles = ["renter", "shared_owner"];
+            const validRoles = ["renter", "admin"];
             if (!role || !validRoles.includes(role)) {
                 console.error(`Invalid role during initialization: "${role}". Expected: ${validRoles.join(", ")}. Redirecting to login.`);
                 showError("無效的用戶角色，請重新登入！");
@@ -1164,12 +1164,12 @@ document.addEventListener("DOMContentLoaded", async function () {
     window.addEventListener("popstate", function (event) {
         const role = getRole();
         const pathRole = window.location.pathname.replace('/', '');
-        const validRoles = ["renter", "shared_owner"];
+        const validRoles = ["renter", "admin"];
         const pageTitle = document.getElementById("pageTitle");
         if (pathRole && validRoles.includes(pathRole) && pathRole === role) {
             if (pageTitle) {
                 if (pathRole === "renter") pageTitle.textContent = "Renter";
-                else if (pathRole === "shared_owner") pageTitle.textContent = "停車場共享者";
+                else if (pathRole === "admin") pageTitle.textContent = "Admin";
             }
             showMainPage();
         } else {
@@ -1378,7 +1378,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                         result.data.user_role ||
                         result.role || "").toString().toLowerCase().trim();
 
-                    if (!["renter", "shared_owner"].includes(role)) {
+                    if (!["renter", "admin"].includes(role)) {
                         showError("角色資訊錯誤，請聯繫管理員！");
                         return;
                     }
@@ -1452,7 +1452,7 @@ document.addEventListener("DOMContentLoaded", async function () {
     async function setupMyParkingSpace() {
         const role = getRole();
         console.log("Current role in setupMyParkingSpace:", role);
-        if (!["shared_owner"].includes(role)) {
+        if (!["admin"].includes(role)) {
             alert("您沒有權限訪問此功能！");
             return;
         }
@@ -1688,7 +1688,7 @@ document.addEventListener("DOMContentLoaded", async function () {
     // 設置個人資訊
     async function setupProfile() {
         const role = getRole();
-        if (!["renter", "shared_owner"].includes(role)) {
+        if (!["renter", "admin"].includes(role)) {
             alert("您沒有權限訪問此功能！");
             return;
         }
@@ -1705,7 +1705,7 @@ document.addEventListener("DOMContentLoaded", async function () {
             vehicleSection.style.display = "block";
             await loadVehicles(); // 只有 renter 才載入車輛
         } else {
-            vehicleSection.style.display = "none"; // shared_owner 完全不顯示
+            vehicleSection.style.display = "none"; // admin 完全不顯示
         }
 
         // 基本資料元素
@@ -1946,7 +1946,7 @@ document.addEventListener("DOMContentLoaded", async function () {
     // 設置收入查詢
     function setupIncomeInquiry() {
         const role = getRole();
-        if (role !== "shared_owner") {
+        if (role !== "admin") {
             alert("此功能僅限管理員使用！");
             return;
         }
@@ -2162,7 +2162,7 @@ document.addEventListener("DOMContentLoaded", async function () {
     }
     async function setupViewAllUsers() {
         const role = getRole();
-        if (role !== "shared_owner") {
+        if (role !== "admin") {
             alert("此功能僅限管理員使用！");
             return;
         }
