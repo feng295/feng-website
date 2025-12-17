@@ -1409,6 +1409,14 @@ input#newPlateInput::placeholder {
     box-sizing: border-box !important;
 }
 
+/* 車牌號碼 - 保持原樣 */
+.text-green-600.text-9xl.font-black.mb-12.tracking-widest {
+    text-align: center !important;
+    margin: 0 auto 4rem auto !important;
+    font-size: 7rem !important;
+    line-height: 1.2 !important;
+}
+
 /* 成功卡片 - 整體置中 + 內部文字處理 */
 .bg-gradient-to-r.from-green-600.to-emerald-700.text-white.text-8xl.font-extrabold {
     text-align: center !important;
