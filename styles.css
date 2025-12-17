@@ -1396,3 +1396,12 @@ input#newPlateInput::placeholder {
     font-weight: 600;
     opacity: 0.8;
 }
+.text-center {
+    text-align: center !important;      /* 水平置中 */
+    display: flex !important;
+    justify-content: center !important; /* 水平置中（flex） */
+    align-items: center !important;     /* 垂直置中（flex） */
+    width: 100% !important;
+    height: 100% !important;           /* 確保容器有高度才能垂直置中 */
+    margin: 0 auto !important;
+}
