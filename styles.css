@@ -1396,25 +1396,45 @@ input#newPlateInput::placeholder {
     font-weight: 600;
     opacity: 0.8;
 }
-/* 出場成功畫面 - 文字完全水平置中 */
-.text-green-600.text-9xl.font-black.mb-12.tracking-widest {
-    text-align: center !important;           /* 車牌號碼置中 */
+/* 強制讓整個成功畫面容器完全置中 */
+.min-h-screen.flex.flex-col.items-center.justify-center.bg-gray-50 {
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: center !important;
+    align-items: center !important;
+    text-align: center !important;
+    min-height: 100vh !important;
     width: 100% !important;
-    letter-spacing: 0.5em !important;        /* 車牌數字間距更漂亮 */
-    margin-bottom: 4rem !important;
+    padding: 2rem !important;
+    box-sizing: border-box !important;
 }
 
-/* 成功訊息卡片 - 內部文字完全置中 */
-.bg-gradient-to-r.from-green-600.to-emerald-700 {
-    text-align: center !important;           /* 所有文字置中 */
-    width: 90% !important;                   /* 避免在小螢幕太寬 */
-    max-width: 800px !important;             /* 大螢幕限制寬度，更聚焦 */
-    margin: 0 auto !important;               /* 卡片本身水平置中 */
-    padding: 5rem 2rem !important;           /* 上下內距加大，讓內容呼吸感更好 */
+/* 車牌號碼 - 強制置中 + 更美觀 */
+.text-green-600.text-9xl.font-black.mb-12.tracking-widest {
+    text-align: center !important;
+    width: 100% !important;
+    max-width: 900px !important;
+    margin: 0 auto 4rem auto !important;
+    letter-spacing: 0.5em !important;
+    font-size: 7rem !important;           /* 稍微調小一點，避免在手機上撐爆 */
+    line-height: 1.2 !important;
 }
 
-/* 金額數字特別強調 */
+/* 成功卡片 - 強制內外都置中 */
+.bg-gradient-to-r.from-green-600.to-emerald-700.text-white.text-8xl.font-extrabold {
+    text-align: center !important;
+    width: 90% !important;
+    max-width: 900px !important;
+    margin: 0 auto !important;
+    padding: 5rem 3rem !important;
+    border-radius: 3rem !important;
+    box-shadow: 0 25px 50px rgba(0,0,0,0.3) !important;
+}
+
+/* 金額數字 - 特別突出 */
 .text-yellow-300.text-9xl {
     display: inline-block !important;
-    margin: 0 0.5rem !important;             /* 左右留點空間 */
+    font-size: 7.5rem !important;
+    margin: 0 0.8rem !important;
+    text-shadow: 0 8px 16px rgba(0,0,0,0.4);
 }
