@@ -1409,15 +1409,6 @@ input#newPlateInput::placeholder {
     box-sizing: border-box !important;
 }
 
-/* 車牌號碼 - 保持原樣 */
-.text-green-600.text-9xl.font-black.mb-12.tracking-widest {
-    text-align: center !important;
-    max-width: 900px !important;
-    margin: 0 auto 4rem auto !important;
-    font-size: 7rem !important;
-    line-height: 1.2 !important;
-}
-
 /* 成功卡片 - 整體置中 + 內部文字處理 */
 .bg-gradient-to-r.from-green-600.to-emerald-700.text-white.text-8xl.font-extrabold {
     text-align: center !important;
@@ -1426,7 +1417,6 @@ input#newPlateInput::placeholder {
     margin: 0 auto !important;
     padding: 5rem 3rem !important;
     border-radius: 3rem !important;
-    box-shadow: 0 25px 50px rgba(0,0,0,0.3) !important;
     line-height: 1.4 !important; /* 讓多行文字間距更好看 */
 }
 
@@ -1443,7 +1433,7 @@ input#newPlateInput::placeholder {
 /* 強制讓所有文字都跟金額一樣大（text-9xl + font-black） */
 .bg-gradient-to-r.from-green-600.to-emerald-700,
 .bg-gradient-to-r.from-green-600.to-emerald-700 span {
-    font-size: 7.5rem !important;        /* 跟 text-9xl 一樣大（可自行調整） */
+    font-size: 3.5rem !important;        /* 跟 text-9xl 一樣大（可自行調整） */
     font-weight: 900 !important;         /* 超粗，跟金額一樣 */
     display: inline-block !important;    /* 確保能正確置中 */
     margin: 0 0.5rem !important;         /* 文字之間留一點呼吸空間 */
