@@ -1396,4 +1396,25 @@ input#newPlateInput::placeholder {
     font-weight: 600;
     opacity: 0.8;
 }
+/* 出場成功畫面 - 文字完全水平置中 */
+.text-green-600.text-9xl.font-black.mb-12.tracking-widest {
+    text-align: center !important;           /* 車牌號碼置中 */
+    width: 100% !important;
+    letter-spacing: 0.5em !important;        /* 車牌數字間距更漂亮 */
+    margin-bottom: 4rem !important;
+}
 
+/* 成功訊息卡片 - 內部文字完全置中 */
+.bg-gradient-to-r.from-green-600.to-emerald-700 {
+    text-align: center !important;           /* 所有文字置中 */
+    width: 90% !important;                   /* 避免在小螢幕太寬 */
+    max-width: 800px !important;             /* 大螢幕限制寬度，更聚焦 */
+    margin: 0 auto !important;               /* 卡片本身水平置中 */
+    padding: 5rem 2rem !important;           /* 上下內距加大，讓內容呼吸感更好 */
+}
+
+/* 金額數字特別強調 */
+.text-yellow-300.text-9xl {
+    display: inline-block !important;
+    margin: 0 0.5rem !important;             /* 左右留點空間 */
+}
