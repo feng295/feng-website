@@ -1916,7 +1916,7 @@ document.addEventListener("DOMContentLoaded", async function () {
             }
         };
 
-        /// === 新增：保存個人資料變更 ===
+        // === 新增：保存個人資料變更 ===
         if (saveProfileButton) {
             saveProfileButton.onclick = async () => {
                 const name = editName.value.trim();
@@ -1942,7 +1942,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 
                 try {
                     const token = getToken();
-                    const res = await fetch(`${API_URL}/members/id`, {
+                    const res = await fetch(`${API_URL}/members/${memberId}`, {
                         method: 'PUT',
                         headers: {
                             "Content-Type": "application/json",
