@@ -1719,11 +1719,12 @@ document.addEventListener("DOMContentLoaded", async function () {
         const cancelEditProfileButton = document.getElementById("cancelEditProfileButton");
 
         // 車輛管理元素
+        const vehicleList = document.getElementById("vehicleList");
         const newPlateInput = document.getElementById("newPlateInput");
         const addVehicleBtn = document.getElementById("addVehicleBtn");
 
         let memberId = null;
-        let vehicles = [];
+        let vehicles = []; // 儲存目前車輛陣列
 
         // 載入個人資料
         async function loadProfile() {
@@ -1732,49 +1733,38 @@ document.addEventListener("DOMContentLoaded", async function () {
                 memberId = getMemberId();
                 if (!token || !memberId) throw new Error("請重新登入！");
 
+                // 1. 載入基本資料（你說這條是對的）
                 const profileRes = await fetch(`${API_URL}/members/profile`, {
                     method: 'GET',
                     headers: { "Authorization": `Bearer ${token}` }
                 });
-
-                if (!profileRes.ok) {
-                    if (profileRes.status === 401) {
-                        alert("登入過期，請重新登入");
-                        removeToken();
-                        showLoginPage(true);
-                        return;
+                if (profileRes.ok) {
+                    const profile = (await profileRes.json()).data || await profileRes.json();
+                    let maskedCard = '未提供';
+                    if (profile.payment_info) {
+                        const c = profile.payment_info.toString().replace(/\D/g, '');
+                        maskedCard = c.length === 16 ? `${c.slice(0, 4)}-****-****-${c.slice(-4)}` : profile.payment_info;
                     }
-                    throw new Error("無法載入個人資料");
+                    profileData.innerHTML = `
+                    <p><strong>姓名：</strong> ${profile.name || '未提供'}</p>
+                    <p><strong>電話：</strong> ${profile.phone || '未提供'}</p>
+                    <p><strong>電子郵件：</strong> ${profile.email || '未提供'}</p>
+                    <p><strong>信用卡號：</strong> ${maskedCard}</p>
+                `;
+                    editName.value = profile.name || '';
+                    editPhone.value = profile.phone || '';
+                    editEmail.value = profile.email || '';
+                    const cleanCard = profile.payment_info ? profile.payment_info.toString().replace(/\D/g, '') : '';
+                    editCardNumber.value = cleanCard.length === 16 ? cleanCard.replace(/(\d{4})(?=\d)/g, '$1-') : cleanCard;
                 }
 
-                const profile = (await profileRes.json()).data || await profileRes.json();
-
-                let maskedCard = '未提供';
-                if (profile.payment_info) {
-                    const c = profile.payment_info.toString().replace(/\D/g, '');
-                    maskedCard = c.length === 16 ? `${c.slice(0, 4)}-****-****-${c.slice(-4)}` : profile.payment_info;
-                }
-
-                profileData.innerHTML = `
-                <p><strong>姓名：</strong> ${profile.name || '未提供'}</p>
-                <p><strong>電話：</strong> ${profile.phone || '未提供'}</p>
-                <p><strong>電子郵件：</strong> ${profile.email || '未提供'}</p>
-                <p><strong>信用卡號：</strong> ${maskedCard}</p>
-            `;
-
-                // 填入編輯表單
-                editName.value = profile.name || '';
-                editPhone.value = profile.phone || '';
-                editEmail.value = profile.email || '';
-                const cleanCard = profile.payment_info ? profile.payment_info.toString().replace(/\D/g, '') : '';
-                editCardNumber.value = cleanCard.length === 16 ? cleanCard.replace(/(\d{4})(?=\d)/g, '$1-') : cleanCard;
-
+                // 2. 載入車輛清單（僅租用者）
                 if (role === "renter") {
                     await loadVehicles();
                 }
 
             } catch (err) {
-                console.error("載入個人資料失敗:", err);
+                console.error(err);
                 alert("載入失敗：" + err.message);
             }
         }
@@ -1799,7 +1789,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                     ? data
                     : data.data || data.vehicles || data.vehicle_list || [];
 
-                renderVehicleTable();
+                renderVehicleTable(); // 改用表格渲染
 
             } catch (err) {
                 const tbody = document.getElementById("vehicleTableBody");
@@ -1810,42 +1800,48 @@ document.addEventListener("DOMContentLoaded", async function () {
             }
         }
 
-        // 渲染車輛表格
+        // ──────────────────────────────────────
+        // 2. 渲染表格版車輛清單（全新！完美對應你的 HTML）
         function renderVehicleTable() {
             const tbody = document.getElementById("vehicleTableBody");
+
             if (!tbody) return;
 
+            // 清空表格
             tbody.innerHTML = '';
 
+            // 如果完全沒車，就什麼都不顯示（超乾淨！）
             if (vehicles.length === 0) {
-                return; // 無車輛時不顯示任何訊息
+                return; // 直接結束，不顯示任何訊息
             }
 
+            // 有車才顯示
             vehicles.forEach((vehicle) => {
                 const row = document.createElement("tr");
                 row.className = "hover:bg-indigo-50 transition-all duration-200 border-b border-gray-100";
 
                 row.innerHTML = `
-                <td class="px-8 py-7">
-                    <div class="text-2xl font-mono font-black text-indigo-700 tracking-widest">
-                        ${vehicle.license_plate || '未知車牌'}
-                    </div>
-                </td>
-                <td class="px-8 py-7 text-center">
-                    <button onclick="deleteVehicle('${vehicle.license_plate}')" 
-                            class="bg-red-500 hover:bg-red-600 text-white font-bold py-3 px-9 rounded-xl 
-                                   shadow-md hover:shadow-xl transform hover:scale-105 transition-all duration-200 
-                                   focus:outline-none focus:ring-4 focus:ring-red-300">
-                        刪除
-                    </button>
-                </td>
-            `;
+            <td class="px-8 py-7">
+                <div class="text-2xl font-mono font-black text-indigo-700 tracking-widest">
+                    ${vehicle.license_plate || '未知車牌'}
+                </div>
+            </td>
+            <td class="px-8 py-7 text-center">
+                <button onclick="deleteVehicle('${vehicle.license_plate}')" 
+                        class="bg-red-500 hover:bg-red-600 text-white font-bold py-3 px-9 rounded-xl 
+                               shadow-md hover:shadow-xl transform hover:scale-105 transition-all duration-200 
+                               focus:outline-none focus:ring-4 focus:ring-red-300">
+                    刪除
+                </button>
+            </td>
+        `;
 
                 tbody.appendChild(row);
             });
         }
 
-        // 新增車輛
+        // ──────────────────────────────────────
+        // 3. 新增車輛（保持原邏輯，但重新載入表格）
         window.addVehicle = async () => {
             const input = document.getElementById("newPlateInput");
             let raw = input.value.trim().toUpperCase();
@@ -1854,12 +1850,15 @@ document.addEventListener("DOMContentLoaded", async function () {
                 return alert("請輸入車牌號碼！");
             }
 
+            // 移除所有非英數字符（包含橫線、空格等）
             let plate = raw.replace(/[^A-Z0-9]/g, '');
 
+            // 嚴格驗證：前面2~4個字母 + 後面3~4個數字（不允許橫線）
             if (!/^[A-Z]{2,4}[0-9]{3,4}$/.test(plate)) {
                 return alert("車牌格式錯誤！\n\n正確格式（不需輸入橫線）：\n• ABC1234\n• AB123\n• KLM5678\n• XYZ9999");
             }
 
+            // 檢查是否重複（比對純字母數字）
             if (vehicles.some(v => v.license_plate === plate)) {
                 return alert("此車牌已經登記過了！");
             }
@@ -1872,7 +1871,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                         "Content-Type": "application/json",
                         "Authorization": `Bearer ${token}`
                     },
-                    body: JSON.stringify({ license_plate: plate })
+                    body: JSON.stringify({ license_plate: plate })  // 傳純 ABC1234
                 });
 
                 if (!res.ok) {
@@ -1882,14 +1881,15 @@ document.addEventListener("DOMContentLoaded", async function () {
 
                 alert(`車輛新增成功！\n${plate}`);
                 input.value = '';
-                await loadVehicles();
+                await loadVehicles(); // 重新載入表格
 
             } catch (err) {
                 alert("新增失敗：" + err.message);
             }
         };
 
-        // 刪除車輛
+        // ──────────────────────────────────────
+        // 4. 刪除車輛（二次確認 + 重新載入）
         window.deleteVehicle = async (plate) => {
             if (!confirm(`確定要刪除這台車？\n\n車牌：${plate}\n\n刪除後將無法自動進出停車場`)) {
                 return;
@@ -1916,84 +1916,15 @@ document.addEventListener("DOMContentLoaded", async function () {
             }
         };
 
-        // === 新增：保存個人資料變更 ===
-        if (saveProfileButton) {
-            saveProfileButton.onclick = async () => {
-                const name = editName.value.trim();
-                const phone = editPhone.value.trim();
-                const email = editEmail.value.trim();
-                let cardNumber = editCardNumber.value.replace(/\D/g, ''); // 只保留數字
-
-                if (!name || !phone || !email) {
-                    alert("姓名、電話、電子郵件不能為空！");
-                    return;
-                }
-
-                if (!/^[0-9]{10}$/.test(phone)) {
-                    alert("電話必須為 10 位數字！");
-                    return;
-                }
-
-                if (cardNumber && cardNumber.length !== 16) {
-                    alert("信用卡號必須為 16 位數字！");
-                    return;
-                }
-
-                try {
-                    const token = getToken();
-                    const res = await fetch(`${API_URL}/members/profile`, {
-                        method: 'PUT',
-                        headers: {
-                            "Content-Type": "application/json",
-                            "Authorization": `Bearer ${token}`
-                        },
-                        body: JSON.stringify({
-                            name,
-                            phone,
-                            email,
-                            payment_info: cardNumber || null
-                        })
-                    });
-
-                    if (!res.ok) {
-                        const err = await res.json().catch(() => ({}));
-                        throw new Error(err.error || "更新失敗");
-                    }
-
-                    alert("個人資料更新成功！");
-                    editProfileForm.style.display = "none";
-                    profileData.style.display = "block";
-                    await loadProfile(); // 重新載入顯示最新資料
-
-                } catch (err) {
-                    alert("更新失敗：" + err.message);
-                }
-            };
-        }
-
-        // 編輯按鈕
-        if (editProfileButton) {
-            editProfileButton.onclick = () => {
-                editProfileForm.style.display = "block";
-                profileData.style.display = "none";
-            };
-        }
-
-        // 取消編輯
-        if (cancelEditProfileButton) {
-            cancelEditProfileButton.onclick = () => {
-                editProfileForm.style.display = "none";
-                profileData.style.display = "block";
-            };
-        }
-
-        // 綁定新增車輛按鈕
+        // 綁定按鈕
         if (addVehicleBtn) addVehicleBtn.onclick = addVehicle;
+        editProfileButton.onclick = () => { editProfileForm.style.display = "block"; profileData.style.display = "none"; };
+        cancelEditProfileButton.onclick = () => { editProfileForm.style.display = "none"; profileData.style.display = "block"; };
 
-        // 啟動載入
+        // 啟動
         loadProfile();
     }
-
+    
     async function waitForGoogleMaps() {
         const maxAttempts = 30; // 最多等待 30 秒
         const interval = 1000; // 每秒檢查一次
