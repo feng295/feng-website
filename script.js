@@ -1924,7 +1924,6 @@ document.addEventListener("DOMContentLoaded", async function () {
         // 啟動
         loadProfile();
     }
-    
     async function waitForGoogleMaps() {
         const maxAttempts = 30; // 最多等待 30 秒
         const interval = 1000; // 每秒檢查一次
