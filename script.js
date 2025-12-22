@@ -1916,14 +1916,90 @@ document.addEventListener("DOMContentLoaded", async function () {
             }
         };
 
-        // 綁定按鈕
-        if (addVehicleBtn) addVehicleBtn.onclick = addVehicle;
-        editProfileButton.onclick = () => { editProfileForm.style.display = "block"; profileData.style.display = "none"; };
-        cancelEditProfileButton.onclick = () => { editProfileForm.style.display = "none"; profileData.style.display = "block"; };
+        /// === 新增：保存個人資料變更 ===
+        if (saveProfileButton) {
+            saveProfileButton.onclick = async () => {
+                const name = editName.value.trim();
+                const phone = editPhone.value.trim();
+                const email = editEmail.value.trim();
+                let cardNumber = editCardNumber.value.replace(/\D/g, ''); // 只保留數字
 
-        // 啟動
+                // 基本驗證
+                if (!name || !phone || !email) {
+                    alert("姓名、電話、電子郵件不能為空！");
+                    return;
+                }
+
+                if (!/^[0-9]{10}$/.test(phone)) {
+                    alert("電話必須為 10 位數字！");
+                    return;
+                }
+
+                if (cardNumber && cardNumber.length !== 16) {
+                    alert("信用卡號必須為 16 位數字！");
+                    return;
+                }
+
+                try {
+                    const token = getToken();
+                    const res = await fetch(`${API_URL}/members/profile`, {
+                        method: 'PUT',
+                        headers: {
+                            "Content-Type": "application/json",
+                            "Authorization": `Bearer ${token}`
+                        },
+                        body: JSON.stringify({
+                            name,
+                            phone,
+                            email,
+                            payment_info: cardNumber || null  // 空字串傳 null
+                        })
+                    });
+
+                    if (!res.ok) {
+                        const err = await res.json().catch(() => ({}));
+                        throw new Error(err.error || err.message || "更新失敗");
+                    }
+
+                    alert("個人資料更新成功！");
+                    editProfileForm.style.display = "none";
+                    profileData.style.display = "block";
+                    await loadProfile(); // 重新載入顯示最新資料
+
+                } catch (err) {
+                    console.error("更新個人資料失敗:", err);
+                    alert("更新失敗：" + err.message);
+                    if (err.message.includes("登入") || err.message.includes("token")) {
+                        removeToken();
+                        showLoginPage(true);
+                    }
+                }
+            };
+        }
+
+        // 編輯按鈕
+        if (editProfileButton) {
+            editProfileButton.onclick = () => {
+                editProfileForm.style.display = "block";
+                profileData.style.display = "none";
+            };
+        }
+
+        // 取消編輯
+        if (cancelEditProfileButton) {
+            cancelEditProfileButton.onclick = () => {
+                editProfileForm.style.display = "none";
+                profileData.style.display = "block";
+            };
+        }
+
+        // 綁定新增車輛按鈕
+        if (addVehicleBtn) addVehicleBtn.onclick = addVehicle;
+
+        // 啟動載入
         loadProfile();
     }
+    
     async function waitForGoogleMaps() {
         const maxAttempts = 30; // 最多等待 30 秒
         const interval = 1000; // 每秒檢查一次
