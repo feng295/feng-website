@@ -1421,7 +1421,6 @@ input#newPlateInput::placeholder {
     text-align: center !important;
     max-width: 900px !important;
     margin: 0 auto !important;
-    padding: 5rem 3rem !important;
     border-radius: 3rem !important;
     line-height: 1.4 !important; /* 讓多行文字間距更好看 */
 }
