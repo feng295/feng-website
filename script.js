@@ -1942,7 +1942,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 
                 try {
                     const token = getToken();
-                    const res = await fetch(`${API_URL}/members/profile`, {
+                    const res = await fetch(`${API_URL}/members/id`, {
                         method: 'PUT',
                         headers: {
                             "Content-Type": "application/json",
@@ -1999,7 +1999,7 @@ document.addEventListener("DOMContentLoaded", async function () {
         // 啟動載入
         loadProfile();
     }
-    
+
     async function waitForGoogleMaps() {
         const maxAttempts = 30; // 最多等待 30 秒
         const interval = 1000; // 每秒檢查一次
