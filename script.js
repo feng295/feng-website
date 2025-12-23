@@ -583,7 +583,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                         <div class="text-center animate-bounce">
                             <div class="text-green-600 text-9xl font-black mb-8 tracking-widest">${cleanPlate}</div>
                             <div class="bg-green-600 text-white text-6xl font-bold px-16 py-8 rounded-3xl shadow-2xl inline-block">
-                                辨識成功！
+                                辨識成功
                             </div>
                         </div>
                     `;
@@ -801,7 +801,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                         <div class="text-center animate-bounce">
                             <div class="text-green-600 text-9xl font-black mb-8 tracking-widest">${cleanPlate}</div>
                             <div class="bg-green-600 text-white text-6xl font-bold px-16 py-8 rounded-3xl shadow-2xl inline-block">
-                                辨識成功！
+                                辨識成功
                             </div>
                         </div>
                     `;
@@ -847,7 +847,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                 <div class="min-h-screen flex flex-col items-center justify-center bg-gray-50">
                     <div class="text-center">
                         <div class="bg-gradient-to-r from-green-600 to-emerald-700 text-white text-8xl font-extrabold px-32 py-20 rounded-3xl shadow-2xl">
-                            出場成功<br><br>
+                            出場成功
                             應收 <span class="text-yellow-300 text-9xl">${amount}</span> 元
                         </div>
                     </div>
