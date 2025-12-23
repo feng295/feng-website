@@ -1575,7 +1575,7 @@ document.addEventListener("DOMContentLoaded", async function () {
             section.appendChild(container);
         }
         container.innerHTML = `
-        <h3 class="text-xl font-bold text-blue-800 mb-4">編輯車位 #${spot.parking_lot_id}</h3>
+        <h3 class="text-xl font-bold text-blue-800 mb-4">編輯停車場</h3>
         <form id="editParkingForm" class="space-y-3">
             <input type="hidden" id="editParkingLotId" value="${spot.parking_lot_id}">
            
