@@ -1412,7 +1412,7 @@ input#newPlateInput::placeholder {
 /* 車牌號碼 - 保持原樣 */
 .text-green-600.text-9xl.font-black.mb-12.tracking-widest {
     text-align: center !important;
-    font-size: 4rem !important;
+    font-size: 3.5rem !important;
     line-height: 1.2 !important;
 }
 
@@ -1428,7 +1428,7 @@ input#newPlateInput::placeholder {
 /* 關鍵修改：讓「出場成功！」和「應收 元」跟金額一樣大，並完美置中 */
 .bg-gradient-to-r.from-green-600.to-emerald-700.text-white.text-8xl.font-extrabold span,
 .bg-gradient-to-r.from-green-600.to-emerald-700.text-white.text-8xl.font-extrabold br + br ~ * {
-    font-size: 7.5rem !important;           /* 跟金額數字一樣大 */
+    font-size: 3.5rem !important;           /* 跟金額數字一樣大 */
     font-weight: 900 !important;            /* 一樣粗 */
     display: inline-block !important;       /* 讓文字能正確對齊 */
     margin: 0 0.5rem !important;
