@@ -846,6 +846,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                     settleResult.innerHTML = `
                 <div class="min-h-screen flex flex-col items-center justify-center bg-gray-50">
                     <div class="text-center">
+                    <div class="text-green-600 text-9xl font-black mb-12 tracking-widest">${currentPlate}</div>
                         <div class="bg-gradient-to-r from-green-600 to-emerald-700 text-white text-8xl font-extrabold px-32 py-20 rounded-3xl shadow-2xl">
                             出場成功
                             應收 <span class="text-yellow-300 text-9xl">${amount}</span> 元
