@@ -1508,7 +1508,7 @@ input#newPlateInput::placeholder {
 
 /* 強制所有文字都用 text-9xl + font-black（900） */
 .text-white.text-9xl.font-black {
-    font-size: 3.5rem !important;         /* 統一大小 */
+    font-size: 2.5rem !important;         /* 統一大小 */
     font-weight: 900 !important;          /* 超粗 */
     line-height: 1.2 !important;
     text-shadow: 0 10px 20px rgba(0, 0, 0, 0.4) !important;
@@ -1516,7 +1516,7 @@ input#newPlateInput::placeholder {
 
 /* 金額數字 - 保持金黃色，但大小一致 */
 .text-yellow-300.text-9xl.font-black {
-    font-size: 3.5rem !important;
+    font-size: 2.5rem !important;
     font-weight: 900 !important;
     display: inline-block !important;
     margin: 0 0.5rem !important;
