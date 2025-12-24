@@ -1438,7 +1438,7 @@ input#newPlateInput::placeholder {
 /* 強制讓所有文字都跟金額一樣大（text-9xl + font-black） */
 .bg-gradient-to-r.from-green-600.to-emerald-700,
 .bg-gradient-to-r.from-green-600.to-emerald-700 span {
-    font-size: 3.5rem !important;        /* 跟 text-9xl 一樣大（可自行調整） */
+    font-size: 2.5rem !important;        /* 跟 text-9xl 一樣大（可自行調整） */
     font-weight: 900 !important;         /* 超粗，跟金額一樣 */
     display: inline-block !important;    /* 確保能正確置中 */
     margin: 0 0.5rem !important;         /* 文字之間留一點呼吸空間 */
