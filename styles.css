@@ -1488,3 +1488,34 @@ input#newPlateInput::placeholder {
     text-shadow: 0 10px 20px rgba(0, 0, 0, 0.3) !important; /* 加一點立體陰影，更霸氣 */
     line-height: 1.2 !important;
 }
+/* 出場成功畫面 - 文字完全一樣大 + 完美置中 */
+.min-h-screen .text-center > div {
+    text-align: center !important;
+    width: 100% !important;
+    max-width: 900px !important;
+    margin: 0 auto !important;
+    text-shadow: 0 10px 20px rgba(0, 0, 0, 0.3) !important;
+    line-height: 1.2 !important;
+}
+
+/* 第一行：出場成功 - 強制超粗 + 指定大小 */
+.min-h-screen .text-center > div:nth-child(1) {
+    font-weight: 900 !important;
+    font-size: 3.5rem !important;           /* 大小統一 */
+    margin-bottom: 3rem !important;
+}
+
+/* 第二行：應收 XXX 元 - 所有文字一樣大、一樣粗 */
+.min-h-screen .text-center > div:nth-child(2) {
+    font-weight: 900 !important;
+    font-size: 3.5rem !important;           /* 跟「出場成功」一樣大 */
+}
+
+/* 金額數字 - 跟其他文字完全一樣大（不再特別放大） */
+.min-h-screen .text-center .text-yellow-300 {
+    font-weight: 900 !important;
+    font-size: 3.5rem !important;           /* 跟「應收」「元」完全一致 */
+    display: inline-block !important;
+    margin: 0 0.5rem !important;
+    text-shadow: 0 10px 20px rgba(0, 0, 0, 0.3) !important;
+}
