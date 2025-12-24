@@ -1481,7 +1481,7 @@ input#newPlateInput::placeholder {
 /* 車牌號碼 - 超粗（900） + 其他美化 */
 .text-green-600.text-9xl.font-black.mb-12.tracking-widest {
     font-weight: 900 !important;          /* 強制超粗，覆蓋所有樣式 */
-    font-size: 3.5rem !important;         /* 稍微調小一點，避免在手機上撐爆 */
+    font-size: 2.5rem !important;         /* 稍微調小一點，避免在手機上撐爆 */
     text-align: center !important;
     width: 100% !important;
     max-width: 900px !important;
