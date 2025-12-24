@@ -1512,7 +1512,6 @@ input#newPlateInput::placeholder {
     font-weight: 900 !important;          /* 超粗 */
     line-height: 1.2 !important;
     text-shadow: 0 10px 20px rgba(0, 0, 0, 0.4) !important;
-    margin-bottom: 3rem !important;
 }
 
 /* 金額數字 - 保持金黃色，但大小一致 */
