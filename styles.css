@@ -1505,17 +1505,18 @@ input#newPlateInput::placeholder {
     margin-bottom: 3rem !important;
 }
 
-/* 第二行：應收 XXX 元 - 所有文字一樣大、一樣粗 */
-.min-h-screen .text-center > div:nth-child(2) {
-    font-weight: 900 !important;
-    font-size: 3.5rem !important;           /* 跟「出場成功」一樣大 */
+/* 出場成功畫面 - 應收金額三個字完全一樣大 */
+.text-white.text-9xl.font-black span {
+    font-size: 3.5rem !important;           /* 強制 text-9xl 大小 */
+    font-weight: 900 !important;          /* 強制超粗 */
+    display: inline-block !important;
+    line-height: 1 !important;
+    vertical-align: middle !important;    /* 垂直對齊，避免高度差 */
+    text-shadow: 0 10px 20px rgba(0, 0, 0, 0.4) !important;
 }
 
-/* 金額數字 - 跟其他文字完全一樣大（不再特別放大） */
-.min-h-screen .text-center .text-yellow-300 {
+/* 金額數字特別顏色 */
+.text-yellow-300.text-9xl.font-black {
+    font-size: 3.5rem !important;
     font-weight: 900 !important;
-    font-size: 3.5rem !important;           /* 跟「應收」「元」完全一致 */
-    display: inline-block !important;
-    margin: 0 0.5rem !important;
-    text-shadow: 0 10px 20px rgba(0, 0, 0, 0.3) !important;
 }

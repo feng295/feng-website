@@ -850,8 +850,10 @@ document.addEventListener("DOMContentLoaded", async function () {
                         <div class="text-white text-8xl font-extrabold mb-8">
                             出場成功
                         </div>
-                        <div class="text-white text-9xl font-black">
-                            應收 <span class="text-yellow-300 text-9xl font-black">${amount}</span> 元
+                        <div class="text-white text-9xl font-black text-center">
+                            <span class="text-white text-9xl font-black">應收 </span>
+                            <span class="text-yellow-300 text-9xl font-black">100</span>
+                            <span class="text-white text-9xl font-black"> 元</span>
                         </div>
                     </div>
                 </div>
