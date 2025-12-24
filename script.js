@@ -847,7 +847,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                 <div class="min-h-screen flex flex-col items-center justify-center bg-gray-50">
                     <div class="text-center">
                         <div class="text-green-600 text-9xl font-black mb-12 tracking-widest">${currentPlate}</div>
-                        <div class="text-white text-8xl font-extrabold mb-8">
+                        <div class="text-white text-9xl font-black mb-12">
                             出場成功
                         </div>
                         <div class="text-white text-9xl font-black text-center">
