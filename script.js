@@ -11,7 +11,42 @@ window.handleMapLoadError = function () {
     window.isGoogleMapsLoaded = false;
     alert("無法載入 Google Maps API，請檢查網路連線或 API 金鑰是否有效。");
 };
+//  密碼顯示/隱藏切換功能（獨立綁定，不依賴外層 DOMContentLoaded）
+// ────────────────────────────────────────────────
+function initPasswordToggle() {
+    const btn = document.querySelector('.toggle-password-btn');
+    const input = document.getElementById('password');
 
+    if (!btn || !input) {
+        console.warn('找不到 .toggle-password-btn 或 #password 元素');
+        return;
+    }
+
+    console.log('密碼切換功能已初始化');  // 確認是否執行
+
+    btn.addEventListener('click', function () {
+        console.log('切換按鈕被點擊');  // 確認點擊事件是否觸發
+
+        const isHidden = input.type === 'password';
+        
+        input.type = isHidden ? 'text' : 'password';
+
+        // 更新按鈕文字
+        const textSpan = btn.querySelector('.text');
+        if (textSpan) {
+            textSpan.textContent = isHidden ? '隱藏' : '顯示';
+        }
+
+        // 更新樣式與 ARIA
+        btn.classList.toggle('showing', isHidden);
+        btn.setAttribute('aria-label', isHidden ? '隱藏密碼' : '顯示密碼');
+
+        input.focus();
+    });
+}
+
+// 立即執行（因為 script 在 body 最後）
+initPasswordToggle();
 document.addEventListener("DOMContentLoaded", async function () {
     console.log("DOM fully loaded");
     // 定義所有 DOM 元素
@@ -1267,7 +1302,6 @@ document.addEventListener("DOMContentLoaded", async function () {
             roleInput.setAttribute("required", "true");
         }
     }
-    
     // ====================== 全螢幕成功動畫共用函式 ======================
     function triggerSuccessAnimation(mainText, subText, callback, duration = 2000) {
         const overlay = document.getElementById("successOverlay");
