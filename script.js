@@ -1403,26 +1403,17 @@ document.addEventListener("DOMContentLoaded", async function () {
                 showError(error.message || "無法連接到伺服器");
             }
 
-            // 密碼顯示/隱藏切換（放在 DOMContentLoaded 或你的 authForm 程式碼下方）
-            const passwordInput = document.getElementById("password");
-            const togglePasswordBtn = document.getElementById("togglePassword");
-            const eyeOpen = document.getElementById("eyeOpen");
-            const eyeClosed = document.getElementById("eyeClosed");
+            document.querySelector('.toggle-password').addEventListener('click', function () {
+                const input = this.previousElementSibling;
 
-            if (togglePasswordBtn && passwordInput && eyeOpen && eyeClosed) {
-                togglePasswordBtn.addEventListener("click", function () {
-                    // 切換輸入框類型
-                    if (passwordInput.type === "password") {
-                        passwordInput.type = "text";
-                        eyeOpen.classList.add("hidden");
-                        eyeClosed.classList.remove("hidden");
-                    } else {
-                        passwordInput.type = "password";
-                        eyeOpen.classList.remove("hidden");
-                        eyeClosed.classList.add("hidden");
-                    }
-                });
-            }
+                if (input.type === 'password') {
+                    input.type = 'text';
+                    this.textContent = '隱藏';
+                } else {
+                    input.type = 'password';
+                    this.textContent = '顯示';
+                }
+            });
 
             // ====================== 註冊 ======================
         } else {
