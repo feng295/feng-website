@@ -1449,38 +1449,35 @@ document.addEventListener("DOMContentLoaded", async function () {
             }
         }
     });
-    // 密碼顯示/隱藏功能 ── 直接執行，不要包在函式裡再加 DOMContentLoaded
-    document.addEventListener('DOMContentLoaded', () => {
+    // 放在你的 <script> 裡面，最好靠近檔案開頭或結尾
+    document.addEventListener('DOMContentLoaded', function () {
         const toggleBtn = document.getElementById('togglePassword');
         const passwordInput = document.getElementById('password');
 
         if (!toggleBtn || !passwordInput) {
-            console.warn('找不到 togglePassword 按鈕 或 password 輸入框');
+            console.log("找不到按鈕或輸入框，請檢查 HTML 的 id 是否正確");
             return;
         }
 
+        console.log("密碼切換功能已成功初始化");  // ← 加這行來確認是否跑到這裡
+
         toggleBtn.addEventListener('click', function (e) {
-            e.preventDefault();  // 防止表單意外提交
+            e.preventDefault();
 
-            const isCurrentlyPassword = passwordInput.type === 'password';
+            const isHidden = passwordInput.type === 'password';
 
-            // 切換類型
-            passwordInput.type = isCurrentlyPassword ? 'text' : 'password';
+            passwordInput.type = isHidden ? 'text' : 'password';
 
-            // 更新按鈕外觀與文字
-            if (isCurrentlyPassword) {
-                // 現在要顯示 → 按鈕改成「隱藏」
-                this.innerHTML = '👁️ 隱藏';
+            if (isHidden) {
+                this.textContent = '👁️ 隱藏';
                 this.classList.add('showing');
                 this.setAttribute('aria-label', '隱藏密碼');
             } else {
-                // 現在要隱藏 → 按鈕改回「顯示」
-                this.innerHTML = '👁️ 顯示';
+                this.textContent = '👁️ 顯示';
                 this.classList.remove('showing');
                 this.setAttribute('aria-label', '顯示密碼');
             }
 
-            // 保持輸入框焦點
             passwordInput.focus();
         });
     });
