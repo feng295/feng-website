@@ -1267,39 +1267,7 @@ document.addEventListener("DOMContentLoaded", async function () {
             roleInput.setAttribute("required", "true");
         }
     }
-    // 眼睛圖示切換密碼顯示/隱藏
-    const eyeIcon = document.getElementById('checkEye');
-    const passwordField = document.getElementById('floatingPassword');
-
-    if (eyeIcon && passwordField) {
-        eyeIcon.addEventListener('click', function () {
-            const isPassword = passwordField.type === 'password';
-
-            // 切換輸入類型
-            passwordField.type = isPassword ? 'text' : 'password';
-
-            // 切換眼睛圖示
-            this.classList.toggle('fa-eye');
-            this.classList.toggle('fa-eye-slash');
-
-            // 可選：改變顏色提示目前狀態
-            this.classList.toggle('showing', isPassword);
-
-            // 更新無障礙標籤
-            this.setAttribute('aria-label', isPassword ? '隱藏密碼' : '顯示密碼');
-
-            // 保持焦點
-            passwordField.focus();
-        });
-
-        // 支援鍵盤 Enter / Space 觸發（無障礙）
-        eyeIcon.addEventListener('keydown', function (e) {
-            if (e.key === 'Enter' || e.key === ' ') {
-                e.preventDefault();
-                this.click();
-            }
-        });
-    }
+    
     // ====================== 全螢幕成功動畫共用函式 ======================
     function triggerSuccessAnimation(mainText, subText, callback, duration = 2000) {
         const overlay = document.getElementById("successOverlay");
@@ -1483,7 +1451,7 @@ document.addEventListener("DOMContentLoaded", async function () {
             }
         }
     });
-
+    
     // 登出功能
     logoutButton.addEventListener("click", function () {
         removeToken();
