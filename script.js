@@ -1403,7 +1403,44 @@ document.addEventListener("DOMContentLoaded", async function () {
                 showError(error.message || "無法連接到伺服器");
             }
 
-            
+            // 密碼顯示/隱藏功能
+            function initPasswordToggle() {
+                const toggleBtn = document.getElementById('togglePassword');
+                const passwordInput = document.getElementById('password');
+
+                if (!toggleBtn || !passwordInput) return;
+
+                toggleBtn.addEventListener('click', function (e) {
+                    e.preventDefault();  // 防止表單提交
+
+                    const isPassword = passwordInput.type === 'password';
+
+                    // 切換輸入框類型
+                    passwordInput.type = isPassword ? 'text' : 'password';
+
+                    // 切換按鈕文字與樣式
+                    if (isPassword) {
+                        // 從隱藏 → 顯示
+                        this.innerHTML = '👁️ 隱藏';
+                        this.classList.add('showing');
+                        this.setAttribute('aria-label', '隱藏密碼');
+                    } else {
+                        // 從顯示 → 隱藏
+                        this.innerHTML = '👁️ 顯示';
+                        this.classList.remove('showing');
+                        this.setAttribute('aria-label', '顯示密碼');
+                    }
+
+                    // 聚焦輸入框（方便繼續輸入）
+                    passwordInput.focus();
+                });
+
+                // 頁面載入後初始化
+                document.addEventListener('DOMContentLoaded', initPasswordToggle);
+            }
+
+            // 如果你的程式碼已經有 DOMContentLoaded，可以直接呼叫
+            // initPasswordToggle();
 
             // ====================== 註冊 ======================
         } else {
