@@ -8,6 +8,8 @@
     <link rel="stylesheet" href="./styles.css">
     <script async defer
         src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDx1m0ViIY5aCpF4Khxtuay2VZc6k3Ne0g&callback=initMap&loading=async&libraries=marker"></script>
+    <!-- Font Awesome 6 Free (推薦 CDN) -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A==" crossorigin="anonymous" referrerpolicy="no-referrer" />
 </head>
 
 <body>
@@ -26,33 +28,35 @@
                 <label for="phone">電話號碼</label>
                 <input type="text" id="phone" name="phone">
             </div>
-            <div class="input-group">
-                <label for="password">密碼</label>
-                <div class="password-wrapper">
-                    <input type="password" id="password" name="password" required autocomplete="current-password">
-                    <button type="button" class="toggle-password-btn" aria-label="顯示密碼">
-                        <span class="icon">👁️</span> <span class="text">顯示</span>
-                    </button>
-                </div>
+            <div class="form-floating position-relative mb-3">
+                <input type="password" class="form-control" id="floatingPassword" name="password" placeholder="請輸入密碼"
+                    required autocomplete="current-password">
+                <label for="floatingPassword">請輸入密碼</label>
+
+                <!-- 眼睛圖示按鈕 -->
+                <i id="checkEye"
+                    class="fas fa-eye position-absolute top-50 end-0 translate-middle-y pe-3 cursor-pointer text-muted"
+                    role="button" aria-label="顯示密碼" tabindex="0"></i>
             </div>
-            <div class="input-group">
-                <label for="role">身份</label>
-                <select id="role" name="role" required>
-                    <option value="renter">租用者</option>
-                </select>
-            </div>
-            <div id="renterFields" class="input-group" style="display: none;">
-                <label for="license_plate">車牌號碼</label>
-                <input type="text" id="license_plate" name="license_plate" placeholder="格式如: AAA-1111">
-            </div>
-            <div id="cardNumberContainer" class="input-group" style="display: none;">
-                <label for="card_number">信用卡號</label>
-                <input type="text" id="card_number" name="card_number" placeholder="請輸入信用卡號" required>
-            </div>
-            <button type="submit" id="submitButton">登入</button>
-            <p id="toggleMessage">還沒有帳號？<a href="#" id="toggleLink">註冊</a></p>
-            <p id="errorMessage"></p>
-        </form>
+    </div>
+    <div class="input-group">
+        <label for="role">身份</label>
+        <select id="role" name="role" required>
+            <option value="renter">租用者</option>
+        </select>
+    </div>
+    <div id="renterFields" class="input-group" style="display: none;">
+        <label for="license_plate">車牌號碼</label>
+        <input type="text" id="license_plate" name="license_plate" placeholder="格式如: AAA-1111">
+    </div>
+    <div id="cardNumberContainer" class="input-group" style="display: none;">
+        <label for="card_number">信用卡號</label>
+        <input type="text" id="card_number" name="card_number" placeholder="請輸入信用卡號" required>
+    </div>
+    <button type="submit" id="submitButton">登入</button>
+    <p id="toggleMessage">還沒有帳號？<a href="#" id="toggleLink">註冊</a></p>
+    <p id="errorMessage"></p>
+    </form>
     </div>
 
     <!-- 全螢幕成功動畫（預設隱藏） -->
