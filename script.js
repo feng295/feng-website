@@ -1403,16 +1403,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                 showError(error.message || "無法連接到伺服器");
             }
 
-            const toggleBtn = document.getElementById('togglePassword');
-            const passwordInput = document.getElementById('password');
-
-            if (toggleBtn && passwordInput) {
-                toggleBtn.addEventListener('click', () => {
-                    const isPassword = passwordInput.type === 'password';
-                    passwordInput.type = isPassword ? 'text' : 'password';
-                    toggleBtn.textContent = isPassword ? '隱藏密碼' : '顯示密碼';
-                });
-            }
+            
 
             // ====================== 註冊 ======================
         } else {
