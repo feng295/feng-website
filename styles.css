@@ -1521,3 +1521,52 @@ input#newPlateInput::placeholder {
     display: inline-block !important;
     margin: 0 0.5rem !important;
 }
+.password-wrapper {
+    position: relative;          /* ← 關鍵：讓按鈕能用 absolute 定位 */
+    width: 100%;
+}
+
+.password-wrapper input {
+    width: 100%;
+    padding: 10px 48px 10px 12px;   /* 右邊留空間給按鈕 */
+    box-sizing: border-box;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+
+.toggle-password-btn {
+    position: absolute;
+    right: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #666;
+    font-size: 1.1rem;
+    padding: 0 6px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    height: 100%;
+    z-index: 2;
+}
+
+.toggle-password-btn:hover {
+    color: #333;
+}
+
+.toggle-password-btn.showing {
+    color: #e74c3c;              /* 顯示狀態可選：變色提醒 */
+}
+
+/* 手機版微調（可選） */
+@media (max-width: 480px) {
+    .toggle-password-btn {
+        right: 6px;
+        font-size: 1rem;
+    }
+    .password-wrapper input {
+        padding-right: 42px;
+    }
+}

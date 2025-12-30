@@ -1449,36 +1449,35 @@ document.addEventListener("DOMContentLoaded", async function () {
             }
         }
     });
-    // 放在你的 <script> 裡面，最好靠近檔案開頭或結尾
-    document.addEventListener('DOMContentLoaded', function () {
-        const toggleBtn = document.getElementById('togglePassword');
-        const passwordInput = document.getElementById('password');
+    // 放在你的 <script> 裡面（建議放在 </body> 前或使用 defer）
+    document.addEventListener('DOMContentLoaded', () => {
+        const btn = document.querySelector('.toggle-password-btn');
+        const input = document.getElementById('password');
 
-        if (!toggleBtn || !passwordInput) {
-            console.log("找不到按鈕或輸入框，請檢查 HTML 的 id 是否正確");
+        if (!btn || !input) {
+            console.warn('密碼顯示切換按鈕或輸入框找不到');
             return;
         }
 
-        console.log("密碼切換功能已成功初始化");  // ← 加這行來確認是否跑到這裡
+        btn.addEventListener('click', () => {
+            const isCurrentlyHidden = input.type === 'password';
 
-        toggleBtn.addEventListener('click', function (e) {
-            e.preventDefault();
+            // 切換類型
+            input.type = isCurrentlyHidden ? 'text' : 'password';
 
-            const isHidden = passwordInput.type === 'password';
-
-            passwordInput.type = isHidden ? 'text' : 'password';
-
-            if (isHidden) {
-                this.textContent = '👁️ 隱藏';
-                this.classList.add('showing');
-                this.setAttribute('aria-label', '隱藏密碼');
+            // 更新按鈕外觀
+            if (isCurrentlyHidden) {
+                btn.querySelector('.text').textContent = '隱藏';
+                btn.classList.add('showing');
+                btn.setAttribute('aria-label', '隱藏密碼');
             } else {
-                this.textContent = '👁️ 顯示';
-                this.classList.remove('showing');
-                this.setAttribute('aria-label', '顯示密碼');
+                btn.querySelector('.text').textContent = '顯示';
+                btn.classList.remove('showing');
+                btn.setAttribute('aria-label', '顯示密碼');
             }
 
-            passwordInput.focus();
+            // 保持輸入框焦點（體驗更好）
+            input.focus();
         });
     });
     // 登出功能
