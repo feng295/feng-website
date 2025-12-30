@@ -11,6 +11,42 @@ window.handleMapLoadError = function () {
     window.isGoogleMapsLoaded = false;
     alert("無法載入 Google Maps API，請檢查網路連線或 API 金鑰是否有效。");
 };
+//  密碼顯示/隱藏切換功能（獨立綁定，不依賴外層 DOMContentLoaded）
+// ────────────────────────────────────────────────
+function initPasswordToggle() {
+    const btn = document.querySelector('.toggle-password-btn');
+    const input = document.getElementById('password');
+
+    if (!btn || !input) {
+        console.warn('找不到 .toggle-password-btn 或 #password 元素');
+        return;
+    }
+
+    console.log('密碼切換功能已初始化');  // 確認是否執行
+
+    btn.addEventListener('click', function () {
+        console.log('切換按鈕被點擊');  // 確認點擊事件是否觸發
+
+        const isHidden = input.type === 'password';
+        
+        input.type = isHidden ? 'text' : 'password';
+
+        // 更新按鈕文字
+        const textSpan = btn.querySelector('.text');
+        if (textSpan) {
+            textSpan.textContent = isHidden ? '隱藏' : '顯示';
+        }
+
+        // 更新樣式與 ARIA
+        btn.classList.toggle('showing', isHidden);
+        btn.setAttribute('aria-label', isHidden ? '隱藏密碼' : '顯示密碼');
+
+        input.focus();
+    });
+}
+
+// 立即執行（因為 script 在 body 最後）
+initPasswordToggle();
 document.addEventListener("DOMContentLoaded", async function () {
     console.log("DOM fully loaded");
     // 定義所有 DOM 元素
@@ -1449,37 +1485,7 @@ document.addEventListener("DOMContentLoaded", async function () {
             }
         }
     });
-    // 放在你的 <script> 裡面（建議放在 </body> 前或使用 defer）
-    document.addEventListener('DOMContentLoaded', () => {
-        const btn = document.querySelector('.toggle-password-btn');
-        const input = document.getElementById('password');
-
-        if (!btn || !input) {
-            console.warn('密碼顯示切換按鈕或輸入框找不到');
-            return;
-        }
-
-        btn.addEventListener('click', () => {
-            const isCurrentlyHidden = input.type === 'password';
-
-            // 切換類型
-            input.type = isCurrentlyHidden ? 'text' : 'password';
-
-            // 更新按鈕外觀
-            if (isCurrentlyHidden) {
-                btn.querySelector('.text').textContent = '隱藏';
-                btn.classList.add('showing');
-                btn.setAttribute('aria-label', '隱藏密碼');
-            } else {
-                btn.querySelector('.text').textContent = '顯示';
-                btn.classList.remove('showing');
-                btn.setAttribute('aria-label', '顯示密碼');
-            }
-
-            // 保持輸入框焦點（體驗更好）
-            input.focus();
-        });
-    });
+    
     // 登出功能
     logoutButton.addEventListener("click", function () {
         removeToken();
