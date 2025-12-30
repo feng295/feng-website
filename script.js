@@ -1403,44 +1403,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                 showError(error.message || "無法連接到伺服器");
             }
 
-            // 密碼顯示/隱藏功能
-            function initPasswordToggle() {
-                const toggleBtn = document.getElementById('togglePassword');
-                const passwordInput = document.getElementById('password');
 
-                if (!toggleBtn || !passwordInput) return;
-
-                toggleBtn.addEventListener('click', function (e) {
-                    e.preventDefault();  // 防止表單提交
-
-                    const isPassword = passwordInput.type === 'password';
-
-                    // 切換輸入框類型
-                    passwordInput.type = isPassword ? 'text' : 'password';
-
-                    // 切換按鈕文字與樣式
-                    if (isPassword) {
-                        // 從隱藏 → 顯示
-                        this.innerHTML = '👁️ 隱藏';
-                        this.classList.add('showing');
-                        this.setAttribute('aria-label', '隱藏密碼');
-                    } else {
-                        // 從顯示 → 隱藏
-                        this.innerHTML = '👁️ 顯示';
-                        this.classList.remove('showing');
-                        this.setAttribute('aria-label', '顯示密碼');
-                    }
-
-                    // 聚焦輸入框（方便繼續輸入）
-                    passwordInput.focus();
-                });
-
-                // 頁面載入後初始化
-                document.addEventListener('DOMContentLoaded', initPasswordToggle);
-            }
-
-            // 如果你的程式碼已經有 DOMContentLoaded，可以直接呼叫
-            // initPasswordToggle();
 
             // ====================== 註冊 ======================
         } else {
@@ -1485,6 +1448,41 @@ document.addEventListener("DOMContentLoaded", async function () {
                 showError(error.message || "無法連接到伺服器");
             }
         }
+    });
+    // 密碼顯示/隱藏功能 ── 直接執行，不要包在函式裡再加 DOMContentLoaded
+    document.addEventListener('DOMContentLoaded', () => {
+        const toggleBtn = document.getElementById('togglePassword');
+        const passwordInput = document.getElementById('password');
+
+        if (!toggleBtn || !passwordInput) {
+            console.warn('找不到 togglePassword 按鈕 或 password 輸入框');
+            return;
+        }
+
+        toggleBtn.addEventListener('click', function (e) {
+            e.preventDefault();  // 防止表單意外提交
+
+            const isCurrentlyPassword = passwordInput.type === 'password';
+
+            // 切換類型
+            passwordInput.type = isCurrentlyPassword ? 'text' : 'password';
+
+            // 更新按鈕外觀與文字
+            if (isCurrentlyPassword) {
+                // 現在要顯示 → 按鈕改成「隱藏」
+                this.innerHTML = '👁️ 隱藏';
+                this.classList.add('showing');
+                this.setAttribute('aria-label', '隱藏密碼');
+            } else {
+                // 現在要隱藏 → 按鈕改回「顯示」
+                this.innerHTML = '👁️ 顯示';
+                this.classList.remove('showing');
+                this.setAttribute('aria-label', '顯示密碼');
+            }
+
+            // 保持輸入框焦點
+            passwordInput.focus();
+        });
     });
     // 登出功能
     logoutButton.addEventListener("click", function () {
