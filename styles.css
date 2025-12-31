@@ -1590,20 +1590,25 @@ input#newPlateInput::placeholder {
     height: 20px;
     stroke-width: 2.5px; /* 增加一點粗細感，更像圖片中的圖示 */
 }
-/* 確保相對定位容器正確 */
+/* 確保父容器是定位基準 */
 .relative {
     position: relative !important;
 }
 
-/* 確保 Icon 絕對定位在輸入框內的最右邊 */
+/* 確保信用卡號的 Icon 絕對定位在右側 */
 .toggle-card-visibility {
     position: absolute !important;
     right: 12px !important;    /* 距離右邊界 12px */
-    top: 50% !important;       /* 垂直置中開始點 */
-    transform: translateY(-50%) !important; /* 向上移動一半，達成精確置中 */
+    top: 50% !important;       /* 垂直居中開始點 */
+    transform: translateY(-50%) !important; /* 向上平移自身的一半，達成置中 */
     display: flex !important;
     align-items: center;
     justify-content: center;
-    z-index: 20;               /* 確保 Icon 在輸入框之上 */
-    background: transparent;
+    z-index: 10;               /* 確保在輸入框之上 */
+    cursor: pointer;
+}
+
+/* 避免輸入文字蓋過圖示 */
+#editCardNumber {
+    padding-right: 50px !important;
 }
