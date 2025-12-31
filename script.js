@@ -2094,7 +2094,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                     });
                 });
             }
-            
+
             // 頁面載入時如果表單已經顯示，也初始化
             document.addEventListener('DOMContentLoaded', () => {
                 if (editProfileForm && window.getComputedStyle(editProfileForm).display !== 'none') {
@@ -2157,11 +2157,12 @@ document.addEventListener("DOMContentLoaded", async function () {
 
         const startDateInput = document.getElementById("startDate");
         const endDateInput = document.getElementById("endDate");
+        const parkingLotSelect = document.getElementById("parkingLotSelect");
         const incomeSearchButton = document.getElementById("incomeSearchButton");
         const incomeTableBody = document.getElementById("incomeTableBody");
         const totalIncomeDisplay = document.getElementById("totalIncomeDisplay");
 
-        if (!startDateInput || !endDateInput || !incomeSearchButton || !incomeTableBody || !totalIncomeDisplay) {
+        if (!startDateInput || !endDateInput || !parkingLotSelect || !incomeSearchButton || !incomeTableBody || !totalIncomeDisplay) {
             console.error("收入查詢頁面缺少必要元素");
             return;
         }
@@ -2170,30 +2171,51 @@ document.addEventListener("DOMContentLoaded", async function () {
         endDateInput.value = today;
 
         let currentParkingLotId = null;
-        let parkingLotAddress = "未知停車場"; // 儲存地址
 
-        // 載入停車場 ID 和地址
-        async function loadParkingLotId() {
+        // 載入所有停車場到下拉選單
+        async function loadParkingLots() {
             try {
                 const token = getToken();
                 const res = await fetch(`${API_URL}/parking/all`, {
                     headers: { "Authorization": `Bearer ${token}` }
                 });
-                if (!res.ok) throw new Error("無法取得停車場");
+                if (!res.ok) throw new Error("無法取得停車場列表");
 
                 const { data } = await res.json();
                 if (!data || data.length === 0) {
                     alert("你尚未管理任何停車場！");
+                    parkingLotSelect.innerHTML = '<option value="">無停車場</option>';
                     return;
                 }
+
+                parkingLotSelect.innerHTML = '<option value="">請選擇停車場</option>';
+                data.forEach(lot => {
+                    const option = document.createElement('option');
+                    option.value = lot.parking_lot_id;
+                    option.textContent = lot.address || lot.name || "未知停車場";
+                    parkingLotSelect.appendChild(option);
+                });
+
+                // 預設選第一個
+                parkingLotSelect.selectedIndex = 1;
                 currentParkingLotId = data[0].parking_lot_id;
-                parkingLotAddress = data[0].address || data[0].name || "未知停車場";
-                console.log("收入查詢使用停車場 → ID:", currentParkingLotId, "地址:", parkingLotAddress);
+                console.log("預設停車場 ID:", currentParkingLotId);
+
             } catch (err) {
-                console.error("載入停車場失敗:", err);
-                alert("無法載入停車場資訊");
+                console.error("載入停車場列表失敗:", err);
+                alert("無法載入停車場列表");
+                parkingLotSelect.innerHTML = '<option value="">載入失敗</option>';
             }
         }
+
+        // 當選擇停車場改變時，更新 currentParkingLotId
+        parkingLotSelect.addEventListener('change', () => {
+            currentParkingLotId = parkingLotSelect.value;
+            if (currentParkingLotId) {
+                console.log("已選擇停車場 ID:", currentParkingLotId);
+                searchIncome(); // 可選：自動查詢
+            }
+        });
 
         async function searchIncome() {
             const start = startDateInput.value;
@@ -2201,7 +2223,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 
             if (!start || !end) return alert("請選擇開始與結束日期");
             if (start > end) return alert("開始日期不能晚於結束日期");
-            if (!currentParkingLotId) return alert("正在載入停車場資訊，請稍後再試");
+            if (!currentParkingLotId) return alert("請先選擇停車場");
 
             incomeTableBody.innerHTML = `<tr><td colspan="4">載入中...</td></tr>`;
             totalIncomeDisplay.innerHTML = `<p class="text-gray-600">載入中...</p>`;
@@ -2227,17 +2249,16 @@ document.addEventListener("DOMContentLoaded", async function () {
                 const data = result.data;
                 const records = data.records || [];
                 const summary = data.summary || {};
-                const address = data.parking_lot_address || parkingLotAddress;
 
-                // 顯示總收入（上方）
+                // 顯示總收入
                 totalIncomeDisplay.innerHTML = `
                 <div class="bg-gradient-to-r from-emerald-500 to-teal-600 text-white p-8 rounded-2xl shadow-2xl text-center mb-8">
                     <p class="text-5xl font-extrabold">總金額 ${summary.total_income?.toLocaleString() || 0} 元</p>
-                    <p class="text-2xl opacity-95">
-                        總停車紀錄共 ${summary.total_records || 0} 筆 
+                    <p class="text-2xl opacity-95 mt-2">
+                        總停車紀錄共 ${summary.total_records || 0} 筆
                     </p>
-                    <p class="text-xl opacity-80 mt-2">
-                        停車時數總計 ${summary.total_hours?.toFixed(1) || 0} 小時
+                    <p class="text-2xl opacity-95 mt-2">
+                        總停車時數 ${summary.total_hours?.toFixed(1) || 0} 小時
                     </p>
                 </div>
             `;
@@ -2249,7 +2270,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                     incomeTableBody.innerHTML = `
                     <tr>
                         <td colspan="4" class="py-20 text-center text-gray-500 text-2xl">
-                            此區間無收入紀錄
+                            此停車場在此區間無收入紀錄
                         </td>
                     </tr>
                 `;
@@ -2260,7 +2281,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                     const row = document.createElement("tr");
                     row.className = "hover:bg-gray-50 transition-colors";
                     row.innerHTML = `
-                    <td class="py-4 px-6 font-medium text-gray-800">${address}</td>
+                    <td class="py-4 px-6 font-medium text-gray-800">${record.address || '未知'}</td>
                     <td class="py-4 px-6">${record.start_time || 'N/A'}</td>
                     <td class="py-4 px-6">${record.end_time || '進行中'}</td>
                     <td class="py-4 px-6 text-right font-bold text-green-600 text-xl">
@@ -2283,17 +2304,17 @@ document.addEventListener("DOMContentLoaded", async function () {
             }
         }
 
-        // 點擊頁籤自動查詢
+        // 點擊頁籤自動載入停車場並查詢
         document.querySelector('.nav-link[data-target="incomeInquiry"]')?.addEventListener("click", async () => {
             endDateInput.value = today;
-            await loadParkingLotId();
-            searchIncome();
+            await loadParkingLots(); // 載入停車場選單
+            searchIncome();           // 自動查詢預設停車場
         });
 
         incomeSearchButton.addEventListener("click", searchIncome);
 
         // 初始化
-        loadParkingLotId();
+        loadParkingLots();
     }
     // 添加租用紀錄
     function addToHistory(action) {
