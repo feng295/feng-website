@@ -1967,13 +1967,14 @@ document.addEventListener("DOMContentLoaded", async function () {
                 const input = document.getElementById('editCardNumber');
 
                 if (!toggle || !input) {
-                    console.warn('信用卡號切換按鈕或輸入框未找到');
+                    console.warn('信用卡號切換元素或輸入框未找到');
                     return;
                 }
 
-                let isVisible = false; // 預設隱藏
+                // 預設隱藏狀態
+                let isVisible = false;
 
-                const updateUI = () => {
+                const updateDisplay = () => {
                     input.type = isVisible ? 'text' : 'password';
                     toggle.textContent = isVisible ? '🙈' : '👁️';
                     toggle.setAttribute('aria-label', isVisible ? '隱藏信用卡號' : '顯示信用卡號');
@@ -1982,11 +1983,11 @@ document.addEventListener("DOMContentLoaded", async function () {
 
                 toggle.addEventListener('click', () => {
                     isVisible = !isVisible;
-                    updateUI();
+                    updateDisplay();
                     input.focus();
                 });
 
-                // 鍵盤支援（Enter / Space）
+                // 鍵盤操作支援
                 toggle.addEventListener('keydown', (e) => {
                     if (e.key === 'Enter' || e.key === ' ') {
                         e.preventDefault();
@@ -1994,8 +1995,8 @@ document.addEventListener("DOMContentLoaded", async function () {
                     }
                 });
 
-                // 初始狀態
-                updateUI();
+                // 第一次執行時設定初始狀態
+                updateDisplay();
             }
 
             // 儲存按鈕邏輯（保持不變）
