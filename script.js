@@ -863,15 +863,18 @@ document.addEventListener("DOMContentLoaded", async function () {
         }
 
         // 確認出場 → 永久成功畫面
+        // 確認出場 → 永久成功畫面
         confirmButton.onclick = async () => {
             if (!currentPlate) return;
 
             confirmButton.disabled = true;
             confirmButton.textContent = "結算中...";
 
+            let res = null; // 1. 提升作用域，讓 finally 看得到
+
             try {
                 const token = getToken();
-                const res = await fetch(`${API_URL}/rent/leave`, {
+                res = await fetch(`${API_URL}/rent/leave`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
                     body: JSON.stringify({
@@ -883,25 +886,28 @@ document.addEventListener("DOMContentLoaded", async function () {
                 const result = await res.json();
 
                 if (res.ok) {
+                    // 2. 確保從後端回傳的資料中取得正確的數值
                     const amount = result.data?.total_cost || 0;
+                    const parkingTime = result.data?.duration_minutes || 0; // 假設後端回傳分鐘數
 
                     settleResult.innerHTML = `
                 <div class="min-h-screen flex flex-col items-center justify-center bg-gray-50">
                     <div class="text-center">
                         <div class="text-green-600 text-9xl font-black mb-12 tracking-widest">${currentPlate}</div>
-                        <div class="text-white text-9xl font-black mb-12">
+                        <div class="text-indigo-900 text-9xl font-black mb-12">
                             出場成功
                         </div>
                         <div class="flex flex-col items-center justify-center space-y-4">
-                        <div class="text-white text-5xl font-bold text-center mb-4">
-                            <span class="opacity-80">停車時間 </span>
-                            <span class="text-green-400">${parkingTime}</span>
-                            <span class="opacity-80"> 分鐘</span>
-                        </div>
-                        <div class="text-white text-9xl font-black text-center">
-                            <span class="text-white text-9xl font-black">收費 </span>
-                            <span class="text-yellow-300 text-9xl font-black">${amount}</span>
-                            <span class="text-white text-9xl font-black"> 元</span>
+                            <div class="text-gray-700 text-5xl font-bold text-center mb-4">
+                                <span class="opacity-80">停車時間 </span>
+                                <span class="text-green-500">${parkingTime}</span>
+                                <span class="opacity-80"> 分鐘</span>
+                            </div>
+                            <div class="text-gray-700 text-9xl font-black text-center">
+                                <span class="text-gray-700">收費 </span>
+                                <span class="text-yellow-500">${amount}</span>
+                                <span class="text-gray-700"> 元</span>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -914,15 +920,16 @@ document.addEventListener("DOMContentLoaded", async function () {
                     startButton.style.display = "none";
                     stopButton.style.display = "none";
 
-                    // 關鍵：出場成功後重新載入停車場列表（共享者就能看到剩餘車位增加）
                     setupParkingList();
                 } else {
                     alert("出場失敗：" + (result.error || "請稍後再試"));
                 }
             } catch (e) {
-                alert("網路錯誤");
+                console.error(e);
+                alert("網路錯誤或伺服器無回應");
             } finally {
-                if (!res?.ok) {
+                // 3. 使用可選鏈或檢查 res 是否存在，避免 ReferenceError
+                if (!res || !res.ok) {
                     confirmButton.disabled = false;
                     confirmButton.textContent = "確認出場";
                 }
