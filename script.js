@@ -894,23 +894,20 @@ document.addEventListener("DOMContentLoaded", async function () {
                     // 1. 取得金額 (優先讀取外層 total_cost)
                     const amount = data.total_cost || record.total_cost || 0;
 
-                    // 2. 計算停車分鐘數 (由 start_time 與 end_time 計算)
+                    // 2. 計算停車分鐘數 
+                    // 邏輯：將後端回傳的 duration_hours 乘以 60 分鐘
                     let parkingTime = 0;
-                    if (record.start_time && record.end_time) {
+                    if (data.duration_hours) {
+                        // 使用 Math.ceil 無條件進位，例如 2.03 小時 = 122 分鐘
+                        parkingTime = Math.ceil(data.duration_hours * 60);
+                    } else if (record.start_time && record.end_time) {
+                        // 備援方案：如果沒有 duration_hours，才用時間相減
                         const start = new Date(record.start_time);
                         const end = new Date(record.end_time);
-
-                        // 計算毫秒差並轉為分鐘
-                        const diffMs = end - start;
-                        parkingTime = Math.ceil(diffMs / (1000 * 60)); // 使用無條件進位，符合停車收費邏輯
+                        parkingTime = Math.ceil((end - start) / (1000 * 60));
                     }
 
-                    // 3. 邏輯保底：若收費 > 0 但時間為 0 (停不到一分鐘)，強制顯示 1 分鐘
-                    if (amount > 0 && parkingTime <= 0) {
-                        parkingTime = 1;
-                    }
-
-                    // 4. 渲染霸氣結算畫面
+                    // 3. 渲染霸氣畫面 (套用 2.5rem 樣式)
                     settleResult.innerHTML = `
                 <div class="settle-display-container">
                     <div class="big-result-style text-green-600 tracking-widest">
@@ -938,7 +935,6 @@ document.addEventListener("DOMContentLoaded", async function () {
                     settleResult.style.display = "block";
                     confirmButton.style.display = "none";
 
-                    // 按鈕狀態切換
                     if (rescanButton) {
                         rescanButton.textContent = "重新掃描";
                         rescanButton.style.display = "inline-block";
