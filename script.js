@@ -37,7 +37,7 @@ function initPasswordToggle() {
     });
 
     // 支援鍵盤 Enter / Space 觸發（更好無障礙）
-    btn.addEventListener('keydown', function(e) {
+    btn.addEventListener('keydown', function (e) {
         if (e.key === 'Enter' || e.key === ' ') {
             e.preventDefault();
             btn.click();
@@ -1484,7 +1484,7 @@ document.addEventListener("DOMContentLoaded", async function () {
             }
         }
     });
-    
+
     // 登出功能
     logoutButton.addEventListener("click", function () {
         removeToken();
@@ -1961,6 +1961,44 @@ document.addEventListener("DOMContentLoaded", async function () {
 
         // === 新增：保存個人資料變更 ===
         if (saveProfileButton) {
+            // 先定義信用卡號顯示/隱藏功能
+            function initCardNumberToggle() {
+                const toggle = document.querySelector('.toggle-card-visibility');
+                const input = document.getElementById('editCardNumber');
+
+                if (!toggle || !input) {
+                    console.warn('信用卡號切換按鈕或輸入框未找到');
+                    return;
+                }
+
+                let isVisible = false; // 預設隱藏
+
+                const updateIcon = () => {
+                    toggle.textContent = isVisible ? '🙈' : '👁️';
+                    toggle.setAttribute('aria-label', isVisible ? '隱藏信用卡號' : '顯示信用卡號');
+                    toggle.classList.toggle('showing', isVisible);
+                };
+
+                toggle.addEventListener('click', () => {
+                    isVisible = !isVisible;
+                    input.type = isVisible ? 'text' : 'password';
+                    updateIcon();
+                    input.focus();
+                });
+
+                // 鍵盤支援（無障礙）
+                toggle.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        toggle.click();
+                    }
+                });
+
+                // 初始設定
+                updateIcon();
+            }
+
+            // 儲存按鈕點擊事件
             saveProfileButton.onclick = async () => {
                 const name = editName.value.trim();
                 const phone = editPhone.value.trim();
@@ -1995,7 +2033,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                             name,
                             phone,
                             email,
-                            payment_info: cardNumber || null  // 空字串傳 null
+                            payment_info: cardNumber || null
                         })
                     });
 
@@ -2018,6 +2056,21 @@ document.addEventListener("DOMContentLoaded", async function () {
                     }
                 }
             };
+
+            // 當「編輯個人資料」按鈕被點擊，顯示表單後初始化信用卡切換功能
+            if (editProfileButton) {
+                editProfileButton.addEventListener('click', () => {
+                    // 假設你原本有顯示表單的程式碼，例如：
+                    // profileData.style.display = "none";
+                    // editProfileForm.style.display = "block";
+
+                    // 在表單顯示後初始化
+                    setTimeout(initCardNumberToggle, 0); // 確保 DOM 已更新
+                });
+            }
+
+            // 如果頁面一開始就載入表單，也執行一次
+            initCardNumberToggle();
         }
 
         // 編輯按鈕
