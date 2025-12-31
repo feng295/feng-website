@@ -1559,28 +1559,34 @@ input#newPlateInput::placeholder {
     width: 100%;
 }
 
-/* 讓圖示垂直置中 */
+
+/* 密碼包裝層確保位置正確 */
 .password-wrapper {
     position: relative;
     display: flex;
     align-items: center;
 }
 
+/* 圖示按鈕樣式 */
 .toggle-password-btn {
+    position: absolute;
+    right: 12px;
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    color: #6b7280; /* 灰度與圖片接近 */
+    color: #4b5563; /* 灰度色調，接近圖片感 */
+    transition: color 0.2s;
+    user-select: none;
 }
 
 .toggle-password-btn:hover {
-    color: #4f46e5; /* 懸停時變色 */
+    color: #4f46e5; /* 懸停時變為靛藍色 */
 }
 
-/* 確保 SVG 大小適中 */
+/* 限制 SVG 的大小，避免過大 */
 .toggle-password-btn svg {
     width: 20px;
     height: 20px;
-    display: block;
+    stroke-width: 2.5px; /* 增加一點粗細感，更像圖片中的圖示 */
 }
