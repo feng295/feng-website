@@ -1646,20 +1646,39 @@ input {
     font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 }
 
-/* 統一霸氣字體樣式 */
-.big-result-text {
-    font-weight: 900 !important;
-    font-size: 2.5rem !important; /* 根據您的需求設定 */
-    text-align: center !important;
+/* 容器：確保整個區塊垂直水平置中 */
+.settle-screen-wrapper {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    min-height: 80vh !important; /* 佔據螢幕大部分高度 */
     width: 100% !important;
-    display: block !important;
-    text-shadow: 0 10px 20px rgba(0, 0, 0, 0.3) !important;
-    line-height: 1.2 !important;
-    letter-spacing: 0.1em !important; /* 稍微拉開字距增加質感 */
-    margin-bottom: 1.5rem !important;
+    background-color: #f9fafb; /* bg-gray-50 */
 }
 
-/* 針對不同顏色的微調 */
-.text-green-highlight { color: #10b981 !important; } /* 綠色 */
-.text-yellow-highlight { color: #f59e0b !important; } /* 黃色 */
-.text-indigo-highlight { color: #312e81 !important; } /* 深藍色 */
+.settle-content {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    width: 100% !important;
+}
+
+/* 統一您指定的霸氣樣式 */
+.big-result-style {
+    font-weight: 900 !important;          /* 強制超粗 */
+    font-size: 2.5rem !important;         /* 您要求的 2.5rem */
+    text-align: center !important;        /* 文字置中 */
+    width: 100% !important;
+    max-width: 900px !important;
+    text-shadow: 0 10px 20px rgba(0, 0, 0, 0.3) !important; /* 您指定的立體陰影 */
+    line-height: 1.2 !important;
+    margin-bottom: 2rem !important;       /* 行距間隔 */
+    display: block !important;
+}
+
+/* 確保過大的字體在手機上不會溢出 */
+@media (max-width: 640px) {
+    .big-result-style {
+        font-size: 2rem !important; /* 手機版稍微調小一點點 */
+    }
+}
