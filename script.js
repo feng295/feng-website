@@ -1971,8 +1971,10 @@ document.addEventListener("DOMContentLoaded", async function () {
                     return;
                 }
 
-                // 預設隱藏狀態
-                let isVisible = false;
+                // 強制把 type 設為 password（即使 HTML 原本寫 text 也強制隱藏）
+                input.type = 'password';
+
+                let isVisible = false; // 永遠預設隱藏
 
                 const updateDisplay = () => {
                     input.type = isVisible ? 'text' : 'password';
@@ -1981,25 +1983,29 @@ document.addEventListener("DOMContentLoaded", async function () {
                     toggle.classList.toggle('showing', isVisible);
                 };
 
-                toggle.addEventListener('click', () => {
+                // 先移除舊事件（避免重複綁定）
+                const newToggle = toggle.cloneNode(true);
+                toggle.parentNode.replaceChild(newToggle, toggle);
+
+                newToggle.addEventListener('click', () => {
                     isVisible = !isVisible;
                     updateDisplay();
                     input.focus();
                 });
 
-                // 鍵盤操作支援
-                toggle.addEventListener('keydown', (e) => {
+                newToggle.addEventListener('keydown', (e) => {
                     if (e.key === 'Enter' || e.key === ' ') {
                         e.preventDefault();
-                        toggle.click();
+                        newToggle.click();
                     }
                 });
 
-                // 第一次執行時設定初始狀態
+                // 強制更新一次，確保 icon 顯示且狀態正確
                 updateDisplay();
+                console.log('信用卡號 icon 已初始化，預設隱藏');
             }
 
-            // 儲存按鈕邏輯（保持不變）
+            // 儲存按鈕邏輯（不變）
             saveProfileButton.onclick = async () => {
                 const name = editName.value.trim();
                 const phone = editPhone.value.trim();
@@ -2058,19 +2064,24 @@ document.addEventListener("DOMContentLoaded", async function () {
                 }
             };
 
-            // 當點擊「編輯個人資料」按鈕時，顯示表單後初始化切換功能
+            // 當點擊「編輯個人資料」按鈕，顯示表單後必定初始化 icon
             if (editProfileButton) {
                 editProfileButton.addEventListener('click', () => {
-                    // 假設你有以下顯示表單的程式碼
+                    // 假設你有顯示表單的程式碼，例如：
                     // profileData.style.display = "none";
                     // editProfileForm.style.display = "block";
 
-                    // 確保 DOM 更新後再初始化
-                    setTimeout(initCardNumberToggle, 50);
+                    // 延遲確保 DOM 渲染完成
+                    setTimeout(initCardNumberToggle, 100);
                 });
             }
 
-            // 如果頁面載入時表單已存在，也執行一次
+            // 頁面載入時也強制執行一次（如果表單一開始就存在）
+            document.addEventListener('DOMContentLoaded', () => {
+                initCardNumberToggle();
+            });
+
+            // 額外保險：每當表單顯示時都呼叫（可視情況保留）
             initCardNumberToggle();
         }
 
