@@ -1968,22 +1968,22 @@ document.addEventListener("DOMContentLoaded", async function () {
 
                 if (!toggle || !input) {
                     console.warn('信用卡號切換元素或輸入框未找到');
-                    return false; // 返回 false 表示失敗
+                    return false;
                 }
 
-                // 強制隱藏
+                // 強制設定為隱藏狀態（確保一出現就是點點點）
                 input.type = 'password';
 
                 let isVisible = false;
 
                 const updateDisplay = () => {
                     input.type = isVisible ? 'text' : 'password';
-                    toggle.textContent = isVisible ? '🙈' : '👁️';
+                    toggle.innerHTML = isVisible ? '🙈' : '👁️';  // 使用 innerHTML 確保 icon 不被清空
                     toggle.setAttribute('aria-label', isVisible ? '隱藏信用卡號' : '顯示信用卡號');
                     toggle.classList.toggle('showing', isVisible);
                 };
 
-                // 清除舊事件（避免重複綁定）
+                // 清除舊的事件監聽（避免重複綁定）
                 const newToggle = toggle.cloneNode(true);
                 toggle.parentNode.replaceChild(newToggle, toggle);
 
@@ -2000,12 +2000,13 @@ document.addEventListener("DOMContentLoaded", async function () {
                     }
                 });
 
+                // 強制執行一次更新
                 updateDisplay();
                 console.log('信用卡號 icon 已初始化，預設隱藏');
-                return true; // 成功
+                return true;
             }
 
-            // 儲存按鈕邏輯（不變）
+            // 儲存按鈕邏輯（保持不變）
             saveProfileButton.onclick = async () => {
                 const name = editName.value.trim();
                 const phone = editPhone.value.trim();
@@ -2063,21 +2064,20 @@ document.addEventListener("DOMContentLoaded", async function () {
                 }
             };
 
-            // === 關鍵修改：使用 MutationObserver 監聽表單顯示狀態 ===
+            // === 關鍵：確保表單每次顯示時都初始化 icon ===
             if (editProfileButton && editProfileForm) {
-                // 當點擊編輯按鈕時，啟動監聽
                 editProfileButton.addEventListener('click', () => {
-                    // 立即嘗試一次（有時已經顯示了）
+                    // 立即嘗試一次（有時已經顯示）
                     initCardNumberToggle();
 
-                    // 使用 MutationObserver 監聽 display 變化
+                    // 啟動 MutationObserver 監聽 display 變化
                     const observer = new MutationObserver((mutations) => {
                         mutations.forEach((mutation) => {
                             if (mutation.attributeName === 'style') {
                                 if (editProfileForm.style.display !== 'none') {
-                                    console.log('偵測到 editProfileForm 顯示 → 初始化 icon');
+                                    console.log('偵測到表單顯示 → 初始化信用卡號 icon');
                                     initCardNumberToggle();
-                                    observer.disconnect(); // 只監聽一次，避免重複
+                                    observer.disconnect(); // 只監聽一次
                                 }
                             }
                         });
@@ -2087,12 +2087,15 @@ document.addEventListener("DOMContentLoaded", async function () {
                 });
             }
 
-            // 頁面載入時如果表單已經顯示，也初始化一次
+            // 頁面載入時如果表單已經顯示，也初始化
             document.addEventListener('DOMContentLoaded', () => {
                 if (editProfileForm && window.getComputedStyle(editProfileForm).display !== 'none') {
                     initCardNumberToggle();
                 }
             });
+
+            // 額外保險：頁面載入後 1 秒再試一次
+            setTimeout(initCardNumberToggle, 1000);
         }
 
         // 編輯按鈕
