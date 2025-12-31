@@ -1590,3 +1590,17 @@ input#newPlateInput::placeholder {
     height: 20px;
     stroke-width: 2.5px; /* 增加一點粗細感，更像圖片中的圖示 */
 }
+
+/* 確保父層是基準點 */
+.relative {
+    position: relative !important;
+}
+
+/* 確保 Icon 絕對定位在右側中央 */
+.toggle-card-visibility {
+    position: absolute !important;
+    right: 16px !important; /* 距離右邊 16px */
+    top: 50% !important;
+    transform: translateY(-50%) !important; /* 垂直居中 */
+    z-index: 10; /* 確保在輸入框之上 */
+}
