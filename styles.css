@@ -1626,3 +1626,22 @@ input#newPlateInput::placeholder {
 input {
     line-height: 1.25 !important;
 }
+/* 統一所有編輯表單內的輸入框高度與樣式 */
+#editName, #editPhone, #editEmail, #editCardNumber {
+    height: 48px !important;    /* 固定高度最保險 */
+    font-size: 16px !important; /* 統一字體大小 */
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+    line-height: 48px;          /* 讓文字垂直置中 */
+}
+
+/* 針對有 icon 的容器微調 */
+.relative {
+    display: flex;
+    align-items: center;
+}
+
+/* 確保信用卡號的字體大小不會導致框框變高 */
+#editCardNumber {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+}
