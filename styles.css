@@ -1567,17 +1567,20 @@ input#newPlateInput::placeholder {
 }
 
 .toggle-password-btn {
-    position: absolute;
-    right: 12px;
-    cursor: pointer;
-    color: #666; /* 圖示顏色 */
-    font-size: 1.1rem; /* 調整圖示大小 */
     display: flex;
     align-items: center;
     justify-content: center;
-    user-select: none;
+    cursor: pointer;
+    color: #6b7280; /* 灰度與圖片接近 */
 }
 
 .toggle-password-btn:hover {
-    color: #4f46e5; /* 懸停時顏色變化 */
+    color: #4f46e5; /* 懸停時變色 */
+}
+
+/* 確保 SVG 大小適中 */
+.toggle-password-btn svg {
+    width: 20px;
+    height: 20px;
+    display: block;
 }
