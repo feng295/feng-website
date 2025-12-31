@@ -1521,3 +1521,33 @@ input#newPlateInput::placeholder {
     display: inline-block !important;
     margin: 0 0.5rem !important;
 }
+.password-wrapper {
+    position: relative;
+    width: 100%;
+}
+
+.password-wrapper input {
+    padding-right: 3.5rem !important;  /* 一定要留空間！避免文字被蓋住 */
+}
+
+.toggle-password-btn {
+    background: transparent;
+    border: none;
+    color: #6c757d;
+    font-size: 1.25rem;
+    padding: 0.5rem;
+    cursor: pointer;
+    z-index: 5;
+    transition: color 0.2s;
+}
+
+.toggle-password-btn:hover,
+.toggle-password-btn:focus {
+    color: #495057;
+    text-decoration: none;
+}
+
+/* 顯示密碼時可變色（可選） */
+.toggle-password-btn.showing {
+    color: #dc3545 !important;
+}

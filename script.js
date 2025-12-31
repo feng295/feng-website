@@ -11,42 +11,6 @@ window.handleMapLoadError = function () {
     window.isGoogleMapsLoaded = false;
     alert("無法載入 Google Maps API，請檢查網路連線或 API 金鑰是否有效。");
 };
-//  密碼顯示/隱藏切換功能（獨立綁定，不依賴外層 DOMContentLoaded）
-// ────────────────────────────────────────────────
-function initPasswordToggle() {
-    const btn = document.querySelector('.toggle-password-btn');
-    const input = document.getElementById('password');
-
-    if (!btn || !input) {
-        console.warn('找不到 .toggle-password-btn 或 #password 元素');
-        return;
-    }
-
-    console.log('密碼切換功能已初始化');  // 確認是否執行
-
-    btn.addEventListener('click', function () {
-        console.log('切換按鈕被點擊');  // 確認點擊事件是否觸發
-
-        const isHidden = input.type === 'password';
-        
-        input.type = isHidden ? 'text' : 'password';
-
-        // 更新按鈕文字
-        const textSpan = btn.querySelector('.text');
-        if (textSpan) {
-            textSpan.textContent = isHidden ? '隱藏' : '顯示';
-        }
-
-        // 更新樣式與 ARIA
-        btn.classList.toggle('showing', isHidden);
-        btn.setAttribute('aria-label', isHidden ? '隱藏密碼' : '顯示密碼');
-
-        input.focus();
-    });
-}
-
-// 立即執行（因為 script 在 body 最後）
-initPasswordToggle();
 document.addEventListener("DOMContentLoaded", async function () {
     console.log("DOM fully loaded");
     // 定義所有 DOM 元素
@@ -1439,7 +1403,39 @@ document.addEventListener("DOMContentLoaded", async function () {
                 showError(error.message || "無法連接到伺服器");
             }
 
+            // 眼睛切換顯示/隱藏密碼
+            document.addEventListener('DOMContentLoaded', () => {
+                const toggleBtn = document.querySelector('.toggle-password-btn');
+                const passwordInput = document.getElementById('password');
 
+                if (!toggleBtn || !passwordInput) {
+                    console.warn('找不到眼睛按鈕或密碼輸入框');
+                    return;
+                }
+
+                toggleBtn.addEventListener('click', () => {
+                    const isPassword = passwordInput.type === 'password';
+
+                    // 切換輸入類型
+                    passwordInput.type = isPassword ? 'text' : 'password';
+
+                    // 切換眼睛圖示（需載入 Font Awesome）
+                    const icon = toggleBtn.querySelector('i');
+                    if (icon) {
+                        icon.classList.toggle('fa-eye', !isPassword);
+                        icon.classList.toggle('fa-eye-slash', isPassword);
+                    }
+
+                    // 更新 ARIA 標籤
+                    toggleBtn.setAttribute('aria-label', isPassword ? '隱藏密碼' : '顯示密碼');
+
+                    // 可選：改變顏色提示
+                    toggleBtn.classList.toggle('showing', isPassword);
+
+                    // 保持焦點
+                    passwordInput.focus();
+                });
+            });
 
             // ====================== 註冊 ======================
         } else {
@@ -1485,7 +1481,7 @@ document.addEventListener("DOMContentLoaded", async function () {
             }
         }
     });
-    
+
     // 登出功能
     logoutButton.addEventListener("click", function () {
         removeToken();
