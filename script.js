@@ -1979,15 +1979,23 @@ document.addEventListener("DOMContentLoaded", async function () {
                     return false;
                 }
 
-                // 強制設定為隱藏狀態（確保一出現就是點點點）
+                // 強制設定為隱藏狀態（確保預設是點點點）
                 input.type = 'password';
 
+                // 使用 let 讓 isVisible 在函式作用域內保持狀態
                 let isVisible = false;
 
                 const updateDisplay = () => {
+                    // 切換輸入類型
                     input.type = isVisible ? 'text' : 'password';
-                    toggle.innerHTML = isVisible ? '🙈' : '👁️';  // 使用 innerHTML 確保 icon 不被清空
+
+                    // 切換 icon（使用 innerHTML 確保內容不會被清空）
+                    toggle.innerHTML = isVisible ? '🙈' : '👁️';
+
+                    // 更新無障礙標籤
                     toggle.setAttribute('aria-label', isVisible ? '隱藏信用卡號' : '顯示信用卡號');
+
+                    // 可選：切換樣式（例如顏色變化）
                     toggle.classList.toggle('showing', isVisible);
                 };
 
@@ -1995,20 +2003,24 @@ document.addEventListener("DOMContentLoaded", async function () {
                 const newToggle = toggle.cloneNode(true);
                 toggle.parentNode.replaceChild(newToggle, toggle);
 
-                newToggle.addEventListener('click', () => {
+                // 重新取得新元素（因為 cloneNode 後原元素被替換）
+                const updatedToggle = document.querySelector('.toggle-card-visibility');
+
+                updatedToggle.addEventListener('click', () => {
                     isVisible = !isVisible;
                     updateDisplay();
                     input.focus();
+                    console.log('信用卡號 icon 被點擊，現在狀態：', isVisible ? '顯示' : '隱藏');
                 });
 
-                newToggle.addEventListener('keydown', (e) => {
+                updatedToggle.addEventListener('keydown', (e) => {
                     if (e.key === 'Enter' || e.key === ' ') {
                         e.preventDefault();
-                        newToggle.click();
+                        updatedToggle.click();
                     }
                 });
 
-                // 強制執行一次更新
+                // 強制執行一次更新 → icon 一定會顯示正確
                 updateDisplay();
                 console.log('信用卡號 icon 已初始化，預設隱藏');
                 return true;
