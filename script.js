@@ -875,7 +875,10 @@ document.addEventListener("DOMContentLoaded", async function () {
                 const token = getToken();
                 res = await fetch(`${API_URL}/rent/leave`, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
                     body: JSON.stringify({
                         license_plate: currentPlate,
                         end_time: new Date().toISOString()
@@ -885,27 +888,38 @@ document.addEventListener("DOMContentLoaded", async function () {
                 const result = await res.json();
 
                 if (res.ok) {
-                    // --- 修正重點：欄位容錯與邏輯檢查 ---
-                    // 1. 取得金額
-                    const amount = result.data?.total_cost || 0;
+                    const data = result.data || {};
+                    const record = data.parking_record || {};
 
-                    // 2. 取得停車時間 (嘗試多種後端可能回傳的欄位名稱)
-                    // 優先順序：duration_minutes -> total_minutes -> minutes
-                    let parkingTime = result.data?.duration_minutes ??
-                        result.data?.total_minutes ??
-                        result.data?.minutes ?? 0;
+                    // 1. 取得金額 (優先讀取外層 total_cost)
+                    const amount = data.total_cost || record.total_cost || 0;
 
-                    // 3. 邏輯修正：如果有收費但時間算出來是 0 (例如停不到 1 分鐘)，強制顯示為 1
-                    if (amount > 0 && parkingTime === 0) {
+                    // 2. 計算停車分鐘數 (由 start_time 與 end_time 計算)
+                    let parkingTime = 0;
+                    if (record.start_time && record.end_time) {
+                        const start = new Date(record.start_time);
+                        const end = new Date(record.end_time);
+
+                        // 計算毫秒差並轉為分鐘
+                        const diffMs = end - start;
+                        parkingTime = Math.ceil(diffMs / (1000 * 60)); // 使用無條件進位，符合停車收費邏輯
+                    }
+
+                    // 3. 邏輯保底：若收費 > 0 但時間為 0 (停不到一分鐘)，強制顯示 1 分鐘
+                    if (amount > 0 && parkingTime <= 0) {
                         parkingTime = 1;
                     }
-                    // ------------------------------------
 
+                    // 4. 渲染霸氣結算畫面
                     settleResult.innerHTML = `
                 <div class="settle-display-container">
-                    <div class="big-result-style text-green-600 tracking-widest">${currentPlate}</div>
+                    <div class="big-result-style text-green-600 tracking-widest">
+                        ${record.license_plate || currentPlate}
+                    </div>
                     
-                    <div class="big-result-style text-indigo-900">出場成功</div>
+                    <div class="big-result-style text-indigo-900">
+                        出場成功
+                    </div>
 
                     <div class="big-result-style text-gray-700">
                         <span class="opacity-70">停車時間 </span>
@@ -915,7 +929,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 
                     <div class="big-result-style text-gray-700">
                         <span>收費 </span>
-                        <span class="text-yellow-500">${amount.toLocaleString()}</span>
+                        <span class="text-yellow-500">${parseFloat(amount).toLocaleString()}</span>
                         <span> 元</span>
                     </div>
                 </div>
@@ -924,10 +938,13 @@ document.addEventListener("DOMContentLoaded", async function () {
                     settleResult.style.display = "block";
                     confirmButton.style.display = "none";
 
-                    rescanButton.textContent = "重新掃描";
-                    rescanButton.style.display = "inline-block";
-                    startButton.style.display = "none";
-                    stopButton.style.display = "none";
+                    // 按鈕狀態切換
+                    if (rescanButton) {
+                        rescanButton.textContent = "重新掃描";
+                        rescanButton.style.display = "inline-block";
+                    }
+                    if (startButton) startButton.style.display = "none";
+                    if (stopButton) stopButton.style.display = "none";
 
                     setupParkingList();
                 } else {
