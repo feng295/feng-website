@@ -1124,6 +1124,7 @@ button:not(#logoutButton),
 }
 /* ====================== 登出按鈕 - 跟登入頁面一樣大一樣帥 ====================== */
 #logoutButton {
+    text-align: center !important;
     width: 100% !important;
     max-width: 480px !important;
     margin: 40px auto !important;
