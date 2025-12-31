@@ -1971,10 +1971,10 @@ document.addEventListener("DOMContentLoaded", async function () {
                     return;
                 }
 
-                // 強制把 type 設為 password（即使 HTML 原本寫 text 也強制隱藏）
+                // 強制隱藏（確保每次都從隱藏開始）
                 input.type = 'password';
 
-                let isVisible = false; // 永遠預設隱藏
+                let isVisible = false;
 
                 const updateDisplay = () => {
                     input.type = isVisible ? 'text' : 'password';
@@ -1983,7 +1983,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                     toggle.classList.toggle('showing', isVisible);
                 };
 
-                // 先移除舊事件（避免重複綁定）
+                // 清除舊事件（避免重複綁定）
                 const newToggle = toggle.cloneNode(true);
                 toggle.parentNode.replaceChild(newToggle, toggle);
 
@@ -2000,9 +2000,9 @@ document.addEventListener("DOMContentLoaded", async function () {
                     }
                 });
 
-                // 強制更新一次，確保 icon 顯示且狀態正確
+                // 強制執行更新 → icon 一定會顯示
                 updateDisplay();
-                console.log('信用卡號 icon 已初始化，預設隱藏');
+                console.log('信用卡號 icon 已強制初始化並顯示（預設隱藏）');
             }
 
             // 儲存按鈕邏輯（不變）
@@ -2010,9 +2010,8 @@ document.addEventListener("DOMContentLoaded", async function () {
                 const name = editName.value.trim();
                 const phone = editPhone.value.trim();
                 const email = editEmail.value.trim();
-                let cardNumber = editCardNumber.value.replace(/\D/g, ''); // 只保留數字
+                let cardNumber = editCardNumber.value.replace(/\D/g, '');
 
-                // 驗證
                 if (!name || !phone || !email) {
                     alert("姓名、電話、電子郵件不能為空！");
                     return;
@@ -2064,25 +2063,32 @@ document.addEventListener("DOMContentLoaded", async function () {
                 }
             };
 
-            // 當點擊「編輯個人資料」按鈕，顯示表單後必定初始化 icon
+            // === 關鍵修改：確保表單每次顯示都重新初始化 icon ===
             if (editProfileButton) {
                 editProfileButton.addEventListener('click', () => {
-                    // 假設你有顯示表單的程式碼，例如：
+                    // 假設你原本有顯示表單的程式碼，例如：
                     // profileData.style.display = "none";
                     // editProfileForm.style.display = "block";
 
-                    // 延遲確保 DOM 渲染完成
-                    setTimeout(initCardNumberToggle, 100);
+                    // 使用 requestAnimationFrame + setTimeout 雙重延遲，確保 DOM 渲染完成
+                    requestAnimationFrame(() => {
+                        setTimeout(() => {
+                            initCardNumberToggle();
+                        }, 150);  // 150ms 通常足夠 DOM 更新
+                    });
                 });
             }
 
-            // 頁面載入時也強制執行一次（如果表單一開始就存在）
+            // 如果表單是頁面一開始就顯示的（少見情況）
             document.addEventListener('DOMContentLoaded', () => {
-                initCardNumberToggle();
+                // 檢查表單是否已經顯示
+                if (editProfileForm && window.getComputedStyle(editProfileForm).display !== 'none') {
+                    initCardNumberToggle();
+                }
             });
 
-            // 額外保險：每當表單顯示時都呼叫（可視情況保留）
-            initCardNumberToggle();
+            // 額外保險：頁面載入後再執行一次（如果表單延遲載入）
+            setTimeout(initCardNumberToggle, 500);
         }
 
         // 編輯按鈕
