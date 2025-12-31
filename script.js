@@ -1968,10 +1968,10 @@ document.addEventListener("DOMContentLoaded", async function () {
 
                 if (!toggle || !input) {
                     console.warn('信用卡號切換元素或輸入框未找到');
-                    return;
+                    return false; // 返回 false 表示失敗
                 }
 
-                // 強制隱藏（確保每次都從隱藏開始）
+                // 強制隱藏
                 input.type = 'password';
 
                 let isVisible = false;
@@ -2000,9 +2000,9 @@ document.addEventListener("DOMContentLoaded", async function () {
                     }
                 });
 
-                // 強制執行更新 → icon 一定會顯示
                 updateDisplay();
-                console.log('信用卡號 icon 已強制初始化並顯示（預設隱藏）');
+                console.log('信用卡號 icon 已初始化，預設隱藏');
+                return true; // 成功
             }
 
             // 儲存按鈕邏輯（不變）
@@ -2063,32 +2063,36 @@ document.addEventListener("DOMContentLoaded", async function () {
                 }
             };
 
-            // === 關鍵修改：確保表單每次顯示都重新初始化 icon ===
-            if (editProfileButton) {
+            // === 關鍵修改：使用 MutationObserver 監聽表單顯示狀態 ===
+            if (editProfileButton && editProfileForm) {
+                // 當點擊編輯按鈕時，啟動監聽
                 editProfileButton.addEventListener('click', () => {
-                    // 假設你原本有顯示表單的程式碼，例如：
-                    // profileData.style.display = "none";
-                    // editProfileForm.style.display = "block";
+                    // 立即嘗試一次（有時已經顯示了）
+                    initCardNumberToggle();
 
-                    // 使用 requestAnimationFrame + setTimeout 雙重延遲，確保 DOM 渲染完成
-                    requestAnimationFrame(() => {
-                        setTimeout(() => {
-                            initCardNumberToggle();
-                        }, 150);  // 150ms 通常足夠 DOM 更新
+                    // 使用 MutationObserver 監聽 display 變化
+                    const observer = new MutationObserver((mutations) => {
+                        mutations.forEach((mutation) => {
+                            if (mutation.attributeName === 'style') {
+                                if (editProfileForm.style.display !== 'none') {
+                                    console.log('偵測到 editProfileForm 顯示 → 初始化 icon');
+                                    initCardNumberToggle();
+                                    observer.disconnect(); // 只監聽一次，避免重複
+                                }
+                            }
+                        });
                     });
+
+                    observer.observe(editProfileForm, { attributes: true, attributeFilter: ['style'] });
                 });
             }
 
-            // 如果表單是頁面一開始就顯示的（少見情況）
+            // 頁面載入時如果表單已經顯示，也初始化一次
             document.addEventListener('DOMContentLoaded', () => {
-                // 檢查表單是否已經顯示
                 if (editProfileForm && window.getComputedStyle(editProfileForm).display !== 'none') {
                     initCardNumberToggle();
                 }
             });
-
-            // 額外保險：頁面載入後再執行一次（如果表單延遲載入）
-            setTimeout(initCardNumberToggle, 500);
         }
 
         // 編輯按鈕
