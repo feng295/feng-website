@@ -39,7 +39,7 @@ function initPasswordToggle() {
 
         // 3. 更新標籤
         btn.setAttribute('aria-label', isCurrentlyPassword ? '隱藏密碼' : '顯示密碼');
-        
+
         input.focus();
     });
 
@@ -1970,7 +1970,6 @@ document.addEventListener("DOMContentLoaded", async function () {
         if (saveProfileButton) {
             // 信用卡號顯示/隱藏功能
             function initCardNumberToggle() {
-                // 每次呼叫都重新查詢元素（避免 cloneNode 後的變數失效）
                 let toggle = document.querySelector('.toggle-card-visibility');
                 const input = document.getElementById('editCardNumber');
 
@@ -1979,34 +1978,37 @@ document.addEventListener("DOMContentLoaded", async function () {
                     return false;
                 }
 
-                // 強制隱藏
-                input.type = 'password';
+                // 定義與你圖片樣式 100% 吻合的 SVG
+                const svgEyeOpen = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>`;
+                const svgEyeSlash = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 19c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>`;
 
+                input.type = 'password';
                 let isVisible = false;
 
                 const updateDisplay = () => {
                     input.type = isVisible ? 'text' : 'password';
-                    // 每次更新都重新查詢 toggle（最保險）
                     toggle = document.querySelector('.toggle-card-visibility');
+
                     if (toggle) {
-                        toggle.innerHTML = isVisible ? '🙈' : '👁️';
+                        // 點開顯示內容時 (isVisible=true) -> 顯示帶斜線的眼睛
+                        // 隱藏內容時 (isVisible=false) -> 顯示正常的空心眼睛
+                        toggle.innerHTML = isVisible ? svgEyeSlash : svgEyeOpen;
+
                         toggle.setAttribute('aria-label', isVisible ? '隱藏信用卡號' : '顯示信用卡號');
                         toggle.classList.toggle('showing', isVisible);
                     }
                 };
 
-                // 清除舊的事件
+                // 清除舊事件
                 const newToggle = toggle.cloneNode(true);
                 toggle.parentNode.replaceChild(newToggle, toggle);
 
-                // 重新取得新元素
                 const updatedToggle = document.querySelector('.toggle-card-visibility');
 
                 updatedToggle.addEventListener('click', () => {
                     isVisible = !isVisible;
                     updateDisplay();
                     input.focus();
-                    console.log('點擊 icon，現在狀態：', isVisible ? '顯示完整數字' : '隱藏點點點');
                 });
 
                 updatedToggle.addEventListener('keydown', (e) => {
@@ -2016,9 +2018,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                     }
                 });
 
-                // 強制執行一次
                 updateDisplay();
-                console.log('信用卡號 icon 已初始化，預設隱藏');
                 return true;
             }
 
