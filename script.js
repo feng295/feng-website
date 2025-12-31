@@ -31,8 +31,8 @@ function initPasswordToggle() {
         // 2. 切換圖示：根據狀態切換 Font Awesome Class
         // 當密碼變成 text (顯示) 時，圖示換成「帶斜線的眼睛」
         // 當密碼變回 password (隱藏) 時，圖示換成「普通眼睛」
-        btn.innerHTML = isHidden
-            ? '<i class="fas fa-eye-slash"></i>'
+        btn.innerHTML = isHidden 
+            ? '<i class="fas fa-eye-slash"></i>' 
             : '<i class="far fa-eye"></i>';
 
         // 3. 更新 ARIA 標籤 (讓無障礙輔助閱讀時更準確)
@@ -1972,7 +1972,7 @@ document.addEventListener("DOMContentLoaded", async function () {
         if (saveProfileButton) {
             // 信用卡號顯示/隱藏功能
             function initCardNumberToggle() {
-                // 每次呼叫都重新查詢元素
+                // 每次呼叫都重新查詢元素（避免 cloneNode 後的變數失效）
                 let toggle = document.querySelector('.toggle-card-visibility');
                 const input = document.getElementById('editCardNumber');
 
@@ -1983,36 +1983,32 @@ document.addEventListener("DOMContentLoaded", async function () {
 
                 // 強制隱藏
                 input.type = 'password';
+
                 let isVisible = false;
 
                 const updateDisplay = () => {
                     input.type = isVisible ? 'text' : 'password';
-
-                    // 重新查詢 toggle
+                    // 每次更新都重新查詢 toggle（最保險）
                     toggle = document.querySelector('.toggle-card-visibility');
                     if (toggle) {
-                        // 切換為 Font Awesome 圖示
-                        // isVisible 為 true 時（顯示卡號），顯示「劃掉的眼睛」提示點擊可隱藏
-                        toggle.innerHTML = isVisible
-                            ? '<i class="fas fa-eye-slash"></i>'
-                            : '<i class="far fa-eye"></i>';
-
+                        toggle.innerHTML = isVisible ? '🙈' : '👁️';
                         toggle.setAttribute('aria-label', isVisible ? '隱藏信用卡號' : '顯示信用卡號');
                         toggle.classList.toggle('showing', isVisible);
                     }
                 };
 
-                // 清除舊的事件 (cloneNode)
+                // 清除舊的事件
                 const newToggle = toggle.cloneNode(true);
                 toggle.parentNode.replaceChild(newToggle, toggle);
 
-                // 重新取得新元素並綁定事件
+                // 重新取得新元素
                 const updatedToggle = document.querySelector('.toggle-card-visibility');
 
                 updatedToggle.addEventListener('click', () => {
                     isVisible = !isVisible;
                     updateDisplay();
                     input.focus();
+                    console.log('點擊 icon，現在狀態：', isVisible ? '顯示完整數字' : '隱藏點點點');
                 });
 
                 updatedToggle.addEventListener('keydown', (e) => {
@@ -2022,13 +2018,11 @@ document.addEventListener("DOMContentLoaded", async function () {
                     }
                 });
 
-                // 初始化狀態
+                // 強制執行一次
                 updateDisplay();
+                console.log('信用卡號 icon 已初始化，預設隱藏');
                 return true;
             }
-
-            // 執行初始化
-            initCardNumberToggle();
 
             // 儲存按鈕邏輯（保持不變）
             saveProfileButton.onclick = async () => {
