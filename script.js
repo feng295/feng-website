@@ -892,8 +892,14 @@ document.addEventListener("DOMContentLoaded", async function () {
                         <div class="text-white text-9xl font-black mb-12">
                             出場成功
                         </div>
+                        <div class="flex flex-col items-center justify-center space-y-4">
+                    <div class="text-white text-5xl font-bold text-center mb-4">
+                        <span class="opacity-80">停車時間 </span>
+                        <span class="text-green-400">${parkingTime}</span>
+                        <span class="opacity-80"> 分鐘</span>
+                    </div>
                         <div class="text-white text-9xl font-black text-center">
-                            <span class="text-white text-9xl font-black">應收 </span>
+                            <span class="text-white text-9xl font-black">收費 </span>
                             <span class="text-yellow-300 text-9xl font-black">${amount}</span>
                             <span class="text-white text-9xl font-black"> 元</span>
                         </div>
