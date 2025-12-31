@@ -17,26 +17,32 @@ function initPasswordToggle() {
     const btn = document.querySelector('.toggle-password-btn.icon');
     const input = document.getElementById('password');
 
-    if (!btn || !input) return;
+    if (!btn || !input) {
+        console.warn('密碼切換按鈕或輸入框未找到');
+        return;
+    }
+
+    // 預設 icon 已經在 HTML 裡了，不用再設定
 
     btn.addEventListener('click', function () {
         const isHidden = input.type === 'password';
 
+        // 切換輸入類型
         input.type = isHidden ? 'text' : 'password';
 
         // 切換圖示（眼睛 ↔ 猴子遮眼）
-        btn.textContent = isHidden ? '🙈' : '👁️';
+        btn.innerHTML = isHidden ? '🙈' : '👁️';
 
         // 更新 ARIA 標籤
         btn.setAttribute('aria-label', isHidden ? '隱藏密碼' : '顯示密碼');
 
-        // 切換顯示狀態樣式
+        // 可選：切換顯示狀態樣式（例如顏色變化）
         btn.classList.toggle('showing', isHidden);
 
         input.focus();
     });
 
-    // 支援鍵盤 Enter / Space 觸發（更好無障礙）
+    // 鍵盤支援（Enter / Space）
     btn.addEventListener('keydown', function (e) {
         if (e.key === 'Enter' || e.key === ' ') {
             e.preventDefault();
@@ -45,7 +51,9 @@ function initPasswordToggle() {
     });
 }
 
+// 立即執行（放在 script 底部）
 initPasswordToggle();
+
 document.addEventListener("DOMContentLoaded", async function () {
     console.log("DOM fully loaded");
     // 定義所有 DOM 元素
