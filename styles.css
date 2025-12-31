@@ -1612,3 +1612,17 @@ input#newPlateInput::placeholder {
 #editCardNumber {
     padding-right: 50px !important;
 }
+/* 修改 grid 的間距，從 gap-6 改小一點 */
+.grid {
+    gap: 1rem !important; /* 16px */
+}
+
+/* 如果要限制整個表單的最大寬度，不讓它撐滿全螢幕 */
+.md\:col-span-2 {
+    max-width: 500px; /* 您可以設定一個適合的大小 */
+}
+
+/* 針對輸入框的微調 */
+input {
+    line-height: 1.25 !important;
+}
