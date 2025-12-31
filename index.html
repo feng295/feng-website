@@ -287,93 +287,102 @@
                                     required>
                             </div>
                             <div class="md:col-span-2">
-                                <label for="editCardNumber" class="block text-lg font-semibold text-gray-700 mb-2">信用卡號
-                                    <span class="text-red-500">*</span></label>
-                                <input type="text" id="editCardNumber" placeholder="1111-1111-1111-1111" maxlength="19"
-                                    class="w-full px-5 py-4 border-2 border-gray-300 rounded-xl focus:border-indigo-600 outline-none text-lg font-mono"
-                                    required>
-                                <span
-                                    class="icon toggle-card-visibility absolute right-4 top-1/2 -translate-y-1/2 cursor-pointer text-gray-500 hover:text-gray-800"
-                                    aria-label="顯示信用卡號" role="button" tabindex="0"></span>
+                                <label for="editCardNumber" class="block text-lg font-semibold text-gray-700 mb-2">
+                                    信用卡號 <span class="text-red-500">*</span>
+                                </label>
+                                <div class="relative"> <!-- 必須有 relative，讓 icon 能絕對定位 -->
+                                    <input type="password" <!-- 改成 password → 永遠預設隱藏 -->
+                                    id="editCardNumber"
+                                    placeholder="1111-1111-1111-1111"
+                                    maxlength="19"
+                                    class="w-full px-5 py-4 border-2 border-gray-300 rounded-xl
+                                    focus:border-indigo-600 outline-none text-lg font-mono pr-16" <!-- pr-16 留空間 -->
+                                    required
+                                    >
+                                    <span class="toggle-card-visibility absolute right-4 top-1/2 -translate-y-1/2 
+                                        cursor-pointer text-gray-500 hover:text-indigo-600 text-xl select-none" aria-label="顯示信用卡號"
+                                        role="button" tabindex="0">
+                                        👁️ <!-- 預設顯示眼睛 icon -->
+                                    </span>
+                                </div>
+                            </div>
+
+                            <div class="flex gap-4 mt-8 justify-center">
+                                <button id="saveProfileButton"
+                                    class="px-10 py-5 bg-gradient-to-r from-green-500 to-emerald-600 text-white text-xl font-bold rounded-xl shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all">
+                                    保存變更
+                                </button>
+                                <button id="cancelEditProfileButton"
+                                    class="px-10 py-5 bg-gray-500 hover:bg-gray-600 text-white text-xl font-bold rounded-xl shadow-lg transition-all">
+                                    取消
+                                </button>
                             </div>
                         </div>
 
-                        <div class="flex gap-4 mt-8 justify-center">
-                            <button id="saveProfileButton"
-                                class="px-10 py-5 bg-gradient-to-r from-green-500 to-emerald-600 text-white text-xl font-bold rounded-xl shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all">
-                                保存變更
-                            </button>
-                            <button id="cancelEditProfileButton"
-                                class="px-10 py-5 bg-gray-500 hover:bg-gray-600 text-white text-xl font-bold rounded-xl shadow-lg transition-all">
-                                取消
-                            </button>
-                        </div>
-                    </div>
+                        <!-- 租用者專屬：我的車輛管理區（僅 renter 看得到） -->
+                        <div id="vehicleSection" style="display: none;" data-role="renter">
 
-                    <!-- 租用者專屬：我的車輛管理區（僅 renter 看得到） -->
-                    <div id="vehicleSection" style="display: none;" data-role="renter">
+                            <div class="mt-12 bg-white rounded-3xl shadow-2xl overflow-hidden border border-indigo-200">
+                                <div class="bg-gradient-to-r from-indigo-600 to-purple-700 text-white px-8 py-6">
+                                    <h3 class="text-3xl font-black">我的車輛</h3>
+                                </div>
 
-                        <div class="mt-12 bg-white rounded-3xl shadow-2xl overflow-hidden border border-indigo-200">
-                            <div class="bg-gradient-to-r from-indigo-600 to-purple-700 text-white px-8 py-6">
-                                <h3 class="text-3xl font-black">我的車輛</h3>
-                            </div>
+                                <!-- 表格容器 -->
+                                <div class="overflow-x-auto">
+                                    <table class="w-full">
+                                        <thead class="bg-gray-50 border-b-2 border-gray-200">
+                                            <tr>
+                                                <th
+                                                    class="px-8 py-5 text-left text-sm font-bold text-gray-700 uppercase tracking-wider">
+                                                    車牌號碼
+                                                </th>
+                                                <th
+                                                    class="px-8 py-5 text-center text-sm font-bold text-red-600 uppercase tracking-wider">
+                                                    操作
+                                                </th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="vehicleTableBody" class="bg-white divide-y divide-gray-200">
+                                            <!-- JS 會動態填入 -->
+                                        </tbody>
+                                    </table>
+                                </div>
 
-                            <!-- 表格容器 -->
-                            <div class="overflow-x-auto">
-                                <table class="w-full">
-                                    <thead class="bg-gray-50 border-b-2 border-gray-200">
-                                        <tr>
-                                            <th
-                                                class="px-8 py-5 text-left text-sm font-bold text-gray-700 uppercase tracking-wider">
-                                                車牌號碼
-                                            </th>
-                                            <th
-                                                class="px-8 py-5 text-center text-sm font-bold text-red-600 uppercase tracking-wider">
-                                                操作
-                                            </th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="vehicleTableBody" class="bg-white divide-y divide-gray-200">
-                                        <!-- JS 會動態填入 -->
-                                    </tbody>
-                                </table>
-                            </div>
-
-                            <!-- 新增車輛區域 -->
-                            <div
-                                class="bg-gradient-to-r from-indigo-50 to-purple-50 px-8 py-10 border-t-4 border-indigo-200">
-                                <div class="flex flex-col lg:flex-row gap-8 items-center max-w-5xl mx-auto">
-                                    <div class="flex-1 w-full">
-                                        <label class="block text-2xl font-black text-indigo-800 mb-4">
-                                            新增車輛
-                                            <span class="text-lg font-normal text-indigo-600 ml-3"></span>
-                                        </label>
-                                        <input type="text" id="newPlateInput" placeholder="例如：ABC1234 或 KLM5678"
-                                            maxlength="8" class="w-full px-8 py-7 text-4xl font-mono font-black text-indigo-900 
+                                <!-- 新增車輛區域 -->
+                                <div
+                                    class="bg-gradient-to-r from-indigo-50 to-purple-50 px-8 py-10 border-t-4 border-indigo-200">
+                                    <div class="flex flex-col lg:flex-row gap-8 items-center max-w-5xl mx-auto">
+                                        <div class="flex-1 w-full">
+                                            <label class="block text-2xl font-black text-indigo-800 mb-4">
+                                                新增車輛
+                                                <span class="text-lg font-normal text-indigo-600 ml-3"></span>
+                                            </label>
+                                            <input type="text" id="newPlateInput" placeholder="例如：ABC1234 或 KLM5678"
+                                                maxlength="8" class="w-full px-8 py-7 text-4xl font-mono font-black text-indigo-900 
                                   placeholder-gray-400 bg-white border-4 border-indigo-400 
                                   rounded-3xl focus:border-purple-600 outline-none shadow-2xl
                                   tracking-widest uppercase text-center">
-                                    </div>
-                                    <div>
-                                        <button id="addVehicleBtn" class="px-16 py-7 bg-gradient-to-r from-purple-600 via-pink-600 to-rose-600 
+                                        </div>
+                                        <div>
+                                            <button id="addVehicleBtn" class="px-16 py-7 bg-gradient-to-r from-purple-600 via-pink-600 to-rose-600 
                                    text-white text-2xl font-black rounded-3xl shadow-2xl 
                                    hover:shadow-3xl transform hover:scale-110 transition-all duration-500">
-                                            新增車輛
-                                        </button>
+                                                新增車輛
+                                            </button>
+                                        </div>
                                     </div>
-                                </div>
-                                <div class="text-center mt-4 text-indigo-700 font-medium">
+                                    <div class="text-center mt-4 text-indigo-700 font-medium">
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
+            <button id="logoutButton">登出</button>
         </div>
-        <button id="logoutButton">登出</button>
-    </div>
 
-    <script src="./script.js"></script>
+        <script src="./script.js"></script>
 </body>
 
 </html>
