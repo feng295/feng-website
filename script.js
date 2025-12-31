@@ -890,27 +890,24 @@ document.addEventListener("DOMContentLoaded", async function () {
                     const parkingTime = result.data?.duration_minutes || 0; // 假設後端回傳分鐘數
 
                     settleResult.innerHTML = `
-                <div class="min-h-screen flex flex-col items-center justify-center bg-gray-50">
-                    <div class="text-center">
-                        <div class="text-green-600 text-9xl font-black mb-12 tracking-widest">${currentPlate}</div>
-                        <div class="text-indigo-900 text-9xl font-black mb-12">
-                            出場成功
-                        </div>
-                        <div class="flex flex-col items-center justify-center space-y-4">
-                            <div class="text-gray-700 text-5xl font-bold text-center mb-4">
-                                <span class="opacity-80">停車時間 </span>
+                        <div class="settle-display-container">
+                            <div class="big-result-style text-green-600 tracking-widest">${currentPlate}</div>
+        
+                            <div class="big-result-style text-indigo-900">出場成功</div>
+
+                            <div class="big-result-style text-gray-700">
+                                <span class="opacity-70">停車時間 </span>
                                 <span class="text-green-500">${parkingTime}</span>
-                                <span class="opacity-80"> 分鐘</span>
+                                <span class="opacity-70"> 分鐘</span>
                             </div>
-                            <div class="text-gray-700 text-9xl font-black text-center">
-                                <span class="text-gray-700">收費 </span>
+
+                            <div class="big-result-style text-gray-700">
+                                <span>收費 </span>
                                 <span class="text-yellow-500">${amount}</span>
-                                <span class="text-gray-700"> 元</span>
+                                <span> 元</span>
                             </div>
                         </div>
-                    </div>
-                </div>
-            `;
+        `;
                     settleResult.style.display = "block";
                     confirmButton.style.display = "none";
 

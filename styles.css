@@ -1682,3 +1682,44 @@ input {
         font-size: 2rem !important; /* 手機版稍微調小一點點 */
     }
 }
+/* 外層容器：確保內容在頁面中垂直水平置中 */
+.settle-display-container {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    text-align: center !important;
+    width: 100% !important;
+    min-height: 70vh !important; /* 確保有足夠高度來呈現置中 */
+    padding: 2rem 0 !important;
+}
+
+/* 您的自訂霸氣字體樣式 */
+.big-result-style {
+    /* 1. 字體大小與粗細 */
+    font-size: 2.5rem !important;         /* 您要求的大小 */
+    font-weight: 900 !important;          /* 強制超粗 */
+    
+    /* 2. 置中與寬度控制 */
+    text-align: center !important;
+    width: 100% !important;
+    max-width: 900px !important;
+    display: block !important;
+    
+    /* 3. 您指定的立體陰影 (霸氣感來源) */
+    text-shadow: 0 10px 20px rgba(0, 0, 0, 0.3) !important;
+    
+    /* 4. 行高與間距 */
+    line-height: 1.2 !important;
+    margin-bottom: 2rem !important;       /* 每一行之間的距離 */
+    
+    /* 5. 確保字體是 Noto Sans TC (或是您 body 設定的字體) */
+    font-family: inherit;
+}
+
+/* 如果是手機版，稍微縮小一點點避免溢出，但仍保持霸氣 */
+@media (max-width: 640px) {
+    .big-result-style {
+        font-size: 2rem !important;
+    }
+}
