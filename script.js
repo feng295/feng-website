@@ -869,7 +869,7 @@ document.addEventListener("DOMContentLoaded", async function () {
             confirmButton.disabled = true;
             confirmButton.textContent = "結算中...";
 
-            let res = null; // 1. 提升作用域，讓 finally 看得到
+            let res = null;
 
             try {
                 const token = getToken();
@@ -885,29 +885,42 @@ document.addEventListener("DOMContentLoaded", async function () {
                 const result = await res.json();
 
                 if (res.ok) {
-                    // 2. 確保從後端回傳的資料中取得正確的數值
+                    // --- 修正重點：欄位容錯與邏輯檢查 ---
+                    // 1. 取得金額
                     const amount = result.data?.total_cost || 0;
-                    const parkingTime = result.data?.duration_minutes || 0; // 假設後端回傳分鐘數
+
+                    // 2. 取得停車時間 (嘗試多種後端可能回傳的欄位名稱)
+                    // 優先順序：duration_minutes -> total_minutes -> minutes
+                    let parkingTime = result.data?.duration_minutes ??
+                        result.data?.total_minutes ??
+                        result.data?.minutes ?? 0;
+
+                    // 3. 邏輯修正：如果有收費但時間算出來是 0 (例如停不到 1 分鐘)，強制顯示為 1
+                    if (amount > 0 && parkingTime === 0) {
+                        parkingTime = 1;
+                    }
+                    // ------------------------------------
 
                     settleResult.innerHTML = `
-                        <div class="settle-display-container">
-                            <div class="big-result-style text-green-600 tracking-widest">${currentPlate}</div>
-        
-                            <div class="big-result-style text-indigo-900">出場成功</div>
+                <div class="settle-display-container">
+                    <div class="big-result-style text-green-600 tracking-widest">${currentPlate}</div>
+                    
+                    <div class="big-result-style text-indigo-900">出場成功</div>
 
-                            <div class="big-result-style text-gray-700">
-                                <span class="opacity-70">停車時間 </span>
-                                <span class="text-green-500">${parkingTime}</span>
-                                <span class="opacity-70"> 分鐘</span>
-                            </div>
+                    <div class="big-result-style text-gray-700">
+                        <span class="opacity-70">停車時間 </span>
+                        <span class="text-green-500">${parkingTime}</span>
+                        <span class="opacity-70"> 分鐘</span>
+                    </div>
 
-                            <div class="big-result-style text-gray-700">
-                                <span>收費 </span>
-                                <span class="text-yellow-500">${amount}</span>
-                                <span> 元</span>
-                            </div>
-                        </div>
-        `;
+                    <div class="big-result-style text-gray-700">
+                        <span>收費 </span>
+                        <span class="text-yellow-500">${amount.toLocaleString()}</span>
+                        <span> 元</span>
+                    </div>
+                </div>
+            `;
+
                     settleResult.style.display = "block";
                     confirmButton.style.display = "none";
 
@@ -921,10 +934,9 @@ document.addEventListener("DOMContentLoaded", async function () {
                     alert("出場失敗：" + (result.error || "請稍後再試"));
                 }
             } catch (e) {
-                console.error(e);
+                console.error("結算錯誤:", e);
                 alert("網路錯誤或伺服器無回應");
             } finally {
-                // 3. 使用可選鏈或檢查 res 是否存在，避免 ReferenceError
                 if (!res || !res.ok) {
                     confirmButton.disabled = false;
                     confirmButton.textContent = "確認出場";
