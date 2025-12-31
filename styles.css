@@ -1795,7 +1795,7 @@ input {
     border: 2px solid #e2e8f0 !important;
     border-radius: 12px !important;
     background: white !important;
-    width: 100% !important; /* 填滿 flex-1 容器 */
+    width: 65% !important; /* 填滿 flex-1 容器 */
     min-width: 240px !important; /* 設定合適的最小寬度 */
     
     appearance: none !important;
