@@ -28,14 +28,14 @@ function initPasswordToggle() {
         // 1. 切換輸入類型
         input.type = isHidden ? 'text' : 'password';
 
-        // 2. 切換圖示：根據狀態切換 Font Awesome Class
-        // 當密碼變成 text (顯示) 時，圖示換成「帶斜線的眼睛」
-        // 當密碼變回 password (隱藏) 時，圖示換成「普通眼睛」
+        // 2. 切換圖示：對應圖片樣式
+        // 當 isHidden 為 true（點擊後變成顯示內容）-> 顯示「帶斜線眼睛」(如 image_694da2)
+        // 當 isHidden 為 false（點擊後變回隱藏密碼）-> 顯示「普通眼睛」(如 image_6950a4)
         btn.innerHTML = isHidden 
             ? '<i class="fas fa-eye-slash"></i>' 
             : '<i class="far fa-eye"></i>';
 
-        // 3. 更新 ARIA 標籤 (讓無障礙輔助閱讀時更準確)
+        // 3. 更新 ARIA 標籤
         btn.setAttribute('aria-label', isHidden ? '隱藏密碼' : '顯示密碼');
 
         // 4. 切換顯示狀態樣式
