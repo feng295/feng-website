@@ -1561,22 +1561,15 @@ input#newPlateInput::placeholder {
 }
 
 
-.toggle-card-visibility {
-    position: absolute;
-    right: 1rem;                /* 距離右邊 1rem，可調整為 0.75rem 更貼近 */
-    top: 50%;
-    transform: translateY(-50%);
-    font-size: 1.4rem;          /* 眼睛大小 */
-    cursor: pointer;
-    user-select: none;
-    transition: color 0.2s ease;
+.relative {
+    position: relative;
 }
 
-.toggle-card-visibility:hover,
-.toggle-card-visibility:focus {
-    color: #6366f1;             /* 藍紫色 hover 效果，與你的主題搭配 */
+.toggle-card-visibility {
+    pointer-events: auto; /* 確保可點擊 */
+    user-select: none;
 }
 
 .toggle-card-visibility.showing {
-    color: #ef4444;             /* 紅色表示正在顯示 */
+    color: #ef4444; /* 紅色表示顯示中，可選 */
 }
