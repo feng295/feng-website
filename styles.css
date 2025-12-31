@@ -1645,3 +1645,21 @@ input {
 #editCardNumber {
     font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 }
+
+/* 統一霸氣字體樣式 */
+.big-result-text {
+    font-weight: 900 !important;
+    font-size: 2.5rem !important; /* 根據您的需求設定 */
+    text-align: center !important;
+    width: 100% !important;
+    display: block !important;
+    text-shadow: 0 10px 20px rgba(0, 0, 0, 0.3) !important;
+    line-height: 1.2 !important;
+    letter-spacing: 0.1em !important; /* 稍微拉開字距增加質感 */
+    margin-bottom: 1.5rem !important;
+}
+
+/* 針對不同顏色的微調 */
+.text-green-highlight { color: #10b981 !important; } /* 綠色 */
+.text-yellow-highlight { color: #f59e0b !important; } /* 黃色 */
+.text-indigo-highlight { color: #312e81 !important; } /* 深藍色 */
