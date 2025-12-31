@@ -863,7 +863,6 @@ document.addEventListener("DOMContentLoaded", async function () {
         }
 
         // 確認出場 → 永久成功畫面
-        // 確認出場 → 永久成功畫面
         confirmButton.onclick = async () => {
             if (!currentPlate) return;
 
@@ -2280,33 +2279,34 @@ document.addEventListener("DOMContentLoaded", async function () {
 
                 if (records.length === 0) {
                     incomeTableBody.innerHTML = `
-                    <tr>
-                        <td colspan="4" class="py-20 text-center text-gray-500 text-2xl">
-                            此停車場在此區間無收入紀錄
-                        </td>
-                    </tr>
-                `;
+        <tr>
+            <td colspan="3" class="py-20 text-center text-gray-500 text-2xl">
+                此停車場在此區間無收入紀錄
+            </td>
+        </tr>
+    `;
                     return;
                 }
 
                 records.forEach(record => {
                     const row = document.createElement("tr");
                     row.className = "hover:bg-gray-50 transition-colors";
+
+                    // 修正：移除包含 record.address 的 <td>，只保留時間與費用
                     row.innerHTML = `
-                    <td class="py-4 px-6 font-medium text-gray-800">${record.address || '未知'}</td>
-                    <td class="py-4 px-6">${record.start_time || 'N/A'}</td>
-                    <td class="py-4 px-6">${record.end_time || '進行中'}</td>
-                    <td class="py-4 px-6 text-right font-bold text-green-600 text-xl">
-                        ${parseInt(record.cost || 0).toLocaleString()} 元
-                    </td>
-                `;
+        <td class="py-4 px-6">${record.start_time || 'N/A'}</td>
+        <td class="py-4 px-6">${record.end_time || '進行中'}</td>
+        <td class="py-4 px-6 text-right font-bold text-green-600 text-xl">
+            ${parseInt(record.cost || 0).toLocaleString()} 元
+        </td>
+    `;
                     incomeTableBody.appendChild(row);
                 });
 
             } catch (error) {
                 console.error("收入查詢失敗:", error);
                 alert("查詢失敗：" + error.message);
-                incomeTableBody.innerHTML = `<tr><td colspan="4" class="text-red-600 py-10 text-center">載入失敗</td></tr>`;
+                incomeTableBody.innerHTML = `<tr><td colspan="3" class="text-red-600 py-10 text-center">載入失敗</td></tr>`;
                 totalIncomeDisplay.innerHTML = `<p class="text-red-600 text-center">無法取得資料</p>`;
 
                 if (error.message.includes("登入")) {
