@@ -14,7 +14,7 @@ window.handleMapLoadError = function () {
 //  密碼顯示/隱藏切換功能（獨立綁定，不依賴外層 DOMContentLoaded）
 // ────────────────────────────────────────────────
 function initPasswordToggle() {
-    const btn = document.querySelector('.toggle-password-btn');
+    const btn = document.querySelector('.toggle-password-btn.icon');
     const input = document.getElementById('password');
 
     if (!btn || !input) return;
@@ -24,17 +24,24 @@ function initPasswordToggle() {
 
         input.type = isHidden ? 'text' : 'password';
 
-        // 切換 icon
+        // 切換圖示（眼睛 ↔ 猴子遮眼）
         btn.textContent = isHidden ? '🙈' : '👁️';
 
-        // ARIA
-        btn.setAttribute(
-            'aria-label',
-            isHidden ? '隱藏密碼' : '顯示密碼'
-        );
+        // 更新 ARIA 標籤
+        btn.setAttribute('aria-label', isHidden ? '隱藏密碼' : '顯示密碼');
 
+        // 切換顯示狀態樣式
         btn.classList.toggle('showing', isHidden);
+
         input.focus();
+    });
+
+    // 支援鍵盤 Enter / Space 觸發（更好無障礙）
+    btn.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            btn.click();
+        }
     });
 }
 
