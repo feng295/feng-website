@@ -1723,3 +1723,56 @@ input {
         font-size: 2rem !important;
     }
 }
+
+/* 針對停車場選擇下拉選單的自訂樣式 */
+#parkingLotSelect {
+    /* 基礎尺寸與字體 */
+    padding: 14px 16px !important;
+    font-size: 18px !important;
+    font-weight: 500 !important;
+    color: #1e293b; /* 濃縮灰，閱讀更清晰 */
+    
+    /* 框線與圓角 */
+    border: 2px solid #e2e8f0 !important;
+    border-radius: 14px !important;
+    
+    /* 背景與寬度 */
+    background: #ffffff !important;
+    width: 100% !important;
+    min-width: 220px !important;
+    
+    /* 移除原生外觀並自訂箭頭 */
+    appearance: none !important;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%236366f1'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E") !important;
+    background-repeat: no-repeat !important;
+    background-position: right 1rem center !important;
+    background-size: 1.2em !important;
+
+    /* 動態效果 */
+    transition: all 0.3s ease !important;
+    cursor: pointer;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+/* 焦點狀態 (點擊時) */
+#parkingLotSelect:focus {
+    border-color: #6366f1 !important; /* 靛藍色 */
+    box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.15) !important;
+    outline: none !important;
+    background-color: #fff !important;
+}
+
+/* 懸停狀態 */
+#parkingLotSelect:hover {
+    border-color: #cbd5e1 !important;
+    background-color: #f8fafc !important;
+}
+
+/* 針對選單內的選項樣式 (部分瀏覽器支援有限) */
+#parkingLotSelect option {
+    padding: 10px;
+    font-size: 16px;
+    background: white;
+}
