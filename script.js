@@ -1970,25 +1970,55 @@ document.addEventListener("DOMContentLoaded", async function () {
         if (saveProfileButton) {
             // 信用卡號顯示/隱藏功能
             function initCardNumberToggle() {
-                const btn = document.querySelector('.toggle-card-visibility');
                 const input = document.getElementById('editCardNumber');
+                // 這裡直接找當下的按鈕
+                const btn = document.querySelector('.toggle-card-visibility');
 
-                // 定義兩種狀態的 SVG 路徑
+                if (!input || !btn) {
+                    console.warn('找不到信用卡輸入框或按鈕');
+                    return;
+                }
+
+                // 定義 SVG 圖示
                 const svgOpen = `<svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>`;
                 const svgSlash = `<svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 19c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>`;
 
-                if (!btn || !input) return;
+                // 移除舊的事件監聽器（透過取代元素的方式，最徹底）
+                const newBtn = btn.cloneNode(true);
+                btn.parentNode.replaceChild(newBtn, btn);
 
-                btn.addEventListener('click', () => {
+                // 為新按鈕綁定點擊事件
+                newBtn.addEventListener('click', function (e) {
+                    e.preventDefault(); // 防止表單送出
+
                     const isHidden = input.type === 'password';
+
+                    // 切換類型
                     input.type = isHidden ? 'text' : 'password';
 
-                    // 點開顯示文字時，顯示「帶斜線的眼睛」
-                    // 隱藏變回點點時，顯示「空心眼睛」
-                    btn.innerHTML = isHidden ? svgSlash : svgOpen;
-                    btn.setAttribute('aria-label', isHidden ? '隱藏信用卡號' : '顯示信用卡號');
+                    // 切換圖示：顯示內容時用「斜線眼」，隱藏時用「空心眼」
+                    this.innerHTML = isHidden ? svgSlash : svgOpen;
+
+                    // 更新輔助說明
+                    this.setAttribute('aria-label', isHidden ? '隱藏信用卡號' : '顯示信用卡號');
+
+                    console.log('信用卡號狀態已切換:', isHidden ? '顯示' : '隱藏');
+
+                    input.focus(); // 保持焦點
+                });
+
+                // 鍵盤支援
+                newBtn.addEventListener('keydown', function (e) {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        this.click();
+                    }
                 });
             }
+
+            // 確保 DOM 載入後執行
+            document.addEventListener('DOMContentLoaded', initCardNumberToggle);
+            // 如果你是動態生成 HTML (例如彈出視窗)，請在生成後手動執行一次 initCardNumberToggle();
 
             // 儲存按鈕邏輯（保持不變）
             saveProfileButton.onclick = async () => {
