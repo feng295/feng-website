@@ -1123,23 +1123,19 @@ button:not(#logoutButton),
     to { opacity: 1; transform: translateY(0); }
 }
 /* ====================== 登出按鈕 - 跟登入頁面一樣大一樣帥 ====================== */
-/* 父容器確保內容置中 */
-#parkingContainer {
+/* 父容器 */
+#parkingContainer, 
+.logout-wrapper {  /* 或任何包住按鈕的 div */
     display: flex;
-    flex-direction: column;
-    align-items: center;
     justify-content: center;
-    min-height: 100vh; /* 可選：垂直置中 */
-    padding: 20px;
-    box-sizing: border-box;
+    width: 100%;
+    margin-top: 40px;
 }
 
-/* 登出按鈕 */
+/* 登出按鈕本身（可選：限制寬度） */
 #logoutButton {
-    display: block;
     width: 100%;
-    max-width: 480px;
-    margin: 40px auto;
+    max-width: 480px;         /* 避免太寬 */
     padding: 18px 32px;
     background: linear-gradient(to right, #3b82f6, #10b981);
     color: white;
@@ -1150,20 +1146,7 @@ button:not(#logoutButton),
     cursor: pointer;
     box-shadow: 0 12px 35px rgba(59, 130, 246, 0.4);
     transition: all 0.3s ease;
-    letter-spacing: 2px;
-    text-transform: uppercase;
     text-align: center;
-}
-
-#logoutButton:hover {
-    transform: translateY(-6px) scale(1.02);
-    box-shadow: 0 20px 50px rgba(59, 130, 246, 0.6);
-    background: linear-gradient(to right, #2563eb, #059669);
-}
-
-#logoutButton:active {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 25px rgba(59, 130, 246, 0.35);
 }
 /* ===== 專屬於新增停車場的頂級美學 CSS ===== */
 .parking-input-group {
