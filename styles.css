@@ -1554,10 +1554,6 @@ input#newPlateInput::placeholder {
 }
 
 
-.relative {
-    position: relative;
-    width: 100%;
-}
 
 
 /* 密碼包裝層確保位置正確 */
