@@ -1971,7 +1971,8 @@ document.addEventListener("DOMContentLoaded", async function () {
         if (saveProfileButton) {
             // 信用卡號顯示/隱藏功能
             function initCardNumberToggle() {
-                const toggle = document.querySelector('.toggle-card-visibility');
+                // 每次呼叫都重新查詢元素（避免 cloneNode 後的變數失效）
+                let toggle = document.querySelector('.toggle-card-visibility');
                 const input = document.getElementById('editCardNumber');
 
                 if (!toggle || !input) {
@@ -1986,16 +1987,20 @@ document.addEventListener("DOMContentLoaded", async function () {
 
                 const updateDisplay = () => {
                     input.type = isVisible ? 'text' : 'password';
-                    toggle.innerHTML = isVisible ? '🙈' : '👁️';
-                    toggle.setAttribute('aria-label', isVisible ? '隱藏信用卡號' : '顯示信用卡號');
-                    toggle.classList.toggle('showing', isVisible);
+                    // 每次更新都重新查詢 toggle（最保險）
+                    toggle = document.querySelector('.toggle-card-visibility');
+                    if (toggle) {
+                        toggle.innerHTML = isVisible ? '🙈' : '👁️';
+                        toggle.setAttribute('aria-label', isVisible ? '隱藏信用卡號' : '顯示信用卡號');
+                        toggle.classList.toggle('showing', isVisible);
+                    }
                 };
 
-                // 先清除舊的事件（避免重複綁定）
+                // 清除舊的事件
                 const newToggle = toggle.cloneNode(true);
                 toggle.parentNode.replaceChild(newToggle, toggle);
 
-                // 重要：重新取得新元素（因為 cloneNode 後舊元素被替換）
+                // 重新取得新元素
                 const updatedToggle = document.querySelector('.toggle-card-visibility');
 
                 updatedToggle.addEventListener('click', () => {
@@ -2012,7 +2017,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                     }
                 });
 
-                // 強制執行一次更新 → icon 一開始就顯示 👁️
+                // 強制執行一次
                 updateDisplay();
                 console.log('信用卡號 icon 已初始化，預設隱藏');
                 return true;
@@ -2076,29 +2081,20 @@ document.addEventListener("DOMContentLoaded", async function () {
                 }
             };
 
-            // === 關鍵：確保表單每次顯示時都初始化 icon ===
-            if (editProfileButton && editProfileForm) {
+            if (editProfileButton) {
                 editProfileButton.addEventListener('click', () => {
-                    // 立即嘗試一次（有時已經顯示）
-                    initCardNumberToggle();
+                    // 顯示表單...
+                    editProfileForm.style.display = 'block';
 
-                    // 啟動 MutationObserver 監聽 display 變化
-                    const observer = new MutationObserver((mutations) => {
-                        mutations.forEach((mutation) => {
-                            if (mutation.attributeName === 'style') {
-                                if (editProfileForm.style.display !== 'none') {
-                                    console.log('偵測到表單顯示 → 初始化信用卡號 icon');
-                                    initCardNumberToggle();
-                                    observer.disconnect(); // 只監聽一次
-                                }
-                            }
-                        });
+                    // 更穩定的延遲
+                    requestAnimationFrame(() => {
+                        setTimeout(() => {
+                            initCardNumberToggle();
+                        }, 200);
                     });
-
-                    observer.observe(editProfileForm, { attributes: true, attributeFilter: ['style'] });
                 });
             }
-
+            
             // 頁面載入時如果表單已經顯示，也初始化
             document.addEventListener('DOMContentLoaded', () => {
                 if (editProfileForm && window.getComputedStyle(editProfileForm).display !== 'none') {
